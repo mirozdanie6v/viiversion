@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "bash scripts/restore-site.sh",
+    "build": "bash scripts/restore-site.sh && python3 scripts/remove-projects.py",
     "deploy": "wrangler deploy",
     "dev": "npm run build && wrangler dev"
   },
