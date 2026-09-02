@@ -22,18 +22,18 @@ def save(path, text, start, end, data, semicolon):
     path.write_text(text[:start] + payload + text[end:], encoding='utf-8')
 
 
+# The current public Worker serves the PET NIKA client/Mini App interface at `/`.
+# `/miniapp` exists in source, but the production Worker still returns 404 there,
+# so every public CTA must use the verified live root route.
 live = {
     'ru': [
-        {'label': 'Прототип', 'url': BASE + '/'},
-        {'label': 'Mini App', 'url': BASE + '/miniapp'},
+        {'label': 'Прототип / Mini App', 'url': BASE + '/'},
     ],
     'en': [
-        {'label': 'Prototype', 'url': BASE + '/'},
-        {'label': 'Mini App', 'url': BASE + '/miniapp'},
+        {'label': 'Prototype / Mini App', 'url': BASE + '/'},
     ],
     'vi': [
-        {'label': 'Prototype', 'url': BASE + '/'},
-        {'label': 'Mini App', 'url': BASE + '/miniapp'},
+        {'label': 'Prototype / Mini App', 'url': BASE + '/'},
     ],
 }
 
@@ -88,60 +88,36 @@ for lang in ('ru', 'en', 'vi'):
     items.insert(insert_at, pet[lang])
 save(path, text, start, end, data, semicolon)
 
-# Dedicated PET NIKA case page: publish current prototype links.
+# Dedicated PET NIKA case page: publish the verified current public route.
 case_products = {
     'ru': [
         {
-            'name': 'PET NIKA — прототип',
-            'kind': 'Веб-прототип',
+            'name': 'PET NIKA — прототип / Mini App',
+            'kind': 'Клиентский интерфейс · публичный прототип',
             'status': 'Публичный прототип',
-            'desc': 'Актуальная опубликованная версия клиентского интерфейса PET NIKA.',
+            'desc': 'Актуальная опубликованная версия клиентского интерфейса PET NIKA, используемого как Mini App.',
             'url': BASE + '/',
             'cta': 'Открыть прототип',
-        },
-        {
-            'name': 'PET NIKA Mini App',
-            'kind': 'Telegram Mini App · прототип',
-            'status': 'Публичный прототип',
-            'desc': 'Мобильный маршрут PET NIKA, подготовленный для запуска как Telegram Mini App.',
-            'url': BASE + '/miniapp',
-            'cta': 'Открыть Mini App',
         },
     ],
     'en': [
         {
-            'name': 'PET NIKA — prototype',
-            'kind': 'Web prototype',
+            'name': 'PET NIKA — prototype / Mini App',
+            'kind': 'Client interface · public prototype',
             'status': 'Public prototype',
-            'desc': 'Current published PET NIKA client interface.',
+            'desc': 'Current published PET NIKA client interface used as the Mini App prototype.',
             'url': BASE + '/',
             'cta': 'Open prototype',
-        },
-        {
-            'name': 'PET NIKA Mini App',
-            'kind': 'Telegram Mini App · prototype',
-            'status': 'Public prototype',
-            'desc': 'Mobile PET NIKA route prepared for use as a Telegram Mini App.',
-            'url': BASE + '/miniapp',
-            'cta': 'Open Mini App',
         },
     ],
     'vi': [
         {
-            'name': 'PET NIKA — prototype',
-            'kind': 'Web prototype',
+            'name': 'PET NIKA — prototype / Mini App',
+            'kind': 'Giao diện khách hàng · prototype công khai',
             'status': 'Prototype công khai',
-            'desc': 'Phiên bản giao diện khách hàng PET NIKA hiện tại đã được xuất bản.',
+            'desc': 'Phiên bản giao diện khách hàng PET NIKA hiện tại dùng làm prototype Mini App.',
             'url': BASE + '/',
             'cta': 'Mở prototype',
-        },
-        {
-            'name': 'PET NIKA Mini App',
-            'kind': 'Telegram Mini App · prototype',
-            'status': 'Prototype công khai',
-            'desc': 'Route mobile PET NIKA được chuẩn bị để chạy như Telegram Mini App.',
-            'url': BASE + '/miniapp',
-            'cta': 'Mở Mini App',
         },
     ],
 }
@@ -160,4 +136,4 @@ for lang in ('ru', 'en', 'vi'):
         data[lang]['band']['status'] = status[lang]
 save(path, text, start, end, data, semicolon)
 
-print('PET NIKA case and prototype links updated.')
+print('PET NIKA case and verified public prototype link updated.')
