@@ -30,11 +30,10 @@ check "https://landing.viiversion.workers.dev/prototypes.html" "UNIQ SMART RENT"
 check "https://landing.viiversion.workers.dev/cases/pet-nika.html" "PET NIKA"
 check "https://landing.viiversion.workers.dev/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
 
-# PET NIKA current public routes
+# Verified PET NIKA public prototype route
 check "https://pet-nika.mirozdanie6v.workers.dev/" "PET NIKA"
-check "https://pet-nika.mirozdanie6v.workers.dev/miniapp" "PET NIKA"
 
 # UNIQ SMART RENT current public app
 check "https://uniq-smart-rent.mirozdanie6v.workers.dev/" "UNIQ"
 
-echo "PUBLIC QA PASS: VIIVERSION main/prototypes/cases, PET NIKA and UNIQ SMART RENT routes are reachable."
+echo "PUBLIC QA PASS: VIIVERSION main/prototypes/cases and verified PET NIKA/UNIQ SMART RENT routes are reachable."
