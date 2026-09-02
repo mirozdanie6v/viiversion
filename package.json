@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "bash scripts/restore-site.sh && python3 scripts/remove-projects.py && python3 scripts/add-prototype-links.py && python3 scripts/add-pet-nika-case.py",
+    "build": "bash scripts/restore-site.sh && python3 scripts/remove-projects.py && python3 scripts/add-prototype-links.py && python3 scripts/add-pet-nika-case.py && python3 scripts/add-uniq-case.py && python3 scripts/verify-prototype-links.py",
     "deploy": "wrangler deploy",
     "dev": "npm run build && wrangler dev"
   },
