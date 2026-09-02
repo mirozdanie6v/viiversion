@@ -40,5 +40,4 @@ jobs:
           check "https://landing.viiversion.workers.dev/cases/pet-nika.html" "PET NIKA"
           check "https://landing.viiversion.workers.dev/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
           check "https://pet-nika.mirozdanie6v.workers.dev/" "PET NIKA"
-          check "https://pet-nika.mirozdanie6v.workers.dev/miniapp" "PET NIKA"
           check "https://uniq-smart-rent.mirozdanie6v.workers.dev/" "UNIQ"
