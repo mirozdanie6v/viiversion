@@ -10,34 +10,77 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Check VIIVERSION, PET NIKA and UNIQ public routes
+      - name: Check VIIVERSION, PET NIKA and UNIQ public routes and links
         shell: bash
         run: |
           set -euo pipefail
-          check() {
+          PET="https://pet-nika.mirozdanie6v.workers.dev/"
+          PET_BROKEN="https://pet-nika.mirozdanie6v.workers.dev/miniapp"
+          UNIQ="https://uniq-smart-rent.mirozdanie6v.workers.dev/"
+
+          fetch_page() {
             local url="$1"
-            local marker="$2"
-            local tmp
-            tmp="$(mktemp)"
+            local out="$2"
             local code=""
             for _ in $(seq 1 20); do
-              code="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 --output "$tmp" --write-out '%{http_code}' "$url" || true)"
-              if [[ "$code" == "200" ]] && [[ -s "$tmp" ]] && grep -Fqi "$marker" "$tmp"; then
-                echo "OK $url"
-                rm -f "$tmp"
+              code="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 --output "$out" --write-out '%{http_code}' "$url" || true)"
+              if [[ "$code" == "200" ]] && [[ -s "$out" ]]; then
+                echo "OK $url HTTP 200"
                 return 0
               fi
               sleep 6
             done
-            echo "FAIL $url HTTP ${code:-none} marker=$marker" >&2
-            rm -f "$tmp"
+            echo "FAIL $url HTTP ${code:-none}" >&2
             return 1
           }
 
-          check "https://landing.viiversion.workers.dev/" "VIIVERSION"
-          check "https://landing.viiversion.workers.dev/prototypes.html" "PET NIKA"
-          check "https://landing.viiversion.workers.dev/prototypes.html" "UNIQ SMART RENT"
-          check "https://landing.viiversion.workers.dev/cases/pet-nika.html" "PET NIKA"
-          check "https://landing.viiversion.workers.dev/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
-          check "https://pet-nika.mirozdanie6v.workers.dev/" "PET NIKA"
-          check "https://uniq-smart-rent.mirozdanie6v.workers.dev/" "UNIQ"
+          require_text() {
+            local file="$1"
+            local text="$2"
+            local label="$3"
+            grep -Fq "$text" "$file" || { echo "FAIL missing $label" >&2; return 1; }
+            echo "OK $label"
+          }
+
+          reject_text() {
+            local file="$1"
+            local text="$2"
+            local label="$3"
+            if grep -Fq "$text" "$file"; then
+              echo "FAIL unexpected $label" >&2
+              return 1
+            fi
+            echo "OK absent $label"
+          }
+
+          main="$(mktemp)"
+          prototypes="$(mktemp)"
+          pet_case="$(mktemp)"
+          uniq_case="$(mktemp)"
+          pet_live="$(mktemp)"
+          uniq_live="$(mktemp)"
+
+          fetch_page "https://landing.viiversion.workers.dev/" "$main"
+          fetch_page "https://landing.viiversion.workers.dev/prototypes.html" "$prototypes"
+          fetch_page "https://landing.viiversion.workers.dev/cases/pet-nika.html" "$pet_case"
+          fetch_page "https://landing.viiversion.workers.dev/cases/uniq-smart-rent.html" "$uniq_case"
+          fetch_page "$PET" "$pet_live"
+          fetch_page "$UNIQ" "$uniq_live"
+
+          require_text "$main" "$PET" "main -> PET NIKA"
+          require_text "$main" "$UNIQ" "main -> UNIQ SMART RENT"
+          reject_text "$main" "$PET_BROKEN" "broken PET /miniapp on main"
+
+          require_text "$prototypes" "$PET" "prototypes -> PET NIKA"
+          require_text "$prototypes" "$UNIQ" "prototypes -> UNIQ SMART RENT"
+          reject_text "$prototypes" "$PET_BROKEN" "broken PET /miniapp on prototypes"
+
+          require_text "$pet_case" "$PET" "PET case -> PET NIKA"
+          reject_text "$pet_case" "$PET_BROKEN" "broken PET /miniapp on PET case"
+          require_text "$uniq_case" "$UNIQ" "UNIQ case -> UNIQ SMART RENT"
+
+          require_text "$pet_live" "PET NIKA" "PET live prototype content"
+          require_text "$uniq_live" "UNIQ" "UNIQ live prototype content"
+
+          rm -f "$main" "$prototypes" "$pet_case" "$uniq_case" "$pet_live" "$uniq_live"
+          echo "PUBLIC LINK QA PASS"
