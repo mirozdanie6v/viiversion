@@ -23,8 +23,10 @@ check() {
   return 1
 }
 
-# VIIVERSION main and case pages
+# VIIVERSION main, prototype library and case pages
 check "https://landing.viiversion.workers.dev/" "VIIVERSION"
+check "https://landing.viiversion.workers.dev/prototypes.html" "PET NIKA"
+check "https://landing.viiversion.workers.dev/prototypes.html" "UNIQ SMART RENT"
 check "https://landing.viiversion.workers.dev/cases/pet-nika.html" "PET NIKA"
 check "https://landing.viiversion.workers.dev/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
 
@@ -35,4 +37,4 @@ check "https://pet-nika.mirozdanie6v.workers.dev/miniapp" "PET NIKA"
 # UNIQ SMART RENT current public app
 check "https://uniq-smart-rent.mirozdanie6v.workers.dev/" "UNIQ"
 
-echo "PUBLIC QA PASS: VIIVERSION, PET NIKA and UNIQ SMART RENT routes are reachable."
+echo "PUBLIC QA PASS: VIIVERSION main/prototypes/cases, PET NIKA and UNIQ SMART RENT routes are reachable."
