@@ -37,20 +37,28 @@ PATCH = r'''<style id="viiversion-home-hero-style">
 .viiv-hero-heading .viiv-gradient-line {
   overflow: visible !important;
 }
-html[lang^="vi"] .viiv-hero-heading,
-body.viiv-lang-vi .viiv-hero-heading {
-  line-height: 1.12 !important;
-  padding-top: .14em;
-  padding-bottom: .14em;
-  letter-spacing: -0.045em !important;
-}
 .viiv-hero-heading .viiv-gradient-line {
   display: inline-block;
-  background: linear-gradient(90deg, #5f5cf6 0%, #6d4fe6 48%, #7b57ef 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  background: linear-gradient(90deg, #5f5cf6 0%, #6d4fe6 48%, #7b57ef 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+.viiv-hero-heading[data-viiv-lang="vi"] {
+  line-height: 1.10 !important;
+  padding-top: .12em;
+  padding-bottom: .12em;
+  letter-spacing: -0.035em !important;
+  max-width: 720px !important;
+}
+.viiv-hero-heading[data-viiv-lang="vi"] .viiv-gradient-line {
+  display: inline-block !important;
+  background: linear-gradient(90deg, #5f5cf6 0%, #6d4fe6 48%, #7b57ef 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 .viiv-hero-benefits {
   display: flex;
@@ -83,14 +91,19 @@ body.viiv-lang-vi .viiv-hero-heading {
 .viiv-hero-benefit-icon svg { width: 21px; height: 21px; }
 @media (min-width: 1100px) {
   .viiv-hero-heading { font-size: clamp(68px, 5.15vw, 86px) !important; }
+  .viiv-hero-heading[data-viiv-lang="vi"] { font-size: clamp(58px, 4.45vw, 74px) !important; }
 }
 @media (max-width: 1099px) {
   .viiv-hero-heading { font-size: clamp(50px, 8vw, 72px) !important; }
+  .viiv-hero-heading[data-viiv-lang="vi"] { font-size: clamp(46px, 7vw, 64px) !important; }
 }
 @media (max-width: 720px) {
   .viiv-hero-heading { font-size: clamp(44px, 12vw, 60px) !important; line-height: 1.04 !important; }
-  html[lang^="vi"] .viiv-hero-heading,
-  body.viiv-lang-vi .viiv-hero-heading { line-height: 1.14 !important; }
+  .viiv-hero-heading[data-viiv-lang="vi"] {
+    font-size: clamp(38px, 10vw, 52px) !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.025em !important;
+  }
   .viiv-hero-benefits { gap: 16px; margin-top: 22px; }
   .viiv-hero-benefit { width: calc(50% - 8px); font-size: 13px; }
   .viiv-hero-benefit:last-child { width: 100%; }
@@ -116,8 +129,8 @@ body.viiv-lang-vi .viiv-hero-heading {
     },
     vi: {
       kicker: 'VIIVERSION · SẢN PHẨM SỐ CHO DOANH NGHIỆP',
-      headingLead: 'Thiết kế hệ thống số',
-      headingAccent: 'cho doanh nghiệp của bạn',
+      headingLead: 'Thiết kế hệ thống số cho',
+      headingAccent: 'doanh nghiệp của bạn',
       subtitle: 'Chúng tôi tìm hiểu cách doanh nghiệp của bạn vận hành, xác định điểm yếu và cơ hội tăng trưởng, sau đó thiết kế các giải pháp số cụ thể phù hợp với quy trình và mục tiêu của bạn.',
       benefits: ['Khởi động nhanh', 'Kết quả đo lường được', 'Hợp tác dài hạn']
     }
@@ -142,11 +155,12 @@ body.viiv-lang-vi .viiv-hero-heading {
   };
 
   const inferLanguage = () => {
+    const stored = localStorage.getItem('viiversion-hero-lang');
+    if (HERO_I18N[stored]) return stored;
     const docLang = (document.documentElement.lang || '').toLowerCase();
     if (docLang.startsWith('en')) return 'en';
     if (docLang.startsWith('vi')) return 'vi';
-    const stored = localStorage.getItem('viiversion-hero-lang');
-    return HERO_I18N[stored] ? stored : selectedLang;
+    return selectedLang;
   };
 
   const icons = [
@@ -166,7 +180,8 @@ body.viiv-lang-vi .viiv-hero-heading {
       heading = [...document.querySelectorAll('h1,h2,[role="heading"]')].find(el => {
         const t = normalize(el.textContent);
         return t.includes('Проектируем цифровую') || t.includes('Собираем цифровую систему') ||
-               t.includes('We design the digital') || t.includes('Thiết kế hệ thống số');
+               t.includes('We design the digital') || t.includes('Thiết kế hệ thống số') ||
+               t.includes('doanh nghiệp của bạn');
       }) || exact('Проектируем цифровую систему вашего бизнеса');
     }
     return { kicker, subtitle, heading };
@@ -199,12 +214,12 @@ body.viiv-lang-vi .viiv-hero-heading {
     try {
       selectedLang = inferLanguage();
       const copy = HERO_I18N[selectedLang] || HERO_I18N.ru;
-      document.body.classList.toggle('viiv-lang-vi', selectedLang === 'vi');
       const { kicker, subtitle, heading } = findHeroNodes();
 
       if (kicker) kicker.textContent = copy.kicker;
       if (heading) {
         heading.classList.add('viiv-hero-heading');
+        heading.dataset.viivLang = selectedLang;
         heading.style.overflow = 'visible';
         heading.innerHTML = `<span>${copy.headingLead}</span><br><span class="viiv-gradient-line">${copy.headingAccent}</span>`;
       }
@@ -222,6 +237,7 @@ body.viiv-lang-vi .viiv-hero-heading {
     localStorage.setItem('viiversion-hero-lang', lang);
     setTimeout(apply, 0);
     setTimeout(apply, 100);
+    setTimeout(apply, 300);
   }, true);
 
   const start = () => {
