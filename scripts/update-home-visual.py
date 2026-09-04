@@ -5,9 +5,9 @@ ROOT = Path('public')
 PATCH = r'''<style id="viiversion-home-visual-style">
 .viiv-system-visual{
   position:relative;
-  width:116%;
-  min-height:610px;
-  margin-left:-8%;
+  width:132%;
+  min-height:720px;
+  margin-left:-14%;
   display:grid;
   place-items:center;
   overflow:visible;
@@ -16,19 +16,19 @@ PATCH = r'''<style id="viiversion-home-visual-style">
 .viiv-system-visual::before{
   content:'';
   position:absolute;
-  width:520px;
-  height:520px;
+  width:650px;
+  height:650px;
   border-radius:50%;
   background:
-    radial-gradient(circle at 48% 46%,rgba(108,89,242,.18),rgba(84,177,231,.08) 36%,transparent 68%);
-  filter:blur(34px);
+    radial-gradient(circle at 48% 46%,rgba(108,89,242,.20),rgba(84,177,231,.09) 36%,transparent 69%);
+  filter:blur(38px);
   z-index:-3;
 }
 .viiv-stage{
   position:relative;
-  width:620px;
-  height:590px;
-  perspective:1150px;
+  width:760px;
+  height:700px;
+  perspective:1400px;
   perspective-origin:50% 44%;
   transform-style:preserve-3d;
 }
@@ -36,20 +36,20 @@ PATCH = r'''<style id="viiversion-home-visual-style">
   content:'';
   position:absolute;
   left:50%;
-  bottom:48px;
-  width:340px;
-  height:58px;
+  bottom:42px;
+  width:430px;
+  height:72px;
   transform:translateX(-50%);
   border-radius:50%;
-  background:radial-gradient(ellipse at center,rgba(50,48,98,.20),rgba(90,76,224,.08) 48%,transparent 72%);
-  filter:blur(20px);
+  background:radial-gradient(ellipse at center,rgba(50,48,98,.22),rgba(90,76,224,.09) 48%,transparent 72%);
+  filter:blur(24px);
 }
 .viiv-cube-wrap{
   position:absolute;
   left:50%;
   top:48%;
-  width:244px;
-  height:244px;
+  width:320px;
+  height:320px;
   transform:translate(-50%,-50%);
   transform-style:preserve-3d;
   animation:viivCubeFloat 8s ease-in-out infinite;
@@ -64,37 +64,37 @@ PATCH = r'''<style id="viiversion-home-visual-style">
 .viiv-face{
   position:absolute;
   inset:0;
-  border-radius:30px;
-  border:1px solid rgba(255,255,255,.78);
+  border-radius:38px;
+  border:1px solid rgba(255,255,255,.80);
   background:
-    linear-gradient(145deg,rgba(255,255,255,.66),rgba(222,221,249,.18) 48%,rgba(91,79,212,.10)),
+    linear-gradient(145deg,rgba(255,255,255,.68),rgba(222,221,249,.20) 48%,rgba(91,79,212,.11)),
     linear-gradient(160deg,rgba(30,31,43,.08),rgba(255,255,255,.04));
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.96),
-    inset 0 0 42px rgba(112,96,242,.10),
-    0 18px 46px rgba(31,33,55,.08);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
+    inset 0 0 52px rgba(112,96,242,.11),
+    0 24px 62px rgba(31,33,55,.10);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
 }
-.viiv-front{transform:translateZ(122px)}
-.viiv-back{transform:rotateY(180deg) translateZ(122px);background:linear-gradient(145deg,rgba(26,27,37,.80),rgba(93,76,218,.26))}
-.viiv-right{transform:rotateY(90deg) translateZ(122px);background:linear-gradient(145deg,rgba(71,65,126,.34),rgba(31,31,44,.72))}
-.viiv-left{transform:rotateY(-90deg) translateZ(122px);background:linear-gradient(145deg,rgba(245,246,255,.38),rgba(101,88,228,.16))}
-.viiv-top{transform:rotateX(90deg) translateZ(122px);background:linear-gradient(145deg,rgba(255,255,255,.84),rgba(198,201,246,.26))}
-.viiv-bottom{transform:rotateX(-90deg) translateZ(122px);background:linear-gradient(145deg,rgba(24,25,34,.82),rgba(86,72,211,.40))}
+.viiv-front{transform:translateZ(160px)}
+.viiv-back{transform:rotateY(180deg) translateZ(160px);background:linear-gradient(145deg,rgba(26,27,37,.82),rgba(93,76,218,.28))}
+.viiv-right{transform:rotateY(90deg) translateZ(160px);background:linear-gradient(145deg,rgba(71,65,126,.36),rgba(31,31,44,.74))}
+.viiv-left{transform:rotateY(-90deg) translateZ(160px);background:linear-gradient(145deg,rgba(245,246,255,.40),rgba(101,88,228,.18))}
+.viiv-top{transform:rotateX(90deg) translateZ(160px);background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(198,201,246,.28))}
+.viiv-bottom{transform:rotateX(-90deg) translateZ(160px);background:linear-gradient(145deg,rgba(24,25,34,.84),rgba(86,72,211,.42))}
 .viiv-face::after{
   content:'';
   position:absolute;
-  inset:14px;
-  border-radius:22px;
-  border:1px solid rgba(112,99,234,.12);
+  inset:18px;
+  border-radius:28px;
+  border:1px solid rgba(112,99,234,.13);
 }
 .viiv-vmark{
   position:absolute;
   left:50%;
   top:50%;
-  width:88px;
-  height:72px;
+  width:112px;
+  height:94px;
   transform:translate(-50%,-50%);
 }
 .viiv-vmark::before,
@@ -102,25 +102,25 @@ PATCH = r'''<style id="viiversion-home-visual-style">
   content:'';
   position:absolute;
   top:0;
-  width:20px;
-  height:78px;
-  border-radius:12px;
+  width:25px;
+  height:100px;
+  border-radius:14px;
   background:linear-gradient(180deg,#ffffff 0%,#cfc9ff 42%,#725ff1 100%);
-  box-shadow:0 0 22px rgba(108,89,242,.22);
+  box-shadow:0 0 28px rgba(108,89,242,.24);
 }
-.viiv-vmark::before{left:22px;transform:rotate(-28deg);transform-origin:50% 8%}
-.viiv-vmark::after{right:22px;transform:rotate(28deg);transform-origin:50% 8%}
+.viiv-vmark::before{left:27px;transform:rotate(-28deg);transform-origin:50% 8%}
+.viiv-vmark::after{right:27px;transform:rotate(28deg);transform-origin:50% 8%}
 .viiv-core-glow{
   position:absolute;
   left:50%;
   top:50%;
-  width:118px;
-  height:118px;
+  width:154px;
+  height:154px;
   border-radius:50%;
   transform:translate(-50%,-50%) translateZ(4px);
-  background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.96),rgba(160,145,255,.68) 24%,rgba(94,72,224,.34) 48%,transparent 72%);
-  filter:blur(2px);
-  opacity:.76;
+  background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.98),rgba(160,145,255,.72) 24%,rgba(94,72,224,.38) 48%,transparent 72%);
+  filter:blur(3px);
+  opacity:.80;
 }
 .viiv-ring{
   position:absolute;
@@ -138,69 +138,69 @@ PATCH = r'''<style id="viiversion-home-visual-style">
   border:2px solid transparent;
   background:
     linear-gradient(#fff0,#fff0) padding-box,
-    linear-gradient(110deg,rgba(255,255,255,.12),rgba(113,96,239,.86),rgba(106,202,244,.62),rgba(255,255,255,.20)) border-box;
-  box-shadow:0 0 22px rgba(106,91,238,.12),inset 0 0 20px rgba(102,184,233,.06);
+    linear-gradient(110deg,rgba(255,255,255,.12),rgba(113,96,239,.88),rgba(106,202,244,.64),rgba(255,255,255,.20)) border-box;
+  box-shadow:0 0 26px rgba(106,91,238,.14),inset 0 0 24px rgba(102,184,233,.07);
 }
 .viiv-ring.r1{
-  width:500px;height:226px;
-  margin-left:-250px;margin-top:-113px;
-  transform:rotateX(66deg) rotateZ(-17deg) translateZ(12px);
+  width:650px;height:300px;
+  margin-left:-325px;margin-top:-150px;
+  transform:rotateX(66deg) rotateZ(-17deg) translateZ(16px);
   animation:viivRingOne 16s linear infinite;
 }
 .viiv-ring.r2{
-  width:430px;height:282px;
-  margin-left:-215px;margin-top:-141px;
-  transform:rotateX(77deg) rotateY(34deg) rotateZ(26deg) translateZ(-16px);
-  opacity:.66;
+  width:560px;height:360px;
+  margin-left:-280px;margin-top:-180px;
+  transform:rotateX(77deg) rotateY(34deg) rotateZ(26deg) translateZ(-20px);
+  opacity:.68;
   animation:viivRingTwo 20s linear infinite reverse;
 }
 .viiv-ring.r3{
-  width:350px;height:440px;
-  margin-left:-175px;margin-top:-220px;
-  transform:rotateY(69deg) rotateZ(52deg) translateZ(-34px);
-  opacity:.42;
+  width:450px;height:560px;
+  margin-left:-225px;margin-top:-280px;
+  transform:rotateY(69deg) rotateZ(52deg) translateZ(-42px);
+  opacity:.44;
 }
 .viiv-orb{
   position:absolute;
   border-radius:50%;
   background:radial-gradient(circle at 30% 25%,#ffffff 0%,#cbc4ff 20%,#7764f2 52%,#2f2b58 100%);
-  box-shadow:0 10px 22px rgba(46,43,89,.18),0 0 30px rgba(111,94,239,.20);
+  box-shadow:0 12px 26px rgba(46,43,89,.20),0 0 34px rgba(111,94,239,.22);
 }
-.viiv-orb.o1{width:28px;height:28px;left:84px;top:214px;animation:viivOrbFloat 7s ease-in-out infinite}
-.viiv-orb.o2{width:18px;height:18px;right:88px;top:160px;animation:viivOrbFloat 9s ease-in-out infinite reverse}
-.viiv-orb.o3{width:36px;height:36px;right:62px;bottom:144px;animation:viivOrbFloat 8s ease-in-out infinite .8s}
-.viiv-orb.o4{width:16px;height:16px;left:118px;bottom:128px;animation:viivOrbFloat 10s ease-in-out infinite reverse}
+.viiv-orb.o1{width:34px;height:34px;left:86px;top:252px;animation:viivOrbFloat 7s ease-in-out infinite}
+.viiv-orb.o2{width:22px;height:22px;right:92px;top:184px;animation:viivOrbFloat 9s ease-in-out infinite reverse}
+.viiv-orb.o3{width:44px;height:44px;right:58px;bottom:164px;animation:viivOrbFloat 8s ease-in-out infinite .8s}
+.viiv-orb.o4{width:20px;height:20px;left:128px;bottom:146px;animation:viivOrbFloat 10s ease-in-out infinite reverse}
 .viiv-plate{
   position:absolute;
-  width:126px;
-  height:82px;
-  border-radius:22px;
-  border:1px solid rgba(255,255,255,.78);
-  background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(225,224,248,.18));
-  box-shadow:0 18px 38px rgba(32,34,55,.08),inset 0 1px 0 rgba(255,255,255,.90);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
+  width:154px;
+  height:98px;
+  border-radius:25px;
+  border:1px solid rgba(255,255,255,.80);
+  background:linear-gradient(145deg,rgba(255,255,255,.60),rgba(225,224,248,.20));
+  box-shadow:0 20px 44px rgba(32,34,55,.09),inset 0 1px 0 rgba(255,255,255,.92);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
 }
-.viiv-plate::before{content:'';position:absolute;left:18px;top:20px;width:46px;height:7px;border-radius:10px;background:linear-gradient(90deg,#6c5ee9,#9ca0ff);box-shadow:0 18px 0 rgba(37,39,52,.12),0 36px 0 rgba(37,39,52,.07)}
-.viiv-plate.p1{left:48px;top:92px;transform:rotate(-14deg) translateZ(-30px)}
-.viiv-plate.p2{right:44px;bottom:88px;transform:rotate(12deg) translateZ(26px);width:110px;height:72px;opacity:.88}
+.viiv-plate::before{content:'';position:absolute;left:22px;top:24px;width:56px;height:8px;border-radius:10px;background:linear-gradient(90deg,#6c5ee9,#9ca0ff);box-shadow:0 22px 0 rgba(37,39,52,.12),0 44px 0 rgba(37,39,52,.07)}
+.viiv-plate.p1{left:56px;top:106px;transform:rotate(-14deg) translateZ(-34px)}
+.viiv-plate.p2{right:50px;bottom:94px;transform:rotate(12deg) translateZ(30px);width:136px;height:88px;opacity:.90}
 @keyframes viivCubeTurn{0%,100%{transform:rotateX(-17deg) rotateY(34deg) rotateZ(-2deg)}50%{transform:rotateX(-12deg) rotateY(43deg) rotateZ(1deg)}}
-@keyframes viivCubeFloat{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-12px)}}
-@keyframes viivRingOne{to{transform:rotateX(66deg) rotateZ(343deg) translateZ(12px)}}
-@keyframes viivRingTwo{to{transform:rotateX(77deg) rotateY(34deg) rotateZ(386deg) translateZ(-16px)}}
-@keyframes viivOrbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes viivCubeFloat{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-16px)}}
+@keyframes viivRingOne{to{transform:rotateX(66deg) rotateZ(343deg) translateZ(16px)}}
+@keyframes viivRingTwo{to{transform:rotateX(77deg) rotateY(34deg) rotateZ(386deg) translateZ(-20px)}}
+@keyframes viivOrbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
 @media(prefers-reduced-motion:reduce){.viiv-cube-wrap,.viiv-cube,.viiv-ring,.viiv-orb{animation:none!important}}
 @media(max-width:1150px){
-  .viiv-system-visual{width:108%;margin-left:-4%;min-height:540px}
-  .viiv-stage{width:540px;height:520px;transform:scale(.92)}
+  .viiv-system-visual{width:120%;margin-left:-10%;min-height:640px}
+  .viiv-stage{width:700px;height:650px;transform:scale(.92)}
 }
 @media(max-width:900px){
-  .viiv-system-visual{width:100%;margin-left:0;min-height:500px}
-  .viiv-stage{width:520px;height:500px;transform:scale(.88)}
+  .viiv-system-visual{width:100%;margin-left:0;min-height:580px}
+  .viiv-stage{width:650px;height:610px;transform:scale(.80)}
 }
 @media(max-width:680px){
-  .viiv-system-visual{min-height:390px}
-  .viiv-stage{width:430px;height:420px;transform:scale(.72)}
+  .viiv-system-visual{min-height:460px}
+  .viiv-stage{width:600px;height:560px;transform:scale(.60)}
 }
 </style>
 <script id="viiversion-home-visual-patch">
@@ -223,7 +223,7 @@ PATCH = r'''<style id="viiversion-home-visual-style">
    card.style.boxShadow='none';
    card.style.overflow='visible';
    card.style.padding='0';
-   card.style.minHeight='590px';
+   card.style.minHeight='700px';
  };
  const start=()=>{apply();new MutationObserver(()=>requestAnimationFrame(apply)).observe(document.body,{subtree:true,childList:true,characterData:true})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
