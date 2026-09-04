@@ -27,41 +27,49 @@ for path in ROOT.rglob('*'):
         path.write_text(updated, encoding='utf-8')
 
 PATCH = r'''<style id="viiversion-about-live-style">
+:root{--viiv-about-green:#0b6f5b;--viiv-about-violet:#6559ee}
+.viiv-about-top-live{display:block!important;width:100%!important;max-width:none!important}
 .viiv-about-heading-live{
-  max-width:760px!important;
+  width:100%!important;
+  max-width:none!important;
   margin:0!important;
-  font-size:clamp(31px,2.6vw,45px)!important;
-  line-height:1.03!important;
+  font-size:clamp(30px,2.3vw,40px)!important;
+  line-height:1.04!important;
   letter-spacing:-.045em!important;
   font-weight:800!important;
   color:#111217!important;
 }
-.viiv-about-heading-live .viiv-about-brand-live{
-  display:block;
-  margin-bottom:12px;
-  font-size:clamp(54px,5vw,78px);
-  line-height:.92;
-  letter-spacing:-.06em;
-  font-weight:850;
+.viiv-about-brand-live{
+  display:inline!important;
+  font-size:1.16em!important;
+  line-height:inherit!important;
+  letter-spacing:-.055em!important;
+  font-weight:850!important;
   background:linear-gradient(90deg,#5f5cf6 0%,#6d4fe6 58%,#7b57ef 100%);
   -webkit-background-clip:text;
   background-clip:text;
-  color:transparent;
+  color:transparent!important;
   -webkit-text-fill-color:transparent;
 }
+.viiv-about-mid-live{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.02fr) minmax(390px,.98fr)!important;
+  gap:64px!important;
+  align-items:center!important;
+  width:100%!important;
+  margin-top:34px!important;
+}
+.viiv-about-diagram-live{width:100%;max-width:590px;margin:0;aspect-ratio:590/172}
+.viiv-about-diagram-live svg{display:block;width:100%;height:100%;overflow:visible}
 .viiv-about-copy-live{
-  max-width:570px!important;
-  font-size:clamp(18px,1.35vw,22px)!important;
-  line-height:1.48!important;
+  width:100%!important;
+  max-width:590px!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:clamp(18px,1.34vw,22px)!important;
+  line-height:1.5!important;
   color:#62636d!important;
 }
-.viiv-about-diagram-live{
-  width:min(100%,590px);
-  height:172px;
-  margin-top:32px;
-  margin-bottom:10px;
-}
-.viiv-about-diagram-live svg{display:block;width:100%;height:100%;overflow:visible}
 .viiv-about-card-live{
   border:1px solid rgba(30,31,41,.11)!important;
   border-radius:24px!important;
@@ -70,7 +78,7 @@ PATCH = r'''<style id="viiversion-about-live-style">
   padding-top:28px!important;
 }
 .viiv-about-card-title-live{
-  color:#6559ee!important;
+  color:var(--viiv-about-green)!important;
   font-weight:800!important;
   letter-spacing:-.035em!important;
   line-height:1.08!important;
@@ -82,19 +90,33 @@ PATCH = r'''<style id="viiversion-about-live-style">
   height:3px;
   border-radius:999px;
   margin:0 0 18px 0;
-  background:linear-gradient(90deg,#6559ee,#8d73f5);
-  opacity:.9;
+  background:var(--viiv-about-green);
+  opacity:.92;
+}
+@media(max-width:1180px){
+  .viiv-about-heading-live{font-size:clamp(29px,2.7vw,37px)!important}
+  .viiv-about-mid-live{grid-template-columns:minmax(0,1fr) minmax(350px,.95fr)!important;gap:42px!important}
+  .viiv-about-copy-live{font-size:19px!important}
 }
 @media(max-width:900px){
-  .viiv-about-heading-live{font-size:clamp(30px,5vw,42px)!important}
-  .viiv-about-heading-live .viiv-about-brand-live{font-size:clamp(48px,8vw,68px)}
-  .viiv-about-diagram-live{height:150px;margin-top:26px}
+  .viiv-about-heading-live{font-size:clamp(29px,4.4vw,36px)!important;line-height:1.05!important}
+  .viiv-about-mid-live{grid-template-columns:1fr!important;gap:24px!important;margin-top:28px!important}
+  .viiv-about-diagram-live{max-width:560px}
+  .viiv-about-copy-live{max-width:720px!important;font-size:18px!important}
 }
 @media(max-width:640px){
-  .viiv-about-heading-live{font-size:29px!important;line-height:1.05!important}
-  .viiv-about-heading-live .viiv-about-brand-live{font-size:46px}
-  .viiv-about-copy-live{font-size:17px!important}
-  .viiv-about-diagram-live{height:135px}
+  .viiv-about-heading-live{font-size:27px!important;line-height:1.07!important;letter-spacing:-.035em!important}
+  .viiv-about-brand-live{font-size:1.08em!important}
+  .viiv-about-mid-live{margin-top:24px!important;gap:20px!important}
+  .viiv-about-diagram-live{max-width:100%}
+  .viiv-about-copy-live{font-size:17px!important;line-height:1.48!important}
+  .viiv-about-card-live{border-radius:20px!important;padding-top:24px!important}
+  .viiv-about-card-title-live{font-size:24px!important}
+}
+@media(max-width:390px){
+  .viiv-about-heading-live{font-size:24px!important}
+  .viiv-about-copy-live{font-size:16px!important}
+  .viiv-about-card-title-live{font-size:22px!important}
 }
 </style>
 <script id="viiversion-about-live-patch">
@@ -141,24 +163,44 @@ PATCH = r'''<style id="viiversion-about-live-style">
     for(let i=0;i<6&&node.parentElement;i++,node=node.parentElement){
       const r=node.getBoundingClientRect();
       const t=norm(node.textContent);
-      if(r.width>250&&r.height>180&&r.width<650&&t.includes(titleEl.textContent.trim()))return node;
+      if(r.width>240&&r.height>170&&r.width<700&&t.includes(titleEl.textContent.trim()))return node;
     }
     return titleEl.parentElement;
+  };
+
+  const findTopContainer=(heading,copy,cardTitle)=>{
+    let node=heading.parentElement;
+    while(node&&node!==document.body){
+      if(node.contains(copy)&&(!cardTitle||!node.contains(cardTitle)))return node;
+      node=node.parentElement;
+    }
+    return null;
   };
 
   const apply=()=>{
     const heading=exact(HEADING);
     const copy=exact(COPY);
+    const firstCardTitle=exact(TITLES[0]);
     if(!heading||!copy)return false;
 
-    if(!heading.classList.contains('viiv-about-heading-live')){
-      heading.classList.add('viiv-about-heading-live');
-      heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION</span><span>команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.</span>';
-    }
+    heading.classList.add('viiv-about-heading-live');
+    heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION —</span> <span>команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.</span>';
     copy.classList.add('viiv-about-copy-live');
 
-    if(!document.querySelector('.viiv-about-diagram-live')){
-      heading.insertAdjacentHTML('afterend',diagram);
+    const top=findTopContainer(heading,copy,firstCardTitle);
+    if(top&&!top.classList.contains('viiv-about-top-live')){
+      top.classList.add('viiv-about-top-live');
+      const mid=document.createElement('div');
+      mid.className='viiv-about-mid-live';
+      mid.innerHTML=diagram;
+      mid.appendChild(copy);
+      top.replaceChildren(heading,mid);
+    } else if(!document.querySelector('.viiv-about-diagram-live')){
+      const mid=document.createElement('div');
+      mid.className='viiv-about-mid-live';
+      mid.innerHTML=diagram;
+      heading.insertAdjacentElement('afterend',mid);
+      mid.appendChild(copy);
     }
 
     TITLES.forEach(text=>{
@@ -173,9 +215,7 @@ PATCH = r'''<style id="viiversion-about-live-style">
 
   const start=()=>{
     if(apply())return;
-    const observer=new MutationObserver(()=>{
-      if(apply())observer.disconnect();
-    });
+    const observer=new MutationObserver(()=>{if(apply())observer.disconnect()});
     observer.observe(document.body,{subtree:true,childList:true,characterData:true});
     setTimeout(()=>{apply();observer.disconnect()},5000);
   };
@@ -187,7 +227,6 @@ PATCH = r'''<style id="viiversion-about-live-style">
 
 for path in ROOT.rglob('*.html'):
     text = path.read_text(encoding='utf-8')
-    # Remove any earlier about-section patch so only the robust live patch remains.
     for marker in ('<style id="viiversion-about-redesign-style">', '<style id="viiversion-about-live-style">'):
         if marker in text:
             start = text.index(marker)
