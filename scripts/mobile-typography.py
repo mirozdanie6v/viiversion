@@ -21,15 +21,25 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
     text-rendering: optimizeLegibility;
   }
 
+  /* Never split words automatically on mobile. */
+  h1, h2, h3, h4, h5, h6,
+  [role="heading"],
+  .viiv-hero-heading,
+  .viiv-about-heading-live,
+  .viiv-about-card-title-live,
+  p, li, button, a, span {
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+    -webkit-hyphens: none !important;
+  }
+
   h1, h2, h3, h4, h5, h6,
   [role="heading"],
   .viiv-hero-heading,
   .viiv-about-heading-live,
   .viiv-about-card-title-live {
-    word-break: normal !important;
-    overflow-wrap: normal !important;
-    hyphens: auto;
-    text-wrap: balance;
+    text-wrap: pretty !important;
   }
 
   /* Hero */
@@ -38,14 +48,14 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
     font-size: var(--vv-mobile-hero) !important;
     line-height: 1.06 !important;
     letter-spacing: -0.035em !important;
-    max-inline-size: 18ch !important;
+    max-inline-size: 100% !important;
   }
 
   .viiv-hero-heading[data-viiv-lang="vi"] {
     font-size: clamp(36px, 9.6vw, 40px) !important;
     line-height: 1.12 !important;
     letter-spacing: -0.02em !important;
-    max-inline-size: 19ch !important;
+    max-inline-size: 100% !important;
   }
 
   /* Section headings */
@@ -54,7 +64,7 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
     font-size: var(--vv-mobile-section) !important;
     line-height: 1.12 !important;
     letter-spacing: -0.03em !important;
-    max-inline-size: 24ch !important;
+    max-inline-size: 100% !important;
   }
 
   /* Card / subsection headings */
@@ -66,7 +76,7 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
     font-size: var(--vv-mobile-card) !important;
     line-height: 1.17 !important;
     letter-spacing: -0.022em !important;
-    max-inline-size: 26ch !important;
+    max-inline-size: 100% !important;
   }
 
   h5, h6 {
@@ -83,7 +93,7 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
     font-size: var(--vv-mobile-lead) !important;
     line-height: 1.5 !important;
     letter-spacing: 0 !important;
-    max-inline-size: 38ch !important;
+    max-inline-size: min(100%, 42ch) !important;
   }
 
   /* Body copy */
@@ -100,7 +110,7 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
   main p,
   section p,
   article p {
-    max-inline-size: 42ch;
+    max-inline-size: min(100%, 44ch);
   }
 
   /* Buttons / nav */
@@ -130,6 +140,10 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
     font-size: var(--vv-mobile-tag) !important;
     line-height: 1.15 !important;
     letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
   }
 
   /* Eyebrows / kickers stay visibly subordinate */
@@ -151,16 +165,6 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
     --vv-mobile-body: 15px;
     --vv-mobile-tag: 12px;
   }
-
-  h1,
-  .viiv-hero-heading {
-    max-inline-size: 17ch !important;
-  }
-
-  h2,
-  .viiv-about-heading-live {
-    max-inline-size: 22ch !important;
-  }
 }
 
 @media (orientation: landscape) and (max-width: 950px) and (max-height: 520px) {
@@ -168,7 +172,7 @@ STYLE = r'''<style id="viiversion-mobile-typography-style">
   .viiv-hero-heading {
     font-size: 36px !important;
     line-height: 1.06 !important;
-    max-inline-size: 20ch !important;
+    max-inline-size: 100% !important;
   }
 
   h2,
