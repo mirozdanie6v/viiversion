@@ -26,9 +26,23 @@ for path in ROOT.rglob("*"):
 PATCH = r'''<style id="viiversion-home-hero-style">
 .viiv-hero-heading {
   letter-spacing: -0.055em !important;
-  line-height: .96 !important;
+  line-height: 1.02 !important;
   max-width: 760px !important;
   text-wrap: balance;
+  overflow: visible !important;
+  padding-top: .08em;
+  padding-bottom: .08em;
+}
+.viiv-hero-heading > span,
+.viiv-hero-heading .viiv-gradient-line {
+  overflow: visible !important;
+}
+html[lang^="vi"] .viiv-hero-heading,
+body.viiv-lang-vi .viiv-hero-heading {
+  line-height: 1.12 !important;
+  padding-top: .14em;
+  padding-bottom: .14em;
+  letter-spacing: -0.045em !important;
 }
 .viiv-hero-heading .viiv-gradient-line {
   display: inline-block;
@@ -74,7 +88,9 @@ PATCH = r'''<style id="viiversion-home-hero-style">
   .viiv-hero-heading { font-size: clamp(50px, 8vw, 72px) !important; }
 }
 @media (max-width: 720px) {
-  .viiv-hero-heading { font-size: clamp(44px, 12vw, 60px) !important; line-height: .98 !important; }
+  .viiv-hero-heading { font-size: clamp(44px, 12vw, 60px) !important; line-height: 1.04 !important; }
+  html[lang^="vi"] .viiv-hero-heading,
+  body.viiv-lang-vi .viiv-hero-heading { line-height: 1.14 !important; }
   .viiv-hero-benefits { gap: 16px; margin-top: 22px; }
   .viiv-hero-benefit { width: calc(50% - 8px); font-size: 13px; }
   .viiv-hero-benefit:last-child { width: 100%; }
@@ -106,15 +122,6 @@ PATCH = r'''<style id="viiversion-home-hero-style">
       benefits: ['Khởi động nhanh', 'Kết quả đo lường được', 'Hợp tác dài hạn']
     }
   };
-
-  const legacyTexts = new Set([
-    'VIIVERSION · КОМАНДА ЦИФРОВЫХ ПРОДУКТОВ',
-    'VIIVERSION · ЦИФРОВЫЕ ПРОДУКТЫ ДЛЯ БИЗНЕСА',
-    'Собираем цифровую систему вокруг того, как уже работает ваш бизнес.',
-    'Проектируем цифровую систему вашего бизнеса',
-    'От первого касания до повторной продажи. VIIVERSION — команда разработки цифровых продуктов для бизнеса: лендинги, Mini Apps, CRM, AI, автоматизация, интеграции и аналитика работают как единый контур.',
-    'Разбираемся, как устроен ваш бизнес, находим слабые места и точки роста, а затем проектируем конкретные цифровые решения под ваши процессы и задачи.'
-  ]);
 
   const normalize = (value) => (value || '').replace(/\s+/g, ' ').trim();
   let selectedLang = 'ru';
@@ -149,7 +156,6 @@ PATCH = r'''<style id="viiversion-home-hero-style">
   ];
 
   const findHeroNodes = () => {
-    const current = HERO_I18N[selectedLang] || HERO_I18N.ru;
     const allKick = Object.values(HERO_I18N).map(v => v.kicker);
     const allSub = Object.values(HERO_I18N).map(v => v.subtitle);
     const kicker = exact(...allKick, 'VIIVERSION · КОМАНДА ЦИФРОВЫХ ПРОДУКТОВ');
@@ -163,16 +169,16 @@ PATCH = r'''<style id="viiversion-home-hero-style">
                t.includes('We design the digital') || t.includes('Thiết kế hệ thống số');
       }) || exact('Проектируем цифровую систему вашего бизнеса');
     }
-    return { kicker, subtitle, heading, current };
+    return { kicker, subtitle, heading };
   };
 
-  const ensureBenefits = (subtitle, labels) => {
+  const ensureBenefits = (labels) => {
     let benefits = document.querySelector('.viiv-hero-benefits');
     if (!benefits) {
       const buttons = [...document.querySelectorAll('a,button')];
       const cta = buttons.find(el => /обсудить проект|discuss|trao đổi/i.test(normalize(el.textContent)));
       if (!cta) return;
-      let row = cta.parentElement;
+      const row = cta.parentElement;
       if (row && row.parentElement) {
         benefits = document.createElement('div');
         benefits.className = 'viiv-hero-benefits';
@@ -193,15 +199,17 @@ PATCH = r'''<style id="viiversion-home-hero-style">
     try {
       selectedLang = inferLanguage();
       const copy = HERO_I18N[selectedLang] || HERO_I18N.ru;
+      document.body.classList.toggle('viiv-lang-vi', selectedLang === 'vi');
       const { kicker, subtitle, heading } = findHeroNodes();
 
       if (kicker) kicker.textContent = copy.kicker;
       if (heading) {
         heading.classList.add('viiv-hero-heading');
+        heading.style.overflow = 'visible';
         heading.innerHTML = `<span>${copy.headingLead}</span><br><span class="viiv-gradient-line">${copy.headingAccent}</span>`;
       }
       if (subtitle) subtitle.textContent = copy.subtitle;
-      ensureBenefits(subtitle, copy.benefits);
+      ensureBenefits(copy.benefits);
     } finally {
       applying = false;
     }
@@ -233,7 +241,6 @@ for path in ROOT.rglob("*.html"):
     marker_start = '<style id="viiversion-home-hero-style">'
     old_script = '<script id="viiversion-home-hero-copy-patch">'
 
-    # Remove any previous injected hero patch before adding the current version.
     if marker_start in text:
         start = text.index(marker_start)
         script_end = text.find('</script>', start)
