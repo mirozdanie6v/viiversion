@@ -27,24 +27,7 @@ input,textarea,select,button{max-width:100%;font:inherit}
 @media(orientation:landscape) and (max-height:520px) and (max-width:950px){.viiv-system-visual{min-height:300px!important}.viiv-static-art{width:min(55vw,380px)!important}}
 @media(hover:none) and (pointer:coarse){button,a[role="button"],input[type="button"],input[type="submit"]{min-height:44px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-</style>
-<script id="viiversion-language-bridge">
-(()=>{
-  const norm=v=>(v||'').replace(/\s+/g,' ').trim().toUpperCase();
-  const getLang=t=>{const el=t&&t.closest?t.closest('button,a,[role="button"]'):null;if(!el)return null;const v=norm(el.textContent);return v==='RU'?'ru':v==='EN'?'en':v==='VI'?'vi':null};
-  const broadcast=lang=>{
-    try{localStorage.setItem('viiversion-lang',lang);localStorage.setItem('viiversion-hero-lang',lang)}catch(_){ }
-    document.documentElement.lang=lang;
-    document.dispatchEvent(new CustomEvent('viiversion:languagechange',{detail:{lang}}));
-  };
-  document.addEventListener('click',e=>{
-    const lang=getLang(e.target);if(!lang)return;
-    broadcast(lang);
-    setTimeout(()=>broadcast(lang),120);
-    setTimeout(()=>broadcast(lang),360);
-  },true);
-})();
-</script>'''
+</style>'''
 
 for path in ROOT.rglob('*.html'):
     text = path.read_text(encoding='utf-8')
@@ -57,10 +40,16 @@ for path in ROOT.rglob('*.html'):
     marker = '<style id="viiversion-global-responsive-style">'
     while marker in text:
         start = text.index(marker)
-        script_end = text.find('</script>', start)
-        if script_end == -1:
+        style_end = text.find('</style>', start)
+        if style_end == -1:
             break
-        text = text[:start] + text[script_end + len('</script>'):]
+        script_start = text.find('<script id="viiversion-language-bridge">', style_end)
+        if script_start != -1:
+            script_end = text.find('</script>', script_start)
+            if script_end != -1:
+                text = text[:start] + text[script_end + len('</script>'):]
+                continue
+        text = text[:start] + text[style_end + len('</style>'):]
     if '</body>' in text:
         text = text.replace('</body>', STYLE + '\n</body>', 1)
     else:
