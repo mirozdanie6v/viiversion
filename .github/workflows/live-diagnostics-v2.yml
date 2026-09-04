@@ -1,0 +1,113 @@
+name: Live diagnostics v2
+
+on:
+  push:
+    branches:
+      - viiversion
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check live HTML markers
+        shell: bash
+        run: |
+          set +e
+          URL="https://landing.viiversion.workers.dev/?qa=$(date +%s)"
+          curl -L --silent --show-error --connect-timeout 15 --max-time 60 \
+            -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+            "$URL" -o live-index.html
+          {
+            echo "URL=$URL"
+            echo "BYTES=$(wc -c < live-index.html 2>/dev/null || echo 0)"
+            for marker in \
+              'viiversion-mobile-typography-style' \
+              'viiversion-about-tags-v2-style' \
+              'viiversion-home-hero-style' \
+              'viiversion-home-visual-style' \
+              'Product Analytics' \
+              'Telecom BSS'; do
+              if grep -Fq "$marker" live-index.html 2>/dev/null; then
+                echo "PRESENT: $marker"
+              else
+                echo "MISSING: $marker"
+              fi
+            done
+          } | tee live-marker-diagnostics.txt
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Browser diagnostics
+        env:
+          TARGET_URL: https://landing.viiversion.workers.dev/
+        shell: bash
+        run: |
+          set +e
+          cat > /tmp/diagnose.cjs <<'JS'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          (async()=>{
+            const target=process.env.TARGET_URL;
+            const out={target,startedAt:new Date().toISOString()};
+            let browser;
+            try{
+              browser=await chromium.launch({headless:true});
+              const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+              await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
+              await page.goto(`${target}?qa=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:120000});
+              await page.waitForTimeout(1800);
+              const snap=async label=>page.evaluate(label=>{
+                const norm=v=>(v||'').replace(/\s+/g,' ').trim();
+                const visible=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0};
+                const leaf=[...document.querySelectorAll('body *')].filter(el=>visible(el)&&el.children.length===0).map(el=>norm(el.textContent)).filter(Boolean);
+                const body=norm(document.body.innerText);
+                const pick=sel=>{const el=document.querySelector(sel);if(!el)return null;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return{text:norm(el.textContent).slice(0,160),fontSize:cs.fontSize,lineHeight:cs.lineHeight,letterSpacing:cs.letterSpacing,width:Math.round(r.width),height:Math.round(r.height)}};
+                return{label,htmlLang:document.documentElement.lang,cyrillicChars:(body.match(/[А-Яа-яЁё]/g)||[]).length,latinChars:(body.match(/[A-Za-z]/g)||[]).length,leaf,markers:{mobileTypography:!!document.querySelector('#viiversion-mobile-typography-style'),aboutTagsV2:!!document.querySelector('#viiversion-about-tags-v2-style'),homeHero:!!document.querySelector('#viiversion-home-hero-style'),homeVisual:!!document.querySelector('#viiversion-home-visual-style')},typography:{hero:pick('.viiv-hero-heading,h1'),section:pick('h2'),card:pick('.viiv-about-card-title-live,h3'),lead:pick('.viiv-about-copy-live'),body:pick('main p,section p'),tag:pick('.viiv-about-tag-live')}};
+              },label);
+              const changed=(a,b)=>{const n=Math.max(a.leaf.length,b.leaf.length);let c=0;for(let i=0;i<n;i++)if((a.leaf[i]||'')!==(b.leaf[i]||''))c++;return c};
+              const clickLang=async lang=>{
+                const els=page.locator('button,a,[role="button"]');
+                const n=await els.count();
+                for(let i=0;i<n;i++){
+                  const el=els.nth(i); const txt=(await el.innerText().catch(()=>'' )).trim();
+                  if(txt===lang && await el.isVisible().catch(()=>false)){await el.click().catch(()=>{});await page.waitForTimeout(1600);return true;}
+                }
+                return false;
+              };
+              const ru=await snap('RU'); await page.screenshot({path:'mobile-ru.png',fullPage:true});
+              const enClicked=await clickLang('EN'); const en=await snap('EN'); await page.screenshot({path:'mobile-en.png',fullPage:true});
+              const viClicked=await clickLang('VI'); const vi=await snap('VI'); await page.screenshot({path:'mobile-vi.png',fullPage:true});
+              out.enClicked=enClicked;out.viClicked=viClicked;
+              out.ru={htmlLang:ru.htmlLang,cyrillicChars:ru.cyrillicChars,latinChars:ru.latinChars,markers:ru.markers,typography:ru.typography};
+              out.en={htmlLang:en.htmlLang,cyrillicChars:en.cyrillicChars,latinChars:en.latinChars,changedLeafTextsVsRu:changed(ru,en),typography:en.typography};
+              out.vi={htmlLang:vi.htmlLang,cyrillicChars:vi.cyrillicChars,latinChars:vi.latinChars,changedLeafTextsVsRu:changed(ru,vi),typography:vi.typography};
+            }catch(e){out.error=String(e&&e.stack||e);}finally{if(browser)await browser.close().catch(()=>{});}
+            fs.writeFileSync('live-diagnostics.json',JSON.stringify(out,null,2));
+            console.log(JSON.stringify(out,null,2));
+          })();
+          JS
+          node /tmp/diagnose.cjs 2>&1 | tee browser-diagnostics.log
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-diagnostics-v2
+          path: |
+            live-index.html
+            live-marker-diagnostics.txt
+            browser-diagnostics.log
+            live-diagnostics.json
+            mobile-ru.png
+            mobile-en.png
+            mobile-vi.png
+          if-no-files-found: warn
