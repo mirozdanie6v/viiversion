@@ -40,30 +40,42 @@ PATCH = r'''<style id="viiversion-about-live-style">
 .viiv-about-copy-live{display:block!important;width:100%!important;max-width:none!important;margin:30px 0 0!important;padding:0!important;font-size:clamp(18px,1.32vw,22px)!important;line-height:1.5!important;color:#62636d!important}
 .viiv-about-card-live{min-width:0!important;border:1px solid rgba(30,31,41,.11)!important;border-radius:24px!important;background:rgba(255,255,255,.20)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.74)!important;padding-top:28px!important}
 .viiv-about-card-title-live{
+  color:#111217!important;
+  -webkit-text-fill-color:#111217!important;
+  background:none!important;
   font-weight:800!important;
   letter-spacing:-.035em!important;
   line-height:1.08!important;
   overflow-wrap:anywhere;
-  background:linear-gradient(105deg,var(--viiv-logo-green-1) 0%,var(--viiv-logo-green-2) 42%,var(--viiv-logo-green-3) 100%)!important;
-  -webkit-background-clip:text!important;
-  background-clip:text!important;
-  color:transparent!important;
-  -webkit-text-fill-color:transparent!important;
 }
 .viiv-about-card-live::before{content:'';display:block;width:42px;height:3px;border-radius:999px;margin:0 0 18px 0;background:linear-gradient(90deg,var(--viiv-logo-green-1),var(--viiv-logo-green-2),var(--viiv-logo-green-3));opacity:.96}
+.viiv-about-tags-live{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.viiv-about-tag-live{display:inline-flex;align-items:center;min-height:30px;padding:6px 11px;border:1px solid rgba(17,18,23,.12);border-radius:999px;background:rgba(255,255,255,.44);color:#3a3b43;font-size:12px;line-height:1;font-weight:700;letter-spacing:.01em;white-space:nowrap}
 .viiv-about-menu-link{cursor:pointer}
 #about{scroll-margin-top:96px}
 @media(max-width:1180px){.viiv-about-heading-live{font-size:clamp(28px,3vw,36px)!important}.viiv-about-copy-live{font-size:19px!important}}
 @media(max-width:900px){.viiv-about-heading-live{font-size:clamp(27px,4.5vw,35px)!important;line-height:1.07!important}.viiv-about-copy-live{margin-top:24px!important;font-size:18px!important}.viiv-about-card-live{border-radius:22px!important}}
-@media(max-width:640px){.viiv-about-heading-live{font-size:26px!important;line-height:1.08!important;letter-spacing:-.035em!important}.viiv-about-brand-live{font-size:1.07em!important}.viiv-about-copy-live{margin-top:20px!important;font-size:17px!important;line-height:1.48!important}.viiv-about-card-live{border-radius:20px!important;padding-top:24px!important}.viiv-about-card-title-live{font-size:23px!important}}
+@media(max-width:640px){.viiv-about-heading-live{font-size:26px!important;line-height:1.08!important;letter-spacing:-.035em!important}.viiv-about-brand-live{font-size:1.07em!important}.viiv-about-copy-live{margin-top:20px!important;font-size:17px!important;line-height:1.48!important}.viiv-about-card-live{border-radius:20px!important;padding-top:24px!important}.viiv-about-card-title-live{font-size:23px!important}.viiv-about-tags-live{gap:7px;margin-top:16px}.viiv-about-tag-live{font-size:11px;min-height:28px;padding:6px 10px}}
 @media(max-width:390px){.viiv-about-heading-live{font-size:23px!important}.viiv-about-copy-live{font-size:16px!important}.viiv-about-card-title-live{font-size:21px!important}}
 </style>
 <script id="viiversion-about-live-patch">
 (()=>{
   const I18N={
-    ru:{menu:'О нас',kicker:'КТО МЫ',rest:'команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.',copy:'Мы создаём интеграционные связки между отдельными системами бизнеса, цифровые контуры между офлайн- и онлайн-процессами, автоматизируем ручные и повторяющиеся операции, разрабатываем внутренние инструменты, клиентские приложения и интерфейсы для команды.',cards:[['20+ лет в IT и telecom','Разработка и внедрение сложных систем для крупных российских и международных компаний, включая телеком-операторов и enterprise-проекты.'],['16+ лет в digital и визуальных коммуникациях','Дизайн, видео, motion, интерфейсы, контент и визуальная подача цифровых продуктов — от идеи до готового пользовательского опыта.'],['Техническая и визуальная экспертиза в одной команде','Разработка, архитектура, UX/UI и визуальная коммуникация соединены в одном процессе — от бизнес-задачи до готового цифрового продукта.']]},
-    en:{menu:'About',kicker:'WHO WE ARE',rest:'a development team with experience in complex IT systems, digital products and visual communications.',copy:'We build integration layers between business systems, connect offline and online processes, automate manual and repetitive operations, and develop internal tools, customer applications and interfaces for teams.',cards:[['20+ years in IT & telecom','Development and implementation of complex systems for major Russian and international companies, including telecom operators and enterprise projects.'],['16+ years in digital & visual communications','Design, video, motion, interfaces, content and visual presentation of digital products — from idea to a complete user experience.'],['Technical and visual expertise in one team','Development, architecture, UX/UI and visual communication are combined in one process — from a business task to a finished digital product.']]},
-    vi:{menu:'Giới thiệu',kicker:'CHÚNG TÔI LÀ AI',rest:'đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.',copy:'Chúng tôi xây dựng các lớp tích hợp giữa các hệ thống của doanh nghiệp, kết nối quy trình offline và online, tự động hóa các thao tác thủ công và lặp lại, đồng thời phát triển công cụ nội bộ, ứng dụng khách hàng và giao diện cho đội ngũ.',cards:[['Hơn 20 năm trong IT & telecom','Phát triển và triển khai các hệ thống phức tạp cho các công ty lớn tại Nga và quốc tế, bao gồm nhà mạng viễn thông và các dự án enterprise.'],['Hơn 16 năm trong digital & truyền thông thị giác','Thiết kế, video, motion, giao diện, nội dung và trình bày trực quan cho sản phẩm số — từ ý tưởng đến trải nghiệm người dùng hoàn chỉnh.'],['Chuyên môn kỹ thuật và thị giác trong một đội ngũ','Phát triển, kiến trúc, UX/UI và truyền thông thị giác được kết nối trong một quy trình — từ bài toán kinh doanh đến sản phẩm số hoàn chỉnh.']]}
+    ru:{menu:'О нас',kicker:'КТО МЫ',rest:'команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.',copy:'Мы создаём интеграционные связки между отдельными системами бизнеса, цифровые контуры между офлайн- и онлайн-процессами, автоматизируем ручные и повторяющиеся операции, разрабатываем внутренние инструменты, клиентские приложения и интерфейсы для команды.',cards:[
+      ['20+ лет в IT и telecom','Разработка и внедрение сложных систем для крупных российских и международных компаний, включая телеком-операторов и enterprise-проекты.',['МегаФон','Tele2 Kazakhstan','Saudi Telecom Company','UCELL']],
+      ['16+ лет в digital и визуальных коммуникациях','Дизайн, видео, motion, интерфейсы, контент и визуальная подача цифровых продуктов — от идеи до готового пользовательского опыта.',['TV & Video','Motion Design','UX/UI','Graphic Design','Content']],
+      ['Техническая и визуальная экспертиза в одной команде','Разработка, архитектура, UX/UI и визуальная коммуникация соединены в одном процессе — от бизнес-задачи до готового цифрового продукта.',['Architecture','Integrations','AI & Automation','Analytics']]
+    ]},
+    en:{menu:'About',kicker:'WHO WE ARE',rest:'a development team with experience in complex IT systems, digital products and visual communications.',copy:'We build integration layers between business systems, connect offline and online processes, automate manual and repetitive operations, and develop internal tools, customer applications and interfaces for teams.',cards:[
+      ['20+ years in IT & telecom','Development and implementation of complex systems for major Russian and international companies, including telecom operators and enterprise projects.',['MegaFon','Tele2 Kazakhstan','Saudi Telecom Company','UCELL']],
+      ['16+ years in digital & visual communications','Design, video, motion, interfaces, content and visual presentation of digital products — from idea to a complete user experience.',['TV & Video','Motion Design','UX/UI','Graphic Design','Content']],
+      ['Technical and visual expertise in one team','Development, architecture, UX/UI and visual communication are combined in one process — from a business task to a finished digital product.',['Architecture','Integrations','AI & Automation','Analytics']]
+    ]},
+    vi:{menu:'Giới thiệu',kicker:'CHÚNG TÔI LÀ AI',rest:'đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.',copy:'Chúng tôi xây dựng các lớp tích hợp giữa các hệ thống của doanh nghiệp, kết nối quy trình offline và online, tự động hóa các thao tác thủ công và lặp lại, đồng thời phát triển công cụ nội bộ, ứng dụng khách hàng và giao diện cho đội ngũ.',cards:[
+      ['Hơn 20 năm trong IT & telecom','Phát triển và triển khai các hệ thống phức tạp cho các công ty lớn tại Nga và quốc tế, bao gồm nhà mạng viễn thông và các dự án enterprise.',['MegaFon','Tele2 Kazakhstan','Saudi Telecom Company','UCELL']],
+      ['Hơn 16 năm trong digital & truyền thông thị giác','Thiết kế, video, motion, giao diện, nội dung và trình bày trực quan cho sản phẩm số — từ ý tưởng đến trải nghiệm người dùng hoàn chỉnh.',['TV & Video','Motion Design','UX/UI','Graphic Design','Content']],
+      ['Chuyên môn kỹ thuật và thị giác trong một đội ngũ','Phát triển, kiến trúc, UX/UI và truyền thông thị giác được kết nối trong một quy trình — từ bài toán kinh doanh đến sản phẩm số hoàn chỉnh.',['Architecture','Integrations','AI & Automation','Analytics']]
+    ]}
   };
   const norm=v=>(v||'').replace(/\s+/g,' ').trim();
   const headings=['VIIVERSION — команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.','VIIVERSION — a development team with experience in complex IT systems, digital products and visual communications.','VIIVERSION — đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.'];
@@ -100,12 +112,15 @@ PATCH = r'''<style id="viiversion-about-live-style">
     if(refs)return true;
     const heading=exact(headings),copy=exact(copies);
     if(!heading||!copy)return false;
-    const cardTitles=[],cards=[],cardBodies=[];
+    const cardTitles=[],cards=[],cardBodies=[],tagBoxes=[];
     for(let i=0;i<3;i++){
       const title=exact(Object.values(I18N).map(v=>v.cards[i][0]));
       if(!title)continue;
       const card=findCard(title);cardTitles[i]=title;cards[i]=card;
-      cardBodies[i]=[...card.querySelectorAll('p,div,span')].filter(el=>el!==title&&el.children.length===0&&norm(el.textContent).length>30).sort((a,b)=>norm(b.textContent).length-norm(a.textContent).length)[0]||null;
+      cardBodies[i]=[...card.querySelectorAll('p,div,span')].filter(el=>el!==title&&!el.classList.contains('viiv-about-tags-live')&&!el.classList.contains('viiv-about-tag-live')&&el.children.length===0&&norm(el.textContent).length>30).sort((a,b)=>norm(b.textContent).length-norm(a.textContent).length)[0]||null;
+      let tags=card.querySelector('.viiv-about-tags-live');
+      if(!tags){tags=document.createElement('div');tags.className='viiv-about-tags-live';card.appendChild(tags)}
+      tagBoxes[i]=tags;
     }
     const top=findTop(heading,copy,cardTitles[0]);
     if(top)top.classList.add('viiv-about-layout-live');
@@ -116,7 +131,7 @@ PATCH = r'''<style id="viiversion-about-live-style">
     const kicker=[...document.querySelectorAll('body *')].find(el=>['КТО МЫ','WHO WE ARE','CHÚNG TÔI LÀ AI'].includes(norm(el.textContent)))||null;
     const anchor=heading.closest('section')||top||heading.parentElement;
     if(anchor){anchor.id='about';anchor.style.scrollMarginTop='96px'}
-    refs={heading,copy,cardTitles,cardBodies,kicker};return true;
+    refs={heading,copy,cardTitles,cardBodies,tagBoxes,kicker};return true;
   };
 
   const render=lang=>{
@@ -125,7 +140,11 @@ PATCH = r'''<style id="viiversion-about-live-style">
     refs.heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION —</span> <span>'+c.rest+'</span>';
     refs.copy.textContent=c.copy;
     if(refs.kicker)refs.kicker.textContent=c.kicker;
-    c.cards.forEach((card,i)=>{if(refs.cardTitles[i])refs.cardTitles[i].textContent=card[0];if(refs.cardBodies[i])refs.cardBodies[i].textContent=card[1]});
+    c.cards.forEach((card,i)=>{
+      if(refs.cardTitles[i])refs.cardTitles[i].textContent=card[0];
+      if(refs.cardBodies[i])refs.cardBodies[i].textContent=card[1];
+      if(refs.tagBoxes[i])refs.tagBoxes[i].innerHTML=(card[2]||[]).map(tag=>'<span class="viiv-about-tag-live">'+tag+'</span>').join('');
+    });
     ensureMenu(lang);
     return true;
   };
