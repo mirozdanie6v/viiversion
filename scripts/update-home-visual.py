@@ -5,9 +5,9 @@ ROOT = Path('public')
 PATCH = r'''<style id="viiversion-home-visual-style">
 .viiv-system-visual{
   position:relative;
-  width:132%;
-  min-height:720px;
-  margin-left:-14%;
+  width:124%;
+  min-height:675px;
+  margin-left:-12%;
   display:grid;
   place-items:center;
   overflow:visible;
@@ -16,8 +16,8 @@ PATCH = r'''<style id="viiversion-home-visual-style">
 .viiv-system-visual::before{
   content:'';
   position:absolute;
-  width:650px;
-  height:650px;
+  width:610px;
+  height:610px;
   border-radius:50%;
   background:
     radial-gradient(circle at 48% 46%,rgba(108,89,242,.20),rgba(84,177,231,.09) 36%,transparent 69%);
@@ -31,6 +31,7 @@ PATCH = r'''<style id="viiversion-home-visual-style">
   perspective:1400px;
   perspective-origin:50% 44%;
   transform-style:preserve-3d;
+  transform:scale(.92);
 }
 .viiv-stage::after{
   content:'';
@@ -191,16 +192,16 @@ PATCH = r'''<style id="viiversion-home-visual-style">
 @keyframes viivOrbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
 @media(prefers-reduced-motion:reduce){.viiv-cube-wrap,.viiv-cube,.viiv-ring,.viiv-orb{animation:none!important}}
 @media(max-width:1150px){
-  .viiv-system-visual{width:120%;margin-left:-10%;min-height:640px}
-  .viiv-stage{width:700px;height:650px;transform:scale(.92)}
+  .viiv-system-visual{width:114%;margin-left:-7%;min-height:600px}
+  .viiv-stage{width:700px;height:650px;transform:scale(.86)}
 }
 @media(max-width:900px){
-  .viiv-system-visual{width:100%;margin-left:0;min-height:580px}
-  .viiv-stage{width:650px;height:610px;transform:scale(.80)}
+  .viiv-system-visual{width:100%;margin-left:0;min-height:550px}
+  .viiv-stage{width:650px;height:610px;transform:scale(.75)}
 }
 @media(max-width:680px){
-  .viiv-system-visual{min-height:460px}
-  .viiv-stage{width:600px;height:560px;transform:scale(.60)}
+  .viiv-system-visual{min-height:435px}
+  .viiv-stage{width:600px;height:560px;transform:scale(.56)}
 }
 </style>
 <script id="viiversion-home-visual-patch">
@@ -223,7 +224,7 @@ PATCH = r'''<style id="viiversion-home-visual-style">
    card.style.boxShadow='none';
    card.style.overflow='visible';
    card.style.padding='0';
-   card.style.minHeight='700px';
+   card.style.minHeight='660px';
  };
  const start=()=>{apply();new MutationObserver(()=>requestAnimationFrame(apply)).observe(document.body,{subtree:true,childList:true,characterData:true})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
