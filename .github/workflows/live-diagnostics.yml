@@ -1,0 +1,119 @@
+name: Live diagnostics
+
+on:
+  push:
+    branches:
+      - viiversion
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Check deployed mobile typography and languages
+        env:
+          TARGET_URL: https://landing.viiversion.workers.dev/
+        run: |
+          cat > /tmp/diagnose.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'fs';
+
+          const target = process.env.TARGET_URL;
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+          await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
+          await page.goto(`${target}?qa=${Date.now()}`, {waitUntil:'networkidle', timeout:120000});
+          await page.waitForTimeout(1000);
+
+          const snapshot = async (label) => page.evaluate((label) => {
+            const visible = el => {
+              const s = getComputedStyle(el); const r = el.getBoundingClientRect();
+              return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+            };
+            const leafTexts = [...document.querySelectorAll('body *')]
+              .filter(el => visible(el) && el.children.length===0)
+              .map(el => (el.textContent||'').replace(/\s+/g,' ').trim())
+              .filter(Boolean);
+            const bodyText = (document.body.innerText||'').replace(/\s+/g,' ').trim();
+            const cyr = (bodyText.match(/[А-Яа-яЁё]/g)||[]).length;
+            const latin = (bodyText.match(/[A-Za-z]/g)||[]).length;
+            const pick = (sel) => {
+              const el = document.querySelector(sel); if(!el) return null;
+              const cs = getComputedStyle(el); const r = el.getBoundingClientRect();
+              return {text:(el.textContent||'').replace(/\s+/g,' ').trim().slice(0,180), fontSize:cs.fontSize, lineHeight:cs.lineHeight, letterSpacing:cs.letterSpacing, width:Math.round(r.width), height:Math.round(r.height)};
+            };
+            return {
+              label,
+              lang:document.documentElement.lang,
+              markers:{
+                mobileTypography:!!document.querySelector('#viiversion-mobile-typography-style'),
+                aboutTagsV2:!!document.querySelector('#viiversion-about-tags-v2-style'),
+                homeHero:!!document.querySelector('#viiversion-home-hero-style'),
+                homeVisual:!!document.querySelector('#viiversion-home-visual-style')
+              },
+              typography:{
+                hero:pick('.viiv-hero-heading, h1'),
+                section:pick('#about h2, #about [role="heading"], h2'),
+                card:pick('.viiv-about-card-title-live, h3'),
+                lead:pick('.viiv-about-copy-live'),
+                body:pick('main p, section p'),
+                tag:pick('.viiv-about-tag-live')
+              },
+              counts:{leafTexts:leafTexts.length,cyrillicChars:cyr,latinChars:latin},
+              leafTexts
+            };
+          }, label);
+
+          const ru = await snapshot('RU');
+          await page.screenshot({path:'mobile-ru.png',fullPage:true});
+
+          const clickLang = async lang => {
+            const el = page.getByText(lang,{exact:true}).first();
+            if (await el.count()) { await el.click(); await page.waitForTimeout(1400); return true; }
+            return false;
+          };
+
+          const enClicked = await clickLang('EN');
+          const en = await snapshot('EN');
+          await page.screenshot({path:'mobile-en.png',fullPage:true});
+
+          const viClicked = await clickLang('VI');
+          const vi = await snapshot('VI');
+          await page.screenshot({path:'mobile-vi.png',fullPage:true});
+
+          const changed = (a,b) => {
+            const n=Math.max(a.leafTexts.length,b.leafTexts.length); let c=0;
+            for(let i=0;i<n;i++) if((a.leafTexts[i]||'')!==(b.leafTexts[i]||'')) c++;
+            return c;
+          };
+
+          const result={
+            target,
+            enClicked,viClicked,
+            ru:{lang:ru.lang,markers:ru.markers,typography:ru.typography,counts:ru.counts},
+            en:{lang:en.lang,typography:en.typography,counts:en.counts,changedLeafTextsVsRu:changed(ru,en)},
+            vi:{lang:vi.lang,typography:vi.typography,counts:vi.counts,changedLeafTextsVsRu:changed(ru,vi)}
+          };
+          fs.writeFileSync('live-diagnostics.json',JSON.stringify(result,null,2));
+          console.log('LIVE_DIAGNOSTICS_START');
+          console.log(JSON.stringify(result,null,2));
+          console.log('LIVE_DIAGNOSTICS_END');
+          await browser.close();
+          JS
+          node /tmp/diagnose.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-diagnostics
+          path: |
+            live-diagnostics.json
+            mobile-ru.png
+            mobile-en.png
+            mobile-vi.png
