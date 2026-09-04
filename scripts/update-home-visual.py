@@ -3,130 +3,227 @@ from pathlib import Path
 ROOT = Path('public')
 
 PATCH = r'''<style id="viiversion-home-visual-style">
-.viiv-system-visual{position:relative;width:100%;min-height:500px;display:grid;place-items:center;overflow:visible;isolation:isolate}
-.viiv-system-visual:before{content:'';position:absolute;inset:10% 3% 8% 8%;background:radial-gradient(circle at 52% 48%,rgba(102,88,238,.15),rgba(93,177,229,.07) 32%,transparent 67%);filter:blur(28px);z-index:-2}
-.viiv-object-wrap{position:relative;width:min(92%,590px);aspect-ratio:1.08;display:grid;place-items:center;transform:translateY(-2px)}
-.viiv-object-svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 30px 48px rgba(25,28,46,.10))}
-.viiv-object-svg .float-a{animation:viivFloatA 8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
-.viiv-object-svg .float-b{animation:viivFloatB 10s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
-.viiv-object-svg .pulse{animation:viivPulse 6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
-@keyframes viivFloatA{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-7px) rotate(.8deg)}}
-@keyframes viivFloatB{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(6px) rotate(-.65deg)}}
-@keyframes viivPulse{0%,100%{opacity:.62;transform:scale(1)}50%{opacity:.95;transform:scale(1.025)}}
-@media (prefers-reduced-motion:reduce){.viiv-object-svg .float-a,.viiv-object-svg .float-b,.viiv-object-svg .pulse{animation:none}}
-@media(max-width:900px){.viiv-system-visual{min-height:430px}.viiv-object-wrap{width:min(94%,540px)}}
-@media(max-width:680px){.viiv-system-visual{min-height:340px}.viiv-object-wrap{width:100%;max-width:430px}}
+.viiv-system-visual{
+  position:relative;
+  width:116%;
+  min-height:610px;
+  margin-left:-8%;
+  display:grid;
+  place-items:center;
+  overflow:visible;
+  isolation:isolate;
+}
+.viiv-system-visual::before{
+  content:'';
+  position:absolute;
+  width:520px;
+  height:520px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 48% 46%,rgba(108,89,242,.18),rgba(84,177,231,.08) 36%,transparent 68%);
+  filter:blur(34px);
+  z-index:-3;
+}
+.viiv-stage{
+  position:relative;
+  width:620px;
+  height:590px;
+  perspective:1150px;
+  perspective-origin:50% 44%;
+  transform-style:preserve-3d;
+}
+.viiv-stage::after{
+  content:'';
+  position:absolute;
+  left:50%;
+  bottom:48px;
+  width:340px;
+  height:58px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(50,48,98,.20),rgba(90,76,224,.08) 48%,transparent 72%);
+  filter:blur(20px);
+}
+.viiv-cube-wrap{
+  position:absolute;
+  left:50%;
+  top:48%;
+  width:244px;
+  height:244px;
+  transform:translate(-50%,-50%);
+  transform-style:preserve-3d;
+  animation:viivCubeFloat 8s ease-in-out infinite;
+}
+.viiv-cube{
+  position:absolute;
+  inset:0;
+  transform-style:preserve-3d;
+  transform:rotateX(-17deg) rotateY(34deg) rotateZ(-2deg);
+  animation:viivCubeTurn 14s ease-in-out infinite;
+}
+.viiv-face{
+  position:absolute;
+  inset:0;
+  border-radius:30px;
+  border:1px solid rgba(255,255,255,.78);
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.66),rgba(222,221,249,.18) 48%,rgba(91,79,212,.10)),
+    linear-gradient(160deg,rgba(30,31,43,.08),rgba(255,255,255,.04));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 0 42px rgba(112,96,242,.10),
+    0 18px 46px rgba(31,33,55,.08);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+.viiv-front{transform:translateZ(122px)}
+.viiv-back{transform:rotateY(180deg) translateZ(122px);background:linear-gradient(145deg,rgba(26,27,37,.80),rgba(93,76,218,.26))}
+.viiv-right{transform:rotateY(90deg) translateZ(122px);background:linear-gradient(145deg,rgba(71,65,126,.34),rgba(31,31,44,.72))}
+.viiv-left{transform:rotateY(-90deg) translateZ(122px);background:linear-gradient(145deg,rgba(245,246,255,.38),rgba(101,88,228,.16))}
+.viiv-top{transform:rotateX(90deg) translateZ(122px);background:linear-gradient(145deg,rgba(255,255,255,.84),rgba(198,201,246,.26))}
+.viiv-bottom{transform:rotateX(-90deg) translateZ(122px);background:linear-gradient(145deg,rgba(24,25,34,.82),rgba(86,72,211,.40))}
+.viiv-face::after{
+  content:'';
+  position:absolute;
+  inset:14px;
+  border-radius:22px;
+  border:1px solid rgba(112,99,234,.12);
+}
+.viiv-vmark{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:88px;
+  height:72px;
+  transform:translate(-50%,-50%);
+}
+.viiv-vmark::before,
+.viiv-vmark::after{
+  content:'';
+  position:absolute;
+  top:0;
+  width:20px;
+  height:78px;
+  border-radius:12px;
+  background:linear-gradient(180deg,#ffffff 0%,#cfc9ff 42%,#725ff1 100%);
+  box-shadow:0 0 22px rgba(108,89,242,.22);
+}
+.viiv-vmark::before{left:22px;transform:rotate(-28deg);transform-origin:50% 8%}
+.viiv-vmark::after{right:22px;transform:rotate(28deg);transform-origin:50% 8%}
+.viiv-core-glow{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:118px;
+  height:118px;
+  border-radius:50%;
+  transform:translate(-50%,-50%) translateZ(4px);
+  background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.96),rgba(160,145,255,.68) 24%,rgba(94,72,224,.34) 48%,transparent 72%);
+  filter:blur(2px);
+  opacity:.76;
+}
+.viiv-ring{
+  position:absolute;
+  left:50%;
+  top:50%;
+  border-radius:50%;
+  transform-style:preserve-3d;
+  pointer-events:none;
+}
+.viiv-ring::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  border:2px solid transparent;
+  background:
+    linear-gradient(#fff0,#fff0) padding-box,
+    linear-gradient(110deg,rgba(255,255,255,.12),rgba(113,96,239,.86),rgba(106,202,244,.62),rgba(255,255,255,.20)) border-box;
+  box-shadow:0 0 22px rgba(106,91,238,.12),inset 0 0 20px rgba(102,184,233,.06);
+}
+.viiv-ring.r1{
+  width:500px;height:226px;
+  margin-left:-250px;margin-top:-113px;
+  transform:rotateX(66deg) rotateZ(-17deg) translateZ(12px);
+  animation:viivRingOne 16s linear infinite;
+}
+.viiv-ring.r2{
+  width:430px;height:282px;
+  margin-left:-215px;margin-top:-141px;
+  transform:rotateX(77deg) rotateY(34deg) rotateZ(26deg) translateZ(-16px);
+  opacity:.66;
+  animation:viivRingTwo 20s linear infinite reverse;
+}
+.viiv-ring.r3{
+  width:350px;height:440px;
+  margin-left:-175px;margin-top:-220px;
+  transform:rotateY(69deg) rotateZ(52deg) translateZ(-34px);
+  opacity:.42;
+}
+.viiv-orb{
+  position:absolute;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 25%,#ffffff 0%,#cbc4ff 20%,#7764f2 52%,#2f2b58 100%);
+  box-shadow:0 10px 22px rgba(46,43,89,.18),0 0 30px rgba(111,94,239,.20);
+}
+.viiv-orb.o1{width:28px;height:28px;left:84px;top:214px;animation:viivOrbFloat 7s ease-in-out infinite}
+.viiv-orb.o2{width:18px;height:18px;right:88px;top:160px;animation:viivOrbFloat 9s ease-in-out infinite reverse}
+.viiv-orb.o3{width:36px;height:36px;right:62px;bottom:144px;animation:viivOrbFloat 8s ease-in-out infinite .8s}
+.viiv-orb.o4{width:16px;height:16px;left:118px;bottom:128px;animation:viivOrbFloat 10s ease-in-out infinite reverse}
+.viiv-plate{
+  position:absolute;
+  width:126px;
+  height:82px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.78);
+  background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(225,224,248,.18));
+  box-shadow:0 18px 38px rgba(32,34,55,.08),inset 0 1px 0 rgba(255,255,255,.90);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+.viiv-plate::before{content:'';position:absolute;left:18px;top:20px;width:46px;height:7px;border-radius:10px;background:linear-gradient(90deg,#6c5ee9,#9ca0ff);box-shadow:0 18px 0 rgba(37,39,52,.12),0 36px 0 rgba(37,39,52,.07)}
+.viiv-plate.p1{left:48px;top:92px;transform:rotate(-14deg) translateZ(-30px)}
+.viiv-plate.p2{right:44px;bottom:88px;transform:rotate(12deg) translateZ(26px);width:110px;height:72px;opacity:.88}
+@keyframes viivCubeTurn{0%,100%{transform:rotateX(-17deg) rotateY(34deg) rotateZ(-2deg)}50%{transform:rotateX(-12deg) rotateY(43deg) rotateZ(1deg)}}
+@keyframes viivCubeFloat{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-12px)}}
+@keyframes viivRingOne{to{transform:rotateX(66deg) rotateZ(343deg) translateZ(12px)}}
+@keyframes viivRingTwo{to{transform:rotateX(77deg) rotateY(34deg) rotateZ(386deg) translateZ(-16px)}}
+@keyframes viivOrbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@media(prefers-reduced-motion:reduce){.viiv-cube-wrap,.viiv-cube,.viiv-ring,.viiv-orb{animation:none!important}}
+@media(max-width:1150px){
+  .viiv-system-visual{width:108%;margin-left:-4%;min-height:540px}
+  .viiv-stage{width:540px;height:520px;transform:scale(.92)}
+}
+@media(max-width:900px){
+  .viiv-system-visual{width:100%;margin-left:0;min-height:500px}
+  .viiv-stage{width:520px;height:500px;transform:scale(.88)}
+}
+@media(max-width:680px){
+  .viiv-system-visual{min-height:390px}
+  .viiv-stage{width:430px;height:420px;transform:scale(.72)}
+}
 </style>
 <script id="viiversion-home-visual-patch">
 (()=>{
  const norm=v=>(v||'').replace(/\s+/g,' ').trim();
- const markup=`
- <div class="viiv-system-visual" aria-label="Abstract VIIVERSION digital system">
-   <div class="viiv-object-wrap">
-     <svg class="viiv-object-svg" viewBox="0 0 620 570" role="img" aria-hidden="true">
-       <defs>
-         <linearGradient id="gDark" x1="0" y1="0" x2="1" y2="1">
-           <stop offset="0" stop-color="#161821"/>
-           <stop offset=".48" stop-color="#29293b"/>
-           <stop offset="1" stop-color="#101116"/>
-         </linearGradient>
-         <linearGradient id="gViolet" x1="0" y1="0" x2="1" y2="1">
-           <stop offset="0" stop-color="#8276ff"/>
-           <stop offset=".45" stop-color="#6559ee"/>
-           <stop offset="1" stop-color="#80c8ef"/>
-         </linearGradient>
-         <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="1">
-           <stop offset="0" stop-color="#ffffff" stop-opacity=".88"/>
-           <stop offset=".48" stop-color="#e8e8f6" stop-opacity=".36"/>
-           <stop offset="1" stop-color="#bfc2db" stop-opacity=".10"/>
-         </linearGradient>
-         <linearGradient id="gEdge" x1="0" y1="0" x2="1" y2="0">
-           <stop offset="0" stop-color="#ffffff" stop-opacity=".10"/>
-           <stop offset=".42" stop-color="#ffffff" stop-opacity=".92"/>
-           <stop offset=".72" stop-color="#8f83ff" stop-opacity=".65"/>
-           <stop offset="1" stop-color="#ffffff" stop-opacity=".06"/>
-         </linearGradient>
-         <radialGradient id="gOrb" cx="35%" cy="28%" r="72%">
-           <stop offset="0" stop-color="#ffffff"/>
-           <stop offset=".20" stop-color="#b5b1ff"/>
-           <stop offset=".55" stop-color="#685bed"/>
-           <stop offset="1" stop-color="#27263a"/>
-         </radialGradient>
-         <radialGradient id="gCore" cx="34%" cy="25%" r="76%">
-           <stop offset="0" stop-color="#ffffff" stop-opacity=".96"/>
-           <stop offset=".22" stop-color="#dad7ff" stop-opacity=".92"/>
-           <stop offset=".55" stop-color="#7d70ff" stop-opacity=".78"/>
-           <stop offset="1" stop-color="#221f3e" stop-opacity=".96"/>
-         </radialGradient>
-         <filter id="blur16"><feGaussianBlur stdDeviation="16"/></filter>
-         <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
-         <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
-           <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#25263a" flood-opacity=".20"/>
-         </filter>
-         <clipPath id="clipCore"><rect x="215" y="170" width="190" height="190" rx="44"/></clipPath>
-       </defs>
-
-       <ellipse cx="315" cy="483" rx="178" ry="29" fill="#6b5cf2" opacity=".08" filter="url(#blur16)"/>
-
-       <g class="float-b" opacity=".96">
-         <path d="M86 330 C119 191, 262 111, 418 145 C520 168, 573 248, 546 329 C518 414, 408 460, 286 446 C168 432, 65 390, 86 330Z" fill="none" stroke="#22242d" stroke-opacity=".15" stroke-width="2"/>
-         <path d="M92 331 C132 213, 265 149, 420 176 C505 191, 545 245, 525 311 C499 394, 402 425, 289 414 C188 405, 75 383, 92 331Z" fill="none" stroke="url(#gViolet)" stroke-opacity=".28" stroke-width="4"/>
-         <path d="M105 327 C149 238, 274 191, 405 205 C471 212, 510 254, 492 305 C466 374, 384 396, 291 386 C200 377, 91 360, 105 327Z" fill="none" stroke="url(#gEdge)" stroke-width="8" stroke-linecap="round"/>
-       </g>
-
-       <g class="float-a" filter="url(#shadow)">
-         <path d="M172 194 L316 110 L458 196 L458 352 L315 435 L172 351Z" fill="url(#gDark)" opacity=".98"/>
-         <path d="M172 194 L316 110 L316 272 L172 351Z" fill="#20222d" opacity=".88"/>
-         <path d="M316 110 L458 196 L458 352 L316 272Z" fill="#37364c" opacity=".82"/>
-         <path d="M172 194 L316 272 L458 196 L316 110Z" fill="url(#gGlass)" opacity=".54"/>
-         <path d="M172 194 L316 272 L458 196" fill="none" stroke="#ffffff" stroke-opacity=".42" stroke-width="1.4"/>
-         <path d="M316 110 L316 272 L315 435" fill="none" stroke="#ffffff" stroke-opacity=".12" stroke-width="1.3"/>
-         <path d="M172 351 L315 435 L458 352" fill="none" stroke="#7b6ff5" stroke-opacity=".28" stroke-width="1.2"/>
-       </g>
-
-       <g class="pulse">
-         <rect x="216" y="171" width="188" height="188" rx="44" fill="url(#gGlass)" stroke="#ffffff" stroke-opacity=".74" stroke-width="1.5"/>
-         <rect x="227" y="182" width="166" height="166" rx="36" fill="url(#gCore)" opacity=".92"/>
-         <path d="M254 214 C291 186, 352 186, 383 223 C409 255, 402 311, 365 336 C329 360, 272 350, 246 314 C220 278, 223 238, 254 214Z" fill="#ffffff" opacity=".10" filter="url(#blur6)"/>
-         <path d="M266 243 L309 314 L352 242 L329 242 L309 278 L289 243Z" fill="#ffffff" opacity=".92"/>
-         <path d="M266 243 L309 314 L352 242" fill="none" stroke="#ffffff" stroke-opacity=".32" stroke-width="2"/>
-       </g>
-
-       <g class="float-b">
-         <ellipse cx="315" cy="284" rx="223" ry="83" transform="rotate(-18 315 284)" fill="none" stroke="url(#gEdge)" stroke-width="4.5" opacity=".84"/>
-         <ellipse cx="315" cy="284" rx="189" ry="132" transform="rotate(37 315 284)" fill="none" stroke="#7a6ef3" stroke-opacity=".34" stroke-width="3"/>
-         <ellipse cx="315" cy="284" rx="149" ry="205" transform="rotate(71 315 284)" fill="none" stroke="#8dcff1" stroke-opacity=".22" stroke-width="2"/>
-       </g>
-
-       <g class="float-a">
-         <circle cx="123" cy="242" r="16" fill="url(#gOrb)"/>
-         <circle cx="489" cy="180" r="11" fill="url(#gOrb)"/>
-         <circle cx="507" cy="365" r="18" fill="url(#gOrb)"/>
-         <circle cx="179" cy="406" r="10" fill="url(#gOrb)"/>
-         <circle cx="123" cy="242" r="25" fill="#695ced" opacity=".10" filter="url(#blur6)"/>
-         <circle cx="507" cy="365" r="29" fill="#695ced" opacity=".09" filter="url(#blur6)"/>
-       </g>
-
-       <path d="M142 131 C208 81 281 61 358 74" fill="none" stroke="#242631" stroke-opacity=".09" stroke-width="1.2"/>
-       <path d="M401 102 C479 119 526 159 553 220" fill="none" stroke="#6c5ff0" stroke-opacity=".10" stroke-width="1.2"/>
-     </svg>
-   </div>
- </div>`;
+ const markup=`<div class="viiv-system-visual" aria-label="VIIVERSION three dimensional digital object"><div class="viiv-stage"><div class="viiv-ring r1"></div><div class="viiv-ring r2"></div><div class="viiv-ring r3"></div><div class="viiv-orb o1"></div><div class="viiv-orb o2"></div><div class="viiv-orb o3"></div><div class="viiv-orb o4"></div><div class="viiv-plate p1"></div><div class="viiv-plate p2"></div><div class="viiv-cube-wrap"><div class="viiv-cube"><div class="viiv-face viiv-front"><div class="viiv-core-glow"></div><div class="viiv-vmark"></div></div><div class="viiv-face viiv-back"></div><div class="viiv-face viiv-right"></div><div class="viiv-face viiv-left"></div><div class="viiv-face viiv-top"></div><div class="viiv-face viiv-bottom"></div></div></div></div></div>`;
  const findCard=()=>{
    const marker=[...document.querySelectorAll('body *')].find(el=>norm(el.textContent)==='СИСТЕМА / 01'||norm(el.textContent)==='SYSTEM / 01');
    if(!marker)return null;
    let node=marker;
-   for(let i=0;i<8&&node.parentElement;i++,node=node.parentElement){
-     const txt=norm(node.textContent);const r=node.getBoundingClientRect();
-     if(r.width>320&&r.height>320&&(txt.includes('повторной продажи')||txt.includes('repeat sale')||txt.includes('AI-консультант')))return node;
-   }
+   for(let i=0;i<8&&node.parentElement;i++,node=node.parentElement){const txt=norm(node.textContent);const r=node.getBoundingClientRect();if(r.width>320&&r.height>320&&(txt.includes('повторной продажи')||txt.includes('repeat sale')||txt.includes('AI-консультант')))return node}
    return marker.parentElement;
  };
  const apply=()=>{
    if(document.querySelector('.viiv-system-visual'))return;
    const card=findCard();if(!card)return;
    card.innerHTML=markup;
-   card.style.background='transparent';card.style.border='0';card.style.boxShadow='none';card.style.overflow='visible';card.style.padding='0';
+   card.style.background='transparent';
+   card.style.border='0';
+   card.style.boxShadow='none';
+   card.style.overflow='visible';
+   card.style.padding='0';
+   card.style.minHeight='590px';
  };
  const start=()=>{apply();new MutationObserver(()=>requestAnimationFrame(apply)).observe(document.body,{subtree:true,childList:true,characterData:true})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
