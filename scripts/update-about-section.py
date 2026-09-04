@@ -49,55 +49,37 @@ PATCH = r'''<style id="viiversion-about-live-style">
     vi:{kicker:'CHÚNG TÔI LÀ AI',rest:'đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.',copy:'Chúng tôi xây dựng các lớp tích hợp giữa các hệ thống của doanh nghiệp, kết nối quy trình offline và online, tự động hóa các thao tác thủ công và lặp lại, đồng thời phát triển công cụ nội bộ, ứng dụng khách hàng và giao diện cho đội ngũ.',cards:[['Hơn 20 năm trong IT & telecom','Phát triển và triển khai các hệ thống phức tạp cho các công ty lớn tại Nga và quốc tế, bao gồm nhà mạng viễn thông và các dự án enterprise.'],['Hơn 16 năm trong digital & truyền thông thị giác','Thiết kế, video, motion, giao diện, nội dung và trình bày trực quan cho sản phẩm số — từ ý tưởng đến trải nghiệm người dùng hoàn chỉnh.'],['Chuyên môn kỹ thuật và thị giác trong một đội ngũ','Phát triển, kiến trúc, UX/UI và truyền thông thị giác được kết nối trong một quy trình — từ bài toán kinh doanh đến sản phẩm số hoàn chỉnh.']]}
   };
   const norm=v=>(v||'').replace(/\s+/g,' ').trim();
-  const allHeadings=[
-    'VIIVERSION — команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.',
-    'VIIVERSION — a development team with experience in complex IT systems, digital products and visual communications.',
-    'VIIVERSION — đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.'
-  ];
+  const allHeadings=['VIIVERSION — команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.','VIIVERSION — a development team with experience in complex IT systems, digital products and visual communications.','VIIVERSION — đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.'];
   const allCopies=Object.values(I18N).map(v=>v.copy);
-  const allTitles=Object.values(I18N).flatMap(v=>v.cards.map(c=>c[0]));
   let refs=null;
-
   const exact=(texts)=>[...document.querySelectorAll('body *')].filter(el=>texts.includes(norm(el.textContent))).sort((a,b)=>a.children.length-b.children.length)[0]||null;
   const langFromTarget=t=>{const el=t&&t.closest?t.closest('button,a,[role="button"]'):null;if(!el)return null;const v=norm(el.textContent).toUpperCase();return v==='RU'?'ru':v==='EN'?'en':v==='VI'?'vi':null};
   const currentLang=()=>{const stored=localStorage.getItem('viiversion-lang')||localStorage.getItem('viiversion-hero-lang');if(I18N[stored])return stored;const dl=(document.documentElement.lang||'').toLowerCase();return dl.startsWith('en')?'en':dl.startsWith('vi')?'vi':'ru'};
-
   const findCard=(title)=>{let n=title;for(let i=0;i<7&&n.parentElement;i++,n=n.parentElement){const r=n.getBoundingClientRect();if(r.width>220&&r.height>150&&r.width<760)return n}return title.parentElement};
-  const lowestCommon=(a,b)=>{const aa=[];for(let n=a;n;n=n.parentElement)aa.push(n);for(let n=b;n;n=n.parentElement)if(aa.includes(n))return n;return null};
+  const findTop=(heading,copy,cardTitle)=>{let n=heading.parentElement;while(n&&n!==document.body){if(n.contains(copy)&&(!cardTitle||!n.contains(cardTitle)))return n;n=n.parentElement}return null};
 
   const init=()=>{
     if(refs)return true;
-    const heading=exact(allHeadings);
-    const copy=exact(allCopies);
+    const heading=exact(allHeadings),copy=exact(allCopies);
     if(!heading||!copy)return false;
-    const cardTitles=[];const cards=[];const cardBodies=[];
+    const cardTitles=[],cards=[],cardBodies=[];
     for(let i=0;i<3;i++){
-      const candidates=Object.values(I18N).map(v=>v.cards[i][0]);
-      const title=exact(candidates);
+      const title=exact(Object.values(I18N).map(v=>v.cards[i][0]));
       if(!title)continue;
-      const card=findCard(title);
-      cardTitles[i]=title;cards[i]=card;
+      const card=findCard(title);cardTitles[i]=title;cards[i]=card;
       cardBodies[i]=[...card.querySelectorAll('p,div,span')].filter(el=>el!==title&&el.children.length===0&&norm(el.textContent).length>30).sort((a,b)=>norm(b.textContent).length-norm(a.textContent).length)[0]||null;
     }
-    const top=lowestCommon(heading,copy);
-    if(top){top.classList.add('viiv-about-layout-live');heading.parentElement&&heading.parentElement.classList.add('viiv-about-heading-wrap-live');heading.insertAdjacentElement('afterend',copy)}
+    const top=findTop(heading,copy,cardTitles[0]);
+    if(top)top.classList.add('viiv-about-layout-live');
+    if(heading.parentElement)heading.parentElement.classList.add('viiv-about-heading-wrap-live');
+    heading.insertAdjacentElement('afterend',copy);
     heading.classList.add('viiv-about-heading-live');copy.classList.add('viiv-about-copy-live');
     cards.forEach(c=>c&&c.classList.add('viiv-about-card-live'));cardTitles.forEach(t=>t&&t.classList.add('viiv-about-card-title-live'));
     const kicker=[...document.querySelectorAll('body *')].find(el=>['КТО МЫ','WHO WE ARE','CHÚNG TÔI LÀ AI'].includes(norm(el.textContent)))||null;
     refs={heading,copy,cardTitles,cardBodies,kicker};return true;
   };
-
-  const render=(lang)=>{
-    if(!init())return false;
-    const c=I18N[lang]||I18N.ru;
-    refs.heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION —</span> <span>'+c.rest+'</span>';
-    refs.copy.textContent=c.copy;
-    if(refs.kicker)refs.kicker.textContent=c.kicker;
-    c.cards.forEach((card,i)=>{if(refs.cardTitles[i])refs.cardTitles[i].textContent=card[0];if(refs.cardBodies[i])refs.cardBodies[i].textContent=card[1]});
-    return true;
-  };
-
-  const setLang=(lang)=>{if(!I18N[lang])return;localStorage.setItem('viiversion-lang',lang);localStorage.setItem('viiversion-hero-lang',lang);render(lang)};
+  const render=(lang)=>{if(!init())return false;const c=I18N[lang]||I18N.ru;refs.heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION —</span> <span>'+c.rest+'</span>';refs.copy.textContent=c.copy;if(refs.kicker)refs.kicker.textContent=c.kicker;c.cards.forEach((card,i)=>{if(refs.cardTitles[i])refs.cardTitles[i].textContent=card[0];if(refs.cardBodies[i])refs.cardBodies[i].textContent=card[1]});return true};
+  const setLang=lang=>{if(!I18N[lang])return;localStorage.setItem('viiversion-lang',lang);localStorage.setItem('viiversion-hero-lang',lang);render(lang)};
   document.addEventListener('click',e=>{const lang=langFromTarget(e.target);if(lang)setTimeout(()=>setLang(lang),0)},true);
   document.addEventListener('viiversion:languagechange',e=>{if(e.detail&&e.detail.lang)setLang(e.detail.lang)});
   const start=()=>{if(render(currentLang()))return;const o=new MutationObserver(()=>{if(render(currentLang()))o.disconnect()});o.observe(document.body,{subtree:true,childList:true,characterData:true});setTimeout(()=>o.disconnect(),6000)};
@@ -106,15 +88,11 @@ PATCH = r'''<style id="viiversion-about-live-style">
 </script>'''
 
 for path in ROOT.rglob('*.html'):
-    text = path.read_text(encoding='utf-8')
+    text=path.read_text(encoding='utf-8')
     for marker in ('<style id="viiversion-about-redesign-style">','<style id="viiversion-about-live-style">'):
         while marker in text:
-            start=text.index(marker)
-            script_end=text.find('</script>',start)
-            if script_end==-1: break
+            start=text.index(marker);script_end=text.find('</script>',start)
+            if script_end==-1:break
             text=text[:start]+text[script_end+len('</script>'):]
-    if '</body>' in text:
-        text=text.replace('</body>',PATCH+'\n</body>',1)
-    else:
-        text+='\n'+PATCH+'\n'
+    text=text.replace('</body>',PATCH+'\n</body>',1) if '</body>' in text else text+'\n'+PATCH+'\n'
     path.write_text(text,encoding='utf-8')
