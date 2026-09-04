@@ -1,0 +1,103 @@
+name: Live diagnostics v3
+
+on:
+  push:
+    branches:
+      - viiversion
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Run browser diagnostics
+        env:
+          TARGET_URL: https://landing.viiversion.workers.dev/
+        run: |
+          cat > diagnose-live.cjs <<'JS'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          (async()=>{
+            const target=process.env.TARGET_URL;
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+            await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
+            await page.goto(`${target}?qa=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.waitForTimeout(1800);
+
+            const snap=async label=>page.evaluate(label=>{
+              const norm=v=>(v||'').replace(/\s+/g,' ').trim();
+              const visible=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0};
+              const leaf=[...document.querySelectorAll('body *')].filter(el=>visible(el)&&el.children.length===0).map(el=>norm(el.textContent)).filter(Boolean);
+              const body=norm(document.body.innerText);
+              const pick=sel=>{const el=document.querySelector(sel);if(!el)return null;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return{text:norm(el.textContent).slice(0,180),fontSize:cs.fontSize,lineHeight:cs.lineHeight,letterSpacing:cs.letterSpacing,width:Math.round(r.width),height:Math.round(r.height)}};
+              return {
+                label,
+                htmlLang:document.documentElement.lang,
+                cyrillicChars:(body.match(/[А-Яа-яЁё]/g)||[]).length,
+                latinChars:(body.match(/[A-Za-z]/g)||[]).length,
+                leaf,
+                markers:{mobileTypography:!!document.querySelector('#viiversion-mobile-typography-style'),aboutTagsV2:!!document.querySelector('#viiversion-about-tags-v2-style'),homeHero:!!document.querySelector('#viiversion-home-hero-style'),homeVisual:!!document.querySelector('#viiversion-home-visual-style')},
+                typography:{
+                  hero:pick('.viiv-hero-heading,h1'),
+                  section:pick('.section-head h2,h2'),
+                  card:pick('.viiv-about-card-title-live,.cap-card h3,.case-body h3,h3'),
+                  lead:pick('.viiv-about-copy-live,.hero p,.section-head p'),
+                  body:pick('.cap-card p,.process-item p,.case-body p,main p,section p'),
+                  tag:pick('.viiv-about-tag-live')
+                }
+              };
+            },label);
+
+            const changed=(a,b)=>{const n=Math.max(a.leaf.length,b.leaf.length);let c=0;for(let i=0;i<n;i++)if((a.leaf[i]||'')!==(b.leaf[i]||''))c++;return c};
+            const clickLang=async lang=>{
+              const els=page.locator('.langs button');
+              const n=await els.count();
+              for(let i=0;i<n;i++){
+                const el=els.nth(i);
+                const txt=(await el.innerText()).trim();
+                if(txt===lang){await el.click();await page.waitForTimeout(1800);return true;}
+              }
+              return false;
+            };
+
+            const ru=await snap('RU');
+            await page.screenshot({path:'mobile-ru.png',fullPage:true});
+            const enClicked=await clickLang('EN');
+            const en=await snap('EN');
+            await page.screenshot({path:'mobile-en.png',fullPage:true});
+            const viClicked=await clickLang('VI');
+            const vi=await snap('VI');
+            await page.screenshot({path:'mobile-vi.png',fullPage:true});
+
+            const result={
+              target,enClicked,viClicked,
+              ru:{htmlLang:ru.htmlLang,cyrillicChars:ru.cyrillicChars,latinChars:ru.latinChars,markers:ru.markers,typography:ru.typography},
+              en:{htmlLang:en.htmlLang,cyrillicChars:en.cyrillicChars,latinChars:en.latinChars,changedLeafTextsVsRu:changed(ru,en),typography:en.typography},
+              vi:{htmlLang:vi.htmlLang,cyrillicChars:vi.cyrillicChars,latinChars:vi.latinChars,changedLeafTextsVsRu:changed(ru,vi),typography:vi.typography}
+            };
+            fs.writeFileSync('live-diagnostics-v3.json',JSON.stringify(result,null,2));
+            console.log(JSON.stringify(result,null,2));
+            await browser.close();
+          })().catch(e=>{fs.writeFileSync('live-diagnostics-v3-error.txt',String(e&&e.stack||e));console.error(e);process.exitCode=1});
+          JS
+          node diagnose-live.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-diagnostics-v3
+          path: |
+            live-diagnostics-v3.json
+            live-diagnostics-v3-error.txt
+            mobile-ru.png
+            mobile-en.png
+            mobile-vi.png
+          if-no-files-found: warn
