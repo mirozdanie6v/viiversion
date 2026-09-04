@@ -33,12 +33,65 @@ PATCH = r'''<style id="viiversion-home-visual-style">
   .viiv-static-art{width:min(100%,540px)}
 }
 @media(max-width:900px){
-  .viiv-system-visual{width:100%;margin-left:0;min-height:470px}
-  .viiv-static-art{width:min(94%,510px)}
+  .viiv-system-visual{width:100%;margin-left:0;min-height:440px}
+  .viiv-static-art{width:min(92%,490px)}
 }
-@media(max-width:680px){
-  .viiv-system-visual{min-height:360px}
-  .viiv-static-art{width:min(96%,420px)}
+
+/* Mobile: visual becomes the first element of the hero, above all hero copy. */
+@media(max-width:760px){
+  .viiv-mobile-hero-layout{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:0!important;
+  }
+  .viiv-mobile-art-col{
+    order:-10!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  .viiv-mobile-copy-col{
+    order:10!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+  .viiv-mobile-art-col > *{
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .viiv-system-visual{
+    width:100%!important;
+    min-height:250px!important;
+    margin:-18px auto -6px!important;
+    padding:0!important;
+    place-items:center!important;
+    overflow:visible!important;
+  }
+  .viiv-system-visual::before{
+    width:68%!important;
+    opacity:.78;
+  }
+  .viiv-static-art{
+    width:min(78vw,340px)!important;
+    max-width:340px!important;
+    margin:0 auto!important;
+  }
+}
+@media(max-width:480px){
+  .viiv-system-visual{min-height:220px!important;margin:-14px auto -8px!important}
+  .viiv-static-art{width:min(80vw,310px)!important;max-width:310px!important}
+}
+@media(max-width:390px){
+  .viiv-system-visual{min-height:205px!important;margin:-10px auto -10px!important}
+  .viiv-static-art{width:min(82vw,285px)!important;max-width:285px!important}
+}
+@media(max-width:340px){
+  .viiv-system-visual{min-height:190px!important}
+  .viiv-static-art{width:min(84vw,260px)!important;max-width:260px!important}
 }
 </style>
 <script id="viiversion-home-visual-patch">
@@ -132,8 +185,43 @@ PATCH = r'''<style id="viiversion-home-visual-style">
    return marker.parentElement;
  };
 
+ const findHeading=()=>document.querySelector('.viiv-hero-heading')||[...document.querySelectorAll('h1,h2,[role="heading"]')].find(el=>{
+   const t=norm(el.textContent);
+   return t.includes('Проектируем цифровую систему')||t.includes('We design the digital system')||t.includes('Thiết kế hệ thống số');
+ })||null;
+
+ const childUnder=(ancestor,node)=>{
+   let current=node;
+   while(current&&current.parentElement&&current.parentElement!==ancestor)current=current.parentElement;
+   return current&&current.parentElement===ancestor?current:null;
+ };
+
+ const wireMobileOrder=(card)=>{
+   const heading=findHeading();
+   if(!heading||!card)return;
+   let ancestor=heading.parentElement;
+   while(ancestor&&ancestor!==document.body){
+     if(ancestor.contains(card)){
+       const copyCol=childUnder(ancestor,heading);
+       const artCol=childUnder(ancestor,card);
+       if(copyCol&&artCol&&copyCol!==artCol){
+         ancestor.classList.add('viiv-mobile-hero-layout');
+         copyCol.classList.add('viiv-mobile-copy-col');
+         artCol.classList.add('viiv-mobile-art-col');
+         return;
+       }
+     }
+     ancestor=ancestor.parentElement;
+   }
+ };
+
  const apply=()=>{
-   if(document.querySelector('.viiv-system-visual'))return true;
+   if(document.querySelector('.viiv-system-visual')){
+     const visual=document.querySelector('.viiv-system-visual');
+     const card=visual.closest('.viiv-mobile-art-col')||visual.parentElement;
+     wireMobileOrder(card);
+     return true;
+   }
    const card=findCard();
    if(!card)return false;
    card.innerHTML=markup;
@@ -142,7 +230,8 @@ PATCH = r'''<style id="viiversion-home-visual-style">
    card.style.boxShadow='none';
    card.style.overflow='visible';
    card.style.padding='0';
-   card.style.minHeight='540px';
+   card.style.minHeight='0';
+   wireMobileOrder(card);
    return true;
  };
 
@@ -151,6 +240,7 @@ PATCH = r'''<style id="viiversion-home-visual-style">
    setTimeout(apply,80);
    setTimeout(apply,220);
    setTimeout(apply,500);
+   setTimeout(apply,900);
  };
 
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
@@ -160,11 +250,12 @@ PATCH = r'''<style id="viiversion-home-visual-style">
 for path in ROOT.rglob('*.html'):
     text = path.read_text(encoding='utf-8')
     marker = '<style id="viiversion-home-visual-style">'
-    if marker in text:
+    while marker in text:
         start = text.index(marker)
         script_end = text.find('</script>', start)
-        if script_end != -1:
-            text = text[:start] + text[script_end + len('</script>'):]
+        if script_end == -1:
+            break
+        text = text[:start] + text[script_end + len('</script>'):]
     if '</body>' in text:
         text = text.replace('</body>', PATCH + '\n</body>', 1)
     else:
