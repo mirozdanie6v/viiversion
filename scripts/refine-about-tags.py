@@ -9,10 +9,16 @@ PATCH = r'''<style id="viiversion-about-tags-v2-style">
   background:none!important;
 }
 .viiv-about-tags-live{
+  display:block!important;
+  margin-top:18px!important;
+}
+.viiv-about-tag-group-live{
   display:flex!important;
   flex-wrap:wrap!important;
   gap:8px!important;
-  margin-top:18px!important;
+}
+.viiv-about-tag-group-live + .viiv-about-tag-group-live{
+  margin-top:12px!important;
 }
 .viiv-about-tag-live{
   display:inline-flex!important;
@@ -29,8 +35,21 @@ PATCH = r'''<style id="viiversion-about-tags-v2-style">
   letter-spacing:.01em!important;
   white-space:nowrap!important;
 }
+.viiv-about-project-tag-live{
+  border-color:rgba(101,89,238,.58)!important;
+  background:rgba(101,89,238,.035)!important;
+  color:#5148c7!important;
+  box-shadow:inset 0 0 0 1px rgba(101,89,238,.04)!important;
+}
+.viiv-about-skill-tag-live{
+  border-color:rgba(17,18,23,.12)!important;
+  background:rgba(255,255,255,.52)!important;
+  color:#303139!important;
+}
 @media(max-width:640px){
-  .viiv-about-tags-live{gap:7px!important;margin-top:16px!important}
+  .viiv-about-tags-live{margin-top:16px!important}
+  .viiv-about-tag-group-live{gap:7px!important}
+  .viiv-about-tag-group-live + .viiv-about-tag-group-live{margin-top:10px!important}
   .viiv-about-tag-live{font-size:11px!important;min-height:28px!important;padding:6px 10px!important}
 }
 </style>
@@ -42,10 +61,17 @@ PATCH = r'''<style id="viiversion-about-tags-v2-style">
     ['16+ лет в digital и визуальных коммуникациях','16+ years in digital & visual communications','Hơn 16 năm trong digital & truyền thông thị giác'],
     ['Техническая и визуальная экспертиза в одной команде','Technical and visual expertise in one team','Chuyên môn kỹ thuật và thị giác trong một đội ngũ']
   ];
-  const TAGS=[
-    ['MegaFon','Tele2 Kazakhstan','Saudi Telecom Company','UCELL'],
-    ['Product Analytics','Information Architecture','Technical Scenarios','Product Design','UX/UI','User Flows','Motion Design','Graphic Design','Video','Content Design'],
-    ['Web Development','Telegram Mini Apps','Bots','CRM','AI Integration','Automation','API Integrations','Admin Panels','Dashboards','Data & Analytics','Payment Integrations','Cloud Deployment','Prototyping']
+
+  const PROJECTS=['MegaFon','Tele2 Kazakhstan','Saudi Telecom Company','UCELL'];
+  const TELECOM_SKILLS=[
+    'Telecom BSS','Revenue Assurance','Fraud Management','Oracle','PL/SQL','PostgreSQL','ETL','CDR Processing','ASN.1',
+    'Unix/Linux','Bash','REST API','JSON/XML','curl','Postman','SQL','Data Reconciliation','L2/L3 Support','System Integration','Jira','Confluence'
+  ];
+  const DIGITAL_SKILLS=[
+    'Product Analytics','Information Architecture','Technical Scenarios','Product Design','UX/UI','User Flows','Motion Design','Graphic Design','Video','Content Design'
+  ];
+  const TEAM_SKILLS=[
+    'Web Development','Telegram Mini Apps','Bots','CRM','AI Integration','Automation','API Integrations','Admin Panels','Dashboards','Data & Analytics','Payment Integrations','Cloud Deployment','Prototyping'
   ];
 
   const exact=(texts)=>[...document.querySelectorAll('body *')]
@@ -60,6 +86,8 @@ PATCH = r'''<style id="viiversion-about-tags-v2-style">
     }
     return title.parentElement;
   };
+
+  const tagsMarkup=(items,extraClass='')=>items.map(tag=>`<span class="viiv-about-tag-live ${extraClass}">${tag}</span>`).join('');
 
   const render=()=>{
     let found=0;
@@ -76,7 +104,16 @@ PATCH = r'''<style id="viiversion-about-tags-v2-style">
         box.className='viiv-about-tags-live';
         card.appendChild(box);
       }
-      box.innerHTML=TAGS[i].map(tag=>`<span class="viiv-about-tag-live">${tag}</span>`).join('');
+
+      if(i===0){
+        box.innerHTML=`
+          <div class="viiv-about-tag-group-live viiv-about-projects-live">${tagsMarkup(PROJECTS,'viiv-about-project-tag-live')}</div>
+          <div class="viiv-about-tag-group-live viiv-about-skills-live">${tagsMarkup(TELECOM_SKILLS,'viiv-about-skill-tag-live')}</div>`;
+      } else if(i===1){
+        box.innerHTML=`<div class="viiv-about-tag-group-live">${tagsMarkup(DIGITAL_SKILLS,'viiv-about-skill-tag-live')}</div>`;
+      } else {
+        box.innerHTML=`<div class="viiv-about-tag-group-live">${tagsMarkup(TEAM_SKILLS,'viiv-about-skill-tag-live')}</div>`;
+      }
     });
     return found>0;
   };
