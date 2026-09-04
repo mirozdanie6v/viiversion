@@ -28,54 +28,93 @@ for path in ROOT.rglob('*'):
 
 PATCH = r'''<style id="viiversion-about-live-style">
 :root{--viiv-about-green:#0b6f5b;--viiv-about-violet:#6559ee}
-.viiv-about-top-live{display:block!important;width:100%!important;max-width:none!important}
-.viiv-about-heading-live{width:100%!important;max-width:none!important;margin:0!important;font-size:clamp(30px,2.3vw,40px)!important;line-height:1.04!important;letter-spacing:-.045em!important;font-weight:800!important;color:#111217!important}
-.viiv-about-brand-live{display:inline!important;font-size:1.16em!important;line-height:inherit!important;letter-spacing:-.055em!important;font-weight:850!important;background:linear-gradient(90deg,#5f5cf6 0%,#6d4fe6 58%,#7b57ef 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent}
-.viiv-about-copy-live{display:block!important;width:100%!important;max-width:none!important;margin:30px 0 0!important;padding:0!important;font-size:clamp(18px,1.35vw,22px)!important;line-height:1.5!important;color:#62636d!important}
-.viiv-about-card-live{border:1px solid rgba(30,31,41,.11)!important;border-radius:24px!important;background:rgba(255,255,255,.20)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.74)!important;padding-top:28px!important}
-.viiv-about-card-title-live{color:var(--viiv-about-green)!important;font-weight:800!important;letter-spacing:-.035em!important;line-height:1.08!important}
+.viiv-about-layout-live{display:block!important;width:100%!important;max-width:none!important;min-width:0!important}
+.viiv-about-heading-wrap-live{width:100%!important;max-width:none!important;min-width:0!important}
+.viiv-about-heading-live{width:100%!important;max-width:none!important;margin:0!important;font-size:clamp(27px,2.35vw,40px)!important;line-height:1.05!important;letter-spacing:-.045em!important;font-weight:800!important;color:#111217!important;text-wrap:balance}
+.viiv-about-brand-live{display:inline!important;font-size:1.14em!important;line-height:inherit!important;letter-spacing:-.055em!important;font-weight:850!important;background:linear-gradient(90deg,#5f5cf6 0%,#6d4fe6 58%,#7b57ef 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent}
+.viiv-about-copy-live{display:block!important;width:100%!important;max-width:none!important;margin:30px 0 0!important;padding:0!important;font-size:clamp(18px,1.32vw,22px)!important;line-height:1.5!important;color:#62636d!important}
+.viiv-about-card-live{min-width:0!important;border:1px solid rgba(30,31,41,.11)!important;border-radius:24px!important;background:rgba(255,255,255,.20)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.74)!important;padding-top:28px!important}
+.viiv-about-card-title-live{color:var(--viiv-about-green)!important;font-weight:800!important;letter-spacing:-.035em!important;line-height:1.08!important;overflow-wrap:anywhere}
 .viiv-about-card-live::before{content:'';display:block;width:42px;height:3px;border-radius:999px;margin:0 0 18px 0;background:var(--viiv-about-green);opacity:.92}
-@media(max-width:1180px){.viiv-about-heading-live{font-size:clamp(29px,2.7vw,37px)!important}.viiv-about-copy-live{font-size:19px!important}}
-@media(max-width:900px){.viiv-about-heading-live{font-size:clamp(29px,4.4vw,36px)!important;line-height:1.05!important}.viiv-about-copy-live{margin-top:24px!important;font-size:18px!important}}
-@media(max-width:640px){.viiv-about-heading-live{font-size:27px!important;line-height:1.07!important;letter-spacing:-.035em!important}.viiv-about-brand-live{font-size:1.08em!important}.viiv-about-copy-live{margin-top:20px!important;font-size:17px!important;line-height:1.48!important}.viiv-about-card-live{border-radius:20px!important;padding-top:24px!important}.viiv-about-card-title-live{font-size:24px!important}}
-@media(max-width:390px){.viiv-about-heading-live{font-size:24px!important}.viiv-about-copy-live{font-size:16px!important}.viiv-about-card-title-live{font-size:22px!important}}
+@media(max-width:1180px){.viiv-about-heading-live{font-size:clamp(28px,3vw,36px)!important}.viiv-about-copy-live{font-size:19px!important}}
+@media(max-width:900px){.viiv-about-heading-live{font-size:clamp(27px,4.5vw,35px)!important;line-height:1.07!important}.viiv-about-copy-live{margin-top:24px!important;font-size:18px!important}.viiv-about-card-live{border-radius:22px!important}}
+@media(max-width:640px){.viiv-about-heading-live{font-size:26px!important;line-height:1.08!important;letter-spacing:-.035em!important}.viiv-about-brand-live{font-size:1.07em!important}.viiv-about-copy-live{margin-top:20px!important;font-size:17px!important;line-height:1.48!important}.viiv-about-card-live{border-radius:20px!important;padding-top:24px!important}.viiv-about-card-title-live{font-size:23px!important}}
+@media(max-width:390px){.viiv-about-heading-live{font-size:23px!important}.viiv-about-copy-live{font-size:16px!important}.viiv-about-card-title-live{font-size:21px!important}}
 </style>
 <script id="viiversion-about-live-patch">
 (()=>{
+  const I18N={
+    ru:{kicker:'КТО МЫ',rest:'команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.',copy:'Мы создаём интеграционные связки между отдельными системами бизнеса, цифровые контуры между офлайн- и онлайн-процессами, автоматизируем ручные и повторяющиеся операции, разрабатываем внутренние инструменты, клиентские приложения и интерфейсы для команды.',cards:[['20+ лет в IT и telecom','Разработка и внедрение сложных систем для крупных российских и международных компаний, включая телеком-операторов и enterprise-проекты.'],['16+ лет в digital и визуальных коммуникациях','Дизайн, видео, motion, интерфейсы, контент и визуальная подача цифровых продуктов — от идеи до готового пользовательского опыта.'],['Техническая и визуальная экспертиза в одной команде','Разработка, архитектура, UX/UI и визуальная коммуникация соединены в одном процессе — от бизнес-задачи до готового цифрового продукта.']]},
+    en:{kicker:'WHO WE ARE',rest:'a development team with experience in complex IT systems, digital products and visual communications.',copy:'We build integration layers between business systems, connect offline and online processes, automate manual and repetitive operations, and develop internal tools, customer applications and interfaces for teams.',cards:[['20+ years in IT & telecom','Development and implementation of complex systems for major Russian and international companies, including telecom operators and enterprise projects.'],['16+ years in digital & visual communications','Design, video, motion, interfaces, content and visual presentation of digital products — from idea to a complete user experience.'],['Technical and visual expertise in one team','Development, architecture, UX/UI and visual communication are combined in one process — from a business task to a finished digital product.']]},
+    vi:{kicker:'CHÚNG TÔI LÀ AI',rest:'đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.',copy:'Chúng tôi xây dựng các lớp tích hợp giữa các hệ thống của doanh nghiệp, kết nối quy trình offline và online, tự động hóa các thao tác thủ công và lặp lại, đồng thời phát triển công cụ nội bộ, ứng dụng khách hàng và giao diện cho đội ngũ.',cards:[['Hơn 20 năm trong IT & telecom','Phát triển và triển khai các hệ thống phức tạp cho các công ty lớn tại Nga và quốc tế, bao gồm nhà mạng viễn thông và các dự án enterprise.'],['Hơn 16 năm trong digital & truyền thông thị giác','Thiết kế, video, motion, giao diện, nội dung và trình bày trực quan cho sản phẩm số — từ ý tưởng đến trải nghiệm người dùng hoàn chỉnh.'],['Chuyên môn kỹ thuật và thị giác trong một đội ngũ','Phát triển, kiến trúc, UX/UI và truyền thông thị giác được kết nối trong một quy trình — từ bài toán kinh doanh đến sản phẩm số hoàn chỉnh.']]}
+  };
   const norm=v=>(v||'').replace(/\s+/g,' ').trim();
-  const HEADING='VIIVERSION — команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.';
-  const COPY='Мы создаём интеграционные связки между отдельными системами бизнеса, цифровые контуры между офлайн- и онлайн-процессами, автоматизируем ручные и повторяющиеся операции, разрабатываем внутренние инструменты, клиентские приложения и интерфейсы для команды.';
-  const TITLES=['20+ лет в IT и telecom','16+ лет в digital и визуальных коммуникациях','Техническая и визуальная экспертиза в одной команде'];
-  const exact=text=>[...document.querySelectorAll('body *')].filter(el=>norm(el.textContent)===text).sort((a,b)=>a.children.length-b.children.length)[0]||null;
-  const findCard=titleEl=>{let node=titleEl;for(let i=0;i<6&&node.parentElement;i++,node=node.parentElement){const r=node.getBoundingClientRect();const t=norm(node.textContent);if(r.width>240&&r.height>170&&r.width<700&&t.includes(titleEl.textContent.trim()))return node}return titleEl.parentElement};
-  const findTop=(heading,copy,firstCard)=>{let node=heading.parentElement;while(node&&node!==document.body){if(node.contains(copy)&&(!firstCard||!node.contains(firstCard)))return node;node=node.parentElement}return null};
-  const apply=()=>{
-    const heading=exact(HEADING),copy=exact(COPY),firstCard=exact(TITLES[0]);
+  const allHeadings=[
+    'VIIVERSION — команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.',
+    'VIIVERSION — a development team with experience in complex IT systems, digital products and visual communications.',
+    'VIIVERSION — đội ngũ phát triển có kinh nghiệm với các hệ thống IT phức tạp, sản phẩm số và truyền thông thị giác.'
+  ];
+  const allCopies=Object.values(I18N).map(v=>v.copy);
+  const allTitles=Object.values(I18N).flatMap(v=>v.cards.map(c=>c[0]));
+  let refs=null;
+
+  const exact=(texts)=>[...document.querySelectorAll('body *')].filter(el=>texts.includes(norm(el.textContent))).sort((a,b)=>a.children.length-b.children.length)[0]||null;
+  const langFromTarget=t=>{const el=t&&t.closest?t.closest('button,a,[role="button"]'):null;if(!el)return null;const v=norm(el.textContent).toUpperCase();return v==='RU'?'ru':v==='EN'?'en':v==='VI'?'vi':null};
+  const currentLang=()=>{const stored=localStorage.getItem('viiversion-lang')||localStorage.getItem('viiversion-hero-lang');if(I18N[stored])return stored;const dl=(document.documentElement.lang||'').toLowerCase();return dl.startsWith('en')?'en':dl.startsWith('vi')?'vi':'ru'};
+
+  const findCard=(title)=>{let n=title;for(let i=0;i<7&&n.parentElement;i++,n=n.parentElement){const r=n.getBoundingClientRect();if(r.width>220&&r.height>150&&r.width<760)return n}return title.parentElement};
+  const lowestCommon=(a,b)=>{const aa=[];for(let n=a;n;n=n.parentElement)aa.push(n);for(let n=b;n;n=n.parentElement)if(aa.includes(n))return n;return null};
+
+  const init=()=>{
+    if(refs)return true;
+    const heading=exact(allHeadings);
+    const copy=exact(allCopies);
     if(!heading||!copy)return false;
-    heading.classList.add('viiv-about-heading-live');
-    heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION —</span> <span>команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.</span>';
-    copy.classList.add('viiv-about-copy-live');
-    const oldDiagram=document.querySelector('.viiv-about-diagram-live');if(oldDiagram)oldDiagram.remove();
-    const top=findTop(heading,copy,firstCard);
-    if(top){top.classList.add('viiv-about-top-live');top.replaceChildren(heading,copy)}
-    TITLES.forEach(text=>{const title=exact(text);if(!title)return;title.classList.add('viiv-about-card-title-live');const card=findCard(title);if(card)card.classList.add('viiv-about-card-live')});
+    const cardTitles=[];const cards=[];const cardBodies=[];
+    for(let i=0;i<3;i++){
+      const candidates=Object.values(I18N).map(v=>v.cards[i][0]);
+      const title=exact(candidates);
+      if(!title)continue;
+      const card=findCard(title);
+      cardTitles[i]=title;cards[i]=card;
+      cardBodies[i]=[...card.querySelectorAll('p,div,span')].filter(el=>el!==title&&el.children.length===0&&norm(el.textContent).length>30).sort((a,b)=>norm(b.textContent).length-norm(a.textContent).length)[0]||null;
+    }
+    const top=lowestCommon(heading,copy);
+    if(top){top.classList.add('viiv-about-layout-live');heading.parentElement&&heading.parentElement.classList.add('viiv-about-heading-wrap-live');heading.insertAdjacentElement('afterend',copy)}
+    heading.classList.add('viiv-about-heading-live');copy.classList.add('viiv-about-copy-live');
+    cards.forEach(c=>c&&c.classList.add('viiv-about-card-live'));cardTitles.forEach(t=>t&&t.classList.add('viiv-about-card-title-live'));
+    const kicker=[...document.querySelectorAll('body *')].find(el=>['КТО МЫ','WHO WE ARE','CHÚNG TÔI LÀ AI'].includes(norm(el.textContent)))||null;
+    refs={heading,copy,cardTitles,cardBodies,kicker};return true;
+  };
+
+  const render=(lang)=>{
+    if(!init())return false;
+    const c=I18N[lang]||I18N.ru;
+    refs.heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION —</span> <span>'+c.rest+'</span>';
+    refs.copy.textContent=c.copy;
+    if(refs.kicker)refs.kicker.textContent=c.kicker;
+    c.cards.forEach((card,i)=>{if(refs.cardTitles[i])refs.cardTitles[i].textContent=card[0];if(refs.cardBodies[i])refs.cardBodies[i].textContent=card[1]});
     return true;
   };
-  const start=()=>{if(apply())return;const observer=new MutationObserver(()=>{if(apply())observer.disconnect()});observer.observe(document.body,{subtree:true,childList:true,characterData:true});setTimeout(()=>{apply();observer.disconnect()},5000)};
+
+  const setLang=(lang)=>{if(!I18N[lang])return;localStorage.setItem('viiversion-lang',lang);localStorage.setItem('viiversion-hero-lang',lang);render(lang)};
+  document.addEventListener('click',e=>{const lang=langFromTarget(e.target);if(lang)setTimeout(()=>setLang(lang),0)},true);
+  document.addEventListener('viiversion:languagechange',e=>{if(e.detail&&e.detail.lang)setLang(e.detail.lang)});
+  const start=()=>{if(render(currentLang()))return;const o=new MutationObserver(()=>{if(render(currentLang()))o.disconnect()});o.observe(document.body,{subtree:true,childList:true,characterData:true});setTimeout(()=>o.disconnect(),6000)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>'''
 
 for path in ROOT.rglob('*.html'):
     text = path.read_text(encoding='utf-8')
-    marker = '<style id="viiversion-about-live-style">'
-    if marker in text:
-        start = text.index(marker)
-        script_end = text.find('</script>', start)
-        if script_end != -1:
-            text = text[:start] + text[script_end + len('</script>'):]
+    for marker in ('<style id="viiversion-about-redesign-style">','<style id="viiversion-about-live-style">'):
+        while marker in text:
+            start=text.index(marker)
+            script_end=text.find('</script>',start)
+            if script_end==-1: break
+            text=text[:start]+text[script_end+len('</script>'):]
     if '</body>' in text:
-        text = text.replace('</body>', PATCH + '\n</body>', 1)
+        text=text.replace('</body>',PATCH+'\n</body>',1)
     else:
-        text += '\n' + PATCH + '\n'
-    path.write_text(text, encoding='utf-8')
+        text+='\n'+PATCH+'\n'
+    path.write_text(text,encoding='utf-8')
