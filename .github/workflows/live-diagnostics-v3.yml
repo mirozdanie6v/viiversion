@@ -18,7 +18,7 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Verify live menu and sticky mobile header
+      - name: Verify live mobile menu closes after selection
         env:
           TARGET_URL: https://viiversion.com/
         run: |
@@ -33,91 +33,96 @@ jobs:
             await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
 
             let deployed=false;
-            for(let i=0;i<18;i++){
+            for(let i=0;i<24;i++){
               await page.goto(`${target}?qa=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:120000});
               await page.waitForTimeout(1200);
-              deployed=await page.evaluate(()=>!!document.querySelector('#viiversion-before-menu-sticky-style'));
+              deployed=await page.evaluate(()=>!!document.querySelector('#viiversion-mobile-menu-close-script'));
               if(deployed)break;
               await page.waitForTimeout(5000);
             }
-            if(!deployed)throw new Error('Latest Before-development/sticky patch is not live yet');
+            if(!deployed)throw new Error('Latest mobile-menu-close patch is not live yet');
 
-            const norm=v=>(v||'').replace(/\s+/g,' ').trim();
-            const state=async label=>page.evaluate(label=>{
-              const norm=v=>(v||'').replace(/\s+/g,' ').trim();
-              const section=document.querySelector('#before,[data-viiv-before-development="true"]');
+            const before=page.locator('[data-viiv-before-menu="true"]').first();
+            if(!(await before.count()))throw new Error('Before-development menu item is missing');
+
+            const buttons=page.locator('.viiv-mobile-sticky-header button, header button');
+            const count=await buttons.count();
+            let toggleIndex=-1;
+            for(let i=0;i<count;i++){
+              const b=buttons.nth(i);
+              if(!(await b.isVisible()))continue;
+              const txt=((await b.innerText().catch(()=>''))||'').trim().toUpperCase();
+              if(['RU','EN','VI'].includes(txt))continue;
+              await b.click();
+              await page.waitForTimeout(220);
+              if(await before.isVisible()){
+                toggleIndex=i;
+                break;
+              }
+              await b.click().catch(()=>{});
+              await page.waitForTimeout(120);
+            }
+            if(toggleIndex<0)throw new Error('Could not discover the mobile menu toggle or open the menu');
+
+            const openSnapshot=await page.evaluate(()=>{
               const link=document.querySelector('[data-viiv-before-menu="true"]');
-              const header=document.querySelector('.viiv-mobile-sticky-header');
-              const hs=header?getComputedStyle(header):null;
-              const hr=header?header.getBoundingClientRect():null;
-              const sr=section?section.getBoundingClientRect():null;
+              const toggle=[...document.querySelectorAll('.viiv-mobile-sticky-header button,header button')].find(b=>{
+                const t=(b.textContent||'').trim().toUpperCase();
+                return !['RU','EN','VI'].includes(t)&&getComputedStyle(b).display!=='none';
+              });
               return {
-                label,
-                sectionFound:!!section,
-                sectionHeading:norm((section&&section.querySelector('#beforeH,h2,h3,[role="heading"]')||{}).textContent),
-                menuFound:!!link,
-                menuLabel:link?norm(link.textContent):'',
-                menuHref:link?link.getAttribute('href'):'',
-                headerFound:!!header,
-                headerPosition:hs?hs.position:'',
-                headerTop:hr?Math.round(hr.top):null,
-                headerBottom:hr?Math.round(hr.bottom):null,
-                headerOpacity:hs?hs.opacity:'',
-                headerVisibility:hs?hs.visibility:'',
-                sectionTop:sr?Math.round(sr.top):null,
+                linkVisible:!!link&&getComputedStyle(link).display!=='none'&&link.getBoundingClientRect().height>0,
+                toggleExpanded:toggle?toggle.getAttribute('aria-expanded'):null,
                 scrollY:Math.round(window.scrollY)
               };
-            },label);
+            });
+            await page.screenshot({path:'mobile-menu-open.png',fullPage:false});
 
-            const ruTop=await state('ru-top');
-            await page.screenshot({path:'mobile-before-top.png',fullPage:false});
+            await before.click();
+            await page.waitForTimeout(500);
+            const afterSelection=await page.evaluate(()=>{
+              const link=document.querySelector('[data-viiv-before-menu="true"]');
+              const visible=el=>{if(!el)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)>0&&r.width>0&&r.height>0};
+              const header=document.querySelector('.viiv-mobile-sticky-header,header');
+              const buttons=header?[...header.querySelectorAll('button,[role="button"]')]:[];
+              const toggle=buttons.filter(b=>{
+                const t=(b.textContent||'').trim().toUpperCase();
+                return !['RU','EN','VI'].includes(t)&&visible(b);
+              })[0]||null;
+              return {
+                linkVisible:visible(link),
+                toggleExpanded:toggle?toggle.getAttribute('aria-expanded'):null,
+                hash:location.hash,
+                scrollY:Math.round(window.scrollY)
+              };
+            });
+            await page.screenshot({path:'mobile-menu-after-selection.png',fullPage:false});
 
-            await page.evaluate(()=>window.scrollTo(0,Math.max(900,document.body.scrollHeight*.48)));
-            await page.waitForTimeout(900);
-            const ruScrolled=await state('ru-scrolled');
-            await page.screenshot({path:'mobile-before-scrolled.png',fullPage:false});
+            // Reopen and verify Escape also dismisses the menu.
+            const toggle=buttons.nth(toggleIndex);
+            await toggle.click();
+            await page.waitForTimeout(220);
+            const reopened=await before.isVisible();
+            if(reopened){
+              await page.keyboard.press('Escape');
+              await page.waitForTimeout(220);
+            }
+            const afterEscape=await before.isVisible();
 
-            const beforeLink=page.locator('[data-viiv-before-menu="true"]').first();
-            await beforeLink.click();
-            await page.waitForTimeout(1200);
-            const ruAnchored=await state('ru-anchored');
-
-            const clickLang=async lang=>{
-              const buttons=page.locator('.langs button');
-              const n=await buttons.count();
-              for(let i=0;i<n;i++){
-                const b=buttons.nth(i);
-                if((await b.innerText()).trim().toUpperCase()===lang){
-                  await b.click();
-                  await page.waitForTimeout(900);
-                  return true;
-                }
-              }
-              return false;
-            };
-
-            const enClicked=await clickLang('EN');
-            const en=await state('en');
-            const viClicked=await clickLang('VI');
-            const vi=await state('vi');
-
-            const result={target,deployed,ruTop,ruScrolled,ruAnchored,enClicked,en,viClicked,vi};
-            fs.writeFileSync('before-menu-sticky-live.json',JSON.stringify(result,null,2));
+            const result={target,deployed,toggleIndex,openSnapshot,afterSelection,reopened,afterEscape};
+            fs.writeFileSync('mobile-menu-close-live.json',JSON.stringify(result,null,2));
             console.log(JSON.stringify(result,null,2));
 
             const failures=[];
-            if(!ruTop.sectionFound)failures.push('before section not found');
-            if(!ruTop.menuFound||ruTop.menuLabel!=='До разработки'||ruTop.menuHref!=='#before')failures.push('RU Before-development menu item incorrect');
-            if(!ruTop.headerFound||ruTop.headerPosition!=='fixed'||Math.abs(ruTop.headerTop)>2)failures.push('mobile header is not fixed at top initially');
-            if(!ruScrolled.headerFound||ruScrolled.headerPosition!=='fixed'||Math.abs(ruScrolled.headerTop)>2||ruScrolled.headerVisibility==='hidden'||Number(ruScrolled.headerOpacity)<0.9)failures.push('mobile header disappears after scrolling');
-            if(!ruAnchored.sectionFound||ruAnchored.sectionTop===null||ruAnchored.sectionTop<ruAnchored.headerBottom-4||ruAnchored.sectionTop>ruAnchored.headerBottom+80)failures.push('Before-development anchor offset incorrect');
-            if(!enClicked||en.menuLabel!=='Before development')failures.push('EN menu label incorrect');
-            if(!viClicked||vi.menuLabel!=='Trước phát triển')failures.push('VI menu label incorrect');
+            if(!openSnapshot.linkVisible)failures.push('menu did not open');
+            if(afterSelection.linkVisible)failures.push('menu stays open after selecting a navigation item');
+            if(afterSelection.hash!=='#before')failures.push('navigation item did not navigate to #before');
+            if(reopened&&afterEscape)failures.push('menu stays open after Escape');
             if(failures.length)throw new Error(failures.join('; '));
 
             await browser.close();
           })().catch(e=>{
-            fs.writeFileSync('before-menu-sticky-live-error.txt',String(e&&e.stack||e));
+            fs.writeFileSync('mobile-menu-close-live-error.txt',String(e&&e.stack||e));
             console.error(e);
             process.exitCode=1;
           });
@@ -126,10 +131,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: before-menu-sticky-live
+          name: mobile-menu-close-live
           path: |
-            before-menu-sticky-live.json
-            before-menu-sticky-live-error.txt
-            mobile-before-top.png
-            mobile-before-scrolled.png
+            mobile-menu-close-live.json
+            mobile-menu-close-live-error.txt
+            mobile-menu-open.png
+            mobile-menu-after-selection.png
           if-no-files-found: warn
