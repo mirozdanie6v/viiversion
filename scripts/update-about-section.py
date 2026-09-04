@@ -26,100 +26,174 @@ for path in ROOT.rglob('*'):
     if updated != text:
         path.write_text(updated, encoding='utf-8')
 
-PATCH = r'''<style id="viiversion-about-redesign-style">
-.viiv-about-shell{max-width:1240px;margin:0 auto;padding:88px 28px 96px;color:#111217}
-.viiv-about-kicker{display:flex;align-items:center;gap:12px;margin-bottom:30px;font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6559ee}
-.viiv-about-kicker:before{content:'';width:42px;height:2px;border-radius:999px;background:linear-gradient(90deg,#6559ee,#8b6cf4)}
-.viiv-about-top{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(340px,.92fr);gap:70px;align-items:start}
-.viiv-about-title{margin:0;max-width:720px;line-height:.98;letter-spacing:-.05em;color:#111217}
-.viiv-about-brand{display:block;margin-bottom:12px;font-size:clamp(52px,5vw,78px);font-weight:850;line-height:.92;letter-spacing:-.06em;background:linear-gradient(90deg,#5f5cf6 0%,#6d4fe6 58%,#7b57ef 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
-.viiv-about-rest{display:block;font-size:clamp(31px,2.75vw,46px);font-weight:800;line-height:1.02;letter-spacing:-.045em}
-.viiv-about-copy{padding-top:56px;font-size:clamp(19px,1.45vw,24px);line-height:1.48;color:#5f616b;max-width:560px}
-.viiv-about-diagram{margin-top:42px;width:min(100%,590px);height:170px;position:relative}
-.viiv-about-diagram svg{width:100%;height:100%;display:block;overflow:visible}
-.viiv-about-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:46px}
-.viiv-about-card{min-height:275px;padding:30px 28px 28px;border:1px solid rgba(31,33,45,.11);border-radius:24px;background:rgba(255,255,255,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.72)}
-.viiv-about-card-head{display:flex;align-items:center;gap:15px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid rgba(31,33,45,.08)}
-.viiv-about-icon{width:48px;height:48px;flex:0 0 48px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,rgba(99,88,246,.10),rgba(100,191,232,.10));border:1px solid rgba(99,88,246,.13);color:#6559ee}
-.viiv-about-icon svg{width:23px;height:23px}
-.viiv-about-card h3{margin:0;font-size:clamp(22px,1.7vw,30px);line-height:1.08;letter-spacing:-.035em;font-weight:800;color:#6559ee}
-.viiv-about-card p{margin:0;font-size:17px;line-height:1.48;color:#5f616b}
-@media(max-width:1000px){.viiv-about-top{grid-template-columns:1fr;gap:18px}.viiv-about-copy{padding-top:0;max-width:760px}.viiv-about-diagram{margin-top:30px}.viiv-about-cards{grid-template-columns:1fr}.viiv-about-card{min-height:0}.viiv-about-shell{padding-top:72px}}
-@media(max-width:640px){.viiv-about-shell{padding:64px 20px 72px}.viiv-about-brand{font-size:48px}.viiv-about-rest{font-size:32px;line-height:1.04}.viiv-about-copy{font-size:18px}.viiv-about-diagram{height:145px;margin-top:24px}.viiv-about-card{padding:24px 22px;border-radius:20px}.viiv-about-card h3{font-size:24px}}
+PATCH = r'''<style id="viiversion-about-live-style">
+.viiv-about-heading-live{
+  max-width:760px!important;
+  margin:0!important;
+  font-size:clamp(31px,2.6vw,45px)!important;
+  line-height:1.03!important;
+  letter-spacing:-.045em!important;
+  font-weight:800!important;
+  color:#111217!important;
+}
+.viiv-about-heading-live .viiv-about-brand-live{
+  display:block;
+  margin-bottom:12px;
+  font-size:clamp(54px,5vw,78px);
+  line-height:.92;
+  letter-spacing:-.06em;
+  font-weight:850;
+  background:linear-gradient(90deg,#5f5cf6 0%,#6d4fe6 58%,#7b57ef 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+.viiv-about-copy-live{
+  max-width:570px!important;
+  font-size:clamp(18px,1.35vw,22px)!important;
+  line-height:1.48!important;
+  color:#62636d!important;
+}
+.viiv-about-diagram-live{
+  width:min(100%,590px);
+  height:172px;
+  margin-top:32px;
+  margin-bottom:10px;
+}
+.viiv-about-diagram-live svg{display:block;width:100%;height:100%;overflow:visible}
+.viiv-about-card-live{
+  border:1px solid rgba(30,31,41,.11)!important;
+  border-radius:24px!important;
+  background:rgba(255,255,255,.20)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.74)!important;
+  padding-top:28px!important;
+}
+.viiv-about-card-title-live{
+  color:#6559ee!important;
+  font-weight:800!important;
+  letter-spacing:-.035em!important;
+  line-height:1.08!important;
+}
+.viiv-about-card-live::before{
+  content:'';
+  display:block;
+  width:42px;
+  height:3px;
+  border-radius:999px;
+  margin:0 0 18px 0;
+  background:linear-gradient(90deg,#6559ee,#8d73f5);
+  opacity:.9;
+}
+@media(max-width:900px){
+  .viiv-about-heading-live{font-size:clamp(30px,5vw,42px)!important}
+  .viiv-about-heading-live .viiv-about-brand-live{font-size:clamp(48px,8vw,68px)}
+  .viiv-about-diagram-live{height:150px;margin-top:26px}
+}
+@media(max-width:640px){
+  .viiv-about-heading-live{font-size:29px!important;line-height:1.05!important}
+  .viiv-about-heading-live .viiv-about-brand-live{font-size:46px}
+  .viiv-about-copy-live{font-size:17px!important}
+  .viiv-about-diagram-live{height:135px}
+}
 </style>
-<script id="viiversion-about-redesign-patch">
+<script id="viiversion-about-live-patch">
 (()=>{
- const norm=v=>(v||'').replace(/\s+/g,' ').trim();
- const findRoot=()=>{
-   const marker=[...document.querySelectorAll('body *')].find(el=>norm(el.textContent)==='КТО МЫ');
-   if(!marker)return null;
-   const section=marker.closest('section');
-   if(section)return section;
-   let node=marker;
-   for(let i=0;i<8&&node.parentElement;i++,node=node.parentElement){
-     const t=norm(node.textContent);
-     if(t.includes('20+ лет')&&t.includes('16+ лет'))return node;
-   }
-   return marker.parentElement;
- };
- const icon1='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10h6v11M10 21V4h6v17M16 21v-8h4v8M2 21h20"/></svg>';
- const icon2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="12" height="12" rx="2"/><circle cx="16.5" cy="15.5" r="4.5"/></svg>';
- const icon3='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18v-2a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v2"/><circle cx="12" cy="7" r="3"/><path d="M3 18v-1a3 3 0 0 1 3-3M21 18v-1a3 3 0 0 0-3-3"/></svg>';
- const markup=`<div class="viiv-about-shell">
-   <div class="viiv-about-kicker">КТО МЫ</div>
-   <div class="viiv-about-top">
-     <div>
-       <h2 class="viiv-about-title"><span class="viiv-about-brand">VIIVERSION</span><span class="viiv-about-rest">команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.</span></h2>
-       <div class="viiv-about-diagram" aria-hidden="true">
-         <svg viewBox="0 0 590 170">
-           <defs>
-             <linearGradient id="viivLine" x1="0" x2="1"><stop offset="0" stop-color="#9aa0ad" stop-opacity=".42"/><stop offset=".52" stop-color="#6559ee" stop-opacity=".72"/><stop offset="1" stop-color="#79c7ee" stop-opacity=".52"/></linearGradient>
-             <linearGradient id="viivCore" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6559ee"/><stop offset="1" stop-color="#7c63f2"/></linearGradient>
-           </defs>
-           <g fill="none" stroke="url(#viivLine)" stroke-width="1.4">
-             <path d="M62 31 C150 31 163 72 248 72"/><path d="M62 85 C153 85 171 85 248 85"/><path d="M62 139 C150 139 163 98 248 98"/>
-             <path d="M342 72 C430 72 438 31 528 31"/><path d="M342 85 C430 85 440 85 528 85"/><path d="M342 98 C430 98 438 139 528 139"/>
-           </g>
-           <g fill="#f8f7f2" stroke="#d9d8dd">
-             <rect x="13" y="8" width="54" height="46" rx="13"/><rect x="13" y="62" width="54" height="46" rx="13"/><rect x="13" y="116" width="54" height="46" rx="13"/>
-             <rect x="523" y="8" width="54" height="46" rx="13"/><rect x="523" y="62" width="54" height="46" rx="13"/><rect x="523" y="116" width="54" height="46" rx="13"/>
-             <rect x="248" y="47" width="94" height="76" rx="19" fill="#fbfaf7"/>
-           </g>
-           <g stroke="#6559ee" stroke-width="2" fill="none" stroke-linecap="round">
-             <ellipse cx="40" cy="24" rx="10" ry="4"/><path d="M30 24v14c0 2 4 4 10 4s10-2 10-4V24M30 31c0 2 4 4 10 4s10-2 10-4"/>
-             <path d="M29 84c3-7 8-10 13-6 7-6 16 0 16 7 0 5-4 8-9 8H31c-5 0-8-4-8-8 0-4 3-7 6-7"/>
-             <rect x="27" y="126" width="26" height="20" rx="3"/><path d="M31 131h18M31 137h18"/>
-             <path d="M535 39l7-7 6 6 10-12"/><path d="M535 44h26"/>
-             <circle cx="550" cy="79" r="5"/><path d="M541 96v-2a8 8 0 0 1 18 0v2M538 92v-1a5 5 0 0 1 5-5M562 92v-1a5 5 0 0 0-5-5"/>
-             <path d="M539 139l7-7M539 132l7 7M554 132l7 7M554 139l7-7"/>
-           </g>
-           <g fill="url(#viivCore)"><path d="M276 70h13l8 20 8-20h13l-20 34h-3z"/></g>
-           <circle cx="248" cy="72" r="3" fill="#6559ee"/><circle cx="248" cy="85" r="3" fill="#6559ee"/><circle cx="248" cy="98" r="3" fill="#6559ee"/><circle cx="342" cy="72" r="3" fill="#6559ee"/><circle cx="342" cy="85" r="3" fill="#6559ee"/><circle cx="342" cy="98" r="3" fill="#6559ee"/>
-         </svg>
-       </div>
-     </div>
-     <div class="viiv-about-copy">Мы создаём интеграционные связки между отдельными системами бизнеса, цифровые контуры между офлайн- и онлайн-процессами, автоматизируем ручные и повторяющиеся операции, разрабатываем внутренние инструменты, клиентские приложения и интерфейсы для команды.</div>
-   </div>
-   <div class="viiv-about-cards">
-     <article class="viiv-about-card"><div class="viiv-about-card-head"><span class="viiv-about-icon">${icon1}</span><h3>20+ лет в IT и telecom</h3></div><p>Разработка и внедрение сложных систем для крупных российских и международных компаний, включая телеком-операторов и enterprise-проекты.</p></article>
-     <article class="viiv-about-card"><div class="viiv-about-card-head"><span class="viiv-about-icon">${icon2}</span><h3>16+ лет в digital и визуальных коммуникациях</h3></div><p>Дизайн, видео, motion, интерфейсы, контент и визуальная подача цифровых продуктов — от идеи до готового пользовательского опыта.</p></article>
-     <article class="viiv-about-card"><div class="viiv-about-card-head"><span class="viiv-about-icon">${icon3}</span><h3>Техническая и визуальная экспертиза в одной команде</h3></div><p>Разработка, архитектура, UX/UI и визуальная коммуникация соединены в одном процессе — от бизнес-задачи до готового цифрового продукта.</p></article>
-   </div>
- </div>`;
- const apply=()=>{if(document.querySelector('.viiv-about-shell'))return true;const root=findRoot();if(!root)return false;root.innerHTML=markup;root.style.padding='0';return true};
- const start=()=>{if(apply())return;setTimeout(apply,100);setTimeout(apply,300);setTimeout(apply,700)};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+  const norm=v=>(v||'').replace(/\s+/g,' ').trim();
+  const HEADING='VIIVERSION — команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.';
+  const COPY='Мы создаём интеграционные связки между отдельными системами бизнеса, цифровые контуры между офлайн- и онлайн-процессами, автоматизируем ручные и повторяющиеся операции, разрабатываем внутренние инструменты, клиентские приложения и интерфейсы для команды.';
+  const TITLES=['20+ лет в IT и telecom','16+ лет в digital и визуальных коммуникациях','Техническая и визуальная экспертиза в одной команде'];
+
+  const exact=(text)=>[...document.querySelectorAll('body *')]
+    .filter(el=>norm(el.textContent)===text)
+    .sort((a,b)=>a.children.length-b.children.length)[0]||null;
+
+  const diagram=`<div class="viiv-about-diagram-live" aria-hidden="true">
+    <svg viewBox="0 0 590 172">
+      <defs>
+        <linearGradient id="vaLine" x1="0" x2="1"><stop offset="0" stop-color="#8f94a1" stop-opacity=".34"/><stop offset=".52" stop-color="#6559ee" stop-opacity=".74"/><stop offset="1" stop-color="#7bc7ef" stop-opacity=".44"/></linearGradient>
+        <linearGradient id="vaCore" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5f5cf6"/><stop offset="1" stop-color="#7b57ef"/></linearGradient>
+      </defs>
+      <g fill="none" stroke="url(#vaLine)" stroke-width="1.35">
+        <path d="M65 31 C146 31 167 69 245 69"/><path d="M65 86 C150 86 170 86 245 86"/><path d="M65 141 C146 141 167 103 245 103"/>
+        <path d="M345 69 C425 69 446 31 525 31"/><path d="M345 86 C425 86 446 86 525 86"/><path d="M345 103 C425 103 446 141 525 141"/>
+      </g>
+      <g fill="#f8f7f2" stroke="#dad9df" stroke-width="1.1">
+        <rect x="12" y="8" width="56" height="46" rx="13"/><rect x="12" y="63" width="56" height="46" rx="13"/><rect x="12" y="118" width="56" height="46" rx="13"/>
+        <rect x="522" y="8" width="56" height="46" rx="13"/><rect x="522" y="63" width="56" height="46" rx="13"/><rect x="522" y="118" width="56" height="46" rx="13"/>
+        <rect x="245" y="45" width="100" height="82" rx="20" fill="#fbfaf7"/>
+      </g>
+      <g stroke="#6559ee" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="40" cy="23" rx="10" ry="4"/><path d="M30 23v14c0 2 4 4 10 4s10-2 10-4V23M30 30c0 2 4 4 10 4s10-2 10-4"/>
+        <path d="M29 85c3-7 8-10 13-6 7-6 16 0 16 7 0 5-4 8-9 8H31c-5 0-8-4-8-8 0-4 3-7 6-7"/>
+        <rect x="27" y="128" width="26" height="20" rx="3"/><path d="M31 133h18M31 139h18"/>
+        <path d="M535 40l7-7 6 6 10-12M535 45h26"/>
+        <circle cx="550" cy="79" r="5"/><path d="M541 97v-2a8 8 0 0 1 18 0v2M538 93v-1a5 5 0 0 1 5-5M562 93v-1a5 5 0 0 0-5-5"/>
+        <path d="M539 140l7-7M539 133l7 7M554 133l7 7M554 140l7-7"/>
+      </g>
+      <g fill="url(#vaCore)"><path d="M273 67h15l8 21 9-21h15l-22 38h-4z"/></g>
+      <g fill="#6559ee"><circle cx="245" cy="69" r="3"/><circle cx="245" cy="86" r="3"/><circle cx="245" cy="103" r="3"/><circle cx="345" cy="69" r="3"/><circle cx="345" cy="86" r="3"/><circle cx="345" cy="103" r="3"/></g>
+    </svg>
+  </div>`;
+
+  const findCard=(titleEl)=>{
+    let node=titleEl;
+    for(let i=0;i<6&&node.parentElement;i++,node=node.parentElement){
+      const r=node.getBoundingClientRect();
+      const t=norm(node.textContent);
+      if(r.width>250&&r.height>180&&r.width<650&&t.includes(titleEl.textContent.trim()))return node;
+    }
+    return titleEl.parentElement;
+  };
+
+  const apply=()=>{
+    const heading=exact(HEADING);
+    const copy=exact(COPY);
+    if(!heading||!copy)return false;
+
+    if(!heading.classList.contains('viiv-about-heading-live')){
+      heading.classList.add('viiv-about-heading-live');
+      heading.innerHTML='<span class="viiv-about-brand-live">VIIVERSION</span><span>команда разработчиков с опытом в сложных IT-системах, цифровых продуктах и визуальных коммуникациях.</span>';
+    }
+    copy.classList.add('viiv-about-copy-live');
+
+    if(!document.querySelector('.viiv-about-diagram-live')){
+      heading.insertAdjacentHTML('afterend',diagram);
+    }
+
+    TITLES.forEach(text=>{
+      const title=exact(text);
+      if(!title)return;
+      title.classList.add('viiv-about-card-title-live');
+      const card=findCard(title);
+      if(card)card.classList.add('viiv-about-card-live');
+    });
+    return true;
+  };
+
+  const start=()=>{
+    if(apply())return;
+    const observer=new MutationObserver(()=>{
+      if(apply())observer.disconnect();
+    });
+    observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+    setTimeout(()=>{apply();observer.disconnect()},5000);
+  };
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
 </script>'''
 
 for path in ROOT.rglob('*.html'):
     text = path.read_text(encoding='utf-8')
-    marker = '<style id="viiversion-about-redesign-style">'
-    if marker in text:
-        start = text.index(marker)
-        script_end = text.find('</script>', start)
-        if script_end != -1:
-            text = text[:start] + text[script_end + len('</script>'):]
+    # Remove any earlier about-section patch so only the robust live patch remains.
+    for marker in ('<style id="viiversion-about-redesign-style">', '<style id="viiversion-about-live-style">'):
+        if marker in text:
+            start = text.index(marker)
+            script_end = text.find('</script>', start)
+            if script_end != -1:
+                text = text[:start] + text[script_end + len('</script>'):]
     if '</body>' in text:
         text = text.replace('</body>', PATCH + '\n</body>', 1)
     else:
