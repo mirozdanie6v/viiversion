@@ -18,111 +18,118 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Run browser diagnostics
+      - name: Verify live menu and sticky mobile header
         env:
           TARGET_URL: https://viiversion.com/
         run: |
           cat > diagnose-live.cjs <<'JS'
           const { chromium } = require('playwright');
           const fs = require('fs');
+
           (async()=>{
             const target=process.env.TARGET_URL;
             const browser=await chromium.launch({headless:true});
             const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
             await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
-            await page.goto(`${target}?lang=ru&qa=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:120000});
-            await page.waitForTimeout(1800);
 
-            const revealAll=async()=>{
-              await page.evaluate(async()=>{
-                const h=document.documentElement.scrollHeight;
-                for(let y=0;y<h;y+=620){window.scrollTo(0,y);await new Promise(r=>setTimeout(r,45));}
-                window.scrollTo(0,0);
-              });
-              await page.waitForTimeout(300);
-            };
+            let deployed=false;
+            for(let i=0;i<18;i++){
+              await page.goto(`${target}?qa=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:120000});
+              await page.waitForTimeout(1200);
+              deployed=await page.evaluate(()=>!!document.querySelector('#viiversion-before-menu-sticky-style'));
+              if(deployed)break;
+              await page.waitForTimeout(5000);
+            }
+            if(!deployed)throw new Error('Latest Before-development/sticky patch is not live yet');
 
-            const snap=async label=>page.evaluate(label=>{
+            const norm=v=>(v||'').replace(/\s+/g,' ').trim();
+            const state=async label=>page.evaluate(label=>{
               const norm=v=>(v||'').replace(/\s+/g,' ').trim();
-              const visible=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0};
-              const leaf=[...document.querySelectorAll('body *')].filter(el=>visible(el)&&el.children.length===0).map(el=>norm(el.textContent)).filter(Boolean);
-              const body=norm(document.body.innerText);
-              const pick=sel=>{const el=document.querySelector(sel);if(!el)return null;const cs=getComputedStyle(el),r=el.getBoundingClientRect();return{text:norm(el.textContent).slice(0,180),fontSize:parseFloat(cs.fontSize),lineHeight:parseFloat(cs.lineHeight),letterSpacing:cs.letterSpacing,width:Math.round(r.width),height:Math.round(r.height)}};
-              const core={};
-              for(const id of ['whoH','beforeH','flowH','capH','effectH','protoH','processH','ctaH']){const e=document.getElementById(id);core[id]=e?norm(e.textContent):null;}
+              const section=document.querySelector('#before,[data-viiv-before-development="true"]');
+              const link=document.querySelector('[data-viiv-before-menu="true"]');
+              const header=document.querySelector('.viiv-mobile-sticky-header');
+              const hs=header?getComputedStyle(header):null;
+              const hr=header?header.getBoundingClientRect():null;
+              const sr=section?section.getBoundingClientRect():null;
               return {
                 label,
-                htmlLang:document.documentElement.lang,
-                cyrillicChars:(body.match(/[А-Яа-яЁё]/g)||[]).length,
-                latinChars:(body.match(/[A-Za-z]/g)||[]).length,
-                leaf,core,
-                runtime:{final:!!document.querySelector('#viiversion-final-runtime-style'),previewRows:!!document.getElementById('previewRows'),heroH:!!document.querySelector('[data-k="heroH"]'),aboutCards:document.querySelectorAll('#whoProofs .who-proof').length},
-                typography:{
-                  hero:pick('.hero h1'),
-                  section:pick('#whoH'),
-                  card:pick('#whoProofs .who-proof>b'),
-                  lead:pick('#whoP'),
-                  body:pick('#whoProofs .who-proof p'),
-                  tag:pick('.viiv-about-tag-live')
-                }
+                sectionFound:!!section,
+                sectionHeading:norm((section&&section.querySelector('#beforeH,h2,h3,[role="heading"]')||{}).textContent),
+                menuFound:!!link,
+                menuLabel:link?norm(link.textContent):'',
+                menuHref:link?link.getAttribute('href'):'',
+                headerFound:!!header,
+                headerPosition:hs?hs.position:'',
+                headerTop:hr?Math.round(hr.top):null,
+                headerBottom:hr?Math.round(hr.bottom):null,
+                headerOpacity:hs?hs.opacity:'',
+                headerVisibility:hs?hs.visibility:'',
+                sectionTop:sr?Math.round(sr.top):null,
+                scrollY:Math.round(window.scrollY)
               };
             },label);
 
-            const changed=(a,b)=>{const n=Math.max(a.leaf.length,b.leaf.length);let c=0;for(let i=0;i<n;i++)if((a.leaf[i]||'')!==(b.leaf[i]||''))c++;return c};
+            const ruTop=await state('ru-top');
+            await page.screenshot({path:'mobile-before-top.png',fullPage:false});
+
+            await page.evaluate(()=>window.scrollTo(0,Math.max(900,document.body.scrollHeight*.48)));
+            await page.waitForTimeout(900);
+            const ruScrolled=await state('ru-scrolled');
+            await page.screenshot({path:'mobile-before-scrolled.png',fullPage:false});
+
+            const beforeLink=page.locator('[data-viiv-before-menu="true"]').first();
+            await beforeLink.click();
+            await page.waitForTimeout(1200);
+            const ruAnchored=await state('ru-anchored');
+
             const clickLang=async lang=>{
-              const el=page.locator(`.langs button[data-lang="${lang.toLowerCase()}"]`);
-              if(await el.count()){await el.first().click();await page.waitForTimeout(900);return true;}
+              const buttons=page.locator('.langs button');
+              const n=await buttons.count();
+              for(let i=0;i<n;i++){
+                const b=buttons.nth(i);
+                if((await b.innerText()).trim().toUpperCase()===lang){
+                  await b.click();
+                  await page.waitForTimeout(900);
+                  return true;
+                }
+              }
               return false;
             };
 
-            await revealAll();
-            const ru=await snap('RU');
-            await page.screenshot({path:'mobile-ru.png',fullPage:true});
-            const enClicked=await clickLang('EN'); await revealAll();
-            const en=await snap('EN');
-            await page.screenshot({path:'mobile-en.png',fullPage:true});
-            const viClicked=await clickLang('VI'); await revealAll();
-            const vi=await snap('VI');
-            await page.screenshot({path:'mobile-vi.png',fullPage:true});
+            const enClicked=await clickLang('EN');
+            const en=await state('en');
+            const viClicked=await clickLang('VI');
+            const vi=await state('vi');
 
-            const range=(x,a,b)=>x&&x.fontSize>=a&&x.fontSize<=b;
-            const checks={
-              nativeDomPreserved:ru.runtime.previewRows&&ru.runtime.heroH,
-              customRuntimeLoaded:ru.runtime.final,
-              aboutCardsPresent:ru.runtime.aboutCards===3,
-              ruSelected:ru.htmlLang==='ru'&&ru.cyrillicChars>500,
-              enSelected:en.htmlLang==='en'&&en.cyrillicChars<100,
-              viSelected:vi.htmlLang==='vi'&&vi.cyrillicChars<100,
-              enChangesWholePage:changed(ru,en)>80,
-              viChangesWholePage:changed(ru,vi)>80,
-              heroScale:range(ru.typography.hero,38,42.5),
-              sectionScale:range(ru.typography.section,28,32.5),
-              cardScale:range(ru.typography.card,20,22.5),
-              leadScale:range(ru.typography.lead,17,18.5),
-              bodyScale:range(ru.typography.body,15,16.5),
-              tagScale:range(ru.typography.tag,12,13.5)
-            };
-            const result={target,enClicked,viClicked,checks,
-              ru:{htmlLang:ru.htmlLang,cyrillicChars:ru.cyrillicChars,latinChars:ru.latinChars,runtime:ru.runtime,typography:ru.typography,core:ru.core},
-              en:{htmlLang:en.htmlLang,cyrillicChars:en.cyrillicChars,latinChars:en.latinChars,changedLeafTextsVsRu:changed(ru,en),typography:en.typography,core:en.core},
-              vi:{htmlLang:vi.htmlLang,cyrillicChars:vi.cyrillicChars,latinChars:vi.latinChars,changedLeafTextsVsRu:changed(ru,vi),typography:vi.typography,core:vi.core}
-            };
-            fs.writeFileSync('live-diagnostics-v3.json',JSON.stringify(result,null,2));
+            const result={target,deployed,ruTop,ruScrolled,ruAnchored,enClicked,en,viClicked,vi};
+            fs.writeFileSync('before-menu-sticky-live.json',JSON.stringify(result,null,2));
             console.log(JSON.stringify(result,null,2));
-            const failed=Object.entries(checks).filter(([,v])=>!v);
+
+            const failures=[];
+            if(!ruTop.sectionFound)failures.push('before section not found');
+            if(!ruTop.menuFound||ruTop.menuLabel!=='До разработки'||ruTop.menuHref!=='#before')failures.push('RU Before-development menu item incorrect');
+            if(!ruTop.headerFound||ruTop.headerPosition!=='fixed'||Math.abs(ruTop.headerTop)>2)failures.push('mobile header is not fixed at top initially');
+            if(!ruScrolled.headerFound||ruScrolled.headerPosition!=='fixed'||Math.abs(ruScrolled.headerTop)>2||ruScrolled.headerVisibility==='hidden'||Number(ruScrolled.headerOpacity)<0.9)failures.push('mobile header disappears after scrolling');
+            if(!ruAnchored.sectionFound||ruAnchored.sectionTop===null||ruAnchored.sectionTop<ruAnchored.headerBottom-4||ruAnchored.sectionTop>ruAnchored.headerBottom+80)failures.push('Before-development anchor offset incorrect');
+            if(!enClicked||en.menuLabel!=='Before development')failures.push('EN menu label incorrect');
+            if(!viClicked||vi.menuLabel!=='Trước phát triển')failures.push('VI menu label incorrect');
+            if(failures.length)throw new Error(failures.join('; '));
+
             await browser.close();
-            if(failed.length){console.error('FAILED CHECKS',failed);process.exitCode=1;}
-          })().catch(e=>{fs.writeFileSync('live-diagnostics-v3-error.txt',String(e&&e.stack||e));console.error(e);process.exitCode=1});
+          })().catch(e=>{
+            fs.writeFileSync('before-menu-sticky-live-error.txt',String(e&&e.stack||e));
+            console.error(e);
+            process.exitCode=1;
+          });
           JS
           node diagnose-live.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: live-diagnostics-v3
+          name: before-menu-sticky-live
           path: |
-            live-diagnostics-v3.json
-            live-diagnostics-v3-error.txt
-            mobile-ru.png
-            mobile-en.png
-            mobile-vi.png
+            before-menu-sticky-live.json
+            before-menu-sticky-live-error.txt
+            mobile-before-top.png
+            mobile-before-scrolled.png
           if-no-files-found: warn
