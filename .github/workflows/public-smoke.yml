@@ -10,19 +10,21 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Check VIIVERSION, PET NIKA and UNIQ public routes and links
+      - name: Check VIIVERSION public routes and prototype links
         shell: bash
         run: |
           set -euo pipefail
           PET="https://pet-nika.mirozdanie6v.workers.dev/"
           PET_BROKEN="https://pet-nika.mirozdanie6v.workers.dev/miniapp"
           UNIQ="https://uniq-smart-rent.mirozdanie6v.workers.dev/"
+          RIC="https://rusinfocenter.viiversion.com/"
+          RIC_BOT="https://rusinfocenter.viiversion.com/notification"
 
           fetch_page() {
             local url="$1"
             local out="$2"
             local code=""
-            for _ in $(seq 1 20); do
+            for _ in $(seq 1 30); do
               code="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 --output "$out" --write-out '%{http_code}' "$url" || true)"
               if [[ "$code" == "200" ]] && [[ -s "$out" ]]; then
                 echo "OK $url HTTP 200"
@@ -54,33 +56,52 @@ jobs:
           }
 
           main="$(mktemp)"
+          custom_main="$(mktemp)"
           prototypes="$(mktemp)"
           pet_case="$(mktemp)"
           uniq_case="$(mktemp)"
+          ric_case="$(mktemp)"
           pet_live="$(mktemp)"
           uniq_live="$(mktemp)"
+          ric_live="$(mktemp)"
+          ric_bot="$(mktemp)"
 
           fetch_page "https://landing.viiversion.workers.dev/" "$main"
+          fetch_page "https://viiversion.com/" "$custom_main"
           fetch_page "https://landing.viiversion.workers.dev/prototypes.html" "$prototypes"
           fetch_page "https://landing.viiversion.workers.dev/cases/pet-nika.html" "$pet_case"
           fetch_page "https://landing.viiversion.workers.dev/cases/uniq-smart-rent.html" "$uniq_case"
+          fetch_page "https://landing.viiversion.workers.dev/cases/ric.html" "$ric_case"
           fetch_page "$PET" "$pet_live"
           fetch_page "$UNIQ" "$uniq_live"
+          fetch_page "$RIC" "$ric_live"
+          fetch_page "$RIC_BOT" "$ric_bot"
 
           require_text "$main" "$PET" "main -> PET NIKA"
           require_text "$main" "$UNIQ" "main -> UNIQ SMART RENT"
+          require_text "$main" "$RIC" "main -> RIC Mini App"
+          require_text "$main" "$RIC_BOT" "main -> RIC Telegram prototype"
           reject_text "$main" "$PET_BROKEN" "broken PET /miniapp on main"
+
+          require_text "$custom_main" "$RIC" "viiversion.com -> RIC Mini App"
+          require_text "$custom_main" "$RIC_BOT" "viiversion.com -> RIC Telegram prototype"
 
           require_text "$prototypes" "$PET" "prototypes -> PET NIKA"
           require_text "$prototypes" "$UNIQ" "prototypes -> UNIQ SMART RENT"
+          require_text "$prototypes" "$RIC" "prototypes -> RIC Mini App"
+          require_text "$prototypes" "$RIC_BOT" "prototypes -> RIC Telegram prototype"
           reject_text "$prototypes" "$PET_BROKEN" "broken PET /miniapp on prototypes"
 
           require_text "$pet_case" "$PET" "PET case -> PET NIKA"
           reject_text "$pet_case" "$PET_BROKEN" "broken PET /miniapp on PET case"
           require_text "$uniq_case" "$UNIQ" "UNIQ case -> UNIQ SMART RENT"
+          require_text "$ric_case" "$RIC" "RIC case -> Mini App"
+          require_text "$ric_case" "$RIC_BOT" "RIC case -> Telegram prototype"
 
           require_text "$pet_live" "PET NIKA" "PET live prototype content"
           require_text "$uniq_live" "UNIQ" "UNIQ live prototype content"
+          require_text "$ric_live" "РИЦ" "RIC live Mini App content"
+          require_text "$ric_bot" "Telegram" "RIC Telegram prototype content"
 
-          rm -f "$main" "$prototypes" "$pet_case" "$uniq_case" "$pet_live" "$uniq_live"
+          rm -f "$main" "$custom_main" "$prototypes" "$pet_case" "$uniq_case" "$ric_case" "$pet_live" "$uniq_live" "$ric_live" "$ric_bot"
           echo "PUBLIC LINK QA PASS"
