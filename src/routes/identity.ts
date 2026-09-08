@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 
-import { createSession, getAuthenticatedUser, readBearerToken } from '../auth/session'
+import { requireAuth } from '../auth/middleware'
+import { createSession } from '../auth/session'
 import {
   TelegramInitDataValidationError,
   validateTelegramInitData,
@@ -136,42 +137,10 @@ identityRoutes.post('/auth/telegram', async (c) => {
   }
 })
 
-identityRoutes.get('/me', async (c) => {
-  const token = readBearerToken(c.req.header('authorization'))
-  if (!token) {
-    return c.json(
-      {
-        ok: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication is required',
-        },
-        requestId: c.get('requestId'),
-      },
-      401,
-    )
-  }
-
-  const db = createDb(c.env.DB)
-  const user = await getAuthenticatedUser({ db, token })
-
-  if (!user) {
-    return c.json(
-      {
-        ok: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Session is invalid or expired',
-        },
-        requestId: c.get('requestId'),
-      },
-      401,
-    )
-  }
-
+identityRoutes.get('/me', requireAuth, (c) => {
   return c.json({
     ok: true,
-    user,
+    user: c.get('authUser'),
     requestId: c.get('requestId'),
   })
 })
