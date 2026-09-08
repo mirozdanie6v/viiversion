@@ -1,0 +1,408 @@
+VIIVERSION BACKEND — ROADMAP
+Version: 1.0
+Date: 2026-09-09
+Branch: backend
+
+ARCHITECTURAL DECISION
+
+The first production version is NOT multi-tenant.
+Each client receives a separate isolated backend deployment.
+
+For every client:
+- separate Cloudflare Worker;
+- separate Cloudflare D1 database;
+- separate R2 bucket when file storage is required;
+- separate KV namespace when cache/config storage is required;
+- separate environment variables and secrets;
+- separate Telegram bot token;
+- separate payment provider credentials;
+- separate domain/subdomain and deployment pipeline;
+- separate migrations and production data.
+
+Reusable code may be copied/extracted into common packages later, but clients do not share runtime databases, secrets, queues or business data.
+
+TARGET STACK
+
+- TypeScript
+- Cloudflare Workers
+- Cloudflare D1
+- Cloudflare R2
+- Cloudflare KV
+- Cloudflare Queues / Cron Triggers / Workflows where required
+- Telegram Bot API / Telegram Mini Apps initData validation
+- REST JSON API
+- Zod validation
+- Drizzle ORM for D1
+- Vitest for automated tests
+- Wrangler for local development, migrations and deployment
+
+REPOSITORY STRATEGY
+
+Current development branch: backend
+
+The branch contains the reference backend architecture and the first production-ready implementation template.
+Client-specific backends will be derived from this architecture and configured/deployed separately.
+
+STAGE 0 — ARCHITECTURE AND RULES
+Status: IN PROGRESS
+
+Goals:
+1. Fix the isolated-per-client architecture.
+2. Define folder structure and coding rules.
+3. Define environment separation: local / preview / production.
+4. Define security rules.
+5. Define deployment rules.
+6. Define the minimum API contract.
+
+Deliverables:
+- docs/VIIVERSION_BACKEND_ROADMAP.txt
+- backend README
+- architecture notes
+
+Acceptance criteria:
+- no multi-tenant data model;
+- no tenant_id required in business tables;
+- no shared production database between clients;
+- all secrets stay outside git.
+
+STAGE 1 — BACKEND FOUNDATION
+Status: NEXT
+
+Goals:
+1. Create a Cloudflare Worker written in TypeScript.
+2. Add routing and JSON responses.
+3. Add environment typing.
+4. Add health endpoint.
+5. Add centralized error handling.
+6. Add request IDs and basic structured logging.
+7. Add CORS configuration for the client's Mini App domain.
+8. Add local/preview/production configuration.
+
+Initial endpoints:
+- GET /health
+- GET /api/v1/status
+
+Acceptance criteria:
+- npm install succeeds;
+- TypeScript typecheck succeeds;
+- tests succeed;
+- wrangler dev can start the Worker;
+- /health returns 200 JSON;
+- no credentials committed to git.
+
+STAGE 2 — DATABASE FOUNDATION (D1)
+
+Goals:
+1. Connect D1.
+2. Configure Drizzle ORM.
+3. Add migrations.
+4. Create base tables.
+
+Base tables:
+- users
+- admins
+- sessions or auth metadata where required
+- audit_log
+- app_settings
+
+Business tables are added per client later.
+
+Acceptance criteria:
+- database can be created independently per client;
+- migrations work from an empty database;
+- local and production D1 bindings are separate;
+- rollback/recovery procedure documented.
+
+STAGE 3 — TELEGRAM AUTHENTICATION
+
+Goals:
+1. Receive Telegram Mini App initData.
+2. Validate Telegram signature server-side.
+3. Reject forged/expired initData.
+4. Create/update user in D1.
+5. Introduce authorization middleware.
+
+Endpoints:
+- POST /api/v1/auth/telegram
+- GET /api/v1/me
+
+Acceptance criteria:
+- Telegram initData is never trusted before validation;
+- bot token is stored only as a Cloudflare secret;
+- protected endpoints reject unauthenticated requests.
+
+STAGE 4 — ADMIN AUTHORIZATION AND RBAC
+
+Goals:
+1. Add admin roles.
+2. Separate customer and manager permissions.
+3. Add audit trail for administrative actions.
+
+Initial roles:
+- owner
+- admin
+- manager
+
+Acceptance criteria:
+- server checks permissions for every protected admin action;
+- frontend role checks are treated only as UI convenience;
+- sensitive changes are written to audit_log.
+
+STAGE 5 — CLIENT BUSINESS MODULE
+
+This stage is implemented separately for each client.
+
+Tour operator example (RIC / Eco Voyage / Max Tour):
+- tours
+- tour_dates
+- availability
+- prices
+- bookings
+- booking_items
+- customers
+- promocodes
+
+Rental example (UNIQ):
+- vehicles
+- categories
+- availability
+- rental_prices
+- rentals
+- customers
+
+Clinic example (PET NIKA / AVE):
+- doctors
+- services
+- pets
+- appointments
+- customers
+
+Rule:
+Only tables and logic required by the specific client's business are deployed.
+
+STAGE 6 — BOOKING / ORDER ENGINE
+
+Goals:
+1. Server-side price calculation.
+2. Availability validation.
+3. Atomic booking/order creation.
+4. Status state machine.
+5. Idempotency protection for repeated requests.
+
+Typical statuses:
+- draft
+- pending_payment
+- paid
+- confirmed
+- cancelled
+- completed
+- refunded
+
+Acceptance criteria:
+- frontend cannot set trusted final price;
+- double-click/retry cannot create duplicate paid orders;
+- unavailable inventory cannot be oversold under normal concurrent operation.
+
+STAGE 7 — PAYMENTS
+
+Goals:
+1. Payment provider adapter.
+2. Create payment request server-side.
+3. Receive and verify provider webhooks.
+4. Idempotent payment processing.
+5. Update booking/order only after verified payment event.
+6. Refund flow when provider supports it.
+
+Acceptance criteria:
+- redirect/success screen never marks an order paid by itself;
+- webhook signatures are validated;
+- repeated webhooks do not duplicate operations;
+- payment credentials are Cloudflare secrets.
+
+STAGE 8 — TELEGRAM BOT AND NOTIFICATIONS
+
+Goals:
+1. Telegram Bot webhook.
+2. /start and Mini App launch flow.
+3. Booking/order confirmations.
+4. Manager notifications.
+5. Scheduled reminders.
+6. Deep links where required.
+
+Acceptance criteria:
+- bot webhook is protected by secret/token validation where applicable;
+- notification failures do not corrupt booking/payment state;
+- retries are safe.
+
+STAGE 9 — ADMIN / CRM API
+
+Goals:
+1. Customer list.
+2. Booking/order management.
+3. Product/catalog management.
+4. Prices and availability management.
+5. Managers and roles.
+6. Settings.
+7. Basic CRM history.
+
+Acceptance criteria:
+- all mutations are server-validated;
+- admin actions are permission-checked;
+- critical actions are audited.
+
+STAGE 10 — FILES AND MEDIA
+
+Goals:
+1. R2 integration.
+2. Controlled upload endpoints.
+3. File type/size validation.
+4. Store file metadata/URLs in D1.
+5. Safe deletion/replacement flow.
+
+Acceptance criteria:
+- database does not store image binaries;
+- upload permissions are restricted;
+- invalid file types and excessive sizes are rejected.
+
+STAGE 11 — BACKGROUND JOBS
+
+Use only when a client requires them.
+
+Possible technologies:
+- Cloudflare Queues
+- Cron Triggers
+- Cloudflare Workflows
+
+Use cases:
+- reminders;
+- abandoned unpaid booking expiration;
+- post-purchase messages;
+- asynchronous notifications;
+- report generation;
+- integration retries.
+
+STAGE 12 — ANALYTICS
+
+Goals:
+1. Track important business events.
+2. Store aggregated metrics needed by the client dashboard.
+3. Track conversion funnel.
+
+Typical events:
+- app_open
+- product_view
+- booking_started
+- booking_created
+- payment_started
+- payment_success
+- purchase
+
+Important rule:
+Analytics must not become the source of truth for orders/payments.
+
+STAGE 13 — EXTERNAL INTEGRATIONS
+
+Per-client only:
+- website / Tilda;
+- CRM;
+- payment systems;
+- Google services;
+- messaging providers;
+- partner APIs;
+- accounting/export systems.
+
+All integrations are isolated by client and credentials.
+
+STAGE 14 — SECURITY HARDENING
+
+Checklist:
+- Telegram initData signature validation;
+- request validation with Zod;
+- RBAC;
+- secrets outside git;
+- webhook signature verification;
+- rate limiting;
+- CORS allowlist;
+- idempotency;
+- SQL access through typed queries/ORM;
+- audit log;
+- sanitized error responses;
+- dependency audit;
+- backup/export procedure;
+- production logging without leaking secrets or personal data.
+
+STAGE 15 — AUTOMATED TESTING
+
+Required test groups:
+- health/API tests;
+- Telegram auth verification tests;
+- validation tests;
+- booking price tests;
+- availability tests;
+- payment webhook/idempotency tests;
+- RBAC tests;
+- migration tests where practical.
+
+STAGE 16 — CI/CD AND CLOUDFLARE DEPLOYMENT
+
+Goals:
+1. Typecheck on every change.
+2. Automated tests.
+3. Preview deployment.
+4. Production deployment.
+5. D1 migration procedure.
+6. Deployment checklist.
+
+Client isolation example:
+
+RIC:
+- Worker: ric-backend
+- D1: ric-production
+- R2: ric-media
+- secrets: RIC-specific
+
+UNIQ:
+- Worker: uniq-backend
+- D1: uniq-production
+- R2: uniq-media
+- secrets: UNIQ-specific
+
+No runtime dependency between these deployments.
+
+STAGE 17 — FIRST REAL CLIENT IMPLEMENTATION
+
+After the core foundation is stable, select one existing prototype and turn it into the first real production implementation.
+Recommended order:
+1. Tour/travel backend first because it exercises catalog + schedule + booking + payments + CRM + notifications.
+2. Extract proven generic code only after it is used successfully.
+3. Apply the proven architecture to the next client as a separate deployment.
+
+DEVELOPMENT PRINCIPLES
+
+1. Build production behavior, not demo-only backend behavior.
+2. Never trust prices, roles, payment state or Telegram identity from the frontend.
+3. Keep each client's production data isolated.
+4. Prefer simple Cloudflare-native services before introducing external infrastructure.
+5. Do not introduce multi-tenancy until several separate client deployments prove which components are genuinely common.
+6. Every stage must have acceptance criteria before moving to the next stage.
+7. No secrets, bot tokens, API keys, payment credentials or production personal data in git.
+8. Schema migrations are versioned.
+9. API is versioned under /api/v1.
+10. Changes to payments/auth/security require tests.
+
+CURRENT EXECUTION ORDER
+
+[1] Stage 0 — roadmap and architecture decision
+[2] Stage 1 — Worker/TypeScript foundation
+[3] Stage 2 — D1/Drizzle/migrations
+[4] Stage 3 — Telegram authentication
+[5] Stage 4 — admin RBAC
+[6] Select first client business module
+[7] Stage 6 — booking/order engine
+[8] Stage 7 — payments
+[9] Stage 8 — Telegram notifications
+[10] Stage 9 — CRM/admin API
+[11] R2/background jobs/analytics/integrations as required
+[12] security audit
+[13] automated tests
+[14] deployment and production readiness audit
