@@ -33,3 +33,6 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Validate Worker build
+        run: npx wrangler deploy --dry-run --outdir dist
