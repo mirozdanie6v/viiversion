@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "viiversion-backend-template",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-09",
+  "vars": {
+    "ENVIRONMENT": "development",
+    "ALLOWED_ORIGINS": "http://localhost:5173"
+  }
+}
