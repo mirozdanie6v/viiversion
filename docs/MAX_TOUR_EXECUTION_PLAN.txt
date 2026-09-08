@@ -1,5 +1,5 @@
 MAX TOUR BACKEND — EXECUTION PLAN
-Version: 1.0
+Version: 1.1
 Date: 2026-09-09
 Repository: mirozdanie6v/viiversion
 Branch: backend-max-tour
@@ -8,7 +8,7 @@ ARCHITECTURE
 
 MAX TOUR uses an isolated single-client backend.
 There is no multi-tenancy.
-There is no shared production database with other VIIVERSION clients.
+There is no shared production database, secrets, orders, payments, demo sessions or analytics with other VIIVERSION clients.
 
 Fixed resource names:
 - Worker: max-tour-backend
@@ -16,101 +16,195 @@ Fixed resource names:
 - Mini App origin: https://max-tour.viiversion.com
 - Future R2 bucket: max-tour-media
 
-CURRENT STATUS
+STAGE 5 — CLIENT BACKEND SPECIALIZATION
+Status: CODE COMPLETE / CLOUDFLARE RESOURCES PENDING
 
-[DONE] 1. Derive backend-max-tour from reusable backend Core.
-[DONE] 2. Rename package to max-tour-backend.
-[DONE] 3. Rename Worker to max-tour-backend.
-[DONE] 4. Set D1 logical name to max-tour-production.
-[DONE] 5. Set MAX TOUR CORS origin.
-[DONE] 6. Keep production D1 UUID as zero sentinel until real D1 exists.
-[DONE] 7. Add production deploy guard against placeholder D1 configuration.
-[DONE] 8. Retarget GitHub Actions CI to backend-max-tour.
-[DONE] 9. Add MAX TOUR backend documentation.
-[PENDING CLOUDFLARE] 10. Create real D1 max-tour-production.
-[PENDING CLOUDFLARE] 11. Put returned D1 UUID into wrangler.jsonc.
-[PENDING CLOUDFLARE] 12. Configure TELEGRAM_BOT_TOKEN secret.
-[PENDING] 13. Run production migration procedure after real D1 binding.
-[PENDING] 14. Production deploy and smoke test.
+[DONE] Derive backend-max-tour from reusable VIIVERSION backend Core.
+[DONE] Rename package to max-tour-backend.
+[DONE] Rename Worker to max-tour-backend.
+[DONE] Set D1 logical database name to max-tour-production.
+[DONE] Set MAX TOUR CORS origin and credentials support.
+[DONE] Add production deploy guard against placeholder D1 UUID.
+[DONE] Retarget GitHub Actions CI to backend-max-tour.
+[DONE] Add MAX TOUR-specific documentation.
+[PENDING CLOUDFLARE] Create real D1 max-tour-production.
+[PENDING CLOUDFLARE] Put returned D1 UUID into wrangler.jsonc.
+[PENDING CLOUDFLARE] Configure TELEGRAM_BOT_TOKEN as a Cloudflare secret.
+[PENDING CLOUDFLARE] Apply production migrations and verified seed.
+[PENDING CLOUDFLARE] Production deploy and smoke test.
 
-STAGE 6 — MAX TOUR BUSINESS SCHEMA
+STAGE 6 — MAX TOUR BUSINESS FOUNDATION
+Status: IMPLEMENTED; LAST DEMO-ADMIN CHANGE UNDER CI VERIFICATION
 
-Next development block after Stage 5 code setup:
+[DONE] Business D1 schema and migration.
+[DONE] Money stored as integer minor units.
+[DONE] Verified source records separated from demo records.
+[DONE] demo_sessions.
+[DONE] destinations + demo_destinations.
+[DONE] tours + tour_images.
+[DONE] demo_tour_overrides.
+[DONE] demo_user_created_tours.
+[DONE] demo_availability.
+[DONE] demo_promotions.
+[DONE] orders.
+[DONE] order_participants.
+[DONE] payments.
+[DONE] analytics_events.
+[DONE] manager_status_history.
 
-1. tours
-2. tour_images
-3. tour_dates
-4. tour_prices
-5. customers
-6. bookings
-7. booking_items
-8. promocodes only if required
+[DONE] Server-created cryptographically random demo session.
+[DONE] HttpOnly + SameSite cookie; Secure in preview/production.
+[DONE] Session ID is not exposed as the client authority.
+[DONE] Demo reset deletes only current-session mutable data.
+[DONE] Verified baseline survives demo reset.
 
-Design rules:
-- dates/capacity belong to explicit tour departures;
-- final prices are server-controlled;
-- archived tours remain referentially safe for historic bookings;
-- no hard delete for business objects referenced by orders;
-- public catalog and admin mutations are separate APIs;
-- booking engine is implemented after catalog/date/price model is stable.
+[DONE] Official MAX TOUR source audit.
+[DONE] Idempotent verified seed.
+[DONE] Five verified directions seeded.
+[DONE] Eight verified tours seeded.
+[DONE] Official source_url stored with verified data.
+[DONE] Known official-site price conflicts documented instead of hidden.
+[DONE] Unpublished live availability remains DEMO AVAILABILITY.
+[DONE] No real payment provider or commission is invented.
 
-PLANNED PUBLIC API
+PUBLIC API IMPLEMENTED
 
-GET /api/v1/tours
-GET /api/v1/tours/:id
-GET /api/v1/tours/:id/dates
+GET  /health
+GET  /api/v1/status
+GET  /api/v1/session
+POST /api/v1/session
+POST /api/v1/demo/reset
+GET  /api/v1/destinations
+GET  /api/v1/tours
+GET  /api/v1/tours/:slug
+GET  /api/v1/tours/:id/availability
+POST /api/v1/auth/telegram
+GET  /api/v1/me
+GET  /api/v1/admin/me
 
-PLANNED ADMIN API
+DEMO ADMIN API IMPLEMENTED
 
-POST /api/v1/admin/tours
-PATCH /api/v1/admin/tours/:id
-POST /api/v1/admin/tours/:id/dates
-PATCH /api/v1/admin/tour-dates/:id
+GET   /api/v1/demo/admin/tours
+PATCH /api/v1/demo/admin/tours/:id
+POST  /api/v1/demo/admin/tours
+POST  /api/v1/demo/admin/tours/:id/schedule
+POST  /api/v1/demo/admin/tours/:id/promo
+GET   /api/v1/demo/admin/directions
+POST  /api/v1/demo/admin/directions
 
-All admin mutations require RBAC and audit logging.
+Demo Admin rules:
+- all mutations are scoped to current HttpOnly demo session;
+- verified tours are changed through demo_tour_overrides, not by editing verified base;
+- user-created demo tours stay in demo_user_created_tours;
+- schedules/availability are explicitly demo_availability;
+- promotions are explicitly demo_promo;
+- browser demo can work without Telegram credentials;
+- real /api/v1/admin remains protected by Telegram auth + RBAC.
 
-STAGE 7 — BOOKING ENGINE
+SOURCE-GROUNDING DECISIONS
 
-After Stage 6:
-- server-side price calculation;
-- capacity validation;
-- atomic booking creation;
-- booking status machine;
+1. Tour detail page wins over a catalog teaser when the official site conflicts with itself.
+2. Dalat Premium verified baseline is $52 adult / $38 child from the detail page; catalog currently shows $52 / $43.
+3. Dalat VIP verified baseline is $45 adult / $32 child from the detail page; catalog currently shows $45 / $35.
+4. The Nha Trang day-city private-price overlap at exactly seven people is documented and not silently resolved.
+5. A missing five-person private price for the two-day Dalat program is not inferred.
+6. No real live availability is claimed until MAX TOUR provides a source/integration.
+7. No real payment provider or commission is claimed until selected by MAX TOUR.
+
+STAGE 7 — QUOTE AND ORDER ENGINE
+Status: NEXT
+
+Required:
+- POST /api/v1/booking/quote;
+- POST /api/v1/orders;
+- GET /api/v1/orders/:id;
+- GET /api/v1/my-trips;
+- server-authoritative price calculation;
+- group/private pricing logic;
+- participant validation;
+- transfer surcharge calculation;
+- demo promo application;
+- deposit/full-payment choice;
+- quote snapshot written into order;
 - idempotency key handling;
-- duplicate-request protection.
+- current demo-session isolation;
+- source recorded on every order;
+- no client-supplied final total accepted as authoritative.
 
-STAGE 8 — PAYMENTS
+STAGE 8 — DEMO PAYMENT ENGINE
+Status: PENDING
 
-Only after the real MAX TOUR payment provider is selected:
-- create payment server-side;
-- verify provider webhook;
-- idempotent payment processing;
-- never trust frontend success state.
+Required:
+- POST /api/v1/payments/demo;
+- simulated payment only;
+- idempotent payment operation;
+- update order payment status;
+- paid/remaining amounts;
+- no real provider claim.
 
-STAGE 9 — TELEGRAM BOT / NOTIFICATIONS
+STAGE 9 — MANAGER + TELEGRAM NOTIFICATIONS
+Status: PENDING
 
-- bot webhook;
-- /start;
-- Mini App launch;
-- booking confirmation;
-- manager notifications;
-- scheduled reminders.
+Required:
+- manager order list/detail;
+- order status change history;
+- Telegram bot webhook;
+- /start and Mini App launch;
+- order confirmation;
+- manager notification;
+- reminder foundation;
+- graceful browser demo when bot secret is unavailable.
 
-STAGE 10 — CRM / ADMIN API
+STAGE 10 — ANALYTICS AND ADMIN DASHBOARD
+Status: PENDING
 
-- bookings;
-- customers;
-- catalog;
-- dates/capacity;
-- prices;
-- manager roles;
-- audit history.
+Required:
+- event endpoint;
+- session-scoped demo analytics;
+- source/tour funnels;
+- revenue from simulated paid demo orders;
+- manager/admin cards from backend data, not decorative hardcode.
+
+STAGE 11 — FRONTEND INTEGRATION
+Status: PENDING
+
+Required:
+- replace prototype local/mock state with API calls;
+- preserve current MAX TOUR Mini App UI;
+- same session demonstrates Admin -> Tourist -> Order -> Manager -> Analytics consistency;
+- browser and Telegram modes both work.
+
+STAGE 12 — PRODUCTION CLOUDFLARE READINESS
+Status: PENDING
+
+Required:
+- create real max-tour-production D1;
+- bind real D1 UUID;
+- configure secrets;
+- migrate/seed production D1;
+- deploy max-tour-backend;
+- frontend API configuration;
+- end-to-end smoke test;
+- security audit;
+- production checklist.
 
 PRODUCTION BLOCKERS
 
-Do not deploy production while any of these are unresolved:
+Do not deploy production while any of these remain unresolved:
 - D1 UUID is the all-zero sentinel;
-- TELEGRAM_BOT_TOKEN is not configured as a Cloudflare secret;
-- migrations have not been applied to the intended D1;
-- CI is not green;
-- production smoke test has not been completed.
+- TELEGRAM_BOT_TOKEN is not configured when Telegram mode is enabled;
+- production migrations/seed were not applied to intended D1;
+- current branch CI is not green;
+- production smoke test is not complete.
+
+CURRENT EXECUTION ORDER
+
+[DONE] Core Stages 0–4 inherited from VIIVERSION backend.
+[CODE COMPLETE] Stage 5 client specialization; Cloudflare resource creation pending.
+[IMPLEMENTED / CI VERIFY] Stage 6 business/session/catalog/demo-admin foundation.
+[NEXT] Stage 7 quote + order engine.
+[PENDING] Stage 8 demo payments.
+[PENDING] Stage 9 manager + Telegram notifications.
+[PENDING] Stage 10 analytics/dashboard.
+[PENDING] Stage 11 frontend integration.
+[PENDING] Stage 12 Cloudflare production readiness.
