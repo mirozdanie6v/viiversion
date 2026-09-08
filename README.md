@@ -1,55 +1,40 @@
-# VIIVERSION Backend
+# MAX TOUR Backend
 
-Reference backend core for VIIVERSION Telegram Mini App projects.
+Isolated production backend for the MAX TOUR Telegram Mini App.
 
-## Architecture decision
+This branch is derived from the reusable VIIVERSION backend core, but from this point onward it belongs only to MAX TOUR.
 
-The first production architecture is **not multi-tenant**.
+## Isolation
 
-Each client gets an isolated deployment:
+MAX TOUR uses its own runtime resources:
 
-- separate Cloudflare Worker;
-- separate Cloudflare D1 database;
-- separate R2/KV/Queues when required;
-- separate secrets and Telegram bot token;
+- Cloudflare Worker: `max-tour-backend`;
+- Cloudflare D1: `max-tour-production`;
+- Mini App origin: `https://max-tour.viiversion.com`;
+- separate Telegram bot token;
 - separate payment credentials;
-- separate domain/subdomain;
-- separate production data and migrations.
+- separate future R2/KV/Queues when required;
+- separate migrations and production data.
 
-Reusable source code may be reused between projects, but client runtime data and infrastructure are never shared.
+No RIC, UNIQ, PET NIKA, AVE or other client data/configuration belongs in this runtime.
 
-The `backend` branch is the reference core. Client-specific business backends should be derived from this core and then configured/deployed independently.
+## Inherited Core
 
-## Implemented stack
+The branch already includes:
 
-- TypeScript
-- Cloudflare Workers
-- Hono
-- Zod
-- Cloudflare D1
-- Drizzle ORM / Drizzle Kit
-- Wrangler
-- Vitest
-- GitHub Actions CI
-
-R2, KV, Queues, Cron and Workflows are added only when a client requires them.
-
-## Implemented core
-
-- request IDs and structured request logging;
-- CORS allowlist;
-- centralized API errors;
-- `/api/v1` API versioning;
-- D1 core schema and versioned migrations;
-- Telegram Mini App `initData` HMAC validation;
-- `auth_date` freshness checks;
-- opaque server sessions with only token hashes stored in D1;
-- shared authentication middleware;
+- TypeScript + Cloudflare Workers;
+- Hono routing;
+- Zod validation;
+- D1 + Drizzle ORM;
+- versioned migrations;
+- Telegram Mini App initData validation;
+- server sessions;
 - RBAC roles: `owner`, `admin`, `manager`;
-- audit log writer;
-- CI validation of typecheck, tests, D1 migrations and Wrangler build.
+- audit-log foundation;
+- Vitest;
+- GitHub Actions CI.
 
-## Current endpoints
+## Current API
 
 - `GET /health`
 - `GET /api/v1/status`
@@ -57,7 +42,7 @@ R2, KV, Queues, Cron and Workflows are added only when a client requires them.
 - `GET /api/v1/me`
 - `GET /api/v1/admin/me`
 
-## Commands
+## Local commands
 
 ```bash
 npm install
@@ -68,39 +53,42 @@ npm run db:migrate:local
 npm run dev
 ```
 
-## D1 template safety
+## Production D1 creation
 
-The reusable `wrangler.jsonc` contains an all-zero D1 UUID sentinel. It must be replaced by the intended client's own D1 database UUID in that client's deployment configuration.
+The checked-in `wrangler.jsonc` intentionally still contains the all-zero D1 UUID sentinel.
 
-See `docs/DATABASE.md`.
+Create the real MAX TOUR database first:
 
-## Telegram bot token
+```bash
+npm run db:create:production
+```
 
-`TELEGRAM_BOT_TOKEN` is never stored in Git. Configure it as a Cloudflare secret for the client-specific Worker.
+Then copy the returned D1 database ID into `wrangler.jsonc` for this branch only.
 
-See `docs/AUTH.md`.
+Do not deploy while the D1 UUID is still all zeroes.
 
-## Never commit
+## Production secrets
 
-- Telegram bot tokens;
-- API keys;
-- payment credentials;
-- raw session tokens;
-- production customer data;
-- production D1 exports;
-- `.dev.vars` / `.env` files.
+Never commit secrets. Configure them with Wrangler/Cloudflare secrets, including:
 
-## Documentation
+```text
+TELEGRAM_BOT_TOKEN
+```
 
-- `docs/VIIVERSION_BACKEND_ROADMAP.txt`
-- `docs/DATABASE.md`
-- `docs/AUTH.md`
+Payment secrets will be added only when the MAX TOUR payment provider is selected.
 
-## Branches
+## Next stage
 
-- `viiversion` — landing deployment
-- `backend` — reusable isolated-client backend core
+After the real MAX TOUR D1 resource is created and bound, Stage 6 adds only MAX TOUR travel-domain tables and APIs:
 
-## Next architectural boundary
+- tours;
+- tour_images;
+- tour_dates;
+- prices;
+- availability/capacity;
+- customers;
+- bookings;
+- booking_items;
+- promocodes when required.
 
-The next stage is client-specific business logic. Do not add multiple clients into one runtime database. Create/derive a separate client backend from this core and add only that client's domain tables, integrations and deployment configuration.
+See `docs/MAX_TOUR_BACKEND.md` and `docs/VIIVERSION_BACKEND_ROADMAP.txt`.
