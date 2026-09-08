@@ -1,12 +1,12 @@
-name: Backend CI
+name: MAX TOUR Backend CI
 
 on:
   push:
     branches:
-      - backend
+      - backend-max-tour
   pull_request:
     branches:
-      - backend
+      - backend-max-tour
 
 permissions:
   contents: read
