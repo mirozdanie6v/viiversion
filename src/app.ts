@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 
 import { getRuntimeConfig } from './config'
+import { identityRoutes } from './routes/identity'
 import type { AppEnv } from './types'
 
 export const app = new Hono<AppEnv>()
@@ -68,7 +69,7 @@ app.get('/health', (c) => {
   return c.json({
     ok: true,
     service: 'viiversion-backend',
-    version: '0.1.0',
+    version: '0.2.0',
     requestId: c.get('requestId'),
   })
 })
@@ -84,6 +85,8 @@ app.get('/api/v1/status', (c) => {
     requestId: c.get('requestId'),
   })
 })
+
+app.route('/api/v1', identityRoutes)
 
 app.notFound((c) => {
   return c.json(
