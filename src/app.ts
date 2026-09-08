@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 
 import { getRuntimeConfig } from './config'
+import { adminRoutes } from './routes/admin'
 import { identityRoutes } from './routes/identity'
 import type { AppEnv } from './types'
 
@@ -87,6 +88,7 @@ app.get('/api/v1/status', (c) => {
 })
 
 app.route('/api/v1', identityRoutes)
+app.route('/api/v1/admin', adminRoutes)
 
 app.notFound((c) => {
   return c.json(
