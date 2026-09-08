@@ -37,7 +37,7 @@ jobs:
       - name: Apply D1 migrations locally
         run: npm run db:migrate:local
 
-      - name: Verify D1 core tables
+      - name: Verify D1 core and MAX TOUR tables
         run: >-
           npx wrangler d1 execute DB --local --command
           "SELECT
@@ -45,7 +45,21 @@ jobs:
           (SELECT COUNT(*) FROM admins) +
           (SELECT COUNT(*) FROM auth_sessions) +
           (SELECT COUNT(*) FROM audit_log) +
-          (SELECT COUNT(*) FROM app_settings) AS total_rows;"
+          (SELECT COUNT(*) FROM app_settings) +
+          (SELECT COUNT(*) FROM demo_sessions) +
+          (SELECT COUNT(*) FROM destinations) +
+          (SELECT COUNT(*) FROM demo_destinations) +
+          (SELECT COUNT(*) FROM tours) +
+          (SELECT COUNT(*) FROM tour_images) +
+          (SELECT COUNT(*) FROM demo_tour_overrides) +
+          (SELECT COUNT(*) FROM demo_user_created_tours) +
+          (SELECT COUNT(*) FROM demo_availability) +
+          (SELECT COUNT(*) FROM demo_promotions) +
+          (SELECT COUNT(*) FROM orders) +
+          (SELECT COUNT(*) FROM order_participants) +
+          (SELECT COUNT(*) FROM payments) +
+          (SELECT COUNT(*) FROM analytics_events) +
+          (SELECT COUNT(*) FROM manager_status_history) AS total_rows;"
 
       - name: Validate Worker build
         run: npx wrangler deploy --dry-run --outdir dist
