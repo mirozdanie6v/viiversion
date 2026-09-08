@@ -61,5 +61,24 @@ jobs:
           (SELECT COUNT(*) FROM analytics_events) +
           (SELECT COUNT(*) FROM manager_status_history) AS total_rows;"
 
+      - name: Seed verified MAX TOUR data
+        run: npm run db:seed:local
+
+      - name: Re-run seed to verify idempotency
+        run: npm run db:seed:local
+
+      - name: Verify verified baseline
+        run: >-
+          npx wrangler d1 execute DB --local --command
+          "SELECT
+          (SELECT COUNT(*) FROM destinations WHERE data_status = 'verified_site') AS verified_destinations,
+          (SELECT COUNT(*) FROM tours WHERE data_status = 'verified_site') AS verified_tours,
+          (SELECT adult_price_minor FROM tours WHERE id = 'tour-dalat-premium') AS dalat_premium_adult,
+          (SELECT child_price_minor FROM tours WHERE id = 'tour-dalat-premium') AS dalat_premium_child;"
+
+      - name: Enforce verified baseline counts and flagship price
+        run: >-
+          node -e "const {execFileSync}=require('node:child_process'); const out=execFileSync('npx',['wrangler','d1','execute','DB','--local','--json','--command','SELECT COUNT(*) AS destinations FROM destinations WHERE data_status = \'verified_site\'; SELECT COUNT(*) AS tours FROM tours WHERE data_status = \'verified_site\'; SELECT adult_price_minor, child_price_minor FROM tours WHERE id = \'tour-dalat-premium\';'],{encoding:'utf8'}); const data=JSON.parse(out); const rows=data.flatMap(x=>x.results||[]); const destinations=rows.find(r=>'destinations' in r)?.destinations; const tours=rows.find(r=>'tours' in r)?.tours; const price=rows.find(r=>'adult_price_minor' in r); if(destinations!==5||tours!==8||price?.adult_price_minor!==5200||price?.child_price_minor!==3800){console.error(out);process.exit(1)}"
+
       - name: Validate Worker build
         run: npx wrangler deploy --dry-run --outdir dist
