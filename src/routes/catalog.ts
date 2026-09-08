@@ -28,9 +28,14 @@ catalogRoutes.get('/destinations', async (c) => {
 
 catalogRoutes.get('/tours', async (c) => {
   const session = await resolveDemoSession(c)
-  const destination = c.req.query('destination')?.trim() || undefined
-  const category = c.req.query('category')?.trim() || undefined
-  const tours = await listTours(c.env.DB, session.id, { destination, category })
+  const destination = c.req.query('destination')?.trim()
+  const category = c.req.query('category')?.trim()
+  const filters: { destination?: string; category?: string } = {}
+
+  if (destination) filters.destination = destination
+  if (category) filters.category = category
+
+  const tours = await listTours(c.env.DB, session.id, filters)
 
   return c.json({
     ok: true,
