@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception'
 
 import { getRuntimeConfig } from './config'
 import { adminRoutes } from './routes/admin'
+import { demoSessionRoutes } from './routes/demo-session'
 import { identityRoutes } from './routes/identity'
 import type { AppEnv } from './types'
 
@@ -42,6 +43,7 @@ app.use('*', async (c, next) => {
     c.header('Vary', 'Origin')
     c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-Id')
     c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+    c.header('Access-Control-Allow-Credentials', 'true')
     c.header('Access-Control-Max-Age', '86400')
   }
 
@@ -69,8 +71,8 @@ app.use('*', async (c, next) => {
 app.get('/health', (c) => {
   return c.json({
     ok: true,
-    service: 'viiversion-backend',
-    version: '0.2.0',
+    service: 'max-tour-backend',
+    version: '0.1.0',
     requestId: c.get('requestId'),
   })
 })
@@ -80,13 +82,14 @@ app.get('/api/v1/status', (c) => {
 
   return c.json({
     ok: true,
-    service: 'viiversion-backend',
+    service: 'max-tour-backend',
     environment: config.environment,
     apiVersion: 'v1',
     requestId: c.get('requestId'),
   })
 })
 
+app.route('/api/v1', demoSessionRoutes)
 app.route('/api/v1', identityRoutes)
 app.route('/api/v1/admin', adminRoutes)
 
