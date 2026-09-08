@@ -59,6 +59,12 @@ function hexToBytes(hex: string): Uint8Array | null {
   return bytes
 }
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength)
+  copy.set(bytes)
+  return copy.buffer
+}
+
 function constantTimeEqual(left: Uint8Array, right: Uint8Array): boolean {
   if (left.length !== right.length) {
     return false
@@ -72,15 +78,16 @@ function constantTimeEqual(left: Uint8Array, right: Uint8Array): boolean {
   return difference === 0
 }
 
-async function hmacSha256(key: BufferSource, data: string): Promise<Uint8Array> {
+async function hmacSha256(key: Uint8Array, data: string): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    key,
+    toArrayBuffer(key),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign'],
   )
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(data))
+  const dataBytes = new TextEncoder().encode(data)
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, toArrayBuffer(dataBytes))
   return new Uint8Array(signature)
 }
 
@@ -88,13 +95,13 @@ export async function createTelegramInitDataHash(
   params: URLSearchParams,
   botToken: string,
 ): Promise<string> {
+  const secretKey = await hmacSha256(new TextEncoder().encode('WebAppData'), botToken)
   const dataCheckString = Array.from(params.entries())
     .filter(([key]) => key !== 'hash')
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([key, value]) => `${key}=${value}`)
     .join('\n')
 
-  const secretKey = await hmacSha256(new TextEncoder().encode('WebAppData'), botToken)
   const signature = await hmacSha256(secretKey, dataCheckString)
   return bytesToHex(signature)
 }
