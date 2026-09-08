@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 
 import { listDestinations, listTours } from '../catalog/service'
@@ -69,7 +69,7 @@ const directionSchema = z.object({
 
 export const demoAdminRoutes = new Hono<AppEnv>()
 
-function validationError(c: Parameters<typeof demoAdminRoutes.post>[1] extends never ? never : any, error: z.ZodError) {
+function validationError(c: Context<AppEnv>, error: z.ZodError) {
   return c.json(
     {
       ok: false,
