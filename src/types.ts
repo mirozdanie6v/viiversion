@@ -1,4 +1,16 @@
 export type EnvironmentName = 'development' | 'preview' | 'production' | 'test'
+export type AdminRole = 'owner' | 'admin' | 'manager'
+
+export interface AuthenticatedUser {
+  id: string
+  telegramId: string | null
+  username: string | null
+  firstName: string
+  lastName: string | null
+  languageCode: string | null
+  phone: string | null
+  email: string | null
+}
 
 export interface Bindings {
   ENVIRONMENT?: string
@@ -11,6 +23,8 @@ export interface Bindings {
 
 export interface Variables {
   requestId: string
+  authUser: AuthenticatedUser
+  adminRole: AdminRole
 }
 
 export type AppEnv = {
