@@ -4,6 +4,7 @@ import { HTTPException } from 'hono/http-exception'
 import { getRuntimeConfig } from './config'
 import { adminRoutes } from './routes/admin'
 import { catalogRoutes } from './routes/catalog'
+import { demoAdminRoutes } from './routes/demo-admin'
 import { demoSessionRoutes } from './routes/demo-session'
 import { identityRoutes } from './routes/identity'
 import type { AppEnv } from './types'
@@ -93,6 +94,7 @@ app.get('/api/v1/status', (c) => {
 app.route('/api/v1', demoSessionRoutes)
 app.route('/api/v1', catalogRoutes)
 app.route('/api/v1', identityRoutes)
+app.route('/api/v1/demo/admin', demoAdminRoutes)
 app.route('/api/v1/admin', adminRoutes)
 
 app.notFound((c) => {
