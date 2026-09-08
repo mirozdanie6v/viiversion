@@ -1,179 +1,272 @@
 VIIVERSION BACKEND — ROADMAP
-Version: 1.2
+Version: 1.3
 Date: 2026-09-09
 Branch: backend
 
+============================================================
 ARCHITECTURAL DECISION
+============================================================
 
-The first production version is NOT multi-tenant.
-Each client receives a separate isolated backend deployment.
+The first production architecture is NOT multi-tenant.
+
+The `backend` branch is the reusable reference CORE only.
+Every real client backend is derived from this core and then deployed independently.
 
 For every client:
 - separate Cloudflare Worker;
 - separate Cloudflare D1 database;
-- separate R2 bucket when file storage is required;
-- separate KV namespace when cache/config storage is required;
+- separate R2 bucket when required;
+- separate KV namespace when required;
 - separate Queues / Cron / Workflows when required;
 - separate environment variables and secrets;
 - separate Telegram bot token;
 - separate payment provider credentials;
-- separate domain/subdomain and deployment pipeline;
-- separate migrations and production data.
+- separate domain/subdomain;
+- separate migrations and production data;
+- separate client-specific business schema and integrations.
 
-Reusable code may be reused between client projects, but clients do not share runtime databases, secrets, queues or business data.
-Multi-tenancy is explicitly postponed until several isolated production implementations prove which components are genuinely common.
+There is NO tenant_id-based shared production database in this version.
+There is NO shared runtime containing several clients.
+Multi-tenancy is explicitly postponed until several separate production backends prove which components are genuinely common.
 
+Reusable source code may be reused. Runtime data and credentials are isolated.
+
+============================================================
 TARGET STACK
+============================================================
 
+Core:
 - TypeScript
 - Cloudflare Workers
 - Hono
 - Zod
 - Cloudflare D1
-- Drizzle ORM
-- Cloudflare R2
-- Cloudflare KV
-- Cloudflare Queues / Cron Triggers / Workflows where required
-- Telegram Bot API / Telegram Mini Apps initData validation
-- REST JSON API
-- Vitest
+- Drizzle ORM / Drizzle Kit
 - Wrangler
+- Vitest
 - GitHub Actions CI
 
-REPOSITORY STRATEGY
+Added per client when required:
+- Cloudflare R2
+- Cloudflare KV
+- Cloudflare Queues
+- Cron Triggers
+- Cloudflare Workflows
+- Telegram Bot API
+- payment provider API
+- website / CRM / other external integrations
 
-Current development branch: backend
-
-The branch contains the reference backend architecture and first production-ready backend foundation.
-Client-specific backends will be derived from this architecture and deployed separately.
-
+============================================================
 STAGE 0 — ARCHITECTURE AND RULES
 Status: COMPLETED — 2026-09-09
+============================================================
 
 Completed:
-- isolated-per-client architecture fixed;
-- backend branch created;
-- backend README created;
-- roadmap created;
-- secret/environment files excluded from git;
-- no tenant_id / shared client database model introduced.
+- created branch `backend`;
+- fixed isolated-per-client architecture;
+- explicitly rejected first-version multi-tenancy;
+- fixed secret-handling rules;
+- created README and roadmap;
+- established API versioning and development rules.
 
-STAGE 1 — BACKEND FOUNDATION
+Acceptance result: PASS.
+
+============================================================
+STAGE 1 — WORKER / TYPESCRIPT FOUNDATION
 Status: COMPLETED — 2026-09-09
+============================================================
 
 Implemented:
 - Cloudflare Worker TypeScript entrypoint;
 - Hono routing;
-- Zod runtime environment validation;
+- Zod runtime configuration validation;
 - request IDs;
-- structured JSON request logging;
+- structured JSON logging;
 - CORS allowlist;
-- centralized 404/error responses;
-- REST API version prefix /api/v1;
-- GET /health;
-- GET /api/v1/status;
+- centralized 404/500 handling;
+- API prefix `/api/v1`;
+- `GET /health`;
+- `GET /api/v1/status`;
+- strict TypeScript config;
 - Vitest foundation tests;
-- strict TypeScript configuration;
-- Wrangler configuration;
-- GitHub Actions backend CI.
-
-Files:
-- package.json
-- tsconfig.json
-- wrangler.jsonc
-- .gitignore
-- src/index.ts
-- src/app.ts
-- src/config.ts
-- src/types.ts
-- vitest.config.ts
-- test/app.test.ts
-- .github/workflows/backend-ci.yml
+- GitHub Actions CI;
+- Wrangler dry-run build validation.
 
 Verification:
-- PASS — npm dependency installation in GitHub Actions;
-- PASS — TypeScript typecheck;
-- PASS — Vitest tests;
-- PASS — Wrangler deploy --dry-run Worker build;
-- PASS — static TypeScript syntax check;
-- PASS — no credentials committed to git.
+- dependency installation: PASS;
+- TypeScript typecheck: PASS;
+- tests: PASS;
+- Wrangler build: PASS.
 
-STAGE 2 — DATABASE FOUNDATION (D1)
-Status: NEXT
+============================================================
+STAGE 2 — D1 / DRIZZLE / MIGRATIONS
+Status: COMPLETED — 2026-09-09
+============================================================
 
-Goals:
-1. Add Cloudflare D1 binding strategy for isolated client deployments.
-2. Add Drizzle ORM and schema configuration.
-3. Add versioned migrations.
-4. Add base tables.
-5. Add migration scripts and documentation.
-6. Separate local / preview / production database configuration.
+Implemented:
+- typed D1 binding `DB`;
+- Drizzle D1 client;
+- Drizzle schema;
+- versioned SQL migrations;
+- local migration scripts;
+- database documentation;
+- all-zero D1 UUID sentinel in reusable template to prevent accidental production targeting.
 
-Base tables:
+Core tables:
 - users
 - admins
-- auth_sessions or auth metadata where required
+- auth_sessions
 - audit_log
 - app_settings
 
-Rules:
-- one D1 database per client deployment;
-- no tenant_id column required;
-- migrations versioned in git;
-- no production database identifiers/secrets hard-coded into reusable source;
-- business tables added only for the selected client module.
+Isolation rule:
+One real client = one real D1 database.
 
-Acceptance criteria:
-- schema typechecks;
-- migrations can create an empty database from zero;
-- Worker can access D1 through typed binding;
-- local database flow documented;
-- per-client production binding procedure documented;
-- CI remains green.
+Verification:
+- D1 migration from empty local DB: PASS;
+- core table verification: PASS;
+- TypeScript typecheck: PASS;
+- tests: PASS;
+- Worker build: PASS.
 
-STAGE 3 — TELEGRAM AUTHENTICATION
-Status: PENDING
+Documentation:
+- `docs/DATABASE.md`
 
-Goals:
-- POST /api/v1/auth/telegram;
-- GET /api/v1/me;
-- server-side Telegram initData signature validation;
-- initData expiry validation;
+============================================================
+STAGE 3 — TELEGRAM MINI APP AUTHENTICATION
+Status: COMPLETED — 2026-09-09
+============================================================
+
+Implemented:
+- `POST /api/v1/auth/telegram`;
+- `GET /api/v1/me`;
+- server-side validation of raw `Telegram.WebApp.initData`;
+- HMAC-SHA-256 Telegram signature validation;
+- `auth_date` freshness validation;
+- rejection of forged, expired and future-dated initData;
+- signed Telegram user parsing with Zod;
 - user create/update in D1;
-- protected-route middleware;
-- Telegram bot token stored only as Cloudflare secret.
+- opaque random server sessions;
+- only SHA-256 session-token hashes stored in D1;
+- Bearer authentication for protected API calls;
+- shared authentication middleware;
+- bot token kept outside Git as `TELEGRAM_BOT_TOKEN` Cloudflare secret.
 
-STAGE 4 — ADMIN AUTHORIZATION / RBAC
-Status: PENDING
+Default timing:
+- initData max age: 300 seconds;
+- session TTL: 86400 seconds.
 
-Roles:
+Tests:
+- valid signed initData: PASS;
+- tampered signed field: PASS;
+- expired auth_date: PASS;
+- future auth_date: PASS;
+- malformed Telegram user: PASS;
+- unauthenticated `/me`: PASS.
+
+Verification pipeline after implementation:
+- typecheck: PASS;
+- tests: PASS;
+- D1 migrations: PASS;
+- core table verification: PASS;
+- Worker build: PASS.
+
+Documentation:
+- `docs/AUTH.md`
+
+============================================================
+STAGE 4 — AUTHORIZATION / RBAC / AUDIT FOUNDATION
+Status: COMPLETED — 2026-09-09
+============================================================
+
+Implemented roles:
 - owner
 - admin
 - manager
 
-Requirements:
-- server-side permission checks;
-- audit trail for sensitive actions;
-- frontend role checks never treated as security.
+Implemented:
+- reusable `requireAuth` middleware;
+- reusable `requireAdminRole(...)` middleware;
+- server-side role allowlist checks;
+- protected `GET /api/v1/admin/me` endpoint;
+- authenticated request context;
+- audit-log writer for sensitive business/admin mutations;
+- D1 role constraints from the core schema;
+- RBAC unit tests.
 
-STAGE 5 — CLIENT BUSINESS MODULE
+Important rule:
+Frontend role visibility is UI only. Permission enforcement always happens on the Worker.
+
+Verification:
+- typecheck: PASS;
+- tests: PASS;
+- D1 migrations: PASS;
+- table verification: PASS;
+- Wrangler build: PASS.
+
+============================================================
+STAGE 5 — DERIVE THE FIRST CLIENT-SPECIFIC BACKEND
+Status: NEXT
+============================================================
+
+This is the architectural boundary between reusable core and a real client application.
+
+Required actions for the selected client:
+1. Derive/create a client-specific backend from branch `backend`.
+2. Give the Worker a client-specific name.
+3. Create a separate client D1 database.
+4. Replace the all-zero template D1 UUID only in the client configuration.
+5. Configure the client's Mini App CORS origin.
+6. Configure the client's Telegram bot token as a secret.
+7. Keep all other clients completely absent from this runtime.
+8. Create business migrations only for this client/domain.
+
+Recommended naming examples:
+
+MAX TOUR:
+- Worker: `max-tour-backend`
+- D1: `max-tour-production`
+- future media: `max-tour-media`
+
+RIC:
+- Worker: `ric-backend`
+- D1: `ric-production`
+- future media: `ric-media`
+
+UNIQ:
+- Worker: `uniq-backend`
+- D1: `uniq-production`
+- future media: `uniq-media`
+
+Acceptance criteria:
+- client runtime contains only that client's configuration/data;
+- separate D1 exists;
+- separate secrets are configured;
+- no other client's business tables/data/secrets are present;
+- CI remains green.
+
+============================================================
+STAGE 6 — CLIENT BUSINESS SCHEMA + CATALOG API
 Status: PENDING
+============================================================
 
-Implemented separately for each client.
+Implemented only inside the selected client backend.
 
-Tour operator example (RIC / Eco Voyage / Max Tour):
+Tour operator example (MAX TOUR / RIC / Eco Voyage):
 - tours
+- tour_images
 - tour_dates
-- availability
 - prices
+- availability/capacity
+- customers
 - bookings
 - booking_items
-- customers
-- promocodes
+- promocodes where needed
 
 Rental example (UNIQ):
 - vehicles
-- categories
+- vehicle_categories
+- vehicle_images
 - availability
 - rental_prices
 - rentals
@@ -186,21 +279,31 @@ Clinic example (PET NIKA / AVE):
 - appointments
 - customers
 
-Rule:
-Only tables and logic required by the specific client's business are deployed.
+Initial API depends on domain, typically:
+- catalog list;
+- item details;
+- dates/availability;
+- price information;
+- admin catalog CRUD.
 
-STAGE 6 — BOOKING / ORDER ENGINE
+Rule:
+Only the selected client's required business model is deployed.
+
+============================================================
+STAGE 7 — BOOKING / ORDER ENGINE
 Status: PENDING
+============================================================
 
 Goals:
 - server-side price calculation;
 - availability validation;
-- atomic order/booking creation;
-- explicit status state machine;
+- capacity/inventory protection;
+- atomic booking/order creation;
+- explicit status machine;
 - idempotency protection;
 - duplicate-request protection.
 
-Typical statuses:
+Typical states:
 - draft
 - pending_payment
 - paid
@@ -209,73 +312,100 @@ Typical statuses:
 - completed
 - refunded
 
-STAGE 7 — PAYMENTS
-Status: PENDING
+Critical rules:
+- frontend price is never trusted;
+- frontend payment state is never trusted;
+- repeated requests must not create duplicate paid orders.
+
+============================================================
+STAGE 8 — PAYMENTS
+Status: PENDING / CLIENT-DEPENDENT
+============================================================
 
 Goals:
-- payment provider adapter;
+- provider adapter;
 - server-side payment creation;
 - signed webhook verification;
 - idempotent webhook processing;
-- paid status only after verified provider event;
-- refund flow when supported.
+- booking/order updated to paid only after verified provider event;
+- refund flow where provider supports it.
 
-STAGE 8 — TELEGRAM BOT / NOTIFICATIONS
+Secrets:
+Payment credentials are separate Cloudflare secrets for that client only.
+
+============================================================
+STAGE 9 — TELEGRAM BOT / NOTIFICATIONS
 Status: PENDING
+============================================================
 
 Goals:
-- bot webhook;
-- /start;
+- Telegram Bot webhook;
+- `/start`;
 - Mini App launch flow;
-- booking/order confirmation;
+- order/booking confirmation;
 - manager notifications;
 - scheduled reminders;
 - deep links;
 - safe retry behavior.
 
-STAGE 9 — ADMIN / CRM API
+Bot token remains client-specific and isolated.
+
+============================================================
+STAGE 10 — ADMIN / CRM API
 Status: PENDING
+============================================================
 
 Goals:
 - customers;
 - bookings/orders;
-- catalog;
+- catalog management;
 - prices;
 - availability;
 - managers;
 - roles;
 - settings;
-- CRM history;
-- audit log.
+- customer/order history;
+- audited sensitive mutations.
 
-STAGE 10 — FILES / MEDIA
-Status: PENDING
+All authorization enforced server-side through Stage 4 middleware.
+
+============================================================
+STAGE 11 — FILES / MEDIA (R2)
+Status: PENDING / CLIENT-DEPENDENT
+============================================================
 
 Goals:
-- R2 integration;
+- separate R2 bucket per client when needed;
 - validated uploads;
-- file type/size restrictions;
+- file-type restrictions;
+- file-size restrictions;
 - metadata/URLs in D1;
 - safe replacement/deletion.
 
-STAGE 11 — BACKGROUND JOBS
-Status: CLIENT-DEPENDENT
+Image binaries are not stored in D1.
+
+============================================================
+STAGE 12 — BACKGROUND JOBS
+Status: PENDING / CLIENT-DEPENDENT
+============================================================
 
 Possible technologies:
 - Cloudflare Queues
 - Cron Triggers
-- Workflows
+- Cloudflare Workflows
 
 Use cases:
 - reminders;
 - unpaid booking expiration;
-- post-purchase messaging;
+- post-purchase messages;
 - notification retries;
 - integration retries;
 - report generation.
 
-STAGE 12 — ANALYTICS
+============================================================
+STAGE 13 — ANALYTICS
 Status: PENDING
+============================================================
 
 Typical events:
 - app_open
@@ -287,120 +417,136 @@ Typical events:
 - purchase
 
 Rule:
-Analytics is never the source of truth for orders/payments.
+Analytics never becomes the source of truth for orders or payments.
 
-STAGE 13 — EXTERNAL INTEGRATIONS
-Status: CLIENT-DEPENDENT
+============================================================
+STAGE 14 — EXTERNAL INTEGRATIONS
+Status: PENDING / CLIENT-DEPENDENT
+============================================================
 
 Possible integrations:
 - website / Tilda;
-- CRM;
+- external CRM;
 - payment systems;
 - Google services;
 - messaging providers;
 - partner APIs;
 - accounting/export systems.
 
-All credentials are isolated per client.
+Every external credential remains isolated to one client backend.
 
-STAGE 14 — SECURITY HARDENING
-Status: PENDING
+============================================================
+STAGE 15 — SECURITY HARDENING
+Status: PENDING / PARTIALLY IMPLEMENTED FROM EARLIER STAGES
+============================================================
 
 Checklist:
-- Telegram initData signature validation;
-- Zod validation;
-- RBAC;
-- secrets outside git;
-- webhook verification;
-- rate limiting;
-- CORS allowlist;
-- idempotency;
-- typed DB access;
-- audit log;
-- sanitized error responses;
-- dependency audit;
-- backup/export procedure;
-- logs without secret/PII leakage.
+- Telegram signature validation [DONE];
+- initData replay-age control [DONE];
+- Zod request validation [STARTED];
+- server sessions [DONE];
+- RBAC [DONE];
+- secrets outside Git [DONE];
+- CORS allowlist [DONE];
+- audit log foundation [DONE];
+- webhook signature validation [PAYMENT STAGE];
+- rate limiting [PENDING];
+- idempotency [BOOKING/PAYMENT STAGES];
+- sanitized errors [STARTED];
+- dependency audit [PENDING];
+- backup/export procedure [DOCUMENTED];
+- PII/secret-safe production logging [REVIEW BEFORE PROD].
 
-STAGE 15 — AUTOMATED TESTING
-Status: STARTED
+============================================================
+STAGE 16 — FULL AUTOMATED TEST SUITE
+Status: IN PROGRESS THROUGHOUT DEVELOPMENT
+============================================================
 
-Already implemented:
-- foundation API tests.
+Already covered:
+- health/status;
+- CORS;
+- errors/404;
+- Telegram signature/auth-date validation;
+- basic auth protection;
+- RBAC role matching;
+- D1 migrations/core tables;
+- Worker build.
 
-Required later:
-- Telegram auth tests;
-- request validation tests;
-- booking price tests;
-- availability/concurrency tests;
-- payment webhook/idempotency tests;
-- RBAC tests;
-- migration tests.
+Add with business implementation:
+- catalog validation;
+- price calculation;
+- availability/concurrency;
+- booking idempotency;
+- payment webhook validation/idempotency;
+- manager permissions;
+- migration regression tests.
 
-STAGE 16 — CI/CD / CLOUDFLARE DEPLOYMENT
-Status: CI FOUNDATION STARTED
+============================================================
+STAGE 17 — CLIENT CI/CD + PRODUCTION READINESS
+Status: CI CORE STARTED / CLIENT DEPLOYMENT PENDING
+============================================================
 
-Already implemented:
-- GitHub Actions on backend push/PR;
+Core CI already performs:
 - dependency installation;
-- typecheck;
+- TypeScript typecheck;
 - tests;
+- local D1 migration application;
+- core-table verification;
 - Wrangler dry-run build.
 
-Later:
-- preview deployment;
-- production deployment;
-- D1 migration procedure;
-- deployment checklist;
-- per-client secrets/bindings.
+Per-client production stage adds:
+- preview configuration;
+- separate production Worker;
+- real client D1 binding;
+- client secrets;
+- production migration procedure;
+- backup/export before risky migrations;
+- custom domain/subdomain;
+- smoke test;
+- security audit;
+- rollback procedure;
+- production readiness checklist.
 
-Client isolation example:
-
-RIC:
-- Worker: ric-backend
-- D1: ric-production
-- R2: ric-media
-
-UNIQ:
-- Worker: uniq-backend
-- D1: uniq-production
-- R2: uniq-media
-
-No runtime dependency between deployments.
-
-STAGE 17 — FIRST REAL CLIENT IMPLEMENTATION
-Status: PENDING
-
-Recommended first implementation:
-Tour/travel backend because it exercises catalog + schedule + availability + booking + payments + CRM + Telegram notifications.
-
-Only after several separate production backends prove common components should reusable packages be extracted.
-
+============================================================
 DEVELOPMENT PRINCIPLES
+============================================================
 
 1. Build production behavior, not demo-only backend behavior.
-2. Never trust prices, roles, payment state or Telegram identity from the frontend.
-3. Keep every client's production data and credentials isolated.
-4. Prefer Cloudflare-native services before introducing external infrastructure.
-5. Multi-tenancy is postponed.
-6. Every stage must pass acceptance criteria before it is marked complete.
-7. No secrets, bot tokens, API keys, payment credentials or production personal data in git.
-8. Schema migrations are versioned.
-9. API is versioned under /api/v1.
-10. Auth/payment/security changes require tests.
-11. CI must remain green before proceeding to production deployment.
+2. One client = one isolated backend runtime.
+3. One client = one isolated production D1 database.
+4. Never trust frontend price, role, payment state or Telegram identity.
+5. Never commit bot tokens, API keys, payment credentials, raw sessions or production personal data.
+6. Prefer Cloudflare-native services before external infrastructure.
+7. Version all schema migrations.
+8. Version API under `/api/v1`.
+9. Auth/payment/security changes require tests.
+10. CI must remain green before production deployment.
+11. Reuse source code only after behavior is proven; do not share production state.
+12. Multi-tenancy remains postponed.
 
-CURRENT EXECUTION ORDER
+============================================================
+CURRENT EXECUTION STATUS
+============================================================
 
-[DONE] Stage 0 — architecture and rules
-[DONE] Stage 1 — Worker / TypeScript backend foundation
-[NEXT] Stage 2 — D1 / Drizzle / migrations
-[PENDING] Stage 3 — Telegram authentication
-[PENDING] Stage 4 — admin RBAC
-[PENDING] Stage 5 — first client business module
-[PENDING] Stage 6 — booking/order engine
-[PENDING] Stage 7 — payments
-[PENDING] Stage 8 — Telegram notifications
-[PENDING] Stage 9 — CRM/admin API
-[PENDING] Stages 10–16 as required
-[PENDING] Stage 17 — first production client implementation
+[DONE] Stage 0 — architecture and isolation rules
+[DONE] Stage 1 — Worker / TypeScript foundation
+[DONE] Stage 2 — D1 / Drizzle / migrations
+[DONE] Stage 3 — Telegram authentication and sessions
+[DONE] Stage 4 — RBAC and audit foundation
+[NEXT] Stage 5 — derive the first client-specific backend
+[PENDING] Stage 6 — client business schema/catalog API
+[PENDING] Stage 7 — booking/order engine
+[PENDING] Stage 8 — payments
+[PENDING] Stage 9 — Telegram bot/notifications
+[PENDING] Stage 10 — CRM/admin API
+[PENDING] Stage 11 — R2/media
+[PENDING] Stage 12 — background jobs
+[PENDING] Stage 13 — analytics
+[PENDING] Stage 14 — external integrations
+[PENDING] Stage 15 — final security hardening
+[ONGOING] Stage 16 — automated tests
+[PENDING] Stage 17 — client production deployment/readiness
+
+Current correct stopping point for the reusable `backend` branch:
+CORE is built through authentication/RBAC.
+The next code must belong to one selected client backend rather than mixing several clients into this branch's runtime model.
