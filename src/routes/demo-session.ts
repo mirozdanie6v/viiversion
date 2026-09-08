@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 
 import { getRuntimeConfig } from '../config'
@@ -20,7 +20,7 @@ function isSecureEnvironment(environment: string): boolean {
   return environment === 'production' || environment === 'preview'
 }
 
-async function getOrCreateSession(c: Parameters<typeof demoSessionRoutes.get>[1] extends never ? never : any, mode: DemoSessionMode) {
+async function getOrCreateSession(c: Context<AppEnv>, mode: DemoSessionMode) {
   const config = getRuntimeConfig(c.env)
   const session = await ensureDemoSession(
     c.env.DB,
