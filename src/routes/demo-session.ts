@@ -1,13 +1,8 @@
-import { Hono, type Context } from 'hono'
+import { Hono } from 'hono'
 import { z } from 'zod'
 
-import { getRuntimeConfig } from '../config'
-import {
-  createDemoSessionCookie,
-  ensureDemoSession,
-  resetDemoSessionData,
-  type DemoSessionMode,
-} from '../demo/session'
+import { resolveDemoSession } from '../demo/http'
+import { resetDemoSessionData } from '../demo/session'
 import type { AppEnv } from '../types'
 
 const createSessionBodySchema = z.object({
@@ -16,34 +11,8 @@ const createSessionBodySchema = z.object({
 
 export const demoSessionRoutes = new Hono<AppEnv>()
 
-function isSecureEnvironment(environment: string): boolean {
-  return environment === 'production' || environment === 'preview'
-}
-
-async function getOrCreateSession(c: Context<AppEnv>, mode: DemoSessionMode) {
-  const config = getRuntimeConfig(c.env)
-  const session = await ensureDemoSession(
-    c.env.DB,
-    c.req.header('cookie'),
-    mode,
-    config.demoSessionTtlSeconds,
-  )
-
-  c.header(
-    'Set-Cookie',
-    createDemoSessionCookie(
-      session.id,
-      config.demoSessionTtlSeconds,
-      isSecureEnvironment(config.environment),
-    ),
-  )
-  c.header('Cache-Control', 'no-store')
-
-  return session
-}
-
 demoSessionRoutes.get('/session', async (c) => {
-  const session = await getOrCreateSession(c, 'browser')
+  const session = await resolveDemoSession(c, 'browser')
 
   return c.json({
     ok: true,
@@ -75,7 +44,7 @@ demoSessionRoutes.post('/session', async (c) => {
     )
   }
 
-  const session = await getOrCreateSession(c, parsed.data.mode)
+  const session = await resolveDemoSession(c, parsed.data.mode)
 
   return c.json({
     ok: true,
@@ -89,7 +58,7 @@ demoSessionRoutes.post('/session', async (c) => {
 })
 
 demoSessionRoutes.post('/demo/reset', async (c) => {
-  const session = await getOrCreateSession(c, 'browser')
+  const session = await resolveDemoSession(c, 'browser')
   await resetDemoSessionData(c.env.DB, session.id)
 
   return c.json({
