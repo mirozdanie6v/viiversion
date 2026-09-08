@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { app } from '../src/app'
 
-describe('VIIVERSION backend foundation', () => {
+describe('MAX TOUR backend foundation', () => {
   it('returns a healthy response', async () => {
     const response = await app.request('/health')
     const body = await response.json()
@@ -10,8 +10,8 @@ describe('VIIVERSION backend foundation', () => {
     expect(response.status).toBe(200)
     expect(body).toMatchObject({
       ok: true,
-      service: 'viiversion-backend',
-      version: '0.2.0',
+      service: 'max-tour-backend',
+      version: '0.1.0',
     })
     expect(response.headers.get('x-request-id')).toBeTruthy()
   })
@@ -23,13 +23,13 @@ describe('VIIVERSION backend foundation', () => {
     expect(response.status).toBe(200)
     expect(body).toMatchObject({
       ok: true,
-      service: 'viiversion-backend',
+      service: 'max-tour-backend',
       environment: 'development',
       apiVersion: 'v1',
     })
   })
 
-  it('allows the configured local origin', async () => {
+  it('allows the configured local origin with credentials', async () => {
     const response = await app.request('/health', {
       headers: {
         Origin: 'http://localhost:5173',
@@ -38,6 +38,7 @@ describe('VIIVERSION backend foundation', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173')
+    expect(response.headers.get('access-control-allow-credentials')).toBe('true')
   })
 
   it('rejects a preflight request from an unknown origin', async () => {
