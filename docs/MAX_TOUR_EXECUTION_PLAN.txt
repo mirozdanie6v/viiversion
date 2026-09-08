@@ -1,0 +1,116 @@
+MAX TOUR BACKEND — EXECUTION PLAN
+Version: 1.0
+Date: 2026-09-09
+Repository: mirozdanie6v/viiversion
+Branch: backend-max-tour
+
+ARCHITECTURE
+
+MAX TOUR uses an isolated single-client backend.
+There is no multi-tenancy.
+There is no shared production database with other VIIVERSION clients.
+
+Fixed resource names:
+- Worker: max-tour-backend
+- D1: max-tour-production
+- Mini App origin: https://max-tour.viiversion.com
+- Future R2 bucket: max-tour-media
+
+CURRENT STATUS
+
+[DONE] 1. Derive backend-max-tour from reusable backend Core.
+[DONE] 2. Rename package to max-tour-backend.
+[DONE] 3. Rename Worker to max-tour-backend.
+[DONE] 4. Set D1 logical name to max-tour-production.
+[DONE] 5. Set MAX TOUR CORS origin.
+[DONE] 6. Keep production D1 UUID as zero sentinel until real D1 exists.
+[DONE] 7. Add production deploy guard against placeholder D1 configuration.
+[DONE] 8. Retarget GitHub Actions CI to backend-max-tour.
+[DONE] 9. Add MAX TOUR backend documentation.
+[PENDING CLOUDFLARE] 10. Create real D1 max-tour-production.
+[PENDING CLOUDFLARE] 11. Put returned D1 UUID into wrangler.jsonc.
+[PENDING CLOUDFLARE] 12. Configure TELEGRAM_BOT_TOKEN secret.
+[PENDING] 13. Run production migration procedure after real D1 binding.
+[PENDING] 14. Production deploy and smoke test.
+
+STAGE 6 — MAX TOUR BUSINESS SCHEMA
+
+Next development block after Stage 5 code setup:
+
+1. tours
+2. tour_images
+3. tour_dates
+4. tour_prices
+5. customers
+6. bookings
+7. booking_items
+8. promocodes only if required
+
+Design rules:
+- dates/capacity belong to explicit tour departures;
+- final prices are server-controlled;
+- archived tours remain referentially safe for historic bookings;
+- no hard delete for business objects referenced by orders;
+- public catalog and admin mutations are separate APIs;
+- booking engine is implemented after catalog/date/price model is stable.
+
+PLANNED PUBLIC API
+
+GET /api/v1/tours
+GET /api/v1/tours/:id
+GET /api/v1/tours/:id/dates
+
+PLANNED ADMIN API
+
+POST /api/v1/admin/tours
+PATCH /api/v1/admin/tours/:id
+POST /api/v1/admin/tours/:id/dates
+PATCH /api/v1/admin/tour-dates/:id
+
+All admin mutations require RBAC and audit logging.
+
+STAGE 7 — BOOKING ENGINE
+
+After Stage 6:
+- server-side price calculation;
+- capacity validation;
+- atomic booking creation;
+- booking status machine;
+- idempotency key handling;
+- duplicate-request protection.
+
+STAGE 8 — PAYMENTS
+
+Only after the real MAX TOUR payment provider is selected:
+- create payment server-side;
+- verify provider webhook;
+- idempotent payment processing;
+- never trust frontend success state.
+
+STAGE 9 — TELEGRAM BOT / NOTIFICATIONS
+
+- bot webhook;
+- /start;
+- Mini App launch;
+- booking confirmation;
+- manager notifications;
+- scheduled reminders.
+
+STAGE 10 — CRM / ADMIN API
+
+- bookings;
+- customers;
+- catalog;
+- dates/capacity;
+- prices;
+- manager roles;
+- audit history.
+
+PRODUCTION BLOCKERS
+
+Do not deploy production while any of these are unresolved:
+- D1 UUID is the all-zero sentinel;
+- TELEGRAM_BOT_TOKEN is not configured as a Cloudflare secret;
+- migrations have not been applied to the intended D1;
+- CI is not green;
+- production smoke test has not been completed.
