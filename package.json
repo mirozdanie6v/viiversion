@@ -14,7 +14,8 @@
     "db:list:local": "wrangler d1 migrations list DB --local",
     "db:create:production": "wrangler d1 create max-tour-production",
     "db:migrate:production": "wrangler d1 migrations apply DB --remote",
-    "deploy": "wrangler deploy"
+    "check:production-config": "node scripts/check-production-config.mjs",
+    "deploy": "npm run check:production-config && wrangler deploy"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
