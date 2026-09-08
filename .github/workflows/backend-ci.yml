@@ -34,5 +34,18 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Apply D1 migrations locally
+        run: npm run db:migrate:local
+
+      - name: Verify D1 core tables
+        run: >-
+          npx wrangler d1 execute DB --local --command
+          "SELECT
+          (SELECT COUNT(*) FROM users) +
+          (SELECT COUNT(*) FROM admins) +
+          (SELECT COUNT(*) FROM auth_sessions) +
+          (SELECT COUNT(*) FROM audit_log) +
+          (SELECT COUNT(*) FROM app_settings) AS total_rows;"
+
       - name: Validate Worker build
         run: npx wrangler deploy --dry-run --outdir dist
