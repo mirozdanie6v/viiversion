@@ -11,7 +11,7 @@ describe('VIIVERSION backend foundation', () => {
     expect(body).toMatchObject({
       ok: true,
       service: 'viiversion-backend',
-      version: '0.1.0',
+      version: '0.2.0',
     })
     expect(response.headers.get('x-request-id')).toBeTruthy()
   })
@@ -49,6 +49,31 @@ describe('VIIVERSION backend foundation', () => {
     })
 
     expect(response.status).toBe(403)
+  })
+
+  it('requires Telegram auth configuration for login', async () => {
+    const response = await app.request('/api/v1/auth/telegram', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ initData: 'auth_date=1&hash=00' }),
+    })
+
+    expect(response.status).toBe(503)
+  })
+
+  it('rejects unauthenticated access to /api/v1/me', async () => {
+    const response = await app.request('/api/v1/me')
+    const body = await response.json()
+
+    expect(response.status).toBe(401)
+    expect(body).toMatchObject({
+      ok: false,
+      error: {
+        code: 'UNAUTHORIZED',
+      },
+    })
   })
 
   it('returns a structured 404 response', async () => {
