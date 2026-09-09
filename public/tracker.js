@@ -100,7 +100,11 @@
     const platform = String(webApp?.platform || launchParam('tgWebAppPlatform') || '').slice(0, 80);
     const version = String(webApp?.version || launchParam('tgWebAppVersion') || '').slice(0, 40);
     const startParam = String(unsafe?.start_param || launchParam('tgWebAppStartParam') || firstParams.get('startapp') || '').slice(0, 160);
-    const detected = Boolean(webApp?.initData || launchParam('tgWebAppData') || platform || version);
+    const launchData = launchParam('tgWebAppData');
+    const launchPlatform = launchParam('tgWebAppPlatform');
+    const launchVersion = launchParam('tgWebAppVersion');
+    const sdkPlatformIsReal = Boolean(platform && platform !== 'unknown');
+    const detected = Boolean(webApp?.initData || launchData || (sdkPlatformIsReal && (launchPlatform || launchVersion)));
     return {
       detected,
       platform,
@@ -220,7 +224,7 @@
     try {
       fetch(endpoint, {
         method: 'POST',
-        mode: 'cors',
+        mode: 'no-cors',
         credentials: 'omit',
         keepalive: true,
         headers: { 'content-type': 'text/plain;charset=UTF-8' },
