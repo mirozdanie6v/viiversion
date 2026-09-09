@@ -36,6 +36,7 @@ function json(data: unknown, status = 200, extra: HeadersInit = {}) {
 function collectorOrigin(request: Request) {
   const origin = request.headers.get('origin');
   if (!origin) return { origin: '', hostname: '' };
+  if (origin === 'null') return { origin: 'null', hostname: '' };
   try {
     const url = new URL(origin);
     return allowedViiversionHost(url.hostname) ? { origin: url.origin, hostname: url.hostname.toLowerCase() } : null;
