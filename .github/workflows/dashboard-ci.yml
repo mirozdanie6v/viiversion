@@ -31,17 +31,20 @@ jobs:
           grep -q "storageHandle('sessionStorage')" public/tracker.js
           grep -q "tgWebAppPlatform" public/tracker.js
           grep -q "telegram.detected ? 'telegram'" public/tracker.js
+          grep -q "telegramInitData" public/tracker.js
+          grep -q "telegramUserId" public/tracker.js
           ! grep -q "const storage = window.localStorage" public/tracker.js
       - run: npm run db:migrate:local
       - name: Verify detailed analytics schema
         run: |
           set -euo pipefail
-          out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS event_table FROM sqlite_master WHERE type='table' AND name='analytics_events'; SELECT COUNT(*) AS maintenance_table FROM sqlite_master WHERE type='table' AND name='analytics_maintenance_log'; SELECT COUNT(*) AS required_columns FROM pragma_table_info('analytics_events') WHERE name IN ('ip_address','user_agent','country','city','asn','colo','http_protocol','tls_version','browser_platform','viewport','page_url','raw_referrer'); SELECT COUNT(*) AS indexes FROM sqlite_master WHERE type='index' AND tbl_name='analytics_events';")
+          out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS event_table FROM sqlite_master WHERE type='table' AND name='analytics_events'; SELECT COUNT(*) AS maintenance_table FROM sqlite_master WHERE type='table' AND name='analytics_maintenance_log'; SELECT COUNT(*) AS telegram_config_table FROM sqlite_master WHERE type='table' AND name='analytics_project_config'; SELECT COUNT(*) AS required_columns FROM pragma_table_info('analytics_events') WHERE name IN ('ip_address','user_agent','country','city','asn','colo','http_protocol','tls_version','browser_platform','viewport','page_url','raw_referrer','telegram_user_id','telegram_username','telegram_verified','telegram_start_param','telegram_photo_url'); SELECT COUNT(*) AS indexes FROM sqlite_master WHERE type='index' AND tbl_name='analytics_events';")
           echo "$out" | jq .
           test "$(echo "$out" | jq '[.[].results[]? | select(has("event_table")) | .event_table][0]')" = "1"
           test "$(echo "$out" | jq '[.[].results[]? | select(has("maintenance_table")) | .maintenance_table][0]')" = "1"
-          test "$(echo "$out" | jq '[.[].results[]? | select(has("required_columns")) | .required_columns][0]')" = "12"
-      - name: Local collector, Telegram WebView and retention integration smoke
+          test "$(echo "$out" | jq '[.[].results[]? | select(has("telegram_config_table")) | .telegram_config_table][0]')" = "1"
+          test "$(echo "$out" | jq '[.[].results[]? | select(has("required_columns")) | .required_columns][0]')" = "17"
+      - name: Local collector, Telegram identity and retention integration smoke
         shell: bash
         run: |
           set -euo pipefail
@@ -67,17 +70,22 @@ jobs:
           test "$(echo "$out" | jq -r '[.[].results[]? | select(has("ua")) | .ua][0]')" = "VIIVERSION-CI-Agent/1.0"
           ! echo "$out" | grep -q 'must-redact'
 
-          telegram_payload='{"eventType":"pageview","project":"MAX TOUR","hostname":"max-tour.viiversion.com","path":"/ci-telegram-opaque","pageUrl":"https://max-tour.viiversion.com/ci-telegram-opaque","title":"Telegram Mini App CI","visitorId":"ci-telegram-visitor","sessionId":"ci-telegram-session","utmSource":"telegram","utmMedium":"miniapp","browserPlatform":"Telegram android 10.1","device":"mobile","occurredAt":"2026-09-09T07:00:00.000Z"}'
+          telegram_init_data=$(node -e "const p=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),start_param:'ci-proposal',user:JSON.stringify({id:777000111,first_name:'CI',last_name:'Telegram',username:'ci_telegram_user',language_code:'ru',is_premium:true,allows_write_to_pm:true})});process.stdout.write(p.toString())")
+          telegram_payload=$(jq -nc --arg init "$telegram_init_data" '{eventType:"pageview",project:"MAX TOUR",hostname:"max-tour.viiversion.com",path:"/ci-telegram-opaque",pageUrl:"https://max-tour.viiversion.com/ci-telegram-opaque",title:"Telegram Mini App CI",visitorId:"ci-telegram-visitor",sessionId:"ci-telegram-session",utmSource:"telegram",utmMedium:"miniapp",browserPlatform:"Telegram android 10.1",device:"mobile",telegramInitData:$init,occurredAt:(now|todate)}')
           telegram_code=$(curl -sS -D /tmp/telegram-headers.txt -o /tmp/telegram-collect.json -w '%{http_code}' http://127.0.0.1:8787/api/collect -X POST -H 'Origin: null' -H 'CF-Connecting-IP: 203.0.113.8' -H 'User-Agent: Telegram-Android-WebView/10.1' -H 'Content-Type: text/plain;charset=UTF-8' --data "$telegram_payload")
           cat /tmp/telegram-collect.json
           cat /tmp/telegram-headers.txt
           test "$telegram_code" = "202"
           grep -qi '^access-control-allow-origin: null' /tmp/telegram-headers.txt
-          telegram_out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS rows,MAX(ip_address) AS ip,MAX(user_agent) AS ua,MAX(utm_source) AS source,MAX(utm_medium) AS medium FROM analytics_events WHERE path='/ci-telegram-opaque';")
+          telegram_out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS rows,MAX(ip_address) AS ip,MAX(user_agent) AS ua,MAX(utm_source) AS source,MAX(utm_medium) AS medium,MAX(telegram_user_id) AS tg_id,MAX(telegram_username) AS tg_username,MAX(telegram_start_param) AS tg_start,MAX(telegram_verification) AS tg_verification FROM analytics_events WHERE path='/ci-telegram-opaque';")
           echo "$telegram_out" | jq .
           test "$(echo "$telegram_out" | jq '[.[].results[]? | select(has("rows")) | .rows][0]')" -ge 1
           test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("source")) | .source][0]')" = "telegram"
           test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("medium")) | .medium][0]')" = "miniapp"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_id")) | .tg_id][0]')" = "777000111"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_username")) | .tg_username][0]')" = "ci_telegram_user"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_start")) | .tg_start][0]')" = "ci-proposal"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_verification")) | .tg_verification][0]')" = "bot_id_missing"
 
           npx wrangler d1 execute DB --local --command="INSERT INTO analytics_events(id,event_type,project,hostname,path,visitor_id,session_id,occurred_at,received_at) VALUES ('retention-old','pageview','Retention Test','retention.viiversion.com','/old','retention-old-visitor','retention-old-session',datetime('now','-31 days'),datetime('now','-31 days'));"
           before=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS old_rows FROM analytics_events WHERE id='retention-old';")
