@@ -1,0 +1,283 @@
+import fs from 'node:fs';
+
+function replaceOnce(source, before, after, label) {
+  if (!source.includes(before)) throw new Error(`anchor not found: ${label}`);
+  return source.replace(before, after);
+}
+
+{
+  const p = 'public/tracker.js';
+  let s = fs.readFileSync(p, 'utf8');
+  const before = `      user: detected ? {
+        id: user?.id ? String(user.id).slice(0, 32) : '',
+        username: String(user?.username || '').slice(0, 64),
+        languageCode: String(user?.language_code || '').slice(0, 24),
+        isPremium: typeof user?.is_premium === 'boolean' ? user.is_premium : null,
+      } : null,`;
+  const after = `      initData: detected ? String(webApp?.initData || '').slice(0, 16384) : '',
+      authDate: Number.isFinite(Number(unsafe?.auth_date)) ? Number(unsafe.auth_date) : null,
+      chatType: String(unsafe?.chat_type || launchParam('tgWebAppChatType') || '').slice(0, 40),
+      chatInstance: String(unsafe?.chat_instance || launchParam('tgWebAppChatInstance') || '').slice(0, 128),
+      user: detected ? {
+        id: user?.id ? String(user.id).slice(0, 32) : '',
+        username: String(user?.username || '').replace(/^@/, '').slice(0, 64),
+        firstName: String(user?.first_name || '').slice(0, 128),
+        lastName: String(user?.last_name || '').slice(0, 128),
+        languageCode: String(user?.language_code || '').slice(0, 24),
+        isPremium: typeof user?.is_premium === 'boolean' ? user.is_premium : null,
+        photoUrl: String(user?.photo_url || '').slice(0, 1000),
+        addedToAttachmentMenu: typeof user?.added_to_attachment_menu === 'boolean' ? user.added_to_attachment_menu : null,
+        allowsWriteToPm: typeof user?.allows_write_to_pm === 'boolean' ? user.allows_write_to_pm : null,
+      } : null,`;
+  s = replaceOnce(s, before, after, 'tracker telegram user');
+  s = replaceOnce(s,
+    `      uaData: uaData(telegram),`,
+    `      telegramInitData: telegram.initData || '',
+      telegramUserId: telegram.user?.id || '',
+      telegramUsername: telegram.user?.username || '',
+      telegramFirstName: telegram.user?.firstName || '',
+      telegramLastName: telegram.user?.lastName || '',
+      telegramLanguageCode: telegram.user?.languageCode || '',
+      telegramIsPremium: telegram.user?.isPremium ?? null,
+      telegramPhotoUrl: telegram.user?.photoUrl || '',
+      telegramStartParam: telegram.startParam || '',
+      telegramAuthDate: telegram.authDate ?? null,
+      telegramAddedToAttachmentMenu: telegram.user?.addedToAttachmentMenu ?? null,
+      telegramAllowsWriteToPm: telegram.user?.allowsWriteToPm ?? null,
+      telegramChatType: telegram.chatType || '',
+      telegramChatInstance: telegram.chatInstance || '',
+      uaData: uaData(telegram),`,
+    'tracker payload');
+  fs.writeFileSync(p, s);
+}
+
+{
+  const p = 'src/worker/index.ts';
+  let s = fs.readFileSync(p, 'utf8');
+  if (!s.includes("from './telegram'")) {
+    s = replaceOnce(s, `} from './analytics';`, `} from './analytics';\nimport { validateTelegramInitData } from './telegram';`, 'worker import');
+  }
+  s = replaceOnce(s,
+    `  const queryString = sanitizeQuery(input?.queryString, 2000);`,
+    `  const queryString = sanitizeQuery(input?.queryString, 2000);
+
+  const telegramConfig = await env.DB.prepare('SELECT telegram_bot_id FROM analytics_project_config WHERE hostname=?')
+    .bind(hostname).first<{ telegram_bot_id: string }>();
+  const telegramValidation = await validateTelegramInitData(input?.telegramInitData, clean(telegramConfig?.telegram_bot_id, 20));
+  let telegramIdentity = telegramValidation.identity;
+  let telegramVerification = telegramValidation.verification as string;
+  if (!telegramIdentity) {
+    const claimedId = clean(input?.telegramUserId, 32);
+    if (/^\\d{1,20}$/.test(claimedId)) {
+      telegramIdentity = {
+        userId: claimedId,
+        username: clean(input?.telegramUsername, 64).replace(/^@/, ''),
+        firstName: clean(input?.telegramFirstName, 128),
+        lastName: clean(input?.telegramLastName, 128),
+        languageCode: clean(input?.telegramLanguageCode, 24),
+        isPremium: typeof input?.telegramIsPremium === 'boolean' ? input.telegramIsPremium : null,
+        photoUrl: clean(input?.telegramPhotoUrl, 1000),
+        startParam: clean(input?.telegramStartParam, 160),
+        authDate: Number.isInteger(Number(input?.telegramAuthDate)) ? Number(input.telegramAuthDate) : null,
+        addedToAttachmentMenu: typeof input?.telegramAddedToAttachmentMenu === 'boolean' ? input.telegramAddedToAttachmentMenu : null,
+        allowsWriteToPm: typeof input?.telegramAllowsWriteToPm === 'boolean' ? input.telegramAllowsWriteToPm : null,
+        chatType: clean(input?.telegramChatType, 40),
+        chatInstance: clean(input?.telegramChatInstance, 128),
+      };
+      telegramVerification = 'client_unverified';
+    }
+  }
+  const telegramPhotoUrl = (() => {
+    const raw = clean(telegramIdentity?.photoUrl, 1000);
+    if (!raw) return '';
+    try { const url = new URL(raw); return url.protocol === 'https:' ? url.toString().slice(0, 1000) : ''; } catch { return ''; }
+  })();`,
+    'worker telegram validation');
+
+  s = replaceOnce(s,
+    `    connection_type,effective_type,downlink,rtt,save_data,webdriver,ua_data,page_url,query_string,url_hash,raw_referrer,request_referer
+  ) VALUES (${Array.from({ length: 68 }, () => '?').join(',')})`,
+    `    connection_type,effective_type,downlink,rtt,save_data,webdriver,ua_data,page_url,query_string,url_hash,raw_referrer,request_referer,
+    telegram_user_id,telegram_username,telegram_first_name,telegram_last_name,telegram_language_code,telegram_is_premium,
+    telegram_photo_url,telegram_start_param,telegram_auth_date,telegram_added_to_attachment_menu,telegram_allows_write_to_pm,
+    telegram_chat_type,telegram_chat_instance,telegram_verified,telegram_verification
+  ) VALUES (${Array.from({ length: 83 }, () => '?').join(',')})`,
+    'worker insert columns');
+
+  s = replaceOnce(s,
+    `    safeRawReferrer(request.headers.get('referer')),
+  ).run();`,
+    `    safeRawReferrer(request.headers.get('referer')),
+    clean(telegramIdentity?.userId, 32),
+    clean(telegramIdentity?.username, 64).replace(/^@/, ''),
+    clean(telegramIdentity?.firstName, 128),
+    clean(telegramIdentity?.lastName, 128),
+    clean(telegramIdentity?.languageCode, 24),
+    boolInt(telegramIdentity?.isPremium),
+    telegramPhotoUrl,
+    clean(telegramIdentity?.startParam, 160),
+    telegramIdentity?.authDate ?? null,
+    boolInt(telegramIdentity?.addedToAttachmentMenu),
+    boolInt(telegramIdentity?.allowsWriteToPm),
+    clean(telegramIdentity?.chatType, 40),
+    clean(telegramIdentity?.chatInstance, 128),
+    telegramValidation.verified ? 1 : 0,
+    clean(telegramVerification, 40),
+  ).run();`,
+    'worker bind tail');
+
+  s = replaceOnce(s,
+    `  const [metrics, engagement, projects, daily, campaigns, sources, pages, recent, geography, networks, ipStats, retention, lastCleanup] = await Promise.all([`,
+    `  const [metrics, engagement, projects, daily, campaigns, sources, pages, recent, geography, networks, ipStats, telegramMetrics, telegramUsers, retention, lastCleanup] = await Promise.all([`,
+    'worker summary destructure');
+
+  s = replaceOnce(s,
+    `    env.DB.prepare(\`SELECT COUNT(*) AS total_events,COUNT(DISTINCT session_id) AS total_sessions,COUNT(DISTINCT visitor_id) AS total_visitors,MIN(received_at) AS oldest_event,MAX(received_at) AS newest_event FROM analytics_events\`).first<any>(),`,
+    `    env.DB.prepare(\`SELECT COUNT(*) AS pageviews,COUNT(DISTINCT telegram_user_id) AS users,COUNT(DISTINCT CASE WHEN telegram_verified=1 THEN telegram_user_id END) AS verified_users FROM analytics_events WHERE \${where} AND event_type='pageview' AND telegram_user_id<>''\`).bind(...args).first<any>(),
+    env.DB.prepare(\`SELECT telegram_user_id,MAX(telegram_username) AS telegram_username,MAX(telegram_first_name) AS telegram_first_name,MAX(telegram_last_name) AS telegram_last_name,MAX(telegram_language_code) AS telegram_language_code,MAX(COALESCE(telegram_is_premium,0)) AS telegram_is_premium,MAX(telegram_photo_url) AS telegram_photo_url,MAX(telegram_start_param) AS telegram_start_param,MAX(telegram_verified) AS telegram_verified,COUNT(*) AS pageviews,COUNT(DISTINCT session_id) AS sessions,COUNT(DISTINCT project) AS projects,MIN(received_at) AS first_visit,MAX(received_at) AS last_visit FROM analytics_events WHERE \${where} AND event_type='pageview' AND telegram_user_id<>'' GROUP BY telegram_user_id ORDER BY last_visit DESC LIMIT 100\`).bind(...args).all<any>(),
+    env.DB.prepare(\`SELECT COUNT(*) AS total_events,COUNT(DISTINCT session_id) AS total_sessions,COUNT(DISTINCT visitor_id) AS total_visitors,MIN(received_at) AS oldest_event,MAX(received_at) AS newest_event FROM analytics_events\`).first<any>(),`,
+    'worker telegram summary queries');
+
+  s = replaceOnce(s,
+    `      avgSessionMs: Math.round(Number(engagement?.avg_session_ms ?? 0)),`,
+    `      avgSessionMs: Math.round(Number(engagement?.avg_session_ms ?? 0)),
+      telegramUsers: Number(telegramMetrics?.users ?? 0),
+      telegramPageviews: Number(telegramMetrics?.pageviews ?? 0),
+      verifiedTelegramUsers: Number(telegramMetrics?.verified_users ?? 0),`,
+    'worker telegram metrics');
+
+  s = replaceOnce(s,
+    `    ipStats: ipStats.results ?? [],`,
+    `    ipStats: ipStats.results ?? [],
+    telegramUsers: telegramUsers.results ?? [],`,
+    'worker telegram users return');
+  fs.writeFileSync(p, s);
+}
+
+{
+  const p = 'src/client/main.tsx';
+  let s = fs.readFileSync(p, 'utf8');
+  s = replaceOnce(s,
+    `  ua_data: string;
+  occurred_at: string;`,
+    `  ua_data: string;
+  telegram_user_id: string;
+  telegram_username: string;
+  telegram_first_name: string;
+  telegram_last_name: string;
+  telegram_language_code: string;
+  telegram_is_premium: number | null;
+  telegram_photo_url: string;
+  telegram_start_param: string;
+  telegram_auth_date: number | null;
+  telegram_added_to_attachment_menu: number | null;
+  telegram_allows_write_to_pm: number | null;
+  telegram_chat_type: string;
+  telegram_chat_instance: string;
+  telegram_verified: number;
+  telegram_verification: string;
+  occurred_at: string;`,
+    'client visit type');
+
+  s = replaceOnce(s,
+    `  metrics: { pageviews: number; visitors: number; sessions: number; uniqueIps: number; avgSessionMs: number };`,
+    `  metrics: { pageviews: number; visitors: number; sessions: number; uniqueIps: number; avgSessionMs: number; telegramUsers: number; telegramPageviews: number; verifiedTelegramUsers: number };`,
+    'client summary metrics');
+
+  s = replaceOnce(s,
+    `  ipStats: Array<{ ip_address: string; country: string; region: string; city: string; as_organization: string; pageviews: number; sessions: number; last_visit: string }>;`,
+    `  ipStats: Array<{ ip_address: string; country: string; region: string; city: string; as_organization: string; pageviews: number; sessions: number; last_visit: string }>;
+  telegramUsers: Array<{ telegram_user_id: string; telegram_username: string; telegram_first_name: string; telegram_last_name: string; telegram_language_code: string; telegram_is_premium: number | null; telegram_photo_url: string; telegram_start_param: string; telegram_verified: number; pageviews: number; sessions: number; projects: number; first_visit: string; last_visit: string }>;`,
+    'client telegram users type');
+
+  s = replaceOnce(s, `<section className="metrics five">`, `<section className="metrics six">`, 'client metric layout');
+  s = replaceOnce(s,
+    `      <Metric label="Вовлечение" value={fmtDuration(data.metrics.avgSessionMs)} note="среднее на сессию" />`,
+    `      <Metric label="Telegram" value={data.metrics.telegramUsers.toLocaleString('ru-RU')} note={\`Mini App · \${data.metrics.telegramPageviews} открытий\`} />
+      <Metric label="Вовлечение" value={fmtDuration(data.metrics.avgSessionMs)} note="среднее на сессию" />`,
+    'client telegram metric');
+
+  const telegramPanel = `    <section className="panel telegram-panel"><PanelTitle kicker="TELEGRAM MINI APP" title="Telegram-пользователи" />
+      <div className="table-wrap"><table><thead><tr><th>Пользователь</th><th>Telegram</th><th>Статус</th><th>Открытия</th><th>Сессии</th><th>Проекты</th><th>Последний визит</th></tr></thead><tbody>{data.telegramUsers.map((row) => {
+        const username = row.telegram_username ? row.telegram_username.replace(/^@/, '') : '';
+        const displayName = [row.telegram_first_name, row.telegram_last_name].filter(Boolean).join(' ') || \`Telegram #\${row.telegram_user_id}\`;
+        return <tr key={row.telegram_user_id}>
+          <td><div className="telegram-user">{row.telegram_photo_url ? <img className="telegram-avatar" src={row.telegram_photo_url} alt="" referrerPolicy="no-referrer" /> : <span className="telegram-avatar placeholder">TG</span>}<div><b>{displayName}</b><small className="subcell">ID {row.telegram_user_id} · {row.telegram_language_code || '—'}{row.telegram_is_premium ? ' · Premium' : ''}</small></div></div></td>
+          <td>{username ? <a className="tg-link" href={\`https://t.me/\${username}\`} target="_blank" rel="noreferrer">@{username}</a> : <span>username не задан</span>}{row.telegram_start_param ? <small className="subcell">start: {row.telegram_start_param}</small> : null}</td>
+          <td><span className={\`tg-badge \${row.telegram_verified ? 'verified' : 'unverified'}\`}>{row.telegram_verified ? 'verified' : 'unverified'}</span></td>
+          <td>{row.pageviews}</td><td>{row.sessions}</td><td>{row.projects}</td><td>{fmtTime(row.last_visit)}</td>
+        </tr>;
+      })}</tbody></table>{!data.telegramUsers.length && <Empty text="Telegram Mini App пользователи ещё не зафиксированы" />}</div>
+    </section>
+
+`;
+  s = replaceOnce(s,
+    `    <section className="grid two">\n      <article className="panel"><PanelTitle kicker="IP-АДРЕСА"`,
+    telegramPanel + `    <section className="grid two">\n      <article className="panel"><PanelTitle kicker="IP-АДРЕСА"`,
+    'client telegram panel');
+
+  s = replaceOnce(s,
+    `    <div className="visit-body">\n      <DetailGroup title="Запрос / Cloudflare">`,
+    `    <div className="visit-body">
+      {row.telegram_user_id ? <DetailGroup title="Telegram Mini App">
+        <Info label="Telegram ID" value={row.telegram_user_id} mono />
+        <Info label="Username" value={row.telegram_username ? \`@\${row.telegram_username} · https://t.me/\${row.telegram_username}\` : 'username не задан'} mono wide />
+        <Info label="Имя" value={[row.telegram_first_name, row.telegram_last_name].filter(Boolean).join(' ')} />
+        <Info label="Язык / Premium" value={\`\${valueOrDash(row.telegram_language_code)} / \${boolLabel(row.telegram_is_premium)}\`} />
+        <Info label="Start parameter" value={row.telegram_start_param} mono />
+        <Info label="Telegram auth_date" value={row.telegram_auth_date ? new Date(row.telegram_auth_date * 1000).toISOString() : '—'} mono />
+        <Info label="Attachment menu / write PM" value={\`\${boolLabel(row.telegram_added_to_attachment_menu)} / \${boolLabel(row.telegram_allows_write_to_pm)}\`} />
+        <Info label="Chat type / instance" value={\`\${valueOrDash(row.telegram_chat_type)} / \${valueOrDash(row.telegram_chat_instance)}\`} mono />
+        <Info label="Проверка Telegram" value={row.telegram_verified ? 'verified · Ed25519' : \`unverified · \${row.telegram_verification || 'нет Bot ID'}\`} />
+        <Info label="Photo URL" value={row.telegram_photo_url} mono wide />
+      </DetailGroup> : null}
+      <DetailGroup title="Запрос / Cloudflare">`,
+    'client visit telegram details');
+  fs.writeFileSync(p, s);
+}
+
+{
+  const p = 'src/client/styles.css';
+  let s = fs.readFileSync(p, 'utf8');
+  if (!s.includes('.metrics.six{')) s += `.metrics.six{grid-template-columns:repeat(6,minmax(0,1fr))}.telegram-panel{border-color:rgba(72,154,255,.28)}.telegram-user{display:flex;align-items:center;gap:10px;min-width:220px}.telegram-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#152942;display:grid;place-items:center;font-size:11px;color:#80b2ff;flex:0 0 auto}.telegram-avatar.placeholder{border:1px solid #294565}.tg-link{color:#75adff;text-decoration:none;font-weight:700}.tg-link:hover{text-decoration:underline}.tg-badge{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800;letter-spacing:.03em}.tg-badge.verified{background:#123b2c;color:#b8f3d5;border:1px solid #286849}.tg-badge.unverified{background:#3d3014;color:#f4d994;border:1px solid #6b5622}@media(max-width:1300px){.metrics.six{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.metrics.six{grid-template-columns:repeat(2,1fr)}}`;
+  fs.writeFileSync(p, s);
+}
+
+{
+  const p = '.github/workflows/dashboard-ci.yml';
+  let s = fs.readFileSync(p, 'utf8');
+  s = replaceOnce(s,
+    `          grep -q "telegram.detected ? 'telegram'" public/tracker.js`,
+    `          grep -q "telegram.detected ? 'telegram'" public/tracker.js
+          grep -q "telegramInitData" public/tracker.js
+          grep -q "telegramUserId" public/tracker.js`,
+    'ci tracker telegram identity');
+  s = replaceOnce(s,
+    `SELECT COUNT(*) AS required_columns FROM pragma_table_info('analytics_events') WHERE name IN ('ip_address','user_agent','country','city','asn','colo','http_protocol','tls_version','browser_platform','viewport','page_url','raw_referrer'); SELECT COUNT(*) AS indexes`,
+    `SELECT COUNT(*) AS required_columns FROM pragma_table_info('analytics_events') WHERE name IN ('ip_address','user_agent','country','city','asn','colo','http_protocol','tls_version','browser_platform','viewport','page_url','raw_referrer','telegram_user_id','telegram_username','telegram_verified','telegram_start_param','telegram_photo_url'); SELECT COUNT(*) AS telegram_config_table FROM sqlite_master WHERE type='table' AND name='analytics_project_config'; SELECT COUNT(*) AS indexes`,
+    'ci schema query');
+  s = replaceOnce(s,
+    `          test "$(echo "$out" | jq '[.[].results[]? | select(has("required_columns")) | .required_columns][0]')" = "12"`,
+    `          test "$(echo "$out" | jq '[.[].results[]? | select(has("required_columns")) | .required_columns][0]')" = "17"
+          test "$(echo "$out" | jq '[.[].results[]? | select(has("telegram_config_table")) | .telegram_config_table][0]')" = "1"`,
+    'ci schema assertions');
+  const oldPayload = `          telegram_payload='{"eventType":"pageview","project":"MAX TOUR","hostname":"max-tour.viiversion.com","path":"/ci-telegram-opaque","pageUrl":"https://max-tour.viiversion.com/ci-telegram-opaque","title":"Telegram Mini App CI","visitorId":"ci-telegram-visitor","sessionId":"ci-telegram-session","utmSource":"telegram","utmMedium":"miniapp","browserPlatform":"Telegram android 10.1","device":"mobile","occurredAt":"2026-09-09T07:00:00.000Z"}'`;
+  const newPayload = `          telegram_init_data=$(node -e "const p=new URLSearchParams({auth_date:String(Math.floor(Date.now()/1000)),start_param:'ci-proposal',user:JSON.stringify({id:777000111,first_name:'CI',last_name:'Telegram',username:'ci_telegram_user',language_code:'ru',is_premium:true,allows_write_to_pm:true})});process.stdout.write(p.toString())")
+          telegram_payload=$(jq -nc --arg init "$telegram_init_data" '{eventType:"pageview",project:"MAX TOUR",hostname:"max-tour.viiversion.com",path:"/ci-telegram-opaque",pageUrl:"https://max-tour.viiversion.com/ci-telegram-opaque",title:"Telegram Mini App CI",visitorId:"ci-telegram-visitor",sessionId:"ci-telegram-session",utmSource:"telegram",utmMedium:"miniapp",browserPlatform:"Telegram android 10.1",device:"mobile",telegramInitData:$init,occurredAt:(now|todate)}')`;
+  s = replaceOnce(s, oldPayload, newPayload, 'ci telegram initdata payload');
+  s = replaceOnce(s,
+    `          telegram_out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS rows,MAX(ip_address) AS ip,MAX(user_agent) AS ua,MAX(utm_source) AS source,MAX(utm_medium) AS medium FROM analytics_events WHERE path='/ci-telegram-opaque';")`,
+    `          telegram_out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS rows,MAX(ip_address) AS ip,MAX(user_agent) AS ua,MAX(utm_source) AS source,MAX(utm_medium) AS medium,MAX(telegram_user_id) AS tg_id,MAX(telegram_username) AS tg_username,MAX(telegram_start_param) AS tg_start,MAX(telegram_verification) AS tg_verification FROM analytics_events WHERE path='/ci-telegram-opaque';")`,
+    'ci telegram query');
+  s = replaceOnce(s,
+    `          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("medium")) | .medium][0]')" = "miniapp"`,
+    `          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("medium")) | .medium][0]')" = "miniapp"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_id")) | .tg_id][0]')" = "777000111"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_username")) | .tg_username][0]')" = "ci_telegram_user"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_start")) | .tg_start][0]')" = "ci-proposal"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("tg_verification")) | .tg_verification][0]')" = "bot_id_missing"`,
+    'ci telegram assertions');
+  fs.writeFileSync(p, s);
+}
+
+console.log('Telegram identity patch applied successfully.');
