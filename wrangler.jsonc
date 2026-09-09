@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "viiversion-dashboard",
+  "main": "./src/worker/index.ts",
+  "compatibility_date": "2026-09-09",
+  "vars": {
+    "DASHBOARD_ACCESS_SHA256": "b21056087317107aa8e9db0e2c6f044b6442eb620e8ca556348e551dbddde5cc"
+  },
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "viiversion-analytics",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "dashboard.viiversion.com",
+      "custom_domain": true
+    }
+  ]
+}
