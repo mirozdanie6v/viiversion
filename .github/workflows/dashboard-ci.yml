@@ -1,0 +1,33 @@
+name: VIIVERSION Dashboard CI
+
+on:
+  push:
+    branches: [dashboard]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: dashboard
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run db:migrate:local
+      - name: Verify analytics schema
+        run: |
+          set -euo pipefail
+          out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS event_table FROM sqlite_master WHERE type='table' AND name='analytics_events'; SELECT COUNT(*) AS indexes FROM sqlite_master WHERE type='index' AND tbl_name='analytics_events';")
+          echo "$out" | jq .
+          test "$(echo "$out" | jq '[.[].results[]? | select(has("event_table")) | .event_table][0]')" = "1"
+      - run: npx wrangler deploy --dry-run --outdir dist/wrangler-dry-run
