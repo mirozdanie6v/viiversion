@@ -22,20 +22,19 @@ jobs:
         run: node scripts/fix-telegram-patch-anchor.mjs
       - name: Apply Telegram identity wiring
         run: node scripts/patch-telegram-identities.mjs
-      - name: Verify patched files
+      - name: Verify patched product files
         shell: bash
         run: |
           set -euo pipefail
           grep -Fq 'telegram_user_id' src/worker/index.ts
           grep -Fq 'telegramInitData' public/tracker.js
           grep -Fq 'Telegram-пользователи' src/client/main.tsx
-          grep -Fq 'telegram_config_table' .github/workflows/dashboard-ci.yml
-      - name: Commit implementation
+      - name: Commit product implementation
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/tracker.js src/worker/index.ts src/client/main.tsx src/client/styles.css .github/workflows/dashboard-ci.yml
+          git add public/tracker.js src/worker/index.ts src/client/main.tsx src/client/styles.css
           git commit -m 'feat: capture and display Telegram Mini App identities'
           git push origin HEAD:dashboard
