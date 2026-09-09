@@ -24,6 +24,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Verify Telegram-safe tracker source
+        run: |
+          set -euo pipefail
+          grep -q "storageHandle('localStorage')" public/tracker.js
+          grep -q "storageHandle('sessionStorage')" public/tracker.js
+          grep -q "tgWebAppPlatform" public/tracker.js
+          grep -q "telegram.detected ? 'telegram'" public/tracker.js
+          ! grep -q "const storage = window.localStorage" public/tracker.js
       - run: npm run db:migrate:local
       - name: Verify detailed analytics schema
         run: |
@@ -33,7 +41,7 @@ jobs:
           test "$(echo "$out" | jq '[.[].results[]? | select(has("event_table")) | .event_table][0]')" = "1"
           test "$(echo "$out" | jq '[.[].results[]? | select(has("maintenance_table")) | .maintenance_table][0]')" = "1"
           test "$(echo "$out" | jq '[.[].results[]? | select(has("required_columns")) | .required_columns][0]')" = "12"
-      - name: Local collector and retention integration smoke
+      - name: Local collector, Telegram WebView and retention integration smoke
         shell: bash
         run: |
           set -euo pipefail
@@ -58,6 +66,18 @@ jobs:
           test "$(echo "$out" | jq '[.[].results[]? | select(has("rows")) | .rows][0]')" -ge 1
           test "$(echo "$out" | jq -r '[.[].results[]? | select(has("ua")) | .ua][0]')" = "VIIVERSION-CI-Agent/1.0"
           ! echo "$out" | grep -q 'must-redact'
+
+          telegram_payload='{"eventType":"pageview","project":"MAX TOUR","hostname":"max-tour.viiversion.com","path":"/ci-telegram-opaque","pageUrl":"https://max-tour.viiversion.com/ci-telegram-opaque","title":"Telegram Mini App CI","visitorId":"ci-telegram-visitor","sessionId":"ci-telegram-session","utmSource":"telegram","utmMedium":"miniapp","browserPlatform":"Telegram android 10.1","device":"mobile","occurredAt":"2026-09-09T07:00:00.000Z"}'
+          telegram_code=$(curl -sS -D /tmp/telegram-headers.txt -o /tmp/telegram-collect.json -w '%{http_code}' http://127.0.0.1:8787/api/collect -X POST -H 'Origin: null' -H 'CF-Connecting-IP: 203.0.113.8' -H 'User-Agent: Telegram-Android-WebView/10.1' -H 'Content-Type: text/plain;charset=UTF-8' --data "$telegram_payload")
+          cat /tmp/telegram-collect.json
+          cat /tmp/telegram-headers.txt
+          test "$telegram_code" = "202"
+          grep -qi '^access-control-allow-origin: null' /tmp/telegram-headers.txt
+          telegram_out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS rows,MAX(ip_address) AS ip,MAX(user_agent) AS ua,MAX(utm_source) AS source,MAX(utm_medium) AS medium FROM analytics_events WHERE path='/ci-telegram-opaque';")
+          echo "$telegram_out" | jq .
+          test "$(echo "$telegram_out" | jq '[.[].results[]? | select(has("rows")) | .rows][0]')" -ge 1
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("source")) | .source][0]')" = "telegram"
+          test "$(echo "$telegram_out" | jq -r '[.[].results[]? | select(has("medium")) | .medium][0]')" = "miniapp"
 
           npx wrangler d1 execute DB --local --command="INSERT INTO analytics_events(id,event_type,project,hostname,path,visitor_id,session_id,occurred_at,received_at) VALUES ('retention-old','pageview','Retention Test','retention.viiversion.com','/old','retention-old-visitor','retention-old-session',datetime('now','-31 days'),datetime('now','-31 days'));"
           before=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS old_rows FROM analytics_events WHERE id='retention-old';")
