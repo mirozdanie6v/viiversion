@@ -199,11 +199,11 @@ async function cleanupAnalytics(env: Env, triggeredBy: 'scheduled' | 'manual', m
   const cutoff = mode === 'retention' ? new Date(Date.now() - RETENTION_DAYS * 86400000).toISOString() : null;
   const count = mode === 'all'
     ? await env.DB.prepare('SELECT COUNT(*) AS count FROM analytics_events').first<{ count: number }>()
-    : await env.DB.prepare('SELECT COUNT(*) AS count FROM analytics_events WHERE received_at < ?').bind(cutoff).first<{ count: number }>();
+    : await env.DB.prepare('SELECT COUNT(*) AS count FROM analytics_events WHERE datetime(received_at) < datetime(?)').bind(cutoff).first<{ count: number }>();
   const deletedRows = Number(count?.count ?? 0);
 
   if (mode === 'all') await env.DB.prepare('DELETE FROM analytics_events').run();
-  else await env.DB.prepare('DELETE FROM analytics_events WHERE received_at < ?').bind(cutoff).run();
+  else await env.DB.prepare('DELETE FROM analytics_events WHERE datetime(received_at) < datetime(?)').bind(cutoff).run();
 
   await env.DB.prepare(`INSERT INTO analytics_maintenance_log(id,action,triggered_by,retention_days,cutoff_at,deleted_rows)
     VALUES (?,?,?,?,?,?)`).bind(
