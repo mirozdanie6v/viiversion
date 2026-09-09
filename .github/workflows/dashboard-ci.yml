@@ -32,7 +32,7 @@ jobs:
           test "$(echo "$out" | jq '[.[].results[]? | select(has("event_table")) | .event_table][0]')" = "1"
           test "$(echo "$out" | jq '[.[].results[]? | select(has("maintenance_table")) | .maintenance_table][0]')" = "1"
           test "$(echo "$out" | jq '[.[].results[]? | select(has("required_columns")) | .required_columns][0]')" = "12"
-      - name: Local collector to D1 integration smoke
+      - name: Local collector and retention integration smoke
         shell: bash
         run: |
           set -euo pipefail
@@ -46,6 +46,8 @@ jobs:
             sleep 1
           done
           test "$ready" -eq 1
+          jq -e '.retentionDays == 30' /tmp/health.json >/dev/null
+
           payload='{"eventType":"pageview","project":"MAX TOUR","hostname":"max-tour.viiversion.com","path":"/ci-smoke","pageUrl":"https://max-tour.viiversion.com/ci-smoke?utm_source=ci&token=must-redact","queryString":"?utm_source=ci&token=must-redact","title":"CI smoke","visitorId":"ci-smoke-visitor","sessionId":"ci-smoke-session","browserPlatform":"CI OS","viewport":"1280x720","occurredAt":"2026-09-09T07:00:00.000Z"}'
           code=$(curl -sS -o /tmp/collect.json -w '%{http_code}' http://127.0.0.1:8787/api/collect -X POST -H 'Origin: https://max-tour.viiversion.com' -H 'CF-Connecting-IP: 203.0.113.7' -H 'User-Agent: VIIVERSION-CI-Agent/1.0' -H 'Content-Type: text/plain;charset=UTF-8' --data "$payload")
           cat /tmp/collect.json
@@ -55,4 +57,14 @@ jobs:
           test "$(echo "$out" | jq '[.[].results[]? | select(has("rows")) | .rows][0]')" -ge 1
           test "$(echo "$out" | jq -r '[.[].results[]? | select(has("ua")) | .ua][0]')" = "VIIVERSION-CI-Agent/1.0"
           ! echo "$out" | grep -q 'must-redact'
+
+          npx wrangler d1 execute DB --local --command="INSERT INTO analytics_events(id,event_type,project,hostname,path,visitor_id,session_id,occurred_at,received_at) VALUES ('retention-old','pageview','Retention Test','retention.viiversion.com','/old','retention-old-visitor','retention-old-session',datetime('now','-31 days'),datetime('now','-31 days'));"
+          before=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS old_rows FROM analytics_events WHERE id='retention-old';")
+          test "$(echo "$before" | jq '[.[].results[]? | select(has("old_rows")) | .old_rows][0]')" = "1"
+          curl -fsS "http://127.0.0.1:8787/cdn-cgi/local/scheduled" >/tmp/scheduled.txt
+          sleep 1
+          after=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS old_rows FROM analytics_events WHERE id='retention-old'; SELECT COUNT(*) AS scheduled_logs FROM analytics_maintenance_log WHERE triggered_by='scheduled' AND action='retention_cleanup' AND deleted_rows>=1;")
+          echo "$after" | jq .
+          test "$(echo "$after" | jq '[.[].results[]? | select(has("old_rows")) | .old_rows][0]')" = "0"
+          test "$(echo "$after" | jq '[.[].results[]? | select(has("scheduled_logs")) | .scheduled_logs][0]')" -ge 1
       - run: npx wrangler deploy --dry-run --outdir dist/wrangler-dry-run
