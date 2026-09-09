@@ -13,6 +13,7 @@ import {
   sanitizeQuery,
   sha256Hex,
 } from './analytics';
+import { validateTelegramInitData } from './telegram';
 
 interface Env {
   DB: D1Database;
@@ -104,6 +105,38 @@ async function collect(request: Request, env: Env) {
   const pageUrl = safePageUrl(input?.pageUrl, hostname);
   const queryString = sanitizeQuery(input?.queryString, 2000);
 
+  const telegramConfig = await env.DB.prepare('SELECT telegram_bot_id FROM analytics_project_config WHERE hostname=?')
+    .bind(hostname).first<{ telegram_bot_id: string }>();
+  const telegramValidation = await validateTelegramInitData(input?.telegramInitData, clean(telegramConfig?.telegram_bot_id, 20));
+  let telegramIdentity = telegramValidation.identity;
+  let telegramVerification = telegramValidation.verification as string;
+  if (!telegramIdentity) {
+    const claimedId = clean(input?.telegramUserId, 32);
+    if (/^\d{1,20}$/.test(claimedId)) {
+      telegramIdentity = {
+        userId: claimedId,
+        username: clean(input?.telegramUsername, 64).replace(/^@/, ''),
+        firstName: clean(input?.telegramFirstName, 128),
+        lastName: clean(input?.telegramLastName, 128),
+        languageCode: clean(input?.telegramLanguageCode, 24),
+        isPremium: typeof input?.telegramIsPremium === 'boolean' ? input.telegramIsPremium : null,
+        photoUrl: clean(input?.telegramPhotoUrl, 1000),
+        startParam: clean(input?.telegramStartParam, 160),
+        authDate: Number.isInteger(Number(input?.telegramAuthDate)) ? Number(input.telegramAuthDate) : null,
+        addedToAttachmentMenu: typeof input?.telegramAddedToAttachmentMenu === 'boolean' ? input.telegramAddedToAttachmentMenu : null,
+        allowsWriteToPm: typeof input?.telegramAllowsWriteToPm === 'boolean' ? input.telegramAllowsWriteToPm : null,
+        chatType: clean(input?.telegramChatType, 40),
+        chatInstance: clean(input?.telegramChatInstance, 128),
+      };
+      telegramVerification = 'client_unverified';
+    }
+  }
+  const telegramPhotoUrl = (() => {
+    const raw = clean(telegramIdentity?.photoUrl, 1000);
+    if (!raw) return '';
+    try { const url = new URL(raw); return url.protocol === 'https:' ? url.toString().slice(0, 1000) : ''; } catch { return ''; }
+  })();
+
   await env.DB.prepare(`INSERT INTO analytics_events(
     id,event_type,project,hostname,path,title,visitor_id,session_id,referrer,referrer_host,
     utm_source,utm_medium,utm_campaign,utm_content,vv_campaign,device,language,timezone,screen,duration_ms,occurred_at,
@@ -111,8 +144,11 @@ async function collect(request: Request, env: Env) {
     country,continent,region,region_code,city,postal_code,latitude,longitude,cf_timezone,asn,as_organization,colo,
     http_protocol,tls_version,tls_cipher,client_tcp_rtt,browser_platform,browser_vendor,browser_languages,cookie_enabled,
     do_not_track,hardware_concurrency,device_memory,max_touch_points,color_depth,pixel_ratio,viewport,orientation,
-    connection_type,effective_type,downlink,rtt,save_data,webdriver,ua_data,page_url,query_string,url_hash,raw_referrer,request_referer
-  ) VALUES (${Array.from({ length: 68 }, () => '?').join(',')})`).bind(
+    connection_type,effective_type,downlink,rtt,save_data,webdriver,ua_data,page_url,query_string,url_hash,raw_referrer,request_referer,
+    telegram_user_id,telegram_username,telegram_first_name,telegram_last_name,telegram_language_code,telegram_is_premium,
+    telegram_photo_url,telegram_start_param,telegram_auth_date,telegram_added_to_attachment_menu,telegram_allows_write_to_pm,
+    telegram_chat_type,telegram_chat_instance,telegram_verified,telegram_verification
+  ) VALUES (${Array.from({ length: 83 }, () => '?').join(',')})`).bind(
     crypto.randomUUID(),
     eventType,
     projectName(hostname, input?.project),
@@ -181,6 +217,21 @@ async function collect(request: Request, env: Env) {
     clean(input?.urlHash, 800),
     safeRawReferrer(input?.rawReferrer),
     safeRawReferrer(request.headers.get('referer')),
+    clean(telegramIdentity?.userId, 32),
+    clean(telegramIdentity?.username, 64).replace(/^@/, ''),
+    clean(telegramIdentity?.firstName, 128),
+    clean(telegramIdentity?.lastName, 128),
+    clean(telegramIdentity?.languageCode, 24),
+    boolInt(telegramIdentity?.isPremium),
+    telegramPhotoUrl,
+    clean(telegramIdentity?.startParam, 160),
+    telegramIdentity?.authDate ?? null,
+    boolInt(telegramIdentity?.addedToAttachmentMenu),
+    boolInt(telegramIdentity?.allowsWriteToPm),
+    clean(telegramIdentity?.chatType, 40),
+    clean(telegramIdentity?.chatInstance, 128),
+    telegramValidation.verified ? 1 : 0,
+    clean(telegramVerification, 40),
   ).run();
 
   return json({ ok: true }, 202, corsHeaders(source.origin));
@@ -243,7 +294,7 @@ async function summary(request: Request, env: Env) {
   const args = queryArgs(days, project);
   const where = `received_at >= datetime('now', ?) ${filter}`;
 
-  const [metrics, engagement, projects, daily, campaigns, sources, pages, recent, geography, networks, ipStats, retention, lastCleanup] = await Promise.all([
+  const [metrics, engagement, projects, daily, campaigns, sources, pages, recent, geography, networks, ipStats, telegramMetrics, telegramUsers, retention, lastCleanup] = await Promise.all([
     env.DB.prepare(`SELECT COUNT(*) AS pageviews, COUNT(DISTINCT visitor_id) AS visitors, COUNT(DISTINCT session_id) AS sessions, COUNT(DISTINCT CASE WHEN ip_address<>'' THEN ip_address END) AS unique_ips FROM analytics_events WHERE ${where} AND event_type='pageview'`).bind(...args).first<any>(),
     env.DB.prepare(`SELECT COALESCE(AVG(total_ms),0) AS avg_session_ms FROM (SELECT session_id, SUM(duration_ms) AS total_ms FROM analytics_events WHERE ${where} AND event_type='engagement' GROUP BY session_id)`).bind(...args).first<any>(),
     env.DB.prepare(`SELECT project,hostname,COUNT(*) AS pageviews,COUNT(DISTINCT visitor_id) AS visitors,COUNT(DISTINCT session_id) AS sessions,COUNT(DISTINCT CASE WHEN ip_address<>'' THEN ip_address END) AS unique_ips,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' GROUP BY project,hostname ORDER BY pageviews DESC`).bind(...args).all<any>(),
@@ -255,6 +306,8 @@ async function summary(request: Request, env: Env) {
     env.DB.prepare(`SELECT country,region,city,COUNT(*) AS pageviews,COUNT(DISTINCT visitor_id) AS visitors,COUNT(DISTINCT CASE WHEN ip_address<>'' THEN ip_address END) AS unique_ips FROM analytics_events WHERE ${where} AND event_type='pageview' GROUP BY country,region,city ORDER BY pageviews DESC LIMIT 50`).bind(...args).all<any>(),
     env.DB.prepare(`SELECT asn,as_organization,colo,COUNT(*) AS pageviews,COUNT(DISTINCT visitor_id) AS visitors FROM analytics_events WHERE ${where} AND event_type='pageview' GROUP BY asn,as_organization,colo ORDER BY pageviews DESC LIMIT 40`).bind(...args).all<any>(),
     env.DB.prepare(`SELECT ip_address,country,region,city,as_organization,COUNT(*) AS pageviews,COUNT(DISTINCT session_id) AS sessions,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' AND ip_address<>'' GROUP BY ip_address,country,region,city,as_organization ORDER BY last_visit DESC LIMIT 100`).bind(...args).all<any>(),
+    env.DB.prepare(`SELECT COUNT(*) AS pageviews,COUNT(DISTINCT telegram_user_id) AS users,COUNT(DISTINCT CASE WHEN telegram_verified=1 THEN telegram_user_id END) AS verified_users FROM analytics_events WHERE ${where} AND event_type='pageview' AND telegram_user_id<>''`).bind(...args).first<any>(),
+    env.DB.prepare(`SELECT telegram_user_id,MAX(telegram_username) AS telegram_username,MAX(telegram_first_name) AS telegram_first_name,MAX(telegram_last_name) AS telegram_last_name,MAX(telegram_language_code) AS telegram_language_code,MAX(COALESCE(telegram_is_premium,0)) AS telegram_is_premium,MAX(telegram_photo_url) AS telegram_photo_url,MAX(telegram_start_param) AS telegram_start_param,MAX(telegram_verified) AS telegram_verified,COUNT(*) AS pageviews,COUNT(DISTINCT session_id) AS sessions,COUNT(DISTINCT project) AS projects,MIN(received_at) AS first_visit,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' AND telegram_user_id<>'' GROUP BY telegram_user_id ORDER BY last_visit DESC LIMIT 100`).bind(...args).all<any>(),
     env.DB.prepare(`SELECT COUNT(*) AS total_events,COUNT(DISTINCT session_id) AS total_sessions,COUNT(DISTINCT visitor_id) AS total_visitors,MIN(received_at) AS oldest_event,MAX(received_at) AS newest_event FROM analytics_events`).first<any>(),
     env.DB.prepare(`SELECT action,triggered_by,retention_days,cutoff_at,deleted_rows,occurred_at FROM analytics_maintenance_log ORDER BY occurred_at DESC LIMIT 1`).first<any>(),
   ]);
@@ -275,6 +328,9 @@ async function summary(request: Request, env: Env) {
       sessions: Number(metrics?.sessions ?? 0),
       uniqueIps: Number(metrics?.unique_ips ?? 0),
       avgSessionMs: Math.round(Number(engagement?.avg_session_ms ?? 0)),
+      telegramUsers: Number(telegramMetrics?.users ?? 0),
+      telegramPageviews: Number(telegramMetrics?.pageviews ?? 0),
+      verifiedTelegramUsers: Number(telegramMetrics?.verified_users ?? 0),
     },
     projects: projects.results ?? [],
     daily: daily.results ?? [],
@@ -285,6 +341,7 @@ async function summary(request: Request, env: Env) {
     geography: geography.results ?? [],
     networks: networks.results ?? [],
     ipStats: ipStats.results ?? [],
+    telegramUsers: telegramUsers.results ?? [],
     storage: {
       totalEvents: Number(retention?.total_events ?? 0),
       totalSessions: Number(retention?.total_sessions ?? 0),

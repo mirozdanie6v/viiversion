@@ -68,6 +68,21 @@ type Visit = {
   save_data: number | null;
   webdriver: number | null;
   ua_data: string;
+  telegram_user_id: string;
+  telegram_username: string;
+  telegram_first_name: string;
+  telegram_last_name: string;
+  telegram_language_code: string;
+  telegram_is_premium: number | null;
+  telegram_photo_url: string;
+  telegram_start_param: string;
+  telegram_auth_date: number | null;
+  telegram_added_to_attachment_menu: number | null;
+  telegram_allows_write_to_pm: number | null;
+  telegram_chat_type: string;
+  telegram_chat_instance: string;
+  telegram_verified: number;
+  telegram_verification: string;
   occurred_at: string;
   received_at: string;
 };
@@ -78,7 +93,7 @@ type Summary = {
   days: number;
   project: string;
   retentionDays: number;
-  metrics: { pageviews: number; visitors: number; sessions: number; uniqueIps: number; avgSessionMs: number };
+  metrics: { pageviews: number; visitors: number; sessions: number; uniqueIps: number; avgSessionMs: number; telegramUsers: number; telegramPageviews: number; verifiedTelegramUsers: number };
   projects: Array<{ project: string; hostname: string; pageviews: number; visitors: number; sessions: number; unique_ips: number; last_visit: string }>;
   daily: Array<{ day: string; pageviews: number; visitors: number }>;
   campaigns: Array<{ campaign: string; pageviews: number; visitors: number; sessions: number; last_visit: string }>;
@@ -88,6 +103,7 @@ type Summary = {
   geography: Array<{ country: string; region: string; city: string; pageviews: number; visitors: number; unique_ips: number }>;
   networks: Array<{ asn: number | null; as_organization: string; colo: string; pageviews: number; visitors: number }>;
   ipStats: Array<{ ip_address: string; country: string; region: string; city: string; as_organization: string; pageviews: number; sessions: number; last_visit: string }>;
+  telegramUsers: Array<{ telegram_user_id: string; telegram_username: string; telegram_first_name: string; telegram_last_name: string; telegram_language_code: string; telegram_is_premium: number | null; telegram_photo_url: string; telegram_start_param: string; telegram_verified: number; pageviews: number; sessions: number; projects: number; first_visit: string; last_visit: string }>;
   storage: {
     totalEvents: number;
     totalSessions: number;
@@ -242,11 +258,12 @@ function App() {
       <select value={project} onChange={(e) => changeProject(e.target.value)}><option value="all">Все проекты</option>{Array.from(new Set(data.knownProjects.map((x) => x.name))).map((name) => <option key={name}>{name}</option>)}</select>
     </section>
 
-    <section className="metrics five">
+    <section className="metrics six">
       <Metric label="Просмотры" value={data.metrics.pageviews.toLocaleString('ru-RU')} note={`за ${days} дн.`} />
       <Metric label="Посетители" value={data.metrics.visitors.toLocaleString('ru-RU')} note="уникальные браузеры" />
       <Metric label="Сессии" value={data.metrics.sessions.toLocaleString('ru-RU')} note="уникальные визиты" />
       <Metric label="IP-адреса" value={data.metrics.uniqueIps.toLocaleString('ru-RU')} note="уникальные IP" />
+      <Metric label="Telegram" value={data.metrics.telegramUsers.toLocaleString('ru-RU')} note={`Mini App · ${data.metrics.telegramPageviews} открытий`} />
       <Metric label="Вовлечение" value={fmtDuration(data.metrics.avgSessionMs)} note="среднее на сессию" />
     </section>
 
@@ -265,6 +282,19 @@ function App() {
     <section className="grid two">
       <article className="panel"><PanelTitle kicker="КП / OUTREACH" title="Кампании" /><div className="campaign-list">{data.campaigns.length ? data.campaigns.map((row) => <div key={row.campaign}><div><b>{row.campaign}</b><span>последний: {fmtTime(row.last_visit)}</span></div><div><strong>{row.visitors}</strong><span>посет.</span></div><div><strong>{row.pageviews}</strong><span>просм.</span></div></div>) : <Empty text="Помеченные ссылки ещё не открывали" />}</div></article>
       <article className="panel"><PanelTitle kicker="ГЕНЕРАТОР" title="Ссылка для конкретного предложения" /><div className="link-generator"><label><span>Прототип</span><select value={campaignProject} onChange={(e) => setCampaignProject(e.target.value)}>{data.knownProjects.map((x) => <option key={x.hostname} value={x.url}>{x.name} · {x.hostname}</option>)}</select></label><label><span>Метка клиента / КП</span><input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="eco-voyage-sep09" /></label><div className="generated-link">{campaignUrl || 'Введите метку — ссылка появится здесь'}</div><button disabled={!campaignUrl} onClick={() => campaignUrl && navigator.clipboard.writeText(campaignUrl)}>Скопировать ссылку</button></div></article>
+    </section>
+
+    <section className="panel telegram-panel"><PanelTitle kicker="TELEGRAM MINI APP" title="Telegram-пользователи" />
+      <div className="table-wrap"><table><thead><tr><th>Пользователь</th><th>Telegram</th><th>Статус</th><th>Открытия</th><th>Сессии</th><th>Проекты</th><th>Последний визит</th></tr></thead><tbody>{data.telegramUsers.map((row) => {
+        const username = row.telegram_username ? row.telegram_username.replace(/^@/, '') : '';
+        const displayName = [row.telegram_first_name, row.telegram_last_name].filter(Boolean).join(' ') || `Telegram #${row.telegram_user_id}`;
+        return <tr key={row.telegram_user_id}>
+          <td><div className="telegram-user">{row.telegram_photo_url ? <img className="telegram-avatar" src={row.telegram_photo_url} alt="" referrerPolicy="no-referrer" /> : <span className="telegram-avatar placeholder">TG</span>}<div><b>{displayName}</b><small className="subcell">ID {row.telegram_user_id} · {row.telegram_language_code || '—'}{row.telegram_is_premium ? ' · Premium' : ''}</small></div></div></td>
+          <td>{username ? <a className="tg-link" href={`https://t.me/${username}`} target="_blank" rel="noreferrer">@{username}</a> : <span>username не задан</span>}{row.telegram_start_param ? <small className="subcell">start: {row.telegram_start_param}</small> : null}</td>
+          <td><span className={`tg-badge ${row.telegram_verified ? 'verified' : 'unverified'}`}>{row.telegram_verified ? 'verified' : 'unverified'}</span></td>
+          <td>{row.pageviews}</td><td>{row.sessions}</td><td>{row.projects}</td><td>{fmtTime(row.last_visit)}</td>
+        </tr>;
+      })}</tbody></table>{!data.telegramUsers.length && <Empty text="Telegram Mini App пользователи ещё не зафиксированы" />}</div>
     </section>
 
     <section className="grid two">
@@ -304,6 +334,18 @@ function VisitDetails({ row }: { row: Visit }) {
       <div className="visit-summary-right"><strong>{row.device || '—'}</strong><time>{fmtTime(row.received_at)}</time></div>
     </summary>
     <div className="visit-body">
+      {row.telegram_user_id ? <DetailGroup title="Telegram Mini App">
+        <Info label="Telegram ID" value={row.telegram_user_id} mono />
+        <Info label="Username" value={row.telegram_username ? `@${row.telegram_username} · https://t.me/${row.telegram_username}` : 'username не задан'} mono wide />
+        <Info label="Имя" value={[row.telegram_first_name, row.telegram_last_name].filter(Boolean).join(' ')} />
+        <Info label="Язык / Premium" value={`${valueOrDash(row.telegram_language_code)} / ${boolLabel(row.telegram_is_premium)}`} />
+        <Info label="Start parameter" value={row.telegram_start_param} mono />
+        <Info label="Telegram auth_date" value={row.telegram_auth_date ? new Date(row.telegram_auth_date * 1000).toISOString() : '—'} mono />
+        <Info label="Attachment menu / write PM" value={`${boolLabel(row.telegram_added_to_attachment_menu)} / ${boolLabel(row.telegram_allows_write_to_pm)}`} />
+        <Info label="Chat type / instance" value={`${valueOrDash(row.telegram_chat_type)} / ${valueOrDash(row.telegram_chat_instance)}`} mono />
+        <Info label="Проверка Telegram" value={row.telegram_verified ? 'verified · Ed25519' : `unverified · ${row.telegram_verification || 'нет Bot ID'}`} />
+        <Info label="Photo URL" value={row.telegram_photo_url} mono wide />
+      </DetailGroup> : null}
       <DetailGroup title="Запрос / Cloudflare">
         <Info label="IP-адрес" value={row.ip_address} mono />
         <Info label="CF-Ray" value={row.cf_ray} mono />
