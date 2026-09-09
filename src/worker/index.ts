@@ -111,7 +111,7 @@ async function collect(request: Request, env: Env) {
     http_protocol,tls_version,tls_cipher,client_tcp_rtt,browser_platform,browser_vendor,browser_languages,cookie_enabled,
     do_not_track,hardware_concurrency,device_memory,max_touch_points,color_depth,pixel_ratio,viewport,orientation,
     connection_type,effective_type,downlink,rtt,save_data,webdriver,ua_data,page_url,query_string,url_hash,raw_referrer,request_referer
-  ) VALUES (${Array.from({ length: 69 }, () => '?').join(',')})`).bind(
+  ) VALUES (${Array.from({ length: 68 }, () => '?').join(',')})`).bind(
     crypto.randomUUID(),
     eventType,
     projectName(hostname, input?.project),
@@ -323,6 +323,7 @@ export default {
     headers.set('Referrer-Policy', 'no-referrer');
     headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    if (path === '/tracker.js') headers.set('Cache-Control', 'public, max-age=300, must-revalidate');
     return new Response(asset.body, { status: asset.status, statusText: asset.statusText, headers });
   },
 
