@@ -18,31 +18,35 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Harden Telegram detection and transport
+      - name: Harden opaque Telegram WebView origins
         shell: bash
         run: |
           set -euo pipefail
           node <<'NODE'
           const fs = require('fs');
-          const p = 'public/tracker.js';
+          const p = 'src/worker/index.ts';
           let s = fs.readFileSync(p, 'utf8');
-          const oldDetect = "    const detected = Boolean(webApp?.initData || launchParam('tgWebAppData') || platform || version);";
-          const newDetect = "    const launchData = launchParam('tgWebAppData');\n    const launchPlatform = launchParam('tgWebAppPlatform');\n    const launchVersion = launchParam('tgWebAppVersion');\n    const sdkPlatformIsReal = Boolean(platform && platform !== 'unknown');\n    const detected = Boolean(webApp?.initData || launchData || (sdkPlatformIsReal && (launchPlatform || launchVersion)));";
-          if (!s.includes(oldDetect)) throw new Error('Telegram detection anchor not found');
-          s = s.replace(oldDetect, newDetect);
-          if (!s.includes("mode: 'cors',")) throw new Error('CORS transport anchor not found');
-          s = s.replace("mode: 'cors',", "mode: 'no-cors',");
+          const anchor = "  if (!origin) return { origin: '', hostname: '' };";
+          const replacement = "  if (!origin) return { origin: '', hostname: '' };\n  if (origin === 'null') return { origin: 'null', hostname: '' };";
+          if (!s.includes("origin === 'null'")) {
+            if (!s.includes(anchor)) throw new Error('collectorOrigin anchor not found');
+            s = s.replace(anchor, replacement);
+          }
           fs.writeFileSync(p, s);
           NODE
-          grep -Fq "platform !== 'unknown'" public/tracker.js
+          grep -Fq "origin === 'null'" src/worker/index.ts
           grep -Fq "mode: 'no-cors'" public/tracker.js
-          ! grep -Fq "mode: 'cors'" public/tracker.js
-      - name: Commit tracker hardening
+          grep -Fq "platform !== 'unknown'" public/tracker.js
+      - name: Commit collector hardening
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/tracker.js
-          git commit -m 'fix: harden Telegram Mini App analytics detection and transport'
-          git push origin HEAD:dashboard
+          if [ -n "$(git status --porcelain -- src/worker/index.ts)" ]; then
+            git add src/worker/index.ts
+            git commit -m 'fix: accept opaque Telegram WebView origins in analytics collector'
+            git push origin HEAD:dashboard
+          else
+            echo 'Collector already supports opaque origins.'
+          fi
