@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "viiversion-dashboard",
-  "main": "./src/worker/index.ts",
+  "main": "./src/worker/telegram-compat.ts",
   "compatibility_date": "2026-09-09",
   "vars": {
     "DASHBOARD_ACCESS_SHA256": "b21056087317107aa8e9db0e2c6f044b6442eb620e8ca556348e551dbddde5cc"
