@@ -4,7 +4,9 @@ export const KNOWN_PROJECTS: Record<string, { name: string; url: string }> = {
   'max-tour.viiversion.com': { name: 'MAX TOUR', url: 'https://max-tour.viiversion.com/' },
   'rusinfocenter.viiversion.com': { name: 'РИЦ', url: 'https://rusinfocenter.viiversion.com/' },
   'uniq-smart-rent.viiversion.com': { name: 'UNIQ Smart Rent', url: 'https://uniq-smart-rent.viiversion.com/' },
+  'uniq-smart-rent-demo.viiversion.com': { name: 'UNIQ Smart Rent', url: 'https://uniq-smart-rent-demo.viiversion.com/' },
   'truesurf-app.viiversion.com': { name: 'TRUE SURF', url: 'https://truesurf-app.viiversion.com/' },
+  'truesurf.viiversion.com': { name: 'TRUE SURF', url: 'https://truesurf.viiversion.com/' },
   'pet-nika.viiversion.com': { name: 'PET NIKA', url: 'https://pet-nika.viiversion.com/' },
 };
 
