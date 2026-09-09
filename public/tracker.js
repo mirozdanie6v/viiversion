@@ -5,12 +5,17 @@
   const script = document.currentScript;
   const endpoint = (script && script.dataset.endpoint) || 'https://dashboard.viiversion.com/api/collect';
   const project = (script && script.dataset.project) || document.documentElement.dataset.vvProject || location.hostname;
-  const storage = window.localStorage;
-  const sessionStorage = window.sessionStorage;
+
+  const storageHandle = (name) => {
+    try { return window[name]; } catch { return null; }
+  };
+  const persistentStorage = storageHandle('localStorage');
+  const transientStorage = storageHandle('sessionStorage');
 
   const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`);
   const getOrCreate = (store, key) => {
     try {
+      if (!store) return uuid();
       let value = store.getItem(key);
       if (!value) {
         value = uuid();
@@ -22,18 +27,44 @@
     }
   };
 
-  const visitorId = getOrCreate(storage, 'vv_analytics_visitor');
-  const sessionId = getOrCreate(sessionStorage, 'vv_analytics_session');
+  const visitorId = getOrCreate(persistentStorage, 'vv_analytics_visitor');
+  const sessionId = getOrCreate(transientStorage, 'vv_analytics_session');
   const firstParams = new URLSearchParams(location.search);
+  const sensitiveKey = /(token|access[_-]?token|authorization|auth|password|passwd|pass|secret|session|jwt|code|initdata|tgwebappdata)/i;
+
+  const sanitizeParams = (raw, prefix, max) => {
+    const source = String(raw || '').replace(/^[?#]/, '').slice(0, max * 2);
+    if (!source) return '';
+    try {
+      const params = new URLSearchParams(source);
+      for (const key of Array.from(params.keys())) {
+        if (sensitiveKey.test(key)) params.set(key, '[REDACTED]');
+      }
+      const result = params.toString();
+      return result ? `${prefix}${result}`.slice(0, max) : '';
+    } catch {
+      return '';
+    }
+  };
+
+  const safeQuery = () => sanitizeParams(location.search, '?', 2000);
+  const safeHash = () => {
+    const raw = String(location.hash || '');
+    if (!raw) return '';
+    const body = raw.replace(/^#/, '');
+    if (body.startsWith('/') || !body.includes('=')) return raw.slice(0, 800);
+    return sanitizeParams(raw, '#', 800);
+  };
+  const safePageUrl = () => `${location.origin}${location.pathname}${safeQuery()}${safeHash()}`.slice(0, 4000);
 
   const persist = (key, value) => {
     if (!value) return;
-    try { sessionStorage.setItem(key, value); } catch {}
+    try { transientStorage?.setItem(key, value); } catch {}
   };
   ['utm_source','utm_medium','utm_campaign','utm_content','vv_campaign'].forEach((key) => persist(`vv_${key}`, firstParams.get(key) || ''));
 
   const remembered = (key) => {
-    try { return sessionStorage.getItem(`vv_${key}`) || ''; } catch { return ''; }
+    try { return transientStorage?.getItem(`vv_${key}`) || ''; } catch { return ''; }
   };
 
   const safeReferrer = () => {
@@ -48,6 +79,41 @@
     } catch {
       return { value: '', host: '', raw: String(document.referrer || '').slice(0, 3000) };
     }
+  };
+
+  const launchParam = (key) => {
+    try {
+      const search = new URLSearchParams(location.search);
+      if (search.has(key)) return search.get(key) || '';
+      const rawHash = String(location.hash || '').replace(/^#/, '');
+      if (rawHash.includes('=')) return new URLSearchParams(rawHash).get(key) || '';
+    } catch {}
+    return '';
+  };
+
+  const telegramInfo = () => {
+    let webApp;
+    try { webApp = window.Telegram?.WebApp; } catch { webApp = undefined; }
+    let unsafe = {};
+    try { unsafe = webApp?.initDataUnsafe || {}; } catch {}
+    const user = unsafe?.user || {};
+    const platform = String(webApp?.platform || launchParam('tgWebAppPlatform') || '').slice(0, 80);
+    const version = String(webApp?.version || launchParam('tgWebAppVersion') || '').slice(0, 40);
+    const startParam = String(unsafe?.start_param || launchParam('tgWebAppStartParam') || firstParams.get('startapp') || '').slice(0, 160);
+    const detected = Boolean(webApp?.initData || launchParam('tgWebAppData') || platform || version);
+    return {
+      detected,
+      platform,
+      version,
+      startParam,
+      colorScheme: String(webApp?.colorScheme || '').slice(0, 20),
+      user: detected ? {
+        id: user?.id ? String(user.id).slice(0, 32) : '',
+        username: String(user?.username || '').slice(0, 64),
+        languageCode: String(user?.language_code || '').slice(0, 24),
+        isPremium: typeof user?.is_premium === 'boolean' ? user.is_premium : null,
+      } : null,
+    };
   };
 
   const device = () => {
@@ -68,15 +134,16 @@
     };
   };
 
-  const uaData = () => {
+  const uaData = (telegram) => {
     try {
       const value = navigator.userAgentData;
-      if (!value) return '';
-      return JSON.stringify({
+      const browser = value ? {
         brands: Array.isArray(value.brands) ? value.brands.slice(0, 8) : [],
         mobile: Boolean(value.mobile),
         platform: String(value.platform || '').slice(0, 80),
-      }).slice(0, 1200);
+      } : null;
+      if (!browser && !telegram.detected) return '';
+      return JSON.stringify({ browser, telegram: telegram.detected ? telegram : null }).slice(0, 1200);
     } catch {
       return '';
     }
@@ -95,22 +162,25 @@
   const payload = (eventType, durationMs = 0) => {
     const ref = safeReferrer();
     const network = connectionInfo();
+    const telegram = telegramInfo();
+    const platform = String(navigator.platform || '').slice(0, 80);
+    const telegramPlatform = telegram.detected ? `Telegram ${telegram.platform || 'unknown'}${telegram.version ? ` ${telegram.version}` : ''}` : '';
     return {
       eventType,
       project: String(project).slice(0, 80),
       hostname: location.hostname,
       path: location.pathname.slice(0, 500),
-      pageUrl: location.href.slice(0, 4000),
-      queryString: location.search.slice(0, 2000),
-      urlHash: location.hash.slice(0, 800),
+      pageUrl: safePageUrl(),
+      queryString: safeQuery(),
+      urlHash: safeHash(),
       title: document.title.slice(0, 200),
       visitorId,
       sessionId,
       referrer: ref.value,
       referrerHost: ref.host,
       rawReferrer: ref.raw,
-      utmSource: remembered('utm_source'),
-      utmMedium: remembered('utm_medium'),
+      utmSource: remembered('utm_source') || (telegram.detected ? 'telegram' : ''),
+      utmMedium: remembered('utm_medium') || (telegram.detected ? 'miniapp' : ''),
       utmCampaign: remembered('utm_campaign'),
       utmContent: remembered('utm_content'),
       vvCampaign: remembered('vv_campaign'),
@@ -121,7 +191,7 @@
       screen: `${screen.width || 0}x${screen.height || 0}`,
       viewport: `${innerWidth || 0}x${innerHeight || 0}`,
       orientation: orientation(),
-      browserPlatform: String(navigator.platform || '').slice(0, 120),
+      browserPlatform: [platform, telegramPlatform].filter(Boolean).join(' · ').slice(0, 120),
       browserVendor: String(navigator.vendor || '').slice(0, 120),
       clientUserAgent: String(navigator.userAgent || '').slice(0, 2000),
       cookieEnabled: typeof navigator.cookieEnabled === 'boolean' ? navigator.cookieEnabled : null,
@@ -132,7 +202,7 @@
       colorDepth: Number.isFinite(Number(screen.colorDepth)) ? Number(screen.colorDepth) : null,
       pixelRatio: Number.isFinite(Number(devicePixelRatio)) ? Number(devicePixelRatio) : null,
       webdriver: typeof navigator.webdriver === 'boolean' ? navigator.webdriver : null,
-      uaData: uaData(),
+      uaData: uaData(telegram),
       ...network,
       durationMs: Math.max(0, Math.min(3600000, Math.round(durationMs))),
       occurredAt: new Date().toISOString(),
