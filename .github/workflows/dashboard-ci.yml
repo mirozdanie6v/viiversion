@@ -32,4 +32,27 @@ jobs:
           test "$(echo "$out" | jq '[.[].results[]? | select(has("event_table")) | .event_table][0]')" = "1"
           test "$(echo "$out" | jq '[.[].results[]? | select(has("maintenance_table")) | .maintenance_table][0]')" = "1"
           test "$(echo "$out" | jq '[.[].results[]? | select(has("required_columns")) | .required_columns][0]')" = "12"
+      - name: Local collector to D1 integration smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler dev --local --port 8787 --config wrangler.jsonc >/tmp/dashboard-wrangler.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true; cat /tmp/dashboard-wrangler.log || true' EXIT
+          ready=0
+          for attempt in $(seq 1 30); do
+            code=$(curl -sS -o /tmp/health.json -w '%{http_code}' http://127.0.0.1:8787/api/health || true)
+            if [ "$code" = "200" ]; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          payload='{"eventType":"pageview","project":"MAX TOUR","hostname":"max-tour.viiversion.com","path":"/ci-smoke","pageUrl":"https://max-tour.viiversion.com/ci-smoke?utm_source=ci&token=must-redact","queryString":"?utm_source=ci&token=must-redact","title":"CI smoke","visitorId":"ci-smoke-visitor","sessionId":"ci-smoke-session","browserPlatform":"CI OS","viewport":"1280x720","occurredAt":"2026-09-09T07:00:00.000Z"}'
+          code=$(curl -sS -o /tmp/collect.json -w '%{http_code}' http://127.0.0.1:8787/api/collect -X POST -H 'Origin: https://max-tour.viiversion.com' -H 'CF-Connecting-IP: 203.0.113.7' -H 'User-Agent: VIIVERSION-CI-Agent/1.0' -H 'Content-Type: text/plain;charset=UTF-8' --data "$payload")
+          cat /tmp/collect.json
+          test "$code" = "202"
+          out=$(npx wrangler d1 execute DB --local --json --command="SELECT COUNT(*) AS rows,MAX(ip_address) AS ip,MAX(user_agent) AS ua,MAX(query_string) AS query FROM analytics_events WHERE path='/ci-smoke';")
+          echo "$out" | jq .
+          test "$(echo "$out" | jq '[.[].results[]? | select(has("rows")) | .rows][0]')" -ge 1
+          test "$(echo "$out" | jq -r '[.[].results[]? | select(has("ua")) | .ua][0]')" = "VIIVERSION-CI-Agent/1.0"
+          ! echo "$out" | grep -q 'must-redact'
       - run: npx wrangler deploy --dry-run --outdir dist/wrangler-dry-run
