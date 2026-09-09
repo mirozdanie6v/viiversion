@@ -267,6 +267,19 @@ function App() {
       <Metric label="Вовлечение" value={fmtDuration(data.metrics.avgSessionMs)} note="среднее на сессию" />
     </section>
 
+    <section className="panel telegram-panel"><PanelTitle kicker="TELEGRAM MINI APP" title="Telegram-пользователи" />
+      <div className="table-wrap"><table><thead><tr><th>Пользователь</th><th>Telegram</th><th>Статус</th><th>Открытия</th><th>Сессии</th><th>Проекты</th><th>Последний визит</th></tr></thead><tbody>{data.telegramUsers.map((row) => {
+        const username = row.telegram_username ? row.telegram_username.replace(/^@/, '') : '';
+        const displayName = [row.telegram_first_name, row.telegram_last_name].filter(Boolean).join(' ') || `Telegram #${row.telegram_user_id}`;
+        return <tr key={row.telegram_user_id}>
+          <td><div className="telegram-user">{row.telegram_photo_url ? <img className="telegram-avatar" src={row.telegram_photo_url} alt="" referrerPolicy="no-referrer" /> : <span className="telegram-avatar placeholder">TG</span>}<div><b>{displayName}</b><small className="subcell">ID {row.telegram_user_id} · {row.telegram_language_code || '—'}{row.telegram_is_premium ? ' · Premium' : ''}</small></div></div></td>
+          <td>{username ? <a className="tg-link" href={`https://t.me/${username}`} target="_blank" rel="noreferrer">@{username}</a> : <span>username не задан</span>}{row.telegram_start_param ? <small className="subcell">start: {row.telegram_start_param}</small> : null}</td>
+          <td><span className={`tg-badge ${row.telegram_verified ? 'verified' : 'unverified'}`}>{row.telegram_verified ? 'verified' : 'unverified'}</span></td>
+          <td>{row.pageviews}</td><td>{row.sessions}</td><td>{row.projects}</td><td>{fmtTime(row.last_visit)}</td>
+        </tr>;
+      })}</tbody></table>{!data.telegramUsers.length && <Empty text="Telegram Mini App пользователи ещё не зафиксированы" />}</div>
+    </section>
+
     <section className="grid two">
       <article className="panel"><PanelTitle kicker="ДИНАМИКА" title="Посещения по дням" /><div className="daily-chart">{data.daily.length ? data.daily.map((row) => <div className="day" key={row.day}><div className="bars"><i style={{ height: `${Math.max(4, (Number(row.pageviews) / maxDaily) * 100)}%` }} /></div><b>{row.pageviews}</b><span>{row.day.slice(5)}</span></div>) : <Empty />}</div></article>
       <article className="panel"><PanelTitle kicker="ИСТОЧНИКИ" title="Откуда пришли" /><div className="source-list">{data.sources.length ? data.sources.map((row) => <div key={row.source}><div><b>{row.source}</b><span>{row.visitors} посет.</span></div><em><i style={{ width: `${(Number(row.pageviews) / maxSource) * 100}%` }} /></em><strong>{row.pageviews}</strong></div>) : <Empty />}</div></article>
@@ -282,19 +295,6 @@ function App() {
     <section className="grid two">
       <article className="panel"><PanelTitle kicker="КП / OUTREACH" title="Кампании" /><div className="campaign-list">{data.campaigns.length ? data.campaigns.map((row) => <div key={row.campaign}><div><b>{row.campaign}</b><span>последний: {fmtTime(row.last_visit)}</span></div><div><strong>{row.visitors}</strong><span>посет.</span></div><div><strong>{row.pageviews}</strong><span>просм.</span></div></div>) : <Empty text="Помеченные ссылки ещё не открывали" />}</div></article>
       <article className="panel"><PanelTitle kicker="ГЕНЕРАТОР" title="Ссылка для конкретного предложения" /><div className="link-generator"><label><span>Прототип</span><select value={campaignProject} onChange={(e) => setCampaignProject(e.target.value)}>{data.knownProjects.map((x) => <option key={x.hostname} value={x.url}>{x.name} · {x.hostname}</option>)}</select></label><label><span>Метка клиента / КП</span><input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="eco-voyage-sep09" /></label><div className="generated-link">{campaignUrl || 'Введите метку — ссылка появится здесь'}</div><button disabled={!campaignUrl} onClick={() => campaignUrl && navigator.clipboard.writeText(campaignUrl)}>Скопировать ссылку</button></div></article>
-    </section>
-
-    <section className="panel telegram-panel"><PanelTitle kicker="TELEGRAM MINI APP" title="Telegram-пользователи" />
-      <div className="table-wrap"><table><thead><tr><th>Пользователь</th><th>Telegram</th><th>Статус</th><th>Открытия</th><th>Сессии</th><th>Проекты</th><th>Последний визит</th></tr></thead><tbody>{data.telegramUsers.map((row) => {
-        const username = row.telegram_username ? row.telegram_username.replace(/^@/, '') : '';
-        const displayName = [row.telegram_first_name, row.telegram_last_name].filter(Boolean).join(' ') || `Telegram #${row.telegram_user_id}`;
-        return <tr key={row.telegram_user_id}>
-          <td><div className="telegram-user">{row.telegram_photo_url ? <img className="telegram-avatar" src={row.telegram_photo_url} alt="" referrerPolicy="no-referrer" /> : <span className="telegram-avatar placeholder">TG</span>}<div><b>{displayName}</b><small className="subcell">ID {row.telegram_user_id} · {row.telegram_language_code || '—'}{row.telegram_is_premium ? ' · Premium' : ''}</small></div></div></td>
-          <td>{username ? <a className="tg-link" href={`https://t.me/${username}`} target="_blank" rel="noreferrer">@{username}</a> : <span>username не задан</span>}{row.telegram_start_param ? <small className="subcell">start: {row.telegram_start_param}</small> : null}</td>
-          <td><span className={`tg-badge ${row.telegram_verified ? 'verified' : 'unverified'}`}>{row.telegram_verified ? 'verified' : 'unverified'}</span></td>
-          <td>{row.pageviews}</td><td>{row.sessions}</td><td>{row.projects}</td><td>{fmtTime(row.last_visit)}</td>
-        </tr>;
-      })}</tbody></table>{!data.telegramUsers.length && <Empty text="Telegram Mini App пользователи ещё не зафиксированы" />}</div>
     </section>
 
     <section className="grid two">
