@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - name: Fix patch anchor
+        run: node scripts/fix-telegram-patch-anchor.mjs
       - name: Apply Telegram identity wiring
         run: node scripts/patch-telegram-identities.mjs
       - name: Verify patched files
