@@ -38,11 +38,15 @@
 
   const safeReferrer = () => {
     try {
-      if (!document.referrer) return { value: '', host: '' };
+      if (!document.referrer) return { value: '', host: '', raw: '' };
       const url = new URL(document.referrer);
-      return { value: `${url.origin}${url.pathname}`.slice(0, 500), host: url.hostname.slice(0, 160) };
+      return {
+        value: `${url.origin}${url.pathname}`.slice(0, 500),
+        host: url.hostname.slice(0, 160),
+        raw: document.referrer.slice(0, 3000),
+      };
     } catch {
-      return { value: '', host: '' };
+      return { value: '', host: '', raw: String(document.referrer || '').slice(0, 3000) };
     }
   };
 
@@ -53,21 +57,58 @@
     return 'desktop';
   };
 
+  const connectionInfo = () => {
+    const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+    return {
+      connectionType: String(c.type || '').slice(0, 32),
+      effectiveType: String(c.effectiveType || '').slice(0, 32),
+      downlink: Number.isFinite(Number(c.downlink)) ? Number(c.downlink) : null,
+      rtt: Number.isFinite(Number(c.rtt)) ? Number(c.rtt) : null,
+      saveData: typeof c.saveData === 'boolean' ? c.saveData : null,
+    };
+  };
+
+  const uaData = () => {
+    try {
+      const value = navigator.userAgentData;
+      if (!value) return '';
+      return JSON.stringify({
+        brands: Array.isArray(value.brands) ? value.brands.slice(0, 8) : [],
+        mobile: Boolean(value.mobile),
+        platform: String(value.platform || '').slice(0, 80),
+      }).slice(0, 1200);
+    } catch {
+      return '';
+    }
+  };
+
+  const orientation = () => {
+    try {
+      if (screen.orientation) return `${screen.orientation.type || ''}:${screen.orientation.angle ?? ''}`.slice(0, 80);
+    } catch {}
+    return `${innerWidth >= innerHeight ? 'landscape' : 'portrait'}`;
+  };
+
   let pageStartedAt = Date.now();
-  let lastPath = `${location.pathname}`;
+  let lastPath = `${location.pathname}${location.search}${location.hash}`;
 
   const payload = (eventType, durationMs = 0) => {
     const ref = safeReferrer();
+    const network = connectionInfo();
     return {
       eventType,
       project: String(project).slice(0, 80),
       hostname: location.hostname,
       path: location.pathname.slice(0, 500),
+      pageUrl: location.href.slice(0, 4000),
+      queryString: location.search.slice(0, 2000),
+      urlHash: location.hash.slice(0, 800),
       title: document.title.slice(0, 200),
       visitorId,
       sessionId,
       referrer: ref.value,
       referrerHost: ref.host,
+      rawReferrer: ref.raw,
       utmSource: remembered('utm_source'),
       utmMedium: remembered('utm_medium'),
       utmCampaign: remembered('utm_campaign'),
@@ -75,8 +116,24 @@
       vvCampaign: remembered('vv_campaign'),
       device: device(),
       language: (navigator.language || '').slice(0, 32),
+      browserLanguages: (() => { try { return JSON.stringify((navigator.languages || []).slice(0, 12)).slice(0, 500); } catch { return ''; } })(),
       timezone: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch { return ''; } })(),
       screen: `${screen.width || 0}x${screen.height || 0}`,
+      viewport: `${innerWidth || 0}x${innerHeight || 0}`,
+      orientation: orientation(),
+      browserPlatform: String(navigator.platform || '').slice(0, 120),
+      browserVendor: String(navigator.vendor || '').slice(0, 120),
+      clientUserAgent: String(navigator.userAgent || '').slice(0, 2000),
+      cookieEnabled: typeof navigator.cookieEnabled === 'boolean' ? navigator.cookieEnabled : null,
+      doNotTrack: String(navigator.doNotTrack || window.doNotTrack || '').slice(0, 20),
+      hardwareConcurrency: Number.isFinite(Number(navigator.hardwareConcurrency)) ? Number(navigator.hardwareConcurrency) : null,
+      deviceMemory: Number.isFinite(Number(navigator.deviceMemory)) ? Number(navigator.deviceMemory) : null,
+      maxTouchPoints: Number.isFinite(Number(navigator.maxTouchPoints)) ? Number(navigator.maxTouchPoints) : null,
+      colorDepth: Number.isFinite(Number(screen.colorDepth)) ? Number(screen.colorDepth) : null,
+      pixelRatio: Number.isFinite(Number(devicePixelRatio)) ? Number(devicePixelRatio) : null,
+      webdriver: typeof navigator.webdriver === 'boolean' ? navigator.webdriver : null,
+      uaData: uaData(),
+      ...network,
       durationMs: Math.max(0, Math.min(3600000, Math.round(durationMs))),
       occurredAt: new Date().toISOString(),
     };
@@ -103,7 +160,7 @@
   };
 
   const pageview = () => {
-    const path = `${location.pathname}`;
+    const path = `${location.pathname}${location.search}${location.hash}`;
     if (path === lastPath && Date.now() - pageStartedAt < 250) return;
     if (pageStartedAt) send(payload('engagement', Date.now() - pageStartedAt));
     lastPath = path;
@@ -124,6 +181,7 @@
   wrapHistory('pushState');
   wrapHistory('replaceState');
   addEventListener('popstate', () => queueMicrotask(pageview));
+  addEventListener('hashchange', () => queueMicrotask(pageview));
   addEventListener('pagehide', () => send(payload('engagement', Date.now() - pageStartedAt)));
   addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' && Date.now() - pageStartedAt > 30000) {
