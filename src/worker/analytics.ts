@@ -2,6 +2,7 @@ export const KNOWN_PROJECTS: Record<string, { name: string; url: string }> = {
   'viiversion.com': { name: 'VIIVERSION', url: 'https://viiversion.com/' },
   'www.viiversion.com': { name: 'VIIVERSION', url: 'https://viiversion.com/' },
   'max-tour.viiversion.com': { name: 'MAX TOUR', url: 'https://max-tour.viiversion.com/' },
+  'max-tour-demo.viiversion.com': { name: 'MAX TOUR Demo', url: 'https://max-tour-demo.viiversion.com/' },
   'rusinfocenter.viiversion.com': { name: 'РИЦ', url: 'https://rusinfocenter.viiversion.com/' },
   'uniq-smart-rent.viiversion.com': { name: 'UNIQ Smart Rent', url: 'https://uniq-smart-rent.viiversion.com/' },
   'uniq-smart-rent-demo.viiversion.com': { name: 'UNIQ Smart Rent', url: 'https://uniq-smart-rent-demo.viiversion.com/' },
