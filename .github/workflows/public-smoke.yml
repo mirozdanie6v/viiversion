@@ -14,7 +14,7 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Check public industry-first commercial site
+      - name: Check canonical product site and lead API
         shell: bash
         run: |
           set -euo pipefail
@@ -25,48 +25,66 @@ jobs:
 
           fetch_page() {
             local url="$1"; local out="$2"; local code=""
-            for _ in $(seq 1 30); do
+            for _ in $(seq 1 40); do
               code="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 --output "$out" --write-out '%{http_code}' "$url" || true)"
               if [[ "$code" == "200" ]] && [[ -s "$out" ]]; then echo "OK $url HTTP 200"; return 0; fi
               sleep 6
             done
             echo "FAIL $url HTTP ${code:-none}" >&2; return 1
           }
+
           require_text(){ grep -Fq "$2" "$1" || { echo "FAIL missing $3" >&2; return 1; }; echo "OK $3"; }
           reject_text(){ if grep -Fq "$2" "$1"; then echo "FAIL unexpected $3" >&2; return 1; fi; echo "OK absent $3"; }
 
-          main="$(mktemp)"; custom="$(mktemp)"; module="$(mktemp)"; modules="$(mktemp)"; cases="$(mktemp)"
-          en="$(mktemp)"; js="$(mktemp)"; photo1="$(mktemp)"; photo2="$(mktemp)"; pet="$(mktemp)"; uniq="$(mktemp)"
+          main="$(mktemp)"; product="$(mktemp)"; software="$(mktemp)"; partners="$(mktemp)"; cases="$(mktemp)"
+          en="$(mktemp)"; oldmodule="$(mktemp)"; oldoffer="$(mktemp)"; sitemap="$(mktemp)"; api="$(mktemp)"
+          shot="$(mktemp)"; pet="$(mktemp)"; uniq="$(mktemp)"
 
-          fetch_page "$BASE/" "$main"
-          fetch_page "$CUSTOM/" "$custom"
-          fetch_page "$CUSTOM/modules/" "$modules"
-          fetch_page "$CUSTOM/modules/online-booking/" "$module"
+          fetch_page "$CUSTOM/" "$main"
+          fetch_page "$CUSTOM/products/online-booking/" "$product"
+          fetch_page "$CUSTOM/software/" "$software"
+          fetch_page "$CUSTOM/partners/" "$partners"
           fetch_page "$CUSTOM/cases/" "$cases"
           fetch_page "$CUSTOM/en/" "$en"
-          fetch_page "$CUSTOM/assets/viiversion.js" "$js"
-          fetch_page "$CUSTOM/assets/team/dmitrii.webp" "$photo1"
-          fetch_page "$CUSTOM/assets/team/olga.webp" "$photo2"
+          fetch_page "$CUSTOM/modules/online-booking/" "$oldmodule"
+          fetch_page "$CUSTOM/offers/booking-start/" "$oldoffer"
+          fetch_page "$CUSTOM/sitemap.xml" "$sitemap"
+          fetch_page "$CUSTOM/assets/cases/max-tour.webp" "$shot"
 
-          require_text "$main" "Цифровые решения для конкретных задач бизнеса" "concrete hero"
-          require_text "$main" "Что можно купить для вашего бизнеса" "industry browser"
-          require_text "$main" 'data-industry-tab="hotels"' "hotel tab"
-          require_text "$main" 'data-industry-tab="shops"' "retail tab"
-          require_text "$main" "Вы общаетесь напрямую с теми, кто делает продукт" "trust block"
-          require_text "$main" "Пять понятных шагов до первого результата" "safe buying steps"
-          require_text "$modules" "Что можно купить" "module catalogue"
-          require_text "$module" "Что мы не будем делать без согласования" "module safety"
-          require_text "$module" "8–18M ₫" "module price"
-          require_text "$cases" "ИНТЕРАКТИВНОЕ ДЕМО" "honest proof status"
-          require_text "$js" "data-industry" "industry interaction source" || true
-          require_text "$js" "landingPage" "first-touch attribution"
-          require_text "$en" "Digital systems for sales and operations" "English version"
-          reject_text "$main" "коммерческих ядер" "internal marketing jargon"
+          require_text "$main" "Что можно купить для вашего бизнеса" "industry-first home"
+          require_text "$main" "Обычно начинают с" "primary products"
+          require_text "$main" "Можно добавить позже" "later products"
+          reject_text "$main" 'data-industry-tab="enterprise"' "enterprise industry tab"
+          require_text "$product" "Первый пакет" "canonical product starter"
+          require_text "$product" "8–18M ₫" "canonical product price"
+          require_text "$software" "Готовые продукты VIIVERSION" "software path"
+          require_text "$partners" "Для агентств, интеграторов и платформ" "partner path"
+          require_text "$cases" "ИНТЕРАКТИВНОЕ ДЕМО" "proof status"
+          require_text "$en" "Digital solutions for specific business tasks" "aligned English hero"
+          require_text "$oldmodule" "noindex,follow" "old module noindex"
+          require_text "$oldmodule" "/products/online-booking/" "old module redirect target"
+          require_text "$oldoffer" "noindex,follow" "old offer noindex"
+          reject_text "$sitemap" "/modules/" "modules excluded from sitemap"
+          reject_text "$sitemap" "/offers/" "offers excluded from sitemap"
+
+          for _ in $(seq 1 40); do
+            code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$api" -w '%{http_code}' "$CUSTOM/api/leads/health" || true)"
+            if [[ "$code" == "200" ]] && grep -Fq '"storage":"durable-object"' "$api"; then
+              echo "OK lead API health"
+              break
+            fi
+            sleep 6
+          done
+          grep -Fq '"storage":"durable-object"' "$api" || { echo "FAIL lead API health" >&2; exit 1; }
+
+          # Exercise the POST route with honeypot set: validates routing without storing a real lead.
+          code="$(curl -sS -o "$api" -w '%{http_code}' -X POST "$CUSTOM/api/leads" -H 'content-type: application/json' --data '{"contact":"qa@example.invalid","task":"qa","website":"bot"}' || true)"
+          [[ "$code" == "202" ]] || { echo "FAIL lead API POST HTTP $code" >&2; cat "$api"; exit 1; }
 
           fetch_page "$PET" "$pet"
           fetch_page "$UNIQ" "$uniq"
           require_text "$pet" "PET NIKA" "PET live"
           require_text "$uniq" "UNIQ" "UNIQ live"
 
-          rm -f "$main" "$custom" "$module" "$modules" "$cases" "$en" "$js" "$photo1" "$photo2" "$pet" "$uniq"
-          echo "PUBLIC INDUSTRY-FIRST QA PASS"
+          rm -f "$main" "$product" "$software" "$partners" "$cases" "$en" "$oldmodule" "$oldoffer" "$sitemap" "$api" "$shot" "$pet" "$uniq"
+          echo "PUBLIC CANONICAL PRODUCT QA PASS"
