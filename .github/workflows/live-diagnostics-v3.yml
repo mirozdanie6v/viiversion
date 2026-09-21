@@ -33,6 +33,7 @@ jobs:
             const target=process.env.TARGET_URL;
             const browser=await chromium.launch({headless:true});
             const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+            await page.route('**://dashboard.viiversion.com/**', route=>route.abort());
             await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
 
             let deployed=false;
