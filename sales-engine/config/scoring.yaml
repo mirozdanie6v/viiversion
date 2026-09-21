@@ -1,0 +1,46 @@
+version: 1
+score_name: speed_to_cash
+scale:
+  min: 0
+  max: 100
+
+weights:
+  readiness: 0.25
+  pain_urgency: 0.20
+  decision_maker_access: 0.15
+  demo_strength: 0.15
+  sales_cycle_speed: 0.15
+  channel_scalability: 0.10
+
+input_scale:
+  min: 1
+  max: 5
+
+formula: "round((readiness*0.25 + pain_urgency*0.20 + decision_maker_access*0.15 + demo_strength*0.15 + sales_cycle_speed*0.15 + channel_scalability*0.10) * 20)"
+
+lanes:
+  SPRINT:
+    min_score: 80
+    intent: "fast paid-entry experiments"
+  ACTIVE:
+    min_score: 65
+    max_score_exclusive: 80
+    intent: "active multi-week sales motion"
+  BUILD:
+    min_score: 50
+    max_score_exclusive: 65
+    intent: "prepare proof/packaging/channel before scaling"
+  LONG:
+    max_score_exclusive: 50
+    intent: "long-cycle enterprise or low-readiness motion"
+
+deal_classes:
+  S: "micro-offer / audit / fixed-scope cashflow"
+  A: "reusable module or pilot"
+  B: "multi-module implementation"
+  C: "vertical solution"
+  D: "integration / engineering"
+  E: "enterprise / telecom / closed system"
+
+governance:
+  note: "Speed-to-cash and ticket potential must be evaluated separately."
