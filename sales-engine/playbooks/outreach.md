@@ -1,4 +1,7 @@
-# VIIVERSION Outreach Playbook v1.1
+# VIIVERSION Outreach Playbook v1.2
+
+## Corporate positioning contract
+VIIVERSION is an **engineering product company**, not a web studio, generic agency or single-technology contractor. Corporate Strategy & Positioning is the highest semantic source of truth for identity and product architecture. Cases are proof; verticals are packaging; Vietnam/Nha Trang is local context, not the brand definition.
 
 ## Operating principle
 Copy is not judged by taste. It is produced from account evidence, buyer role, offer fit, proof and experiment rules. Pre-send quality is separated from market performance.
@@ -27,12 +30,14 @@ Ready threshold: 8/10 and no hard fail. This score is QA, not a forecast.
 A visible workflow makes the offer relevant. A current event makes timing stronger. Seek a second trigger when possible: new branch, new service, campaign, hiring, expansion, migration, integration project or explicit request.
 
 ## Cold message architecture
-**Trigger → Problem hypothesis → Buyer outcome → Mechanism → Proof → Interest CTA**
+**Verified trigger → VIIVERSION identity → Concrete product → Before/After outcome → Relevant proof → Interest CTA**
 
-Do not sell abstractions such as “structured flow” when you can describe the buyer-visible result.
+Cold outreach may be short, but it must not be vague. The recipient must understand both **who VIIVERSION is** and **what exact product is being offered**.
+
+Do not sell abstractions such as “mobile layer”, “structured flow”, “digital journey” or “owned brand layer”. Do not hide a real product category merely to reduce friction.
 
 Example:
-> На сайте запись идёт через WhatsApp. У нас есть рабочий flow, где клиент выбирает услугу и время до переписки, а администратор получает уже заполненный запрос. Могу отправить короткое демо?
+> Добрый день. Вижу, что бронирование столов у вас сейчас идёт через Instagram. Мы VIIVERSION — инженерная команда, создаём цифровые системы для бизнеса. Хотим предложить The Cloud систему онлайн-бронирования столов: гость сам выбирает дату, время и количество человек, а при необходимости вносит депозит и получает подтверждение без переписки с менеджером. У нас есть готовые booking-модули. Показать короткое демо?
 
 ## Persona map
 - Owner: control, customer experience, operational friction, commercial result.
@@ -63,7 +68,7 @@ Every active offer should eventually have:
 - Send information → send one concise asset, not a long proposal.
 - Not interested → acknowledge and stop.
 - Wrong person → ask who owns the workflow.
-- Who are you? → one-line VIIVERSION identity + relevant proof.
+- Who are you? → one-line VIIVERSION identity consistent with Corporate Strategy + relevant proof.
 
 ## Follow-up cadence
 Email default: day 0, 3, 7, 12, 19, 28.
