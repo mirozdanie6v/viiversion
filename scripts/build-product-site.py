@@ -221,22 +221,46 @@ document.addEventListener("DOMContentLoaded",()=>{
   };
   try{sessionStorage.setItem("viiversion_campaign",JSON.stringify(campaign))}catch(_){}
 
-  const analytics=(eventType,detail={})=>{
+  const analytics=(logicalType,detail={})=>{
+    const storage=(name)=>{try{return window[name]}catch(_){return null}};
+    const getId=(store,key)=>{
+      try{
+        let value=store&&store.getItem(key);
+        if(!value){
+          value=(crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(16).slice(2));
+          if(store)store.setItem(key,value);
+        }
+        return value;
+      }catch(_){return Date.now()+"-"+Math.random().toString(16).slice(2)}
+    };
+    const visitorId=getId(storage("localStorage"),"vv_analytics_visitor");
+    const sessionId=getId(storage("sessionStorage"),"vv_analytics_session");
+    const virtualPath="/__conversion/"+String(logicalType||"event").replace(/_/g,"-");
+    const params=new URLSearchParams();
+    params.set("source_path",location.pathname.slice(0,500));
+    if(detail.interest)params.set("interest",String(detail.interest).slice(0,160));
+    if(detail.cta)params.set("cta",String(detail.cta).slice(0,160));
+    if(campaign.source)params.set("utm_source",campaign.source.slice(0,160));
+    if(campaign.medium)params.set("utm_medium",campaign.medium.slice(0,160));
+    if(campaign.campaign)params.set("utm_campaign",campaign.campaign.slice(0,200));
+    const query=params.toString()?"?"+params.toString():"";
     const payload={
-      eventType,
+      eventType:"pageview",
       project:PROJECT,
       hostname:location.hostname,
-      path:location.pathname.slice(0,500),
-      pageUrl:location.href.slice(0,4000),
-      title:document.title.slice(0,200),
-      referrer:String(document.referrer||"").slice(0,500),
+      path:virtualPath,
+      pageUrl:(location.origin+virtualPath+query).slice(0,4000),
+      queryString:query.slice(0,2000),
+      title:("Conversion: "+logicalType+" | "+(detail.interest||document.title)).slice(0,200),
+      visitorId,
+      sessionId,
+      referrer:(location.origin+location.pathname).slice(0,500),
       utmSource:campaign.source,
       utmMedium:campaign.medium,
       utmCampaign:campaign.campaign,
       utmContent:campaign.content,
       vvCampaign:campaign.vvCampaign,
-      occurredAt:new Date().toISOString(),
-      ...detail
+      occurredAt:new Date().toISOString()
     };
     const body=JSON.stringify(payload);
     try{
