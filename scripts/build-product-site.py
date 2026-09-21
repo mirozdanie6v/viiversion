@@ -220,10 +220,13 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   document.querySelectorAll("[data-interest]").forEach(el=>{
     el.addEventListener("click",()=>{
-      sessionStorage.setItem("viiversion_interest",el.dataset.interest||"");
+      const selected=el.dataset.interest||"";
+      sessionStorage.setItem("viiversion_interest",selected);
       sessionStorage.setItem("viiversion_cta",el.dataset.cta||el.textContent.trim());
+      const liveInterest=document.querySelector('.lead-form [name="interest"]');
+      if(liveInterest) liveInterest.value=selected;
       window.dataLayer=window.dataLayer||[];
-      window.dataLayer.push({event:"cta_click",interest:el.dataset.interest||"",cta:el.dataset.cta||el.textContent.trim(),path:location.pathname});
+      window.dataLayer.push({event:"cta_click",interest:selected,cta:el.dataset.cta||el.textContent.trim(),path:location.pathname});
     });
   });
 
@@ -301,14 +304,14 @@ def nav_path(lang, raw):
         return "/en/"
     return "/en" + raw
 
-def header(lang):
+def header(lang, path="/"):
     nav = "".join(f'<a href="{nav_path(lang,u)}">{escape(n)}</a>' for n,u in NAV[lang])
     c = COPY[lang]
     return f'''<header class="site-header"><div class="wrap header-row">
       <a class="brand" href="{loc(lang)}">{LOGO}</a>
       <nav class="nav">{nav}</nav>
       <div class="header-actions">
-        <a class="lang-link" href="{alternate(lang)}">{c["lang_switch"]}</a>
+        <a class="lang-link" href="{alternate(lang,path)}">{c["lang_switch"]}</a>
         <a class="header-cta" href="#contact" data-interest="general" data-cta="header">{c["contact"]} →</a>
         <button class="mobile-toggle" aria-label="Menu">☰</button>
       </div>
@@ -376,7 +379,7 @@ def page(lang, title, desc, body, path="/", page_type="WebPage", interest=""):
       <meta name="twitter:card" content="summary_large_image">
       <link rel="stylesheet" href="/assets/viiversion.css">
       {structured_data(lang,title,path,page_type)}
-    </head><body>{header(lang)}<main>{body}</main>{contact(lang,interest)}{footer(lang)}
+    </head><body>{header(lang,path)}<main>{body}</main>{contact(lang,interest)}{footer(lang)}
     <script src="/assets/viiversion.js" defer></script></body></html>'''
 
 def breadcrumb(lang, items):
