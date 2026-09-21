@@ -45,7 +45,7 @@ check "$BASE/cases/pet-nika.html" "PET NIKA"
 check "$BASE/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
 
 # External demos used as proof.
-check "https://pet-nika.mirozdanie6v.workers.dev/" "PET NIKA"
+check "https://pet-nika.viiversion.com/" "PET NIKA"
 check "https://uniq-smart-rent.mirozdanie6v.workers.dev/" "UNIQ"
 
 echo "PUBLIC QA PASS: product architecture, legacy proof pages and verified demos are reachable."
