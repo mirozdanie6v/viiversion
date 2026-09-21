@@ -69,16 +69,16 @@ COPY = {
         "problem_pay": "Оплата и заказ живут в разных системах",
         "problem_ops": "Руководителю не видно, что происходит в операциях",
         "problem_custom": "Готовые SaaS не подходят под ваш процесс",
-        "problem_booking_desc": "Переносим выбор даты, параметров и подтверждение в Booking.",
+        "problem_booking_desc": "Переносим выбор даты, параметров и подтверждение в онлайн-бронирование.",
         "problem_leads_desc": "Собираем клиентский путь и CRM вокруг одного процесса.",
-        "problem_ai_desc": "AI консультирует по утверждённой базе и передаёт контекст дальше.",
-        "problem_pay_desc": "Соединяем checkout, provider status и back-office.",
-        "problem_ops_desc": "CRM, back-office и аналитика работают в одном контуре.",
-        "problem_custom_desc": "Проектируем закрытую систему вокруг ролей, данных и workflow.",
-        "partners_head": "White-label и партнёрская разработка",
-        "partners_body": "Mini App Factory, PayBridge и отдельные delivery-компоненты можно использовать через агентство, интегратора или software-партнёра.",
+        "problem_ai_desc": "AI-консультант отвечает по утверждённой базе и передаёт контекст дальше.",
+        "problem_pay_desc": "Связываем оплату, подтверждённый статус и рабочую панель.",
+        "problem_ops_desc": "CRM, рабочая панель и аналитика работают вместе.",
+        "problem_custom_desc": "Проектируем закрытую систему вокруг ролей, данных и рабочего процесса.",
+        "partners_head": "Разработка для агентств и интеграторов",
+        "partners_body": "Mini App Factory, PayBridge и отдельные компоненты можно поставлять через агентство, интегратора или программного партнёра.",
         "enterprise_head": "Сложные внутренние системы",
-        "enterprise_body": "API, ETL, базы данных, Oracle / PL/SQL, роли, approvals, audit и managed support — отдельное инженерное направление.",
+        "enterprise_body": "API, ETL, базы данных, Oracle / PL/SQL, роли, согласования, журнал действий и техническое сопровождение — отдельное инженерное направление.",
         "team_lead": "Архитектура, интеграции и разработка соединены с продуктовой логикой, UX и исследованием пользовательского пути.",
         "form_name": "Имя",
         "form_contact": "Как с вами связаться",
@@ -93,11 +93,11 @@ COPY = {
         "offer": "Стартовый формат",
         "status": "Статус",
         "how_works": "Как устроен первый этап",
-        "not_fixed": "Итоговый scope подтверждаем после короткого разбора текущего процесса.",
+        "not_fixed": "Итоговый состав работ подтверждаем после короткого разбора текущего процесса.",
         "similar": "Нужно похожее решение?",
         "team": "Команда",
         "product_use": "Что показывает этот кейс",
-        "case_disclaimer": "Статус указан явно: working demo, public prototype или client concept. Мы не выдаём прототип за production-внедрение.",
+        "case_disclaimer": "Статус указан прямо: интерактивное демо, публичный прототип или клиентская концепция. Мы не выдаём прототип за внедрённую рабочую систему.",
         "solutions_problem": "По задаче",
         "solutions_industry": "По отрасли",
         "target_cta": "Получить оценку этого сценария",
@@ -746,7 +746,7 @@ def industry_page(lang,slug):
 def cases_index(lang):
     cards="".join(case_card(lang,s) for s in CASES)
     title="Кейсы, демо и прототипы" if lang=="ru" else "Cases, demos and prototypes"
-    lead="Каждая карточка имеет явный статус. Рабочее демо, публичный прототип и клиентский концепт — не одно и то же." if lang=="ru" else "Every card has an explicit status. A working demo, public prototype and client concept are not the same thing."
+    lead="Каждая карточка имеет явный статус. Интерактивное демо, публичный прототип и клиентская концепция — не одно и то же." if lang=="ru" else "Every card has an explicit status. A working demo, public prototype and client concept are not the same thing."
     return hero(lang,COPY[lang]["cases"],title,lead,"/cases/")+f'<section class="section"><div class="wrap"><div class="case-grid">{cards}</div></div></section>'
 
 def case_page(lang,slug):
@@ -760,11 +760,11 @@ def enterprise_page(lang):
     if lang=="ru":
         items=[
             ("Роли и права доступа", "Роли, разрешения, согласования и журнал действий."),
-            ("API и webhooks", "Надёжный обмен данными между существующими системами."),
+            ("API и вебхуки", "Надёжный обмен данными между существующими системами."),
             ("ETL и данные", "Сбор, преобразование и синхронизация данных."),
-            ("Перенос баз данных", "Oracle / PostgreSQL, очистка и перенос legacy-данных."),
+            ("Перенос баз данных", "Oracle / PostgreSQL, очистка и перенос данных из старых систем."),
             ("Oracle / PL/SQL", "Производительность, процедуры и поддержка рабочих систем."),
-            ("Revenue Assurance", "Сверка и контроль потерь для telecom."),
+            ("Revenue Assurance", "Сверка и контроль потерь для телеком-систем."),
             ("L2/L3 поддержка", "Диагностика сложных технических проблем и сопровождение."),
         ]
         steps=["Диагностика","Архитектура / прототип","Внедрение","Техническое сопровождение"]
@@ -800,7 +800,7 @@ def partners_page(lang):
         d=item[lang]
         cards.append(f'<article class="card"><div class="kicker">{escape(d["status"])}</div><h3>{escape(d["name"])}</h3><p>{escape(d["summary"])}</p><a class="text-link" href="#contact" data-interest="{escape(d["name"])}" data-cta="partner">{escape(d["cta"])} →</a></article>')
     title="Для агентств, интеграторов и платформ" if lang=="ru" else "For agencies, integrators and platforms"
-    lead="Отдельный путь для white-label поставки, серийной разработки и технических интеграций через партнёра." if lang=="ru" else "A separate path for white-label delivery, repeatable production and technical integrations through partners."
+    lead="Отдельный путь для разработки под брендом партнёра, серийной сборки и технических интеграций." if lang=="ru" else "A separate path for white-label delivery, repeatable production and technical integrations through partners."
     return hero(lang,"Партнёрам" if lang=="ru" else "Partners",title,lead,"/partners/")+f'<section class="section"><div class="wrap"><div class="grid2">{"".join(cards)}</div></div></section>'
 
 def about_page(lang):
