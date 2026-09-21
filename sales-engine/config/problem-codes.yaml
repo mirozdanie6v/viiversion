@@ -1,0 +1,30 @@
+version: 1
+problem_codes:
+  BOOKING_MANUAL:
+    description: "Booking or appointment is handled manually in messenger/chat."
+  PAYMENT_FRICTION:
+    description: "Extra steps or disconnected state between order/POS and payment."
+  LEADS_LOST:
+    description: "Inquiries lack one status, owner or next action."
+  SYSTEMS_DISCONNECTED:
+    description: "Data or status is manually transferred between systems."
+  LEGACY_WEB:
+    description: "Website/WordPress creates technical, UX or operational constraints."
+  REPEAT_SALES_LOW:
+    description: "No systematic customer return/reactivation after first purchase."
+  MANUAL_DATA_TRANSFER:
+    description: "Staff repeatedly copies data between tables/services."
+  NO_OWNER_VISIBILITY:
+    description: "Owner lacks one operational KPI/control view."
+  CATALOG_QUOTE_MANUAL:
+    description: "Manager manually calculates price/configuration for each request."
+  WHITE_LABEL_CAPACITY:
+    description: "Agency/studio needs delivery capacity without hiring."
+  DATA_RECONCILIATION:
+    description: "Flows, transactions or datasets require reconciliation/control."
+  CUSTOM_WORKFLOW_GAP:
+    description: "Off-the-shelf SaaS does not fit the internal workflow."
+
+evidence_rule:
+  public_observation: "May be stated as an observed signal."
+  unverified_internal_process: "Must be framed as a hypothesis or discovery question."
