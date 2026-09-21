@@ -1,0 +1,229 @@
+version: "1.0"
+name: "VIIVERSION Lead Discovery"
+
+purpose: >
+  Find businesses and partners with a commercially meaningful, evidence-based reason
+  to buy one concrete VIIVERSION product. Lead Discovery must reject weak-fit accounts
+  rather than invent a vague micro-offer just to create outreach volume.
+
+source_of_truth:
+  operational_data: "Google Sheet VIIVERSION Commercial Matrix"
+  products: "sales-engine/catalog/products.yaml"
+  verticals: "sales-engine/catalog/verticals.yaml"
+  problem_codes: "sales-engine/config/problem-codes.yaml"
+  routing: "sales-engine/config/routing.yaml"
+  scoring: "sales-engine/config/scoring.yaml"
+  messaging: "sales-engine/config/messaging.yaml"
+  experiments: "Google Sheet Experiments"
+  lead_schema: "sales-engine/schemas/lead.schema.json"
+
+core_flow:
+  - "business"
+  - "public_evidence"
+  - "commercially_meaningful_job_or_problem"
+  - "current_trigger_when_available"
+  - "concrete_viiversion_product"
+  - "buyer_or_decision_maker"
+  - "relevant_proof"
+  - "entry_offer"
+  - "channel"
+  - "outreach"
+  - "next_action"
+
+hard_rule:
+  statement: >
+    Do not start from a missing feature and invent something to sell.
+    Start from a commercially meaningful buyer job/problem or active buying trigger,
+    then map it to an existing concrete VIIVERSION product.
+  reject_if:
+    - "The only observation is that the company lacks a website, AI, CRM, app, chatbot, automation or other feature."
+    - "The proposed product merely recreates the current process with a nicer form but no meaningful customer or business outcome."
+    - "The product cannot be named clearly in buyer language."
+    - "There is no relevant VIIVERSION product or credible entry offer."
+    - "The claim depends on an unverified internal problem."
+    - "The proposed offer exists only because the business was already found."
+    - "The account already solves the target job well and no meaningful adjacent gap is evidenced."
+
+concrete_product_rule:
+  question: "After one sentence, can the buyer answer: What exactly are they offering me?"
+  required: true
+  examples_good:
+    - "Online table booking system"
+    - "Tour booking system"
+    - "Rental booking system"
+    - "Clinic booking and CRM"
+    - "School enrollment and student operations system"
+    - "AI sales consultant connected to the real catalog"
+    - "Payment module"
+    - "Customer CRM"
+    - "Integration module"
+    - "Telegram Mini App for a defined customer job"
+  examples_bad:
+    - "mobile layer"
+    - "structured flow"
+    - "digital customer journey"
+    - "smart ecosystem"
+    - "operations module"
+    - "AI-powered solution"
+    - "owned brand layer"
+  note: >
+    Internal product codes and architecture terms may be used in Sales OS, but the
+    client-facing product must have a concrete category/name.
+
+problem_validation:
+  levels:
+    strong:
+      - "Explicit project, request, tender, RFP or stated need"
+      - "New branch, location, service or product launch tied to the workflow"
+      - "Active hiring tied to the workflow"
+      - "Technology migration or integration initiative"
+      - "Current campaign/expansion creating operational demand"
+      - "Public evidence of an active transaction/booking/payment process with clear friction"
+    medium:
+      - "Observable manual booking, quote, sales or support workflow"
+      - "Multiple customer channels with a clear operational job to unify"
+      - "Catalog/quote handled through chat"
+      - "Repeated customer action that can clearly become self-service"
+    weak:
+      - "Industry fit only"
+      - "No website"
+      - "No AI"
+      - "No CRM"
+      - "No app"
+      - "Uses Instagram/WhatsApp"
+      - "Generic similarity to an existing client"
+  rule: >
+    Weak signals alone do not qualify a lead. Medium signals may qualify only when
+    the product creates a materially different outcome, not merely a prettier version
+    of the existing process.
+
+outcome_test:
+  required: true
+  questions:
+    - "What changes for the end customer?"
+    - "What changes for the employee/manager?"
+    - "What becomes self-service, automated, measurable, faster or newly possible?"
+    - "Is the result meaningfully different from the current process?"
+  reject_example: >
+    Current: customer messages manager to book. Proposed: customer fills a form and
+    manager receives a request. Reject unless the offer adds a meaningful capability
+    such as real availability, confirmed booking, payment/deposit, automated status,
+    capacity control, CRM or another material outcome.
+
+buyer_identity:
+  rule: "Identify the likely owner of the job, not just any public contact."
+  personas:
+    owner: "Commercial outcome, customer experience, control, scalability."
+    operations: "Capacity, statuses, handoffs, manual work, errors."
+    sales: "Qualification, booking conversion, follow-up, revenue workflow."
+    technical: "Integration, API, data, security, ownership, implementation risk."
+  uncertainty_rule: "If role/name is not verified, use a role-based target and do not invent a title."
+
+proof_rule:
+  required_for_ready: true
+  preferred_order:
+    - "live relevant demo"
+    - "production system / relevant case"
+    - "clickable prototype"
+    - "screenshots / sample output"
+    - "architecture description"
+  rule: >
+    Proof must demonstrate the concrete product being offered. A generic portfolio
+    link does not count as strong proof.
+
+offer_selection:
+  - "Use config/routing.yaml only after the buyer problem/job is validated."
+  - "Prefer one concrete entry product/offer, not a bundle."
+  - "Do not downgrade a real product into a vague micro-offer merely to reduce friction."
+  - "Do not propose a replacement when the existing tool already solves the job well; look for an evidenced adjacent gap or reject the lead."
+  - "AI is allowed as the concrete product when the buyer job is genuinely conversational/recommendation-heavy and the assistant can be grounded in real catalog/rules/data."
+
+discovery_sequence:
+  step_1:
+    name: "Select experiment lane"
+    action: "Prioritize active SPRINT/ACTIVE experiments with low real lead coverage; rotate verticals/channels."
+  step_2:
+    name: "Find candidate business"
+    action: "Use current public sources. Prefer accounts with explicit activity or operational triggers."
+  step_3:
+    name: "Verify business and deduplicate"
+    action: "Check company/domain/source against Sales_Router and Outreach_Queue."
+  step_4:
+    name: "Collect evidence"
+    action: "Record only observable facts, source URL, source type and date."
+  step_5:
+    name: "Validate meaningful job/problem"
+    action: "Apply problem_validation and outcome_test. Reject feature-gap-only leads."
+  step_6:
+    name: "Map concrete product"
+    action: "Select an existing VIIVERSION product/category that can be named clearly to the buyer."
+  step_7:
+    name: "Map offer and proof"
+    action: "Apply routing.yaml; choose the best relevant asset."
+  step_8:
+    name: "Identify buyer and channel"
+    action: "Prefer the person responsible for the job; keep uncertainty explicit."
+  step_9:
+    name: "Generate outreach"
+    action: "Use messaging.yaml and playbooks/outreach.md. State who VIIVERSION is and name the concrete product."
+  step_10:
+    name: "Quality gate"
+    action: "Only Ready when messaging pre-send threshold passes and Lead Discovery hard rules pass."
+  step_11:
+    name: "Write operational records"
+    action: "Add Target lead to Sales_Router and Ready/Needs signal/Needs localization row to Outreach_Queue."
+
+outreach_requirements:
+  identity_required: true
+  identity_example_ru: "Мы VIIVERSION — команда разработчиков из Нячанга."
+  product_name_required: true
+  minimum_comprehension_test:
+    - "Who is contacting me?"
+    - "What exact product are they offering?"
+    - "Why is it relevant to my business?"
+    - "What changes compared with my current process?"
+    - "What is the one next step?"
+  structure:
+    - "verified trigger"
+    - "short VIIVERSION identity"
+    - "concrete product"
+    - "before/after outcome"
+    - "relevant proof"
+    - "one low-friction CTA"
+
+lead_status_rules:
+  Ready:
+    - "Meaningful problem/job is evidenced."
+    - "Concrete product is clear."
+    - "Relevant proof exists."
+    - "Messaging score passes."
+  Needs_signal:
+    - "Product fit looks plausible but the meaningful problem/job is not sufficiently evidenced."
+  Needs_localization:
+    - "Evidence and product fit pass, but channel-native copy is not reliable yet."
+  Reject:
+    - "Only a missing-feature observation exists."
+    - "No meaningful outcome."
+    - "No concrete product."
+    - "No relevant product/proof."
+    - "Existing system already solves the job and no adjacent evidenced gap exists."
+
+metrics:
+  discovery_quality:
+    - "qualified_leads_created"
+    - "rejected_weak_fit_candidates"
+    - "percent_with_current_business_trigger"
+    - "percent_with_concrete_product"
+    - "percent_with_relevant_proof"
+  downstream:
+    - "positive_reply_rate"
+    - "demo_accept_rate"
+    - "qualified_conversation_rate"
+    - "paid_entry_rate"
+  anti_metric: "Do not optimize for number of leads added."
+
+governance:
+  - "Do not change canonical products, offers, routing, scoring or prices during discovery."
+  - "Do not invent a new offer inside a lead record."
+  - "If recurring evidence shows a missing product/offer, log it for product/offer review instead of improvising it."
+  - "All material rule changes require a version update."
