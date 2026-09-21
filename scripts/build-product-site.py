@@ -479,7 +479,7 @@ def home(lang):
 
     <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["offer"]}</div><h2>{escape(b["start_title"])}</h2></div><p>{escape(b["start_lead"])}</p></div><div class="offer-grid">{offers}</div></div></section>
 
-    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Product × Industry</div><h2>{escape(b["matrix_title"])}</h2></div><p>{escape(b["matrix_lead"])}</p></div><div class="matrix-wrap"><div class="matrix-tabs">{tabs}</div><div class="matrix-results">{''.join(matrix_cards)}</div></div></div></section>
+    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{'Для разных отраслей' if lang=='ru' else 'Across industries'}</div><h2>{escape(b["matrix_title"])}</h2></div><p>{escape(b["matrix_lead"])}</p></div><div class="matrix-wrap"><div class="matrix-tabs">{tabs}</div><div class="matrix-results">{''.join(matrix_cards)}</div></div></div></section>
 
     <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{escape(b["special_title"])}</div><h2>{escape(b["special_title"])}</h2></div></div><div class="special-grid">
       <article class="special-box"><div class="kicker">Partners</div><h3>{c["partners_head"]}</h3><p>{c["partners_body"]}</p><a class="btn btn-secondary" href="{loc(lang,'/labs/')}">{c["learn_more"]} →</a></article>
@@ -683,7 +683,7 @@ home_text=(PUBLIC/"index.html").read_text(encoding="utf-8")
 for bad in ("коммерческих ядер","buyer journey","Entry offers","client work","Большая продажа"):
     if bad in home_text:
         raise SystemExit("Client-facing jargon leaked into home: "+bad)
-for marker in ("Автоматизируем продажи и операции","Рабочие демо и прототипы","Начните с одной небольшой задачи","Product × Industry"):
+for marker in ("Автоматизируем продажи и операции","Рабочие демо и прототипы","Начните с одной небольшой задачи","Один продукт — разные сценарии"):
     if marker not in home_text:
         raise SystemExit("Product site QA missing: "+marker)
 
