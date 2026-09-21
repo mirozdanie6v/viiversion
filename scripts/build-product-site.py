@@ -478,7 +478,7 @@ def home(lang):
 
     <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Product × Industry</div><h2>{escape(b["matrix_title"])}</h2></div><p>{escape(b["matrix_lead"])}</p></div><div class="matrix-wrap"><div class="matrix-tabs">{tabs}</div><div class="matrix-results">{''.join(matrix_cards)}</div></div></div></section>
 
-    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{c["special_title"]}</div><h2>{escape(b["special_title"])}</h2></div></div><div class="special-grid">
+    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{escape(b["special_title"])}</div><h2>{escape(b["special_title"])}</h2></div></div><div class="special-grid">
       <article class="special-box"><div class="kicker">Partners</div><h3>{c["partners_head"]}</h3><p>{c["partners_body"]}</p><a class="btn btn-secondary" href="{loc(lang,'/labs/')}">{c["learn_more"]} →</a></article>
       <article class="special-box alt"><div class="kicker">Enterprise</div><h3>{c["enterprise_head"]}</h3><p>{c["enterprise_body"]}</p><a class="btn btn-primary" href="{loc(lang,'/enterprise/')}">{c["learn_more"]} →</a></article>
     </div></div></section>
