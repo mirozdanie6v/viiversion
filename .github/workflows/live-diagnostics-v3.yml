@@ -22,13 +22,14 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Verify live industry-first UX
+      - name: Verify live canonical product UX
         env:
           TARGET_URL: https://viiversion.com/
         run: |
           cat > diagnose-live.cjs <<'JS'
           const { chromium } = require('playwright');
           const fs = require('fs');
+
           (async()=>{
             const target=process.env.TARGET_URL;
             const browser=await chromium.launch({headless:true});
@@ -37,69 +38,95 @@ jobs:
             await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
 
             let deployed=false;
-            for(let i=0;i<15;i++){
-              await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=industry-first`,{waitUntil:'domcontentloaded',timeout:30000});
-              await page.waitForTimeout(700);
+            for(let i=0;i<20;i++){
+              await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=canonical-products`,{waitUntil:'domcontentloaded',timeout:30000});
+              await page.waitForTimeout(500);
               const text=await page.locator('body').innerText();
-              deployed=text.includes('Цифровые решения для конкретных задач бизнеса') &&
-                       text.includes('Что можно купить для вашего бизнеса') &&
+              deployed=text.includes('Что можно купить для вашего бизнеса') &&
+                       text.includes('Обычно начинают с') &&
                        await page.locator('[data-industry-tab]').count()>=6;
               if(deployed) break;
               await page.waitForTimeout(3000);
             }
-            if(!deployed) throw new Error('Industry-first site version is not live');
+            if(!deployed) throw new Error('Canonical product site is not live');
 
             const toggle=page.locator('.mobile-toggle');
             if(!(await toggle.isVisible())) throw new Error('Mobile menu toggle missing');
             await toggle.click(); await page.waitForTimeout(100);
             if(!(await page.locator('.nav.open').isVisible())) throw new Error('Mobile menu did not open');
 
-            await page.goto(`${target}?utm_source=qa&utm_campaign=industry-first`,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.goto(`${target}?utm_source=qa&utm_campaign=canonical-products`,{waitUntil:'domcontentloaded',timeout:30000});
             const hotelTab=page.locator('[data-industry-tab="hotels"]');
             await hotelTab.click(); await page.waitForTimeout(120);
             const hotelPanel=page.locator('[data-industry-panel="hotels"]');
             if(!(await hotelPanel.isVisible())) throw new Error('Hotel panel did not open');
-            const hotelText=await hotelPanel.innerText();
-            if(!hotelText.includes('Онлайн-бронирование')||!hotelText.includes('Личный кабинет клиента')) throw new Error('Hotel modules missing');
+            let text=await hotelPanel.innerText();
+            if(!text.includes('Онлайн-бронирование')||!text.includes('Подключение оплаты')||!text.includes('CRM для заявок и заказов')) throw new Error('Hotel primary products missing');
+            if(!text.includes('Можно добавить позже')) throw new Error('Hotel later-products group missing');
 
             const shopTab=page.locator('[data-industry-tab="shops"]');
             await shopTab.click(); await page.waitForTimeout(120);
-            const shopText=await page.locator('[data-industry-panel="shops"]').innerText();
-            if(!shopText.includes('Каталог с ценами')||!shopText.includes('Подключение оплаты')) throw new Error('Retail modules missing');
+            text=await page.locator('[data-industry-panel="shops"]').innerText();
+            if(!text.includes('Каталог с ценами')||!text.includes('Интеграция двух систем')) throw new Error('Retail canonical products missing');
 
-            const team=page.locator('#team');
-            await team.scrollIntoViewIfNeeded();
-            if(await team.locator('.team-photo').count()!==2) throw new Error('Team portraits missing');
-            for(const img of await team.locator('.team-photo').all()){
-              if(!(await img.evaluate(el=>el.complete && el.naturalWidth>50))) throw new Error('Team portrait failed to load');
-            }
+            if(await page.locator('[data-industry-tab="enterprise"]').count()) throw new Error('Enterprise leaked into industry tabs');
+
+            await page.goto(new URL('/products/online-booking/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            text=await page.locator('body').innerText();
+            if(!text.includes('Первый пакет')||!text.includes('8–18M ₫')||!text.includes('Можно подключить дополнительно')) throw new Error('Canonical booking product incomplete');
 
             await page.goto(new URL('/modules/online-booking/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
-            let text=await page.locator('body').innerText();
-            if(!text.includes('Что входит')||!text.includes('Что мы не будем делать без согласования')||!text.includes('8–18M ₫')) throw new Error('Concrete module page incomplete');
+            if(!page.url().includes('/products/online-booking/')) throw new Error('Legacy module did not redirect to canonical product');
 
-            await page.goto(new URL('/modules/ai-consultant/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.goto(new URL('/offers/booking-start/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            if(!page.url().includes('/products/online-booking/')) throw new Error('Legacy offer did not redirect to canonical product');
+
+            await page.goto(new URL('/software/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             text=await page.locator('body').innerText();
-            if(!text.includes('AI-консультант')||!text.includes('утверждённой')) throw new Error('AI module page incomplete');
+            if(!text.includes('Proposal Studio')||!text.includes('ZL Web Agent')) throw new Error('Software product path incomplete');
+
+            await page.goto(new URL('/partners/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            text=await page.locator('body').innerText();
+            if(!text.includes('Mini App Factory')) throw new Error('Partner path incomplete');
 
             await page.goto(`${target}?utm_source=qa&utm_campaign=first-touch`,{waitUntil:'domcontentloaded',timeout:30000});
-            await page.goto(new URL('/modules/crm/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.goto(new URL('/products/crm/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             const form=page.locator('.lead-form');
             const context=await form.locator('[name="page_context"]').inputValue();
             if(!context.includes('"source":"qa"')||!context.includes('"landingPage":"/"')) throw new Error('First-touch attribution was not preserved');
 
+            const health=await page.evaluate(async()=>{const r=await fetch('/api/leads/health');return {status:r.status,body:await r.json()}});
+            if(health.status!==200||health.body.storage!=='durable-object') throw new Error('Lead API health failed');
+
+            const apiProbe=await page.evaluate(async()=>{
+              const r=await fetch('/api/leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({contact:'qa@example.invalid',task:'qa',website:'bot'})});
+              return {status:r.status,body:await r.json()};
+            });
+            if(apiProbe.status!==202||!apiProbe.body.ok) throw new Error('Lead API POST probe failed');
+
+            const team=page.locator('#team');
+            await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.locator('#team').scrollIntoViewIfNeeded();
+            if(await page.locator('#team .team-photo').count()!==2) throw new Error('Team portraits missing');
+
+            const caseImage=page.locator('.case-media img').first();
+            if(await caseImage.count()){
+              await caseImage.scrollIntoViewIfNeeded();
+              if(!(await caseImage.evaluate(el=>el.complete && el.naturalWidth>100))) throw new Error('Case proof screenshot failed to load');
+            }
+
             await page.goto(new URL('/en/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             text=await page.locator('body').innerText();
-            if(!text.includes('Digital systems for sales and operations')) throw new Error('English homepage missing');
+            if(!text.includes('Digital solutions for specific business tasks')) throw new Error('English architecture is not aligned');
 
             await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
-            await page.waitForTimeout(900);
-            await page.screenshot({path:'viiversion-industry-first-mobile.png',fullPage:true});
-            fs.writeFileSync('viiversion-industry-first-live.json',JSON.stringify({target,deployed},null,2));
-            console.log(JSON.stringify({target,deployed},null,2));
+            await page.waitForTimeout(700);
+            await page.screenshot({path:'viiversion-canonical-mobile.png',fullPage:true});
+            fs.writeFileSync('viiversion-canonical-live.json',JSON.stringify({target,deployed,health,apiProbe},null,2));
+            console.log(JSON.stringify({target,deployed,health,apiProbe},null,2));
             await browser.close();
           })().catch(e=>{
-            fs.writeFileSync('viiversion-industry-first-error.txt',String(e&&e.stack||e));
+            fs.writeFileSync('viiversion-canonical-error.txt',String(e&&e.stack||e));
             console.error(e); process.exitCode=1;
           });
           JS
@@ -107,9 +134,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: viiversion-industry-first-live
+          name: viiversion-canonical-live
           path: |
-            viiversion-industry-first-live.json
-            viiversion-industry-first-error.txt
-            viiversion-industry-first-mobile.png
+            viiversion-canonical-live.json
+            viiversion-canonical-error.txt
+            viiversion-canonical-mobile.png
           if-no-files-found: warn
