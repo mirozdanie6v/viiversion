@@ -1,0 +1,73 @@
+version: 1
+
+routing:
+  BOOKING_MANUAL:
+    eligible_products: [P07, P08, P14, P05]
+    default_offer: O025
+    vertical_overrides:
+      TOUR_AGENCY: O001
+      DENTAL: O009
+      VETERINARY: O011
+      BEAUTY_SPA: O013
+      EDUCATION: O021
+      EVENTS: O023
+
+  PAYMENT_FRICTION:
+    eligible_products: [P20, P19, P21]
+    default_offer: O017
+    preferred_channel: "B2B2B via POS/payment integrators or chains"
+
+  LEADS_LOST:
+    eligible_products: [P10, P14, P18]
+    default_offer: O026
+
+  SYSTEMS_DISCONNECTED:
+    eligible_products: [P21, P34, P18, P35]
+    default_offer: O049
+    vertical_overrides:
+      LOGISTICS: O028
+      RETAIL: O019
+      FRANCHISE: O020
+
+  LEGACY_WEB:
+    eligible_products: [P03, P29, P02, P30]
+    default_offer: O034
+    expansion_offer: O035
+
+  REPEAT_SALES_LOW:
+    eligible_products: [P15, P14, P10, P18]
+    default_offer: O014
+
+  MANUAL_DATA_TRANSFER:
+    eligible_products: [P34, P21, P22]
+    default_offer: O037
+    vertical_overrides:
+      MANUFACTURING: O029
+
+  NO_OWNER_VISIBILITY:
+    eligible_products: [P18, P21, P13]
+    default_offer: O048
+
+  CATALOG_QUOTE_MANUAL:
+    eligible_products: [P09, P07]
+    default_offer: O006
+
+  WHITE_LABEL_CAPACITY:
+    eligible_products: [P05, P27, P30, P29]
+    default_offer: O030
+    expansion_offer: O031
+
+  DATA_RECONCILIATION:
+    eligible_products: [P25, P22, P24, P35]
+    default_offer: O041
+
+  CUSTOM_WORKFLOW_GAP:
+    eligible_products: [P26, P21, P18]
+    default_offer: O038
+    expansion_offer: O039
+
+selection_rules:
+  - "Prefer one entry offer, not a bundle, for first contact."
+  - "Prefer an offer with an existing proof asset when scores are otherwise similar."
+  - "For D/E work, route to paid discovery/diagnostic/PoC before full implementation."
+  - "For payment middleware, prioritize distributors/integrators over one-by-one merchants."
