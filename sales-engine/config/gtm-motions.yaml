@@ -1,0 +1,109 @@
+version: "1.0"
+name: "VIIVERSION Multi-Channel GTM"
+
+principle: >
+  Sales OS is a portfolio of commercial motions, not a cold-outreach machine.
+  Every active workday must balance fast cashflow, repeatable distribution,
+  partner leverage and long-cycle high-ticket pipeline.
+
+sources:
+  corporate_strategy: "Google Doc VIIVERSION — Corporate Strategy & Positioning"
+  commercial_matrix: "Google Sheet VIIVERSION Commercial Matrix"
+  distribution_matrix: "Distribution_Matrix"
+  ecosystems: "Ecosystems"
+  launch_waves: "Launch_Waves"
+  partner_channels: "Partner_Channels"
+  distribution_pipeline: "Distribution_Pipeline"
+  daily_plan: "Daily_GTM"
+
+motions:
+  FAST_DIRECT:
+    purpose: "Fast cashflow from qualified end-business leads"
+    default_timebox: "60-75m"
+    default_quota: "up to 20 qualified first touches"
+    rule: "Never lower qualification standards to hit volume."
+    kpi: ["positive_reply", "demo_accept", "paid_entry", "days_to_cash"]
+
+  FOLLOW_UP:
+    purpose: "Move existing conversations forward"
+    default_timebox: "30m"
+    default_quota: "all due replies/follow-ups"
+    rule: "Handle replies and due follow-ups before new cold outreach."
+    kpi: ["stage_progression", "demo_accept", "qualified", "paid_entry"]
+
+  PARTNER_B2B2B:
+    purpose: "Create repeat partner-sourced revenue"
+    default_timebox: "30-45m"
+    default_quota: "5 qualified partner actions"
+    channels: ["agencies", "software studios", "CRM/ERP integrators", "POS/payment integrators", "vendors", "resellers"]
+    kpi: ["qualified_partner_conversation", "joint_pilot", "partner_sourced_revenue"]
+
+  PLATFORM_DISTRIBUTION:
+    purpose: "Publish repeatable products into app/plugin/platform ecosystems"
+    default_timebox: "90-120m"
+    default_quota: "1 closed distribution milestone"
+    channels: ["ChatGPT app directory / Apps SDK", "WordPress.org", "Odoo Apps", "Shopify / POS", "Square", "Clover", "HubSpot", "Slack", "Atlassian", "Zapier"]
+    rule: "Only use ecosystems marked PRIMARY/SECONDARY for the product in Distribution_Matrix."
+    kpi: ["milestone_closed", "submission", "published", "installs", "activated_users", "revenue"]
+
+  PRODUCT_LAUNCH:
+    purpose: "Global discovery, beta users and launch momentum for self-serve products"
+    default_timebox: "45-90m"
+    default_quota: "1 launch milestone"
+    channels: ["Product Hunt", "own product pages", "maker/developer communities", "beta communities"]
+    rule: "Product Hunt is launch/discovery, not billing or CRM."
+    kpi: ["launch_readiness", "signups", "activation", "feedback", "paid_conversion"]
+
+  FREELANCE_MARKETPLACE:
+    purpose: "Win fast paid work and platform proof"
+    default_timebox: "30-45m"
+    default_quota: "3 high-fit applications"
+    channels: ["Upwork", "LaborX", "selected project marketplaces"]
+    rule: "Apply only where product/capability fit is strong; do not mass-apply."
+    kpi: ["qualified_reply", "win", "platform_revenue", "review"]
+
+  ENTERPRISE_VENDOR:
+    purpose: "Maintain long-cycle high-ticket pipeline"
+    default_timebox: "30-45m"
+    default_quota: "2 high-quality stakeholder actions"
+    channels: ["LinkedIn", "vendors", "integrators", "recruiters", "professional network"]
+    products: ["P22", "P23", "P24", "P25", "P26", "P35"]
+    kpi: ["qualified_enterprise_conversation", "paid_diagnostic", "PoC", "retainer_pipeline"]
+
+  PRODUCTIZATION:
+    purpose: "Remove blockers preventing repeatable distribution"
+    default_timebox: "60-120m"
+    default_quota: "1 blocker removed or one sellable deliverable completed"
+    examples: ["generic demo", "API contract", "adapter", "onboarding", "pricing", "screenshots", "product page", "legal/support pages"]
+    rule: "Counts as GTM work only when tied to an active distribution blocker."
+    kpi: ["blocker_removed", "time_to_publish", "time_to_demo"]
+
+  LOCAL_REFERRAL:
+    purpose: "Generate warm local introductions and quick local sales"
+    default_timebox: "30m"
+    default_quota: "3 warm actions"
+    channels: ["local network", "events", "referrals", "communities"]
+    kpi: ["warm_conversation", "referral", "paid_entry"]
+
+portfolio_rules:
+  - "Lead Discovery serves FAST_DIRECT only; it does not own the entire GTM system."
+  - "Every product can have multiple channel fits: direct, partner, platform, launch, freelance, enterprise."
+  - "Do not spend the whole day on one motion unless a real deadline or high-value event justifies it."
+  - "Default day should contain 4-6 prioritized actions across at least 3 motions."
+  - "Prioritize due customer/partner replies first, then fast cashflow, then one deep distribution/productization milestone."
+  - "Limit deep platform/product work to one primary milestone per person at a time."
+  - "If a channel is marked LATER or NO in Distribution_Matrix, do not allocate daily work to it without explicit review."
+  - "If fewer than 20 qualified direct leads exist, send fewer and use remaining time to qualify the buffer. Never create weak leads to fill quota."
+
+daily_planning:
+  required_inputs: ["Outreach_Queue", "Sales_Router", "Experiments", "Distribution_Matrix", "Ecosystems", "Launch_Waves", "Distribution_Pipeline", "Partner_Channels", "current blockers and deadlines"]
+  prioritization: ["customer/partner reply or due follow-up", "near-term cashflow", "platform submission/review deadline", "distribution blocker with high leverage", "active launch wave", "partner multiplier", "enterprise high-value next step"]
+  output: ["4-6 core actions", "timebox", "owner", "target/quantity", "source/pipeline", "definition of done", "status and result"]
+
+channel_metrics:
+  direct: ["positive_reply", "demo_accept", "qualified", "paid_entry"]
+  partner: ["qualified_partner_conversation", "pilot", "repeat_partner_revenue"]
+  platform: ["submission", "publication", "installs", "activation", "revenue"]
+  launch: ["signups", "activation", "feedback", "paid_conversion"]
+  freelance: ["reply", "win", "review", "revenue"]
+  enterprise: ["qualified_pipeline", "diagnostic", "PoC", "retainer"]
