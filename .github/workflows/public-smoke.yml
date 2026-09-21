@@ -69,13 +69,13 @@ jobs:
 
           for _ in $(seq 1 40); do
             code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$api" -w '%{http_code}' "$CUSTOM/api/leads/health" || true)"
-            if [[ "$code" == "200" ]] && grep -Fq '"storage":"durable-object"' "$api"; then
-              echo "OK lead API health"
+            if [[ "$code" == "200" ]] && grep -Fq '"version":"canonical-v2"' "$api"; then
+              echo "OK lead API canonical-v2"
               break
             fi
             sleep 6
           done
-          grep -Fq '"storage":"durable-object"' "$api" || { echo "FAIL lead API health" >&2; exit 1; }
+          grep -Fq '"version":"canonical-v2"' "$api" || { echo "FAIL lead API canonical-v2" >&2; exit 1; }
 
           # Exercise real Durable Object storage with a disposable QA record.
           code="$(curl -sS -o "$api" -w '%{http_code}' -X POST "$CUSTOM/api/leads" -H 'content-type: application/json' --data '{"contact":"qa@example.invalid","task":"QA storage probe","qa":true}' || true)"
