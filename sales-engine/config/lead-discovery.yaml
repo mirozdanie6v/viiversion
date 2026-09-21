@@ -1,4 +1,4 @@
-version: "1.0"
+version: "1.1"
 name: "VIIVERSION Lead Discovery"
 
 purpose: >
@@ -7,6 +7,8 @@ purpose: >
   rather than invent a vague micro-offer just to create outreach volume.
 
 source_of_truth:
+  corporate_positioning: "Google Doc VIIVERSION — Corporate Strategy & Positioning: https://docs.google.com/document/d/1nfRAgnSiEv13XUOcqgRostFYdUlbFo83eOLRLQNLnN4/edit"
+  precedence: "Corporate positioning governs identity/business model/product architecture; Commercial Matrix governs live operational data; Sales Playbook governs human process; GitHub implements machine rules."
   operational_data: "Google Sheet VIIVERSION Commercial Matrix"
   products: "sales-engine/catalog/products.yaml"
   verticals: "sales-engine/catalog/verticals.yaml"
@@ -175,7 +177,8 @@ discovery_sequence:
 
 outreach_requirements:
   identity_required: true
-  identity_example_ru: "Мы VIIVERSION — команда разработчиков из Нячанга."
+  identity_example_ru: "Мы VIIVERSION — инженерная команда, создаём цифровые системы для бизнеса и собственные программные продукты."
+  local_context_rule: "Nha Trang/Vietnam may be mentioned as local presence (e.g. работаем в Нячанге), never as the primary brand identity."
   product_name_required: true
   minimum_comprehension_test:
     - "Who is contacting me?"
@@ -185,8 +188,8 @@ outreach_requirements:
     - "What is the one next step?"
   structure:
     - "verified trigger"
-    - "short VIIVERSION identity"
-    - "concrete product"
+    - "short VIIVERSION identity consistent with Corporate Strategy"
+    - "concrete product category/name"
     - "before/after outcome"
     - "relevant proof"
     - "one low-friction CTA"
