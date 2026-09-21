@@ -1,0 +1,19 @@
+name: Inspect analytics endpoint
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [viiversion]
+    paths:
+      - ".github/workflows/inspect-analytics.yml"
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch tracker
+        run: |
+          set -euo pipefail
+          curl -fsSL https://dashboard.viiversion.com/tracker.js -o tracker.js
+          echo "=== tracker.js ==="
+          cat tracker.js
