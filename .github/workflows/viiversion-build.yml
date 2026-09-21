@@ -22,36 +22,42 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build site
         run: npm run build
-      - name: Verify commercial architecture
+      - name: Verify industry-first commercial architecture
         run: |
           set -euo pipefail
           test -s public/index.html
           test -s public/en/index.html
-          test -s public/products/booking/index.html
-          test -s public/en/products/booking/index.html
-          test -s public/offers/booking-start/index.html
-          test -s public/offers/mini-app-pilot/index.html
-          test -s public/solutions/tourism/booking/index.html
-          test -s public/solutions/clinics/booking/index.html
-          test -s public/solutions/restaurants/paybridge/index.html
-          test -s public/industries/tourism/index.html
-          test -s public/industries/rental/index.html
-          test -s public/industries/clinics/index.html
+          test -s public/modules/index.html
+          test -s public/modules/online-booking/index.html
+          test -s public/modules/telegram-mini-app/index.html
+          test -s public/modules/crm/index.html
+          test -s public/modules/ai-consultant/index.html
+          test -s public/modules/payment-integration/index.html
+          test -s public/assets/team/dmitrii.webp
+          test -s public/assets/team/olga.webp
           test -s public/cases/index.html
           test -s public/enterprise/index.html
-          test -s public/labs/index.html
-          grep -Fq "Автоматизируем продажи и операции" public/index.html
-          grep -Fq "Рабочие демо и прототипы" public/index.html
-          grep -Fq "8–18M ₫" public/offers/booking-start/index.html
-          grep -Fq 'hreflang="en"' public/index.html
+          grep -Fq "Цифровые решения для конкретных задач бизнеса" public/index.html
+          grep -Fq "Что можно купить для вашего бизнеса" public/index.html
+          grep -Fq 'data-industry-tab="tourism"' public/index.html
+          grep -Fq 'data-industry-tab="hotels"' public/index.html
+          grep -Fq 'data-industry-tab="shops"' public/index.html
+          grep -Fq "Онлайн-бронирование" public/index.html
+          grep -Fq "CRM для заявок и заказов" public/index.html
+          grep -Fq "AI-консультант" public/index.html
+          grep -Fq "Подключение оплаты" public/index.html
+          grep -Fq "Вы общаетесь напрямую с теми, кто делает продукт" public/index.html
+          grep -Fq "/assets/team/dmitrii.webp" public/index.html
+          grep -Fq "/assets/team/olga.webp" public/index.html
+          grep -Fq "Что входит и как начать" public/index.html
+          grep -Fq "Что мы не будем делать без согласования" public/modules/online-booking/index.html
+          grep -Fq "8–18M ₫" public/modules/online-booking/index.html
           grep -Fq 'class="lead-form"' public/index.html
           grep -Fq '/__conversion/' public/assets/viiversion.js
+          grep -Fq 'viiversion_campaign' public/assets/viiversion.js
+          grep -Fq 'landingPage' public/assets/viiversion.js
           grep -Fq 'href="/en/solutions/"' public/en/index.html
-          grep -Fq "WORKING DEMO" public/en/cases/index.html
           ! grep -Fq '/en/en/' public/en/index.html
-          ! grep -Fq "РАБОЧЕЕ ДЕМО" public/en/cases/index.html
-          ! grep -Fq "ПУБЛИЧНЫЙ ПРОТОТИП" public/en/cases/index.html
-          ! grep -Fq "КЛИЕНТСКАЯ КОНЦЕПЦИЯ" public/en/cases/index.html
           ! grep -Fq "коммерческих ядер" public/index.html
           ! grep -Fq "buyer journey" public/index.html
           ! grep -Fq "Большая продажа" public/index.html
