@@ -70,7 +70,7 @@ export class LeadStore {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads", version:"canonical-v2" });
+    if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads", version:"canonical-v3" });
 
     if (url.pathname === "/api/leads" && request.method === "POST") {
       if (!allowedOrigin(request)) return json({ ok:false, error:"origin_not_allowed" }, 403);
