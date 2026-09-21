@@ -22,14 +22,13 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Verify live VIIVERSION product site
+      - name: Verify live commercial UX
         env:
           TARGET_URL: https://viiversion.com/
         run: |
           cat > diagnose-live.cjs <<'JS'
           const { chromium } = require('playwright');
           const fs = require('fs');
-
           (async()=>{
             const target=process.env.TARGET_URL;
             const browser=await chromium.launch({headless:true});
@@ -38,64 +37,69 @@ jobs:
 
             let deployed=false;
             for(let i=0;i<30;i++){
-              await page.goto(`${target}?qa=${Date.now()}`,{waitUntil:'domcontentloaded',timeout:120000});
-              await page.waitForTimeout(900);
-              deployed=await page.locator('[data-matrix-product="all"]').count()>0 &&
-                       (await page.locator('body').innerText()).includes('Product × Industry');
+              await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:120000});
+              await page.waitForTimeout(700);
+              const text=await page.locator('body').innerText();
+              deployed=text.includes('Автоматизируем продажи и операции') && await page.locator('.lead-form').count()>0;
               if(deployed) break;
               await page.waitForTimeout(5000);
             }
-            if(!deployed) throw new Error('New product architecture is not live yet');
+            if(!deployed) throw new Error('Commercial site version is not live');
 
             const toggle=page.locator('.mobile-toggle');
-            if(!(await toggle.isVisible())) throw new Error('Mobile navigation toggle is not visible');
-            await toggle.click();
-            await page.waitForTimeout(150);
-            if(!(await page.locator('.nav.open').isVisible())) throw new Error('Mobile navigation did not open');
-
-            await page.locator('.nav.open a[href="/products/"]').click();
-            await page.waitForLoadState('domcontentloaded');
-            if(!page.url().includes('/products/')) throw new Error('Products navigation did not open /products/');
-            if(!(await page.locator('body').innerText()).includes('Продуктовые ядра VIIVERSION')) throw new Error('Products page marker missing');
+            if(!(await toggle.isVisible())) throw new Error('Mobile menu toggle missing');
+            await toggle.click(); await page.waitForTimeout(100);
+            if(!(await page.locator('.nav.open').isVisible())) throw new Error('Mobile menu did not open');
 
             await page.goto(new URL('/products/booking/',target).href,{waitUntil:'domcontentloaded',timeout:120000});
-            if(!(await page.locator('body').innerText()).includes('Booking Start')) throw new Error('Booking product page marker missing');
+            let text=await page.locator('body').innerText();
+            if(!text.includes('Как процесс выглядит сейчас')||!text.includes('8–18M ₫')) throw new Error('Booking commercial content missing');
 
-            await page.goto(new URL('/industries/tourism/',target).href,{waitUntil:'domcontentloaded',timeout:120000});
-            if(!(await page.locator('body').innerText()).includes('Booking Start')) throw new Error('Tourism industry page marker missing');
+            await page.goto(new URL('/solutions/tourism/booking/',target).href,{waitUntil:'domcontentloaded',timeout:120000});
+            text=await page.locator('body').innerText();
+            if(!text.includes('Турист бронирует экскурсию сам')) throw new Error('Targeted landing missing');
+
+            await page.goto(new URL('/en/',target).href,{waitUntil:'domcontentloaded',timeout:120000});
+            text=await page.locator('body').innerText();
+            if(!text.includes('Automate sales and operations')) throw new Error('English homepage missing');
 
             await page.goto(target,{waitUntil:'domcontentloaded',timeout:120000});
             const allResults=await page.locator('[data-products]').count();
             await page.locator('[data-matrix-product="booking"]').click();
-            await page.waitForTimeout(120);
+            await page.waitForTimeout(100);
             const hidden=await page.locator('[data-products].hidden').count();
-            if(allResults<2 || hidden<1) throw new Error('Product × Industry filter did not change visible results');
+            if(allResults<2||hidden<1) throw new Error('Product × Industry filter failed');
 
-            const routes=['/solutions/','/cases/','/enterprise/','/labs/'];
+            const form=page.locator('.lead-form');
+            await form.locator('[name="contact"]').fill('qa@example.com');
+            await form.locator('[name="task"]').fill('QA test only');
+            const context=await form.locator('[name="page_context"]').inputValue();
+            if(!context.includes('"source":"qa"')) throw new Error('UTM context was not captured');
+
+            const routes=['/offers/booking-start/','/industries/rental/','/industries/clinics/','/cases/','/enterprise/','/labs/'];
             for(const route of routes){
               const response=await page.goto(new URL(route,target).href,{waitUntil:'domcontentloaded',timeout:120000});
-              if(!response || response.status()!==200) throw new Error(`Route failed: ${route}`);
+              if(!response||response.status()!==200) throw new Error(`Route failed: ${route}`);
             }
 
             await page.goto(target,{waitUntil:'networkidle',timeout:120000});
-            await page.screenshot({path:'viiversion-product-site-mobile.png',fullPage:true});
-            const result={target,deployed,allResults,hidden,finalUrl:page.url()};
-            fs.writeFileSync('viiversion-product-site-live.json',JSON.stringify(result,null,2));
+            await page.screenshot({path:'viiversion-commercial-mobile.png',fullPage:true});
+            const result={target,deployed,allResults,hidden};
+            fs.writeFileSync('viiversion-commercial-live.json',JSON.stringify(result,null,2));
             console.log(JSON.stringify(result,null,2));
             await browser.close();
           })().catch(e=>{
-            fs.writeFileSync('viiversion-product-site-live-error.txt',String(e&&e.stack||e));
-            console.error(e);
-            process.exitCode=1;
+            fs.writeFileSync('viiversion-commercial-live-error.txt',String(e&&e.stack||e));
+            console.error(e); process.exitCode=1;
           });
           JS
           node diagnose-live.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: viiversion-product-site-live
+          name: viiversion-commercial-live
           path: |
-            viiversion-product-site-live.json
-            viiversion-product-site-live-error.txt
-            viiversion-product-site-mobile.png
+            viiversion-commercial-live.json
+            viiversion-commercial-live-error.txt
+            viiversion-commercial-mobile.png
           if-no-files-found: warn
