@@ -37,7 +37,7 @@ jobs:
           reject_text(){ if grep -Fq "$2" "$1"; then echo "FAIL unexpected $3" >&2; return 1; fi; echo "OK absent $3"; }
 
           main="$(mktemp)"; product="$(mktemp)"; software="$(mktemp)"; partners="$(mktemp)"; cases="$(mktemp)"
-          en="$(mktemp)"; oldmodule="$(mktemp)"; oldoffer="$(mktemp)"; sitemap="$(mktemp)"; api="$(mktemp)"
+          en="$(mktemp)"; privacy="$(mktemp)"; oldmodule="$(mktemp)"; oldoffer="$(mktemp)"; sitemap="$(mktemp)"; api="$(mktemp)"
           shot="$(mktemp)"; pet="$(mktemp)"; uniq="$(mktemp)"
 
           fetch_page "$CUSTOM/" "$main"
@@ -46,6 +46,7 @@ jobs:
           fetch_page "$CUSTOM/partners/" "$partners"
           fetch_page "$CUSTOM/cases/" "$cases"
           fetch_page "$CUSTOM/en/" "$en"
+          fetch_page "$CUSTOM/privacy/" "$privacy"
           fetch_page "$CUSTOM/modules/online-booking/" "$oldmodule"
           fetch_page "$CUSTOM/offers/booking-start/" "$oldoffer"
           fetch_page "$CUSTOM/sitemap.xml" "$sitemap"
@@ -61,6 +62,8 @@ jobs:
           require_text "$partners" "Для агентств, интеграторов и платформ" "partner path"
           require_text "$cases" "ИНТЕРАКТИВНОЕ ДЕМО" "proof status"
           require_text "$en" "Digital solutions for specific business tasks" "aligned English hero"
+          require_text "$privacy" "Заявки" "lead privacy page"
+          require_text "$privacy" "Cloudflare" "lead storage disclosure"
           require_text "$oldmodule" "noindex,follow" "old module noindex"
           require_text "$oldmodule" "/products/online-booking/" "old module redirect target"
           require_text "$oldoffer" "noindex,follow" "old offer noindex"
@@ -87,5 +90,5 @@ jobs:
           require_text "$pet" "PET NIKA" "PET live"
           require_text "$uniq" "UNIQ" "UNIQ live"
 
-          rm -f "$main" "$product" "$software" "$partners" "$cases" "$en" "$oldmodule" "$oldoffer" "$sitemap" "$api" "$shot" "$pet" "$uniq"
+          rm -f "$main" "$product" "$software" "$partners" "$cases" "$en" "$privacy" "$oldmodule" "$oldoffer" "$sitemap" "$api" "$shot" "$pet" "$uniq"
           echo "PUBLIC CANONICAL PRODUCT QA PASS"
