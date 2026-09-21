@@ -82,9 +82,9 @@ COPY = {
         "form_contact": "Как с вами связаться",
         "form_company": "Компания / сайт",
         "form_task": "Что хотите улучшить?",
-        "form_submit": "Подготовить обращение",
-        "form_note": "Форма не отправляет данные в неизвестный сервис. Она собирает контекст страницы и готовит структурированное сообщение для одного из наших опубликованных каналов связи.",
-        "form_done": "Сообщение подготовлено. Оно скопировано в буфер обмена; выбранный канал связи откроется автоматически.",
+        "form_submit": "Продолжить отправку",
+        "form_note": "После нажатия мы зафиксируем источник и страницу обращения, скопируем текст заявки и откроем наш основной канал связи. Имя, контакт и текст заявки в аналитику не передаются.",
+        "form_done": "Заявка подготовлена и скопирована. Осталось отправить её в открывшемся канале связи.",
         "context": "Контекст",
         "lang_switch": "EN",
         "home": "Главная",
@@ -144,9 +144,9 @@ COPY = {
         "form_contact": "How should we contact you?",
         "form_company": "Company / website",
         "form_task": "What do you want to improve?",
-        "form_submit": "Prepare enquiry",
-        "form_note": "The form does not send data to an unknown third party. It captures page context and prepares a structured message for one of our published contact channels.",
-        "form_done": "Message prepared and copied to clipboard. The selected contact channel will open automatically.",
+        "form_submit": "Continue to send",
+        "form_note": "We record the source page and campaign, copy the enquiry text and open our primary contact channel. Name, contact details and enquiry text are not sent to analytics.",
+        "form_done": "The enquiry is prepared and copied. Send it in the contact channel that just opened.",
         "context": "Context",
         "lang_switch": "RU",
         "home": "Home",
@@ -536,7 +536,7 @@ def home(lang):
       <div class="process-node"><b>{'Один проблемный процесс' if lang=='ru' else 'One broken process'}</b><span>Start</span></div><div class="process-arrow">↓</div>
       <div class="process-node"><b>{'Рабочий модуль' if lang=='ru' else 'Working module'}</b><span>Booking / AI / Integration</span></div><div class="process-arrow">↓</div>
       <div class="process-node"><b>{'Связка с текущими системами' if lang=='ru' else 'Connect to current systems'}</b><span>CRM / Payments / Data</span></div><div class="process-arrow">↓</div>
-      <div class="process-node"><b>{'Единый операционный контур' if lang=='ru' else 'Connected operating system'}</b><span>Scale</span></div>
+      <div class="process-node"><b>{'Единая рабочая система' if lang=='ru' else 'Connected operating system'}</b><span>Scale</span></div>
     </div></div></div></section>
 
     <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions"]}</div><h2>{escape(b["problem_title"])}</h2></div><p>{escape(b["problem_lead"])}</p></div><div class="grid3">{prob_html}</div></div></section>
