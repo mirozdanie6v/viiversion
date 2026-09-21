@@ -586,7 +586,7 @@ def industry_browser(lang):
           <div class="industry-panel-head"><div><h3>{escape(info["name"])}</h3><p>{escape(info["lead"])}</p></div><a class="text-link" href="{loc(lang,'/industries/'+slug+'/')}">{'Вся конфигурация' if lang=='ru' else 'Full industry view'} →</a></div>
           <div class="eyebrow" style="margin-bottom:10px">{primary_title}</div><div class="module-buy-grid">{primary}</div>
           {f'<div class="eyebrow" style="margin:24px 0 10px">{later_title}</div><div class="module-buy-grid">{later}</div>' if later else ''}
-          {f'<div style="margin-top:20px"><div class="eyebrow">{later_title}</div>{addon_html}</div>' if addon_html else ''}
+          {f'<div style="margin-top:20px"><div class="eyebrow">{"Дополнительные функции" if lang=="ru" else "Optional add-ons"}</div>{addon_html}</div>' if addon_html else ''}
         </div>''')
     title="Что можно купить для вашего бизнеса" if lang=="ru" else "What you can buy for your business"
     lead="Выберите сферу. Сначала покажем 2–3 решения, с которых обычно есть смысл начинать; остальное можно подключить позже." if lang=="ru" else "Choose your industry. We show the 2–3 products that usually make sense first, then what can be added later."
