@@ -9,136 +9,63 @@ Public targets:
 Deployment branch: `viiversion`  
 Cloudflare Worker: `landing`
 
-## Product architecture
+## Brand, product system and website rules
 
-There is one canonical commercial catalogue:
+The public website is a **buyer-facing projection** of the VIIVERSION product/commercial system. It is not the canonical product database.
 
-```
-FAMILIES
-  ↓
-SELLABLE_PRODUCTS
-  ↓
-PACKAGES + ADDONS
-  ↓
-INDUSTRY_CONFIGS
-  ↓
-TARGET_LANDINGS / COMPOSITE_SYSTEMS
-```
+Binding website rules:
 
-Source of truth: `scripts/product_catalog.py`.
+- `docs/WEBSITE_PRESENTATION_SYSTEM.md`
 
-### Families
+Source-of-truth priority:
 
-Families organise the catalogue internally. They are not separate products sold to the customer.
+1. **VIIVERSION — Corporate Strategy & Positioning** — company identity and product-architecture principles.
+2. **VIIVERSION Commercial Matrix** — current Products, Offers, Assets, Verticals, status, commercial relationships and price hypotheses.
+3. **VIIVERSION Sales Playbook v1** — buyer language, messaging, proof, CTA, partner and governance rules.
+4. GitHub website code — implementation/presentation layer only.
 
-- Online Sales
-- Booking
-- Operations
-- AI
-- Payments
-- Integrations
+Google Drive source IDs are recorded in `docs/WEBSITE_PRESENTATION_SYSTEM.md`.
 
-### Sellable products
+### Presentation principle
 
-These are the canonical products customers can buy directly:
+The internal system is multi-dimensional:
 
-- Online booking
-- Telegram Mini App
-- Catalogue with pricing
-- CRM for leads and orders
-- AI assistant
-- Payment integration
-- System integration
+- Products/modules;
+- commercial types and layers;
+- horizontal portfolio families;
+- Verticals;
+- Offers;
+- Assets/proof;
+- channel/distribution fit;
+- readiness/status.
 
-Canonical routes:
+The website must **not flatten these internal entity types into one catalogue**.
 
-`/products/<product>/`
+Public pages translate the system into buyer language and preserve the source relationships. A standalone entry product can be sold on its own; several products can be composed into a larger system when the buyer's workflow requires it.
 
-A starter package is embedded inside each product. It is not a separate product or indexable page.
+### Public routes
 
-### Add-ons
+Stable public intent routes may include:
 
-Add-ons extend a canonical product and are not automatically promoted to standalone products. Examples:
+- products / solutions;
+- industries;
+- cases / proof;
+- partners / white-label;
+- engineering / enterprise;
+- company/about;
+- owned software when a real external product path exists.
 
-- customer account
-- staff dashboard
-- notifications
-- analytics
-- owner dashboard
-- repeat sales
-- reconciliation
-- managed support
+Exact public labels are presentation copy, not canonical internal taxonomy.
 
-### Industry configurations
+### CRM guardrail
 
-The homepage and industry pages filter the canonical catalogue by business type.
+VIIVERSION configures, extends and integrates the CRM selected/used by the client. A custom back-office/internal operational system is a separate product class.
 
-They do not create new products.
-
-Current business types:
-
-- tours & activities
-- hotels
-- retail
-- rental
-- clinics
-- restaurants
-- services
-
-Each industry shows:
-
-1. 2–3 products that usually make sense first;
-2. products/add-ons that can be added later.
-
-Enterprise is intentionally **not** an industry. It has its own commercial path.
-
-### Product × industry pages
-
-Targeted landing pages may exist for outbound, ads or SEO, for example:
-
-- `/solutions/tourism/online-booking/`
-- `/solutions/tourism/ai-consultant/`
-- `/solutions/rental/online-booking/`
-- `/solutions/clinics/online-booking/`
-- `/solutions/clinics/ai-consultant/`
-- `/solutions/restaurants/payment-integration/`
-
-These pages reference the canonical product and its starter package. They do not duplicate pricing or create a new catalogue entity.
-
-## Separate commercial paths
+Legacy internal labels such as `CRM Core` or `CRM Lite` must be translated through the current Corporate Strategy before public rendering.
 
 ### Software products
 
-`/software/`
-
-Standalone products developed by VIIVERSION, separate from custom client delivery:
-
-- Proposal Studio
-- ZL Web Agent
-- Event Video Human Editor
-
-### Partners
-
-`/partners/`
-
-Partner / white-label paths:
-
-- Mini App Factory
-- payment integration delivery for POS vendors and platforms
-
-### Enterprise
-
-`/enterprise/`
-
-Complex internal and engineering work:
-
-- roles / permissions / approvals
-- API and webhooks
-- ETL / data
-- database migration
-- Oracle / PL/SQL
-- Revenue Assurance
-- L2/L3 technical support
+Owned Software Products are a long-term company direction. A specific owned product is promoted publicly according to its real readiness and external distribution/use path; internal or future products do not need to appear as finished catalogue items.
 
 ## Legacy URL policy
 
@@ -237,7 +164,7 @@ English mirrors the same information architecture under:
 
 `/en/`
 
-RU and EN use the same product catalogue, industry configuration and commercial paths.
+RU and EN use the same source relationships and presentation architecture, translated for each buyer language.
 
 ## Build
 
@@ -254,7 +181,7 @@ Build order:
 
 The commercial site is data-driven through:
 
-- `scripts/product_catalog.py` — canonical commercial data;
+- `scripts/product_catalog.py` — current website presentation mapping/cache (not corporate Source of Truth);
 - `scripts/site_content.py` — brand, proof, team and navigation;
 - `scripts/build-product-site.py` — rendering and interaction.
 
@@ -279,17 +206,6 @@ Every push to `viiversion` verifies:
 
 ## Rule for future product changes
 
-Do **not** add a new public product by creating a new page first.
+Add/update the source entity in the Commercial Matrix first, then classify its role and readiness.
 
-Decide whether it is:
-
-1. a sellable product;
-2. an add-on;
-3. a package of an existing product;
-4. an industry configuration;
-5. a composite system;
-6. a standalone software product;
-7. a partner product;
-8. an Enterprise capability.
-
-Only after that classification should a route or landing page be created.
+A new Product/Offer/Vertical/Asset does **not** automatically create a new public navigation category or page. Map it through `docs/WEBSITE_PRESENTATION_SYSTEM.md` and create the public route only when the buyer job, outcome, proof/status and CTA are clear.
