@@ -348,19 +348,54 @@ document.addEventListener("DOMContentLoaded",()=>{
       ];
       const message=lines.join("\n");
 
+      const submitButton=form.querySelector('button[type="submit"]');
+      if(submitButton)submitButton.disabled=true;
+      let stored=false, leadId="";
+      try{
+        const leadResponse=await fetch("/api/leads",{
+          method:"POST",
+          headers:{"content-type":"application/json"},
+          body:JSON.stringify({
+            name:data.name||"",
+            contact:data.contact||"",
+            company:data.company||"",
+            interest:data.interest||"",
+            task:data.task||"",
+            website:data.website||"",
+            page:location.href,
+            pageContext:JSON.stringify(camp),
+            source:(camp.firstTouch&&camp.firstTouch.source)||camp.source||"",
+            medium:(camp.firstTouch&&camp.firstTouch.medium)||camp.medium||"",
+            campaign:(camp.firstTouch&&camp.firstTouch.campaign)||camp.campaign||"",
+            referrer:camp.firstReferrer||camp.referrer||"",
+            locale:document.documentElement.lang||""
+          })
+        });
+        const leadResult=await leadResponse.json().catch(()=>({}));
+        stored=leadResponse.ok&&leadResult.ok;
+        leadId=leadResult.id||"";
+      }catch(_){}
+      if(submitButton)submitButton.disabled=false;
+
       analytics("lead_submit",{
         interest:String(data.interest||"").slice(0,160),
         hasContact:Boolean(data.contact),
         hasCompany:Boolean(data.company),
         taskLength:String(data.task||"").length,
+        stored,
         cta:(sessionStorage.getItem("viiversion_cta")||"form").slice(0,160)
       });
 
       try{await navigator.clipboard.writeText(message)}catch(_){}
-      try{localStorage.setItem("viiversion_last_enquiry",JSON.stringify({interest:data.interest||"",source:camp.source||"",campaign:camp.campaign||"",createdAt:new Date().toISOString()}))}catch(_){}
+      try{localStorage.setItem("viiversion_last_enquiry",JSON.stringify({interest:data.interest||"",source:(camp.firstTouch&&camp.firstTouch.source)||camp.source||"",campaign:(camp.firstTouch&&camp.firstTouch.campaign)||camp.campaign||"",leadId,stored,createdAt:new Date().toISOString()}))}catch(_){}
 
       const status=form.querySelector(".form-status");
-      if(status) status.hidden=false;
+      if(status){
+        status.hidden=false;
+        if(!stored)status.textContent=document.documentElement.lang==="ru"
+          ?"Не удалось сохранить заявку автоматически. Текст скопирован — отправьте его в открывшемся канале связи."
+          :"Automatic saving failed. The message was copied — please send it in the contact channel that opened.";
+      }
 
       const target=form.dataset.contact||"";
       if(target.startsWith("mailto:")){
@@ -440,7 +475,7 @@ def contact(lang, default_interest=""):
           <div class="form-full"><label>{c["form_company"]}</label><input name="company" autocomplete="url"></div>
           <div class="form-full"><label>{c["form_task"]}</label><textarea name="task" required></textarea></div>
         </div>
-        <input type="hidden" name="interest"><input type="hidden" name="page_context">
+        <input type="hidden" name="interest"><input type="hidden" name="page_context"><input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
         <div class="form-actions"><button class="btn btn-primary" type="submit">{c["form_submit"]} →</button></div>
         <div class="form-note">{c["form_note"]}</div>
         <div class="form-status" hidden>{c["form_done"]}</div>
