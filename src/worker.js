@@ -32,11 +32,16 @@ export class LeadStore {
       const hour = new Date().toISOString().slice(0, 13);
       const rateKey = "rate:" + payload.visitorHash + ":" + hour;
       const count = Number((await this.ctx.storage.get(rateKey)) || 0) + 1;
-      await this.ctx.storage.put(rateKey, count, { expirationTtl: 7200 });
+      await this.ctx.storage.put(rateKey, count);
       if (count > 8) return json({ ok:false, error:"rate_limited" }, 429);
       const id = payload.id || crypto.randomUUID();
       const key = "lead:" + payload.createdAt + ":" + id;
       await this.ctx.storage.put(key, payload);
+      if (payload.isTest) {
+        const stored = await this.ctx.storage.get(key);
+        await this.ctx.storage.delete(key);
+        return json({ ok:Boolean(stored), id, probe:true });
+      }
       const recent = (await this.ctx.storage.get("recent")) || [];
       recent.unshift({ key, id, createdAt:payload.createdAt, interest:payload.interest, contact:payload.contact });
       if (recent.length > 250) recent.length = 250;
@@ -76,7 +81,7 @@ export default {
         pageContext:clean(raw.pageContext,MAX.context), source:clean(raw.source,MAX.source),
         medium:clean(raw.medium,MAX.source), campaign:clean(raw.campaign,MAX.source),
         referrer:clean(raw.referrer,MAX.page), locale:clean(raw.locale,16),
-        country:clean(request.cf?.country,8), colo:clean(request.cf?.colo,16), visitorHash
+        country:clean(request.cf?.country,8), colo:clean(request.cf?.colo,16), visitorHash, isTest:Boolean(raw.qa)
       };
       const id = env.LEADS.idFromName("viiversion-leads");
       const stub = env.LEADS.get(id);
