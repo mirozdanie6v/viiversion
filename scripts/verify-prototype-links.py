@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-PET = 'https://pet-nika.mirozdanie6v.workers.dev'
+PET = 'https://pet-nika.viiversion.com'
 PET_BROKEN_ALIAS = PET + '/miniapp'
 UNIQ = 'https://uniq-smart-rent.mirozdanie6v.workers.dev'
 
