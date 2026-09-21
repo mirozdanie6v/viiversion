@@ -455,7 +455,7 @@ def footer(lang):
     partners_url = loc(lang, "/partners/")
     return f'''<footer class="footer"><div class="wrap footer-row">
       <div><div class="brand-word">VIIVERSION</div><div style="font-size:11px">{("Цифровые решения для бизнеса" if lang=="ru" else "Digital Business Systems")}</div></div>
-      <div class="footer-links">{links}<a href="{software_url}">{("Готовые продукты" if lang=="ru" else "Software")}</a><a href="{partners_url}">{("Партнёрам" if lang=="ru" else "Partners")}</a><a href="/proposal-studio/">Proposal Studio</a></div>
+      <div class="footer-links">{links}<a href="{software_url}">{("Готовые продукты" if lang=="ru" else "Software")}</a><a href="{partners_url}">{("Партнёрам" if lang=="ru" else "Partners")}</a><a href="{loc(lang,'/privacy/')}">{("Конфиденциальность" if lang=="ru" else "Privacy")}</a><a href="/proposal-studio/">Proposal Studio</a></div>
     </div></footer>'''
 
 def contact(lang, default_interest=""):
@@ -559,14 +559,6 @@ def product_card(lang, slug):
       <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{'Что входит и как начать' if lang=='ru' else 'What is included and how to start'} →</a>
     </article>'''
 
-def offer_card(lang, slug):
-    o = OFFERS[slug][lang]
-    return f'''<article class="card offer-card">
-      <div class="kicker">{COPY[lang]["offer"]}</div><h3>{escape(o["name"])}</h3><p>{escape(o["headline"])}</p>
-      <div class="offer-meta"><div><small>{COPY[lang]["price"]}</small><b>{escape(o["price"])}</b></div><div><small>{COPY[lang]["timeline"]}</small><b>{escape(o["timeline"])}</b></div></div>
-      <a class="text-link" href="{loc(lang,'/offers/'+slug+'/')}">{COPY[lang]["learn_more"]} →</a>
-    </article>'''
-
 def module_buy_card(lang, slug):
     p = SELLABLE_PRODUCTS[slug][lang]
     start = SELLABLE_PRODUCTS[slug]["packages"]["start"][lang]
@@ -667,47 +659,6 @@ def home(lang):
     <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{"Другие направления" if lang=="ru" else "Other paths"}</div><h2>{escape(enterprise_title)}</h2></div><p>{escape(enterprise_text)}</p></div><div class="actions"><a class="btn btn-secondary" href="{loc(lang,'/software/')}">{"Готовые продукты" if lang=="ru" else "Software products"} →</a><a class="btn btn-secondary" href="{loc(lang,'/partners/')}">{"Партнёрам" if lang=="ru" else "Partners"} →</a><a class="btn btn-secondary" href="{loc(lang,'/enterprise/')}">{"Для крупных систем" if lang=="ru" else "Enterprise engineering"} →</a></div></div></section>
     '''
 
-def modules_index(lang):
-    cards="".join(module_buy_card(lang,s) for s in MODULES)
-    title="Что можно купить" if lang=="ru" else "What you can buy"
-    lead="Каждая карточка — отдельная понятная задача с описанием результата, срока и способа старта." if lang=="ru" else "Each card is a concrete task with a result, timeline and a clear way to start."
-    return hero(lang,title,title,lead,"/modules/")+f'<section class="section"><div class="wrap"><div class="module-buy-grid">{cards}</div></div></section>'
-
-def module_page(lang,slug):
-    c=COPY[lang]; m=MODULES[slug][lang]
-    steps="".join(f'<div class="module-step"><span class="num">{i:02d}</span>{escape(x)}</div>' for i,x in enumerate(m["steps"],1))
-    includes="".join(f'<li>{escape(x)}</li>' for x in m["includes"])
-    excludes="".join(f'<li>{escape(x)}</li>' for x in m["excludes"])
-    proof="".join(case_card(lang,s) for s in m["proof"][:3] if s in CASES)
-    audience=", ".join(m["for"])
-    if lang=="ru":
-        title=f'{m["name"]} — что это, что входит и как заказать'
-        buy_title="Как заказать"
-        buy_text="Пришлите ссылку, скриншот или коротко опишите, как эта задача решается сейчас. Мы ответим, подходит ли готовый модуль, что потребуется изменить и какой первый этап имеет смысл."
-        safe_title="Что мы не будем делать без согласования"
-        included="Что входит"
-        excluded="Что не входит в базовую оценку"
-        how="Как это работает"
-        result="Что меняется для бизнеса"
-        for_label="Подходит для"
-    else:
-        title=f'{m["name"]} — what it is, what is included and how to start'
-        buy_title="How to buy"
-        buy_text="Send a link, screenshot or short description of how this task works today. We will tell you whether the module fits, what must change and what the first step should be."
-        safe_title="What we will not change without agreement"
-        included="Included"
-        excluded="Not included in the base estimate"
-        how="How it works"
-        result="What changes for the business"
-        for_label="Suitable for"
-    body=hero(lang,"Модуль" if lang=="ru" else "Module",title,m["short"],"/modules/"+slug+"/",(("Что можно купить" if lang=="ru" else "Modules"),"/modules/"))
-    body+=f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{result}</div><h2>{escape(m["result"])}</h2><p><b>{for_label}:</b> {escape(audience)}</p></div><div class="scope-box"><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(m["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(m["timeline"])}</strong></div></div><a class="btn btn-primary" href="#contact" data-interest="{escape(m["name"])}" data-cta="module">{escape(m["cta"])} →</a></div></div></section>
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{how}</div><h2>{how}</h2></div></div><div class="module-steps">{steps}</div></div></section>
-    <section class="section"><div class="wrap compare"><div class="compare-box after"><div class="eyebrow">{included}</div><h3>{included}</h3><ul>{includes}</ul></div><div class="compare-box"><div class="eyebrow">{safe_title}</div><h3>{excluded}</h3><ul>{excludes}</ul></div></div></section>
-    <section class="section soft"><div class="wrap two-col"><div><div class="eyebrow">{buy_title}</div><h2>{buy_title}</h2><p class="quote">{escape(buy_text)}</p></div><div class="trust-box" style="margin-top:0"><h3>{"До старта фиксируем" if lang=="ru" else "Agreed before starting"}</h3><div class="trust-list"><div class="trust-item">✓ {"Что именно делаем" if lang=="ru" else "Exact scope"}</div><div class="trust-item">✓ {"Срок первого этапа" if lang=="ru" else "First-stage timeline"}</div><div class="trust-item">✓ {"Стоимость" if lang=="ru" else "Price"}</div><div class="trust-item">✓ {"Какие доступы нужны" if lang=="ru" else "Required access"}</div></div></div></div></section>
-    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
-    return body
-
 def products_index(lang):
     cards="".join(product_card(lang,s) for s in SELLABLE_PRODUCTS)
     title="Что можно купить" if lang=="ru" else "Products you can buy"
@@ -747,17 +698,6 @@ def product_page(lang,slug):
     <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>
     <section class="section soft"><div class="wrap two-col"><div><div class="eyebrow">{buy_title}</div><h2>{buy_title}</h2><p class="quote">{escape(buy_text)}</p></div><div class="trust-box" style="margin-top:0"><h3>{"До старта фиксируем" if lang=="ru" else "Agreed before starting"}</h3><div class="trust-list"><div class="trust-item">✓ {"Состав первого пакета" if lang=="ru" else "Starter scope"}</div><div class="trust-item">✓ {"Срок" if lang=="ru" else "Timeline"}</div><div class="trust-item">✓ {"Стоимость" if lang=="ru" else "Price"}</div><div class="trust-item">✓ {"Необходимые доступы" if lang=="ru" else "Required access"}</div></div></div></div></section>'''
     return body
-
-def offers_index(lang):
-    cards="".join(offer_card(lang,s) for s in OFFERS)
-    title="Стартовые форматы" if lang=="ru" else "Starting offers"
-    lead="Небольшие, понятные первые этапы с конкретным составом работ, сроком и ориентиром по стоимости." if lang=="ru" else "Small, concrete first steps with a defined scope, timeline and price guide."
-    return hero(lang,COPY[lang]["offer"],title,lead,"/offers/")+f'<section class="section"><div class="wrap"><div class="offer-grid">{cards}</div></div></section>'
-
-def offer_page(lang,slug):
-    c=COPY[lang]; o=OFFERS[slug][lang]; pslug=OFFERS[slug]["product"]; p=PRODUCTS[pslug][lang]
-    scope="".join(f"<li>{escape(x)}</li>" for x in o["scope"])
-    return hero(lang,c["offer"],f'{o["name"]} — {o["headline"]}',p["summary"],"/offers/"+slug+"/",(c["products"],"/products/"))+f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["scope"]}</div><h2>{c["how_works"]}</h2><ul class="list-clean">{scope}</ul></div><div class="scope-box"><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(o["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(o["timeline"])}</strong></div></div><p><b>{c["proof"]}:</b> {escape(o["proof"])}</p><p>{c["not_fixed"]}</p><a class="btn btn-primary" href="#contact" data-interest="{escape(o["name"])}" data-cta="offer">{escape(o["cta"])} →</a></div></div></section>'''
 
 def solutions_index(lang):
     target_cards=[]
@@ -870,6 +810,30 @@ def about_page(lang):
     method="До разработки разбираем, что делает клиент, что делает сотрудник, где хранятся данные и на каком шаге возникает ручная работа или потеря информации." if lang=="ru" else "Before development we map what the customer does, what staff do, where data lives and where manual work or information loss appears."
     return hero(lang,c["about"],title,lead,"/about/")+team_trust(lang)+f'<section class="section"><div class="wrap"><div class="eyebrow">{"Как работаем" if lang=="ru" else "Method"}</div><h2>{"Сначала конкретный процесс, затем технология" if lang=="ru" else "Process first, technology second"}</h2><p class="quote">{escape(method)}</p></div></section>'
 
+def privacy_page(lang):
+    if lang=="ru":
+        title="Конфиденциальность"
+        lead="Какие данные получает VIIVERSION через этот сайт и зачем они нужны."
+        items=[
+            ("Заявки", "Если вы отправляете форму, мы сохраняем указанные вами имя, контакт, компанию, текст задачи, выбранный продукт и страницу, с которой пришла заявка. Эти данные нужны только для ответа и работы с обращением."),
+            ("Аналитика", "Отдельно фиксируются источник перехода, UTM-метки, выбранный CTA и тип интереса. Имя, контакт и текст заявки в аналитический сервис не передаются."),
+            ("Хранение", "Заявки сохраняются в инфраструктуре VIIVERSION на Cloudflare. Доступ к списку лидов закрыт отдельной административной авторизацией."),
+            ("Передача", "Мы не продаём данные заявок третьим лицам. Если для выполнения проекта понадобится подключить внешний сервис, это согласуется отдельно."),
+            ("Удаление", "Чтобы запросить удаление своей заявки или уточнить, какие данные были переданы, напишите нам через опубликованный канал связи."),
+        ]
+    else:
+        title="Privacy"
+        lead="What VIIVERSION receives through this website and why."
+        items=[
+            ("Enquiries", "When you submit the form, we store the name, contact details, company, task description, selected product and source page you provided. This is used to respond and handle the enquiry."),
+            ("Analytics", "We separately record referral source, UTM parameters, CTA and interest type. Your name, contact details and enquiry text are not sent to the analytics service."),
+            ("Storage", "Enquiries are stored in VIIVERSION infrastructure on Cloudflare. Access to stored leads requires separate administrative authentication."),
+            ("Sharing", "We do not sell enquiry data to third parties. If an external service is required for delivery, it is agreed separately."),
+            ("Deletion", "To request deletion or ask what information was submitted, contact us through a published VIIVERSION contact channel."),
+        ]
+    blocks="".join(f'<article class="card"><h3>{escape(h)}</h3><p>{escape(p)}</p></article>' for h,p in items)
+    return hero(lang,title,title,lead,"/privacy/")+f'<section class="section"><div class="wrap"><div class="grid2">{blocks}</div></div></section>'
+
 def redirect_page(lang, target):
     target_url=loc(lang,target)
     return f'''<!doctype html><html lang="{'ru' if lang=='ru' else 'en'}"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><meta http-equiv="refresh" content="0;url={target_url}"><link rel="canonical" href="{BASE+target_url}"><title>VIIVERSION</title></head><body><p><a href="{target_url}">Continue</a></p></body></html>'''
@@ -911,6 +875,7 @@ for lang in LANGS:
     pages[base_dir+"partners/index.html"] = page(lang, ("Партнёрам — VIIVERSION" if lang=="ru" else "Partners — VIIVERSION"), ("White-label и партнёрские форматы VIIVERSION." if lang=="ru" else "White-label and partner delivery from VIIVERSION."), partners_page(lang), "/partners/")
     pages[base_dir+"enterprise/index.html"] = page(lang, "Enterprise — VIIVERSION", ("Сложные внутренние системы, данные и интеграции." if lang=="ru" else "Complex internal systems, data and integrations."), enterprise_page(lang), "/enterprise/", page_type="Service", interest="Enterprise")
     pages[base_dir+"about/index.html"] = page(lang, ("О VIIVERSION" if lang=="ru" else "About VIIVERSION"), ("Команда, компетенции и метод работы." if lang=="ru" else "Team, capabilities and delivery method."), about_page(lang), "/about/")
+    pages[base_dir+"privacy/index.html"] = page(lang, ("Конфиденциальность — VIIVERSION" if lang=="ru" else "Privacy — VIIVERSION"), ("Как VIIVERSION обрабатывает заявки с сайта." if lang=="ru" else "How VIIVERSION handles website enquiries."), privacy_page(lang), "/privacy/")
     pages[base_dir+"contact/index.html"] = page(lang, ("Контакты — VIIVERSION" if lang=="ru" else "Contact — VIIVERSION"), BRAND[lang]["final_lead"], hero(lang,COPY[lang]["contact"],BRAND[lang]["final_title"],BRAND[lang]["final_lead"],"/contact/"), "/contact/", interest="general")
 
     # Keep old URLs alive without indexing duplicate commercial content.
@@ -963,7 +928,7 @@ required=[
     "products/crm/index.html","products/ai-consultant/index.html","products/payment-integration/index.html","products/system-integration/index.html",
     "solutions/tourism/online-booking/index.html","solutions/clinics/ai-consultant/index.html",
     "industries/tourism/index.html","industries/hotels/index.html","industries/shops/index.html",
-    "cases/index.html","software/index.html","partners/index.html","enterprise/index.html","about/index.html",
+    "cases/index.html","software/index.html","partners/index.html","enterprise/index.html","about/index.html","privacy/index.html",
     "assets/viiversion.css","assets/viiversion.js","assets/team/dmitrii.webp","assets/team/olga.webp","sitemap.xml"
 ]
 for rel in required:
