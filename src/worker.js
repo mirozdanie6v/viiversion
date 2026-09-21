@@ -40,6 +40,14 @@ export class LeadStore {
       if (payload.isTest) {
         const stored = await this.ctx.storage.get(key);
         await this.ctx.storage.delete(key);
+        const recent = (await this.ctx.storage.get("recent")) || [];
+        const cleaned = [];
+        for (const item of recent) {
+          const oldLead = await this.ctx.storage.get(item.key);
+          if (oldLead?.isTest) await this.ctx.storage.delete(item.key);
+          else if (oldLead) cleaned.push(item);
+        }
+        await this.ctx.storage.put("recent", cleaned);
         return json({ ok:Boolean(stored), id, probe:true });
       }
       const recent = (await this.ctx.storage.get("recent")) || [];
@@ -62,7 +70,7 @@ export class LeadStore {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads" });
+    if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads", version:"canonical-v2" });
 
     if (url.pathname === "/api/leads" && request.method === "POST") {
       if (!allowedOrigin(request)) return json({ ok:false, error:"origin_not_allowed" }, 403);
