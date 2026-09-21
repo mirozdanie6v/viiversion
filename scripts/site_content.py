@@ -87,11 +87,11 @@ CASES = {
 TEAM = {
     "ru": [
         ("Дмитрий Владимиров", "Серверная архитектура и данные · базы данных · интеграции", "20+ лет в IT и телеком. Отвечает за серверную логику, данные, интеграции, надёжность и техническую архитектуру."),
-        ("Ольга Ногтич", "Продуктовая архитектура · интерфейсы · AI-автоматизация", "16+ лет в цифровых и визуальных коммуникациях. Отвечает за логику продукта, пользовательские сценарии, интерфейсы, исследования и AI-автоматизацию."),
+        ("Ольга Ногтич", "Продуктовая и системная архитектура · AI-автоматизация · интерфейсы", "Проектирует логику продукта и системы, AI-автоматизацию, клиентские и операционные сценарии, интерфейсы и техническую реализацию продуктовых прототипов."),
     ],
     "en": [
         ("Dmitrii Vladimirov", "Systems architecture · databases · integrations · development", "Oracle, PL/SQL, ETL, Linux, API, telecom BSS / Revenue Assurance. Experience with complex telecom and international systems."),
-        ("Olga Nogtich", "Product & AI systems engineering · product architecture · interfaces", "Product logic, system architecture, AI automation, customer journeys, interfaces and rapid product engineering."),
+        ("Olga Nogtich", "Product & AI systems engineering · system architecture · interfaces", "Designs product and system logic, AI automation, customer and operational flows, interfaces and technical implementation of product prototypes."),
     ],
 }
 
