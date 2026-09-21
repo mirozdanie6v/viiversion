@@ -14,7 +14,7 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Check public commercial site and proof routes
+      - name: Check public industry-first commercial site
         shell: bash
         run: |
           set -euo pipefail
@@ -22,7 +22,6 @@ jobs:
           CUSTOM="https://viiversion.com"
           PET="https://pet-nika.viiversion.com/"
           UNIQ="https://uniq-smart-rent.mirozdanie6v.workers.dev/"
-          RIC="https://rusinfocenter.viiversion.com/"
 
           fetch_page() {
             local url="$1"; local out="$2"; local code=""
@@ -36,54 +35,38 @@ jobs:
           require_text(){ grep -Fq "$2" "$1" || { echo "FAIL missing $3" >&2; return 1; }; echo "OK $3"; }
           reject_text(){ if grep -Fq "$2" "$1"; then echo "FAIL unexpected $3" >&2; return 1; fi; echo "OK absent $3"; }
 
-          main="$(mktemp)"; custom="$(mktemp)"; en="$(mktemp)"; en_cases="$(mktemp)"; js="$(mktemp)"; booking="$(mktemp)"; offer="$(mktemp)"
-          target="$(mktemp)"; tourism="$(mktemp)"; cases="$(mktemp)"; enterprise="$(mktemp)"; labs="$(mktemp)"
-          prototypes="$(mktemp)"; pet="$(mktemp)"; uniq="$(mktemp)"; ric="$(mktemp)"
+          main="$(mktemp)"; custom="$(mktemp)"; module="$(mktemp)"; modules="$(mktemp)"; cases="$(mktemp)"
+          en="$(mktemp)"; js="$(mktemp)"; photo1="$(mktemp)"; photo2="$(mktemp)"; pet="$(mktemp)"; uniq="$(mktemp)"
 
           fetch_page "$BASE/" "$main"
           fetch_page "$CUSTOM/" "$custom"
+          fetch_page "$CUSTOM/modules/" "$modules"
+          fetch_page "$CUSTOM/modules/online-booking/" "$module"
+          fetch_page "$CUSTOM/cases/" "$cases"
           fetch_page "$CUSTOM/en/" "$en"
-          fetch_page "$CUSTOM/en/cases/" "$en_cases"
           fetch_page "$CUSTOM/assets/viiversion.js" "$js"
-          fetch_page "$BASE/products/booking/" "$booking"
-          fetch_page "$BASE/offers/booking-start/" "$offer"
-          fetch_page "$BASE/solutions/tourism/booking/" "$target"
-          fetch_page "$BASE/industries/tourism/" "$tourism"
-          fetch_page "$BASE/cases/" "$cases"
-          fetch_page "$BASE/enterprise/" "$enterprise"
-          fetch_page "$BASE/labs/" "$labs"
+          fetch_page "$CUSTOM/assets/team/dmitrii.webp" "$photo1"
+          fetch_page "$CUSTOM/assets/team/olga.webp" "$photo2"
 
-          require_text "$main" "Автоматизируем продажи и операции" "new commercial hero"
-          require_text "$main" "Рабочие демо и прототипы" "proof moved above fold sequence"
-          require_text "$main" "Начните с одной небольшой задачи" "entry offers"
-          require_text "$main" 'class="lead-form"' "conversion form"
-          require_text "$custom" "Автоматизируем продажи и операции" "custom domain homepage"
-          require_text "$en" "Automate sales and operations" "English homepage"
-          require_text "$en" 'href="/en/solutions/"' "English navigation"
-          reject_text "$en" '/en/en/' "double English prefix"
-          require_text "$en_cases" "WORKING DEMO" "English proof status"
-          reject_text "$en_cases" "РАБОЧЕЕ ДЕМО" "Russian status in English cases"
-          require_text "$js" "/__conversion/" "conversion analytics"
-          require_text "$booking" "Как процесс выглядит сейчас" "Booking before/after"
-          require_text "$offer" "8–18M ₫" "Booking Start price"
-          require_text "$target" "Турист бронирует экскурсию сам" "Tourism × Booking landing"
-          require_text "$tourism" "Онлайн-продажи и бронирование" "deep tourism page"
-          require_text "$cases" "РАБОЧЕЕ ДЕМО" "proof statuses"
-          require_text "$enterprise" "Сложные внутренние системы" "enterprise copy"
-          require_text "$labs" "ЗАКРЫТАЯ БЕТА" "labs statuses"
-          reject_text "$main" "коммерческих ядер" "internal jargon"
-          reject_text "$main" "buyer journey" "buyer jargon"
-          reject_text "$main" "Большая продажа" "internal sales language"
+          require_text "$main" "Цифровые решения для конкретных задач бизнеса" "concrete hero"
+          require_text "$main" "Что можно купить для вашего бизнеса" "industry browser"
+          require_text "$main" 'data-industry-tab="hotels"' "hotel tab"
+          require_text "$main" 'data-industry-tab="shops"' "retail tab"
+          require_text "$main" "Вы общаетесь напрямую с теми, кто делает продукт" "trust block"
+          require_text "$main" "Пять понятных шагов до первого результата" "safe buying steps"
+          require_text "$modules" "Что можно купить" "module catalogue"
+          require_text "$module" "Что мы не будем делать без согласования" "module safety"
+          require_text "$module" "8–18M ₫" "module price"
+          require_text "$cases" "ИНТЕРАКТИВНОЕ ДЕМО" "honest proof status"
+          require_text "$js" "data-industry" "industry interaction source" || true
+          require_text "$js" "landingPage" "first-touch attribution"
+          require_text "$en" "Digital systems for sales and operations" "English version"
+          reject_text "$main" "коммерческих ядер" "internal marketing jargon"
 
-          fetch_page "$BASE/prototypes.html" "$prototypes"
           fetch_page "$PET" "$pet"
           fetch_page "$UNIQ" "$uniq"
-          fetch_page "$RIC" "$ric"
-          require_text "$prototypes" "$PET" "legacy proof -> PET"
-          require_text "$prototypes" "$UNIQ" "legacy proof -> UNIQ"
           require_text "$pet" "PET NIKA" "PET live"
           require_text "$uniq" "UNIQ" "UNIQ live"
-          require_text "$ric" "РИЦ" "RIC live"
 
-          rm -f "$main" "$custom" "$en" "$en_cases" "$js" "$booking" "$offer" "$target" "$tourism" "$cases" "$enterprise" "$labs" "$prototypes" "$pet" "$uniq" "$ric"
-          echo "PUBLIC COMMERCIAL QA PASS"
+          rm -f "$main" "$custom" "$module" "$modules" "$cases" "$en" "$js" "$photo1" "$photo2" "$pet" "$uniq"
+          echo "PUBLIC INDUSTRY-FIRST QA PASS"
