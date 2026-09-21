@@ -21,8 +21,8 @@ jobs:
 
           BASE="https://landing.viiversion.workers.dev"
           CUSTOM="https://viiversion.com"
-          PET="https://pet-nika.mirozdanie6v.workers.dev/"
-          PET_BROKEN="https://pet-nika.mirozdanie6v.workers.dev/miniapp"
+          PET="https://pet-nika.viiversion.com/"
+          PET_BROKEN="https://pet-nika.viiversion.com/miniapp"
           UNIQ="https://uniq-smart-rent.mirozdanie6v.workers.dev/"
           RIC="https://rusinfocenter.viiversion.com/"
           RIC_BOT="https://rusinfocenter.viiversion.com/notification"
