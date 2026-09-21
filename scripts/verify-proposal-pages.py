@@ -38,5 +38,8 @@ for route in ('', 'support', 'privacy', 'terms'):
             target /= 'index.html'
         assert target.is_file(), f'Broken local link: {link}'
     assert f'https://viiversion.com/proposal-studio/{route + "/" if route else ""}' in text
+support = (ROOT / 'proposal-studio' / 'support' / 'index.html').read_text(encoding='utf-8')
+assert 'mailto:info@viiversion.com' in support
+assert 'https://t.me/Flyer_Flyer' in support
 assert 'data-proposal-studio-links' in (ROOT / 'index.html').read_text(encoding='utf-8')
-print('PASS: routes, bilingual content, internal links, canonical URLs and no-script checks.')
+print('PASS: routes, bilingual content, support contacts, internal links, canonical URLs and no-script checks.')
