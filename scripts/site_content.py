@@ -539,38 +539,38 @@ TARGET_LANDINGS = {
 CASES = {
     "max-tour": {
         "ru": {"name": "MAX TOUR", "industry": "Туризм", "status": "working-demo", "status_label": "РАБОЧЕЕ ДЕМО", "summary": "Клиентский путь, бронирование, роли, admin и owner analytics для экскурсионного бизнеса.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
-        "en": {"name": "MAX TOUR", "industry": "Tourism", "status": "working-demo", "status_label": "РАБОЧЕЕ ДЕМО", "summary": "Customer flow, booking, roles, admin and owner analytics for a tour business.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
+        "en": {"name": "MAX TOUR", "industry": "Tourism", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Customer flow, booking, roles, admin and owner analytics for a tour business.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
     },
     "uniq-smart-rent": {
         "ru": {"name": "UNIQ SMART RENT", "industry": "Аренда", "status": "working-demo", "status_label": "РАБОЧЕЕ ДЕМО", "summary": "Каталог, pricing и request lifecycle для аренды транспорта.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
-        "en": {"name": "UNIQ SMART RENT", "industry": "Rental", "status": "working-demo", "status_label": "РАБОЧЕЕ ДЕМО", "summary": "Catalogue, pricing and request lifecycle for vehicle rental.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
+        "en": {"name": "UNIQ SMART RENT", "industry": "Rental", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Catalogue, pricing and request lifecycle for vehicle rental.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
     },
     "pet-nika": {
         "ru": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Клиентский кабинет, питомцы, обращения, booking и admin-слой.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
-        "en": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Customer account, pets, requests, booking and admin layer.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
+        "en": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Customer account, pets, requests, booking and admin layer.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
     },
     "ave-dental": {
         "ru": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Мультиязычный Mini App и booking-flow для клиники.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
-        "en": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Multilingual Mini App and booking flow for a clinic.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
+        "en": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Multilingual Mini App and booking flow for a clinic.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
     },
     "rusinfocenter": {
         "ru": {"name": "Русский Информационный Центр", "industry": "Туризм", "status": "concept", "status_label": "КЛИЕНТСКАЯ КОНЦЕПЦИЯ", "summary": "Цифровой клиентский путь и архитектура будущей системы продаж.", "shows": ["Online Sales", "Booking", "Integrations"], "demo": "https://rusinfocenter.viiversion.com/"},
-        "en": {"name": "Russian Information Center", "industry": "Tourism", "status": "concept", "status_label": "КЛИЕНТСКАЯ КОНЦЕПЦИЯ", "summary": "Customer journey and architecture for a future sales system.", "shows": ["Online Sales", "Booking", "Integrations"], "demo": "https://rusinfocenter.viiversion.com/"},
+        "en": {"name": "Russian Information Center", "industry": "Tourism", "status": "concept", "status_label": "CLIENT CONCEPT", "summary": "Customer journey and architecture for a future sales system.", "shows": ["Online Sales", "Booking", "Integrations"], "demo": "https://rusinfocenter.viiversion.com/"},
     },
     "g-beauty": {
         "ru": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Landing, Mini App, booking и demo admin для локального beauty-бизнеса.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
-        "en": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Landing, Mini App, booking and demo admin for a local beauty business.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
+        "en": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Landing, Mini App, booking and demo admin for a local beauty business.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
     },
     "true-surf": {
         "ru": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Booking, client passport и repeat-flow в формате Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
-        "en": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Booking, client passport and repeat flow in a Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
+        "en": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Booking, client passport and repeat flow in a Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
     },
 }
 
 LABS = {
     "proposal-studio": {
         "ru": {"name": "Proposal Studio", "status": "ДОСТУПНО", "summary": "Research → diagnosis → solution → commercial proposal → QA.", "url": "/proposal-studio/"},
-        "en": {"name": "Proposal Studio", "status": "ДОСТУПНО", "summary": "Research → diagnosis → solution → commercial proposal → QA.", "url": "/proposal-studio/"},
+        "en": {"name": "Proposal Studio", "status": "AVAILABLE", "summary": "Research → diagnosis → solution → commercial proposal → QA.", "url": "/proposal-studio/"},
     },
     "mini-app-factory": {
         "ru": {"name": "Mini App Factory", "status": "ЗАКРЫТАЯ БЕТА", "summary": "White-label production line для серийной сборки клиентских Mini Apps.", "url": None},
@@ -599,5 +599,5 @@ TEAM = {
 
 NAV = {
     "ru": [("Решения", "/solutions/"), ("Продукты", "/products/"), ("Кейсы", "/cases/"), ("Enterprise", "/enterprise/"), ("Компания", "/about/")],
-    "en": [("Solutions", "/en/solutions/"), ("Products", "/en/products/"), ("Cases", "/en/cases/"), ("Enterprise", "/en/enterprise/"), ("Company", "/en/about/")],
+    "en": [("Solutions", "/solutions/"), ("Products", "/products/"), ("Cases", "/cases/"), ("Enterprise", "/enterprise/"), ("Company", "/about/")],
 }
