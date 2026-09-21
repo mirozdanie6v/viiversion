@@ -50,6 +50,25 @@ jobs:
             }
             if(!deployed) throw new Error('Canonical product site is not live');
 
+            await page.setViewportSize({width:1440,height:1000});
+            await page.goto(`${target}?qa=desktop-overflow-${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.waitForTimeout(500);
+            const desktopOverflow=await page.evaluate(()=>{
+              const vw=document.documentElement.clientWidth;
+              const sw=document.documentElement.scrollWidth;
+              const offenders=[...document.querySelectorAll('body *')].map(el=>{
+                const r=el.getBoundingClientRect();
+                const cs=getComputedStyle(el);
+                return {tag:el.tagName.toLowerCase(),cls:String(el.className||'').slice(0,160),left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),position:cs.position,whiteSpace:cs.whiteSpace,overflowX:cs.overflowX};
+              }).filter(x=>x.width>0&&(x.right>vw+2||x.left<-2)).sort((a,b)=>Math.max(b.right-vw,-b.left)-Math.max(a.right-vw,-a.left)).slice(0,25);
+              return {vw,sw,overflow:sw-vw,offenders};
+            });
+            console.log('DESKTOP_OVERFLOW',JSON.stringify(desktopOverflow,null,2));
+            await page.screenshot({path:'viiversion-canonical-desktop.png',fullPage:true});
+            if(desktopOverflow.overflow>2) throw new Error('Desktop horizontal overflow: '+JSON.stringify(desktopOverflow));
+
+            await page.setViewportSize({width:390,height:844});
+            await page.goto(`${target}?qa=mobile-after-desktop-${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
             const toggle=page.locator('.mobile-toggle');
             if(!(await toggle.isVisible())) throw new Error('Mobile menu toggle missing');
             await toggle.click(); await page.waitForTimeout(100);
@@ -122,8 +141,8 @@ jobs:
             await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
             await page.waitForTimeout(700);
             await page.screenshot({path:'viiversion-canonical-mobile.png',fullPage:true});
-            fs.writeFileSync('viiversion-canonical-live.json',JSON.stringify({target,deployed,health,apiProbe},null,2));
-            console.log(JSON.stringify({target,deployed,health,apiProbe},null,2));
+            fs.writeFileSync('viiversion-canonical-live.json',JSON.stringify({target,deployed,desktopOverflow,health,apiProbe},null,2));
+            console.log(JSON.stringify({target,deployed,desktopOverflow,health,apiProbe},null,2));
             await browser.close();
           })().catch(e=>{
             fs.writeFileSync('viiversion-canonical-error.txt',String(e&&e.stack||e));
@@ -139,4 +158,5 @@ jobs:
             viiversion-canonical-live.json
             viiversion-canonical-error.txt
             viiversion-canonical-mobile.png
+            viiversion-canonical-desktop.png
           if-no-files-found: warn
