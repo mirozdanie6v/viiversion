@@ -1,5 +1,14 @@
-version: "1.1"
+version: "1.2"
 name: "VIIVERSION Messaging System"
+
+source_of_truth:
+  corporate_positioning: "https://docs.google.com/document/d/1nfRAgnSiEv13XUOcqgRostFYdUlbFo83eOLRLQNLnN4/edit"
+  rule: "All client-facing identity, product naming and market framing must be consistent with VIIVERSION Corporate Strategy & Positioning."
+
+brand_identity:
+  canonical: "VIIVERSION is an engineering product company that builds digital systems for businesses and develops its own software products."
+  short_ru: "Мы VIIVERSION — инженерная команда, создаём цифровые системы для бизнеса и собственные программные продукты."
+  local_context: "Vietnam/Nha Trang may be mentioned as place of current presence or work, never as the primary company identity."
 
 principles:
   - "One message = one commercial job."
@@ -44,6 +53,8 @@ pre_send_model:
     - "more than one primary CTA"
     - "cold message asks for a meeting before interest"
     - "translation is literal/unnatural for the channel"
+    - "recipient cannot tell who VIIVERSION is"
+    - "recipient cannot name the concrete product being offered"
   note: "A 10/10 pre-send score is not a prediction of commercial performance."
 
 signals:
@@ -74,11 +85,11 @@ cold_outreach:
     body_words_target: "35-70"
     preferred_blocks: "3-4"
   structure:
-    - trigger
-    - problem_hypothesis
-    - buyer_outcome
-    - mechanism
-    - proof
+    - verified_trigger
+    - viiversion_identity
+    - concrete_product
+    - before_after_outcome
+    - relevant_proof
     - interest_cta
   subject_rules:
     prefer:
@@ -103,6 +114,8 @@ cold_outreach:
     - "technical stack unless buyer is technical"
     - "price unless the experiment explicitly tests price or buyer asked"
     - "seller abstractions such as structured flow when a concrete buyer outcome is available"
+    - "hiding the product category to make the message feel softer"
+    - "defining VIIVERSION primarily as a local Nha Trang development team"
 
 personalization_priority:
   - "current buying/business trigger"
@@ -146,6 +159,7 @@ value_proposition:
   required:
     - buyer
     - situation
+    - concrete_product
     - outcome
     - mechanism
     - proof
