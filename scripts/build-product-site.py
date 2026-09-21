@@ -417,7 +417,7 @@ def footer(lang):
     links = "".join(f'<a href="{nav_path(lang,u)}">{escape(n)}</a>' for n,u in NAV[lang])
     labs_url = loc(lang, "/labs/")
     return f'''<footer class="footer"><div class="wrap footer-row">
-      <div><div class="brand-word">VIIVERSION</div><div style="font-size:11px">Digital Business Systems</div></div>
+      <div><div class="brand-word">VIIVERSION</div><div style="font-size:11px">{("Цифровые решения для бизнеса" if lang=="ru" else "Digital Business Systems")}</div></div>
       <div class="footer-links">{links}<a href="{labs_url}">Labs</a><a href="/proposal-studio/">Proposal Studio</a></div>
     </div></footer>'''
 
@@ -661,7 +661,7 @@ def module_page(lang,slug):
 def products_index(lang):
     c=COPY[lang]
     cards="".join(product_card(lang,s) for s in PRODUCTS)
-    return hero(lang,c["products"],c["all_products"],"Booking, Online Sales, Operations, AI Operator and PayBridge." if lang=="en" else "Booking, Online Sales, Operations, AI Operator и PayBridge — самостоятельные продукты, которые можно соединять между собой.","/products/")+f'<section class="section"><div class="wrap"><div class="grid5">{cards}</div></div></section>'
+    return hero(lang,c["products"],c["all_products"],"Booking, Online Sales, Operations, AI Operator and PayBridge." if lang=="en" else "Онлайн-бронирование, онлайн-продажи, CRM и работа команды, AI-консультант и PayBridge — решения, которые можно заказывать отдельно и при необходимости связывать между собой.","/products/")+f'<section class="section"><div class="wrap"><div class="grid5">{cards}</div></div></section>'
 
 def product_page(lang,slug):
     c=COPY[lang]; p=PRODUCTS[slug][lang]
@@ -684,7 +684,7 @@ def product_page(lang,slug):
 def offers_index(lang):
     cards="".join(offer_card(lang,s) for s in OFFERS)
     title="Стартовые форматы" if lang=="ru" else "Starting offers"
-    lead="Небольшие, понятные первые этапы с конкретным scope, сроком и ориентиром по стоимости." if lang=="ru" else "Small, concrete first steps with a defined scope, timeline and price guide."
+    lead="Небольшие, понятные первые этапы с конкретным составом работ, сроком и ориентиром по стоимости." if lang=="ru" else "Small, concrete first steps with a defined scope, timeline and price guide."
     return hero(lang,COPY[lang]["offer"],title,lead,"/offers/")+f'<section class="section"><div class="wrap"><div class="offer-grid">{cards}</div></div></section>'
 
 def offer_page(lang,slug):
@@ -740,20 +740,34 @@ def case_page(lang,slug):
 def enterprise_page(lang):
     c=COPY[lang]
     title="Сложные внутренние системы" if lang=="ru" else "Complex internal systems"
-    lead="Когда готовый SaaS не соответствует процессу, сначала фиксируем роли, данные, ограничения и интеграции, затем проверяем критичный участок через PoC." if lang=="ru" else "When off-the-shelf SaaS does not fit the workflow, we map roles, data, constraints and integrations first, then validate the critical part with a PoC."
-    items=[
-        ("RBAC / workflows","Роли, approvals и audit." if lang=="ru" else "Roles, approvals and audit."),
-        ("API / Webhooks","Надёжные мосты между системами." if lang=="ru" else "Reliable bridges between systems."),
-        ("ETL / Data","Сбор, преобразование и синхронизация данных." if lang=="ru" else "Collect, transform and synchronise data."),
-        ("Database migration","Oracle / PostgreSQL / legacy cleanup."),
-        ("Oracle / PL/SQL","Производительность, процедуры и production support." if lang=="ru" else "Performance, procedures and production support."),
-        ("RA / reconciliation","Telecom Revenue Assurance / FM."),
-        ("L2/L3 support","Managed engineering and troubleshooting."),
-    ]
+    lead="Если готовый сервис не подходит под ваш процесс, сначала фиксируем роли, данные, ограничения и интеграции. Затем проверяем самый критичный участок на ограниченной версии и только после этого расширяем решение." if lang=="ru" else "When off-the-shelf SaaS does not fit the workflow, we map roles, data, constraints and integrations first, then validate the critical part with a PoC."
+    if lang=="ru":
+        items=[
+            ("Роли и права доступа", "Роли, разрешения, согласования и журнал действий."),
+            ("API и webhooks", "Надёжный обмен данными между существующими системами."),
+            ("ETL и данные", "Сбор, преобразование и синхронизация данных."),
+            ("Перенос баз данных", "Oracle / PostgreSQL, очистка и перенос legacy-данных."),
+            ("Oracle / PL/SQL", "Производительность, процедуры и поддержка рабочих систем."),
+            ("Revenue Assurance", "Сверка и контроль потерь для telecom."),
+            ("L2/L3 поддержка", "Диагностика сложных технических проблем и сопровождение."),
+        ]
+        steps=["Диагностика","Архитектура / прототип","Внедрение","Техническое сопровождение"]
+        eyebrow="Инженерные возможности"; head="Что можем сделать"; delivery="Как начинаем"; check="Сначала проверяем критичный участок"; note="Не предлагаем строить большую систему, пока не понятен процесс и не проверена ключевая техническая часть."; cta="Запросить технический разбор"
+    else:
+        items=[
+            ("RBAC / workflows","Roles, approvals and audit."),
+            ("API / Webhooks","Reliable bridges between systems."),
+            ("ETL / Data","Collect, transform and synchronise data."),
+            ("Database migration","Oracle / PostgreSQL / legacy cleanup."),
+            ("Oracle / PL/SQL","Performance, procedures and production support."),
+            ("RA / reconciliation","Telecom Revenue Assurance / FM."),
+            ("L2/L3 support","Managed engineering and troubleshooting."),
+        ]
+        steps=["Discovery","Architecture / PoC","Implementation","Managed Support"]
+        eyebrow="Capabilities"; head="Capabilities"; delivery="Delivery"; check="Validate the critical part first"; note="A full private system is not sold as a fixed package."; cta="Request a technical review"
     mods="".join(f'<article class="module"><h3>{escape(n)}</h3><p>{escape(d)}</p></article>' for n,d in items)
-    steps=["Discovery","Architecture / PoC","Implementation","Managed Support"]
     flow="".join(f'<div class="industry-step">{escape(x)}</div>' for x in steps)
-    return hero(lang,"Enterprise",title,lead,"/enterprise/")+f'''<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Capabilities</div><h2>{'Что можно подключить' if lang=='ru' else 'Capabilities'}</h2></div></div><div class="module-grid">{mods}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Delivery</div><h2>{'Сначала проверяем критичный участок' if lang=='ru' else 'Validate the critical part first'}</h2></div><p>{'Полная система не продаётся как фиксированный пакет.' if lang=='ru' else 'A full private system is not sold as a fixed package.'}</p></div><div class="industry-flow">{flow}</div><div class="actions"><a class="btn btn-primary" href="#contact" data-interest="Enterprise Discovery" data-cta="enterprise">{'Запросить технический разбор' if lang=='ru' else 'Request a technical review'} →</a></div></div></section>'''
+    return hero(lang,"Для крупных систем" if lang=="ru" else "Enterprise",title,lead,"/enterprise/")+f'''<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{eyebrow}</div><h2>{head}</h2></div></div><div class="module-grid">{mods}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{delivery}</div><h2>{check}</h2></div><p>{note}</p></div><div class="industry-flow">{flow}</div><div class="actions"><a class="btn btn-primary" href="#contact" data-interest="Enterprise Discovery" data-cta="enterprise">{cta} →</a></div></div></section>'''
 
 def labs_page(lang):
     cards=[]
@@ -766,11 +780,10 @@ def labs_page(lang):
 
 def about_page(lang):
     c=COPY[lang]
-    team="".join(f'<article class="card"><div class="kicker">{c["team"]}</div><h3>{escape(n)}</h3><p><b>{escape(role)}</b></p><p>{escape(desc)}</p></article>' for n,role,desc in TEAM[lang])
-    title="VIIVERSION — инженерная продуктовая компания" if lang=="ru" else "VIIVERSION — an engineering product company"
-    lead="Строим цифровые системы для бизнеса и одновременно развиваем собственные программные продукты." if lang=="ru" else "We build digital systems for businesses and develop our own software products."
-    method="До разработки разбираем путь клиента, действия команды, источники данных и конкретное место, где процесс ломается." if lang=="ru" else "Before development we map the customer journey, team actions, data sources and the exact point where the workflow breaks."
-    return hero(lang,c["about"],title,lead,"/about/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["team"]}</div><h2>{BRAND[lang]["team_title"]}</h2></div><p>{c["team_lead"]}</p></div><div class="team-grid">{team}</div></div></section><section class="section soft"><div class="wrap"><div class="eyebrow">Method</div><h2>{'Сначала процесс, затем технология' if lang=='ru' else 'Process first, technology second'}</h2><p class="quote">{escape(method)}</p></div></section>'
+    title="VIIVERSION — небольшая инженерная продуктовая команда" if lang=="ru" else "VIIVERSION — an engineering product team"
+    lead="Проектируем клиентские сценарии, интерфейсы, серверную логику, данные и интеграции внутри одной команды." if lang=="ru" else "We design customer flows, interfaces, server logic, data and integrations within one team."
+    method="До разработки разбираем, что делает клиент, что делает сотрудник, где хранятся данные и на каком шаге возникает ручная работа или потеря информации." if lang=="ru" else "Before development we map what the customer does, what staff do, where data lives and where manual work or information loss appears."
+    return hero(lang,c["about"],title,lead,"/about/")+team_trust(lang)+f'<section class="section"><div class="wrap"><div class="eyebrow">{"Как работаем" if lang=="ru" else "Method"}</div><h2>{"Сначала конкретный процесс, затем технология" if lang=="ru" else "Process first, technology second"}</h2><p class="quote">{escape(method)}</p></div></section>'
 
 def write(rel, html):
     path=PUBLIC/rel
