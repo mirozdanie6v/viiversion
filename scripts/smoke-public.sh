@@ -41,16 +41,16 @@ check_absent() {
 }
 
 # Canonical commercial architecture.
-check "$BASE/" "Что можно купить для вашего бизнеса"
+check "$BASE/" "Четыре контура одной цифровой системы"
 check "$BASE/products/" "Онлайн-бронирование"
 check "$BASE/products/online-booking/" "Первый пакет"
 check "$BASE/products/system-integration/" "Интеграция двух систем"
-check "$BASE/industries/" "Решения по типу бизнеса"
-check "$BASE/industries/tourism/" "Обычно начинают с"
+check "$BASE/industries/" "Цифровые системы по типу бизнеса"
+check "$BASE/industries/tourism/" "Типовой цифровой контур"
 check "$BASE/software/" "Proposal Studio"
 check "$BASE/partners/" "Mini App Factory"
 check "$BASE/enterprise/" "Сложные внутренние системы"
-check "$BASE/en/" "Digital solutions for specific business tasks"
+check "$BASE/en/" "We design and build digital systems around the real business process"
 check "$BASE/sitemap.xml" "viiversion.com/products/online-booking/"
 
 # Legacy commercial URLs must remain non-indexable compatibility pages.
@@ -70,4 +70,4 @@ check "$BASE/prototypes.html" "PET NIKA"
 # Server-side lead storage must be live.
 check "$BASE/api/leads/health" '"version":"canonical-v3"'
 
-echo "PUBLIC QA PASS: canonical products, legacy noindex routes, proof assets and lead API are reachable."
+echo "PUBLIC QA PASS: system-first presentation, canonical building blocks, legacy noindex routes, proof assets and lead API are reachable."
