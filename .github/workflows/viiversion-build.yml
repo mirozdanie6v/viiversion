@@ -46,10 +46,10 @@ jobs:
           test -s public/assets/cases/uniq-smart-rent.webp
           test -s public/assets/cases/pet-nika.webp
 
-          grep -Fq "Цифровые решения для конкретных задач бизнеса" public/index.html
-          grep -Fq "Что можно купить для вашего бизнеса" public/index.html
-          grep -Fq "Обычно начинают с" public/index.html
-          grep -Fq "Можно добавить позже" public/index.html
+          grep -Fq "Проектируем и собираем цифровые системы вокруг реального процесса бизнеса" public/index.html
+          grep -Fq "Четыре контура одной цифровой системы" public/index.html
+          grep -Fq "Системы, которые можно открыть и проверить" public/index.html
+          grep -Fq "Компоненты — ниже уровнем, чем сама система" public/index.html
           grep -Fq 'data-industry-tab="hotels"' public/index.html
           grep -Fq 'data-industry-tab="shops"' public/index.html
           ! grep -Fq 'data-industry-tab="enterprise"' public/index.html
@@ -71,8 +71,8 @@ jobs:
           grep -Fq 'landingPage' public/assets/viiversion.js
           grep -Fq 'class="lead-form"' public/index.html
           grep -Fq 'href="/en/products/"' public/en/index.html
-          grep -Fq 'href="/en/software/"' public/en/index.html
-          grep -Fq 'href="/en/partners/"' public/en/index.html
+          grep -Fq 'href="/en/cases/"' public/en/index.html
+          grep -Fq 'href="/en/enterprise/"' public/en/index.html
           ! grep -Fq '/en/en/' public/en/index.html
 
           ! grep -Fq "Booking Start" public/index.html
