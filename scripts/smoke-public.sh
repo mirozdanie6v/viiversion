@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+BASE="${BASE:-https://landing.viiversion.workers.dev}"
+
 check() {
   local url="$1"
   local marker="$2"
@@ -8,7 +10,7 @@ check() {
   tmp="$(mktemp)"
   local code=""
   for _ in 1 2 3 4 5 6 7 8 9 10; do
-    code="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 --output "$tmp" --write-out '%{http_code}' "$url" || true)"
+    code="$(curl --silent --show-error --connect-timeout 10 --max-time 25 --output "$tmp" --write-out '%{http_code}' "$url" || true)"
     if [[ "$code" == "200" ]] && [[ -s "$tmp" ]]; then
       if [[ -z "$marker" ]] || grep -Fqi "$marker" "$tmp"; then
         echo "OK $url HTTP 200"
@@ -23,29 +25,49 @@ check() {
   return 1
 }
 
-BASE="https://landing.viiversion.workers.dev"
+check_absent() {
+  local url="$1"
+  local marker="$2"
+  local tmp
+  tmp="$(mktemp)"
+  curl --silent --show-error --connect-timeout 10 --max-time 25 "$url" -o "$tmp"
+  if grep -Fqi "$marker" "$tmp"; then
+    echo "FAIL $url unexpectedly contains $marker" >&2
+    rm -f "$tmp"
+    return 1
+  fi
+  echo "OK $url excludes $marker"
+  rm -f "$tmp"
+}
 
-# New product architecture
-check "$BASE/" "Product × Industry"
-check "$BASE/products/" "Продуктовые ядра VIIVERSION"
-check "$BASE/products/booking/" "Booking Start"
-check "$BASE/products/paybridge/" "PayBridge"
-check "$BASE/industries/" "Отраслевые конфигурации"
-check "$BASE/industries/tourism/" "Booking Start"
-check "$BASE/solutions/" "Решения вокруг конкретной бизнес-задачи"
-check "$BASE/cases/" "Кейсы как доказательство"
-check "$BASE/enterprise/" "Paid Discovery"
-check "$BASE/labs/" "Собственные продукты VIIVERSION"
-check "$BASE/sitemap.xml" "viiversion.com/products/"
+# Canonical commercial architecture.
+check "$BASE/" "Что можно купить для вашего бизнеса"
+check "$BASE/products/" "Онлайн-бронирование"
+check "$BASE/products/online-booking/" "Первый пакет"
+check "$BASE/products/system-integration/" "Интеграция двух систем"
+check "$BASE/industries/" "Решения по типу бизнеса"
+check "$BASE/industries/tourism/" "Обычно начинают с"
+check "$BASE/software/" "Proposal Studio"
+check "$BASE/partners/" "Mini App Factory"
+check "$BASE/enterprise/" "Сложные внутренние системы"
+check "$BASE/en/" "Digital solutions for specific business tasks"
+check "$BASE/sitemap.xml" "viiversion.com/products/online-booking/"
 
-# Legacy proof library must remain reachable.
+# Legacy commercial URLs must remain non-indexable compatibility pages.
+check "$BASE/modules/online-booking/" "noindex,follow"
+check "$BASE/modules/online-booking/" "/products/online-booking/"
+check "$BASE/offers/booking-start/" "noindex,follow"
+check "$BASE/offers/booking-start/" "/products/online-booking/"
+check_absent "$BASE/sitemap.xml" "/modules/"
+check_absent "$BASE/sitemap.xml" "/offers/"
+
+# Real proof assets and legacy proof library stay reachable.
+check "$BASE/assets/cases/max-tour.webp" ""
+check "$BASE/assets/cases/uniq-smart-rent.webp" ""
+check "$BASE/assets/cases/pet-nika.webp" ""
 check "$BASE/prototypes.html" "PET NIKA"
-check "$BASE/prototypes.html" "UNIQ SMART RENT"
-check "$BASE/cases/pet-nika.html" "PET NIKA"
-check "$BASE/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
 
-# External demos used as proof.
-check "https://pet-nika.viiversion.com/" "PET NIKA"
-check "https://uniq-smart-rent.mirozdanie6v.workers.dev/" "UNIQ"
+# Server-side lead storage must be live.
+check "$BASE/api/leads/health" '"version":"canonical-v3"'
 
-echo "PUBLIC QA PASS: product architecture, legacy proof pages and verified demos are reachable."
+echo "PUBLIC QA PASS: canonical products, legacy noindex routes, proof assets and lead API are reachable."
