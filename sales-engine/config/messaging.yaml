@@ -1,14 +1,69 @@
-version: "1.0"
+version: "1.1"
 name: "VIIVERSION Messaging System"
 
 principles:
   - "One message = one commercial job."
   - "Lead with buyer context and outcome, not the VIIVERSION stack."
   - "Use only observable facts; uncertain internal problems are hypotheses."
+  - "Workflow relevance is not the same as buying intent."
   - "Clarity beats cleverness."
   - "Proof beats adjectives."
   - "The first cold CTA asks for interest or permission, not calendar time."
   - "AI is a mechanism, not the headline, unless the buyer is explicitly shopping for AI."
+  - "Pre-send quality and market performance are separate metrics."
+
+pre_send_model:
+  dimensions:
+    signal_strength:
+      scale: "0-2"
+      rule: "0 generic fit; 1 observable workflow signal; 2 workflow signal plus current business/buying trigger."
+    product_market_fit:
+      scale: "0-2"
+      rule: "How directly the selected offer maps to this buyer's visible job/problem."
+    message_clarity:
+      scale: "0-1"
+      rule: "Buyer can understand the outcome without decoding seller terminology."
+    proof_strength:
+      scale: "0-2"
+      rule: "0 description only; 1 prototype/sample; 2 live relevant demo, production proof or closely matched case."
+    cta_friction:
+      scale: "0-1"
+      rule: "1 only when the ask is low effort and appropriate to the awareness stage."
+    localization:
+      scale: "0-1"
+      rule: "Language, honorifics, register and channel style fit the recipient."
+    claim_safety:
+      scale: "0-1"
+      rule: "No invented losses, ROI, internal process claims or unsupported compatibility."
+  total: 10
+  ready_threshold: 8
+  hard_fail:
+    - "wrong company or person"
+    - "invented metric, loss or ROI"
+    - "unsupported integration/compatibility claim"
+    - "more than one primary CTA"
+    - "cold message asks for a meeting before interest"
+    - "translation is literal/unnatural for the channel"
+  note: "A 10/10 pre-send score is not a prediction of commercial performance."
+
+signals:
+  hierarchy:
+    strongest:
+      - "explicit active project/request/RFP"
+      - "technology migration or integration need"
+      - "new branch/location/service/product launch"
+      - "active hiring tied to the workflow"
+      - "recent operational change"
+      - "new campaign or expansion"
+    medium:
+      - "observable manual workflow"
+      - "multi-channel customer intake"
+      - "catalog/quote handled through chat"
+      - "website flow showing avoidable friction"
+    weak:
+      - "industry fit only"
+      - "generic company similarity"
+  rule: "Use workflow signal for relevance; seek a second current trigger when possible for timing."
 
 cold_outreach:
   email:
@@ -21,7 +76,8 @@ cold_outreach:
   structure:
     - trigger
     - problem_hypothesis
-    - outcome_or_mechanism
+    - buyer_outcome
+    - mechanism
     - proof
     - interest_cta
   subject_rules:
@@ -46,36 +102,47 @@ cold_outreach:
     - "personal trivia"
     - "technical stack unless buyer is technical"
     - "price unless the experiment explicitly tests price or buyer asked"
+    - "seller abstractions such as structured flow when a concrete buyer outcome is available"
 
 personalization_priority:
-  - "activity_or_trigger"
-  - "company_workflow"
-  - "role_priority"
-  - "industry_pattern"
-  - "personal_trivia"
+  - "current buying/business trigger"
+  - "company workflow"
+  - "role priority"
+  - "industry pattern"
+  - "personal trivia"
 
-cta_ladder:
-  cold:
-    objective: "interest_or_permission"
-    examples:
-      - "Отправить короткое демо?"
-      - "Would it be useful if I send the 60-second demo?"
-      - "Можно показать, как это выглядит на телефоне?"
-  positive_reply:
-    objective: "deliver_asset_then_one_question"
-  after_demo:
-    objective: "validate_fit"
-    examples:
-      - "Есть смысл примерить это к вашему процессу?"
-  qualified:
-    objective: "specific_next_step"
-    examples:
-      - "Подойдёт вторник 14:00 или среда 11:00?"
-  proposal:
-    objective: "decision_or_next_commitment"
+persona_map:
+  owner:
+    prioritize:
+      - "customer experience"
+      - "less operational friction"
+      - "visibility/control"
+      - "commercial outcome"
+    avoid:
+      - "implementation detail"
+  operations_manager:
+    prioritize:
+      - "fewer incomplete requests"
+      - "less manual coordination"
+      - "clear status and handoff"
+      - "repeatable workflow"
+  sales_manager:
+    prioritize:
+      - "faster qualification"
+      - "less back-and-forth"
+      - "better follow-up"
+      - "more structured lead context"
+  technical_buyer:
+    prioritize:
+      - "integration boundary"
+      - "API/data ownership"
+      - "security/deployment"
+      - "implementation risk"
+    allow:
+      - "technical stack when relevant"
 
 value_proposition:
-  formula: "For [buyer/ICP] with [observable situation], [offer] helps [desired job/outcome] by [mechanism], without [main friction/anxiety]. Proof: [relevant asset]."
+  formula: "For [buyer/ICP] with [observable situation], [offer] helps [desired outcome] by [mechanism], without [main friction/anxiety]. Proof: [relevant asset]."
   required:
     - buyer
     - situation
@@ -88,6 +155,7 @@ value_proposition:
     - "innovative"
     - "digital transformation"
     - "10x ROI"
+    - "structured flow"
 
 proof_hierarchy:
   - live_relevant_demo
@@ -96,6 +164,27 @@ proof_hierarchy:
   - screenshot_or_sample_output
   - architecture_or_description
   - unsupported_claim
+proof_rule: "Name what the proof demonstrates; do not just say 'we have a demo'."
+
+cta_ladder:
+  cold:
+    objective: "interest_or_permission"
+    examples:
+      - "Отправить короткое демо?"
+      - "Would it be useful if I send the short demo?"
+      - "Tôi gửi demo ngắn để anh/chị xem thử nhé?"
+  positive_reply:
+    objective: "deliver_asset_then_one_diagnostic_question"
+  after_demo:
+    objective: "validate_fit"
+    examples:
+      - "Есть смысл примерить это к вашему процессу?"
+  qualified:
+    objective: "specific_next_step"
+    examples:
+      - "Подойдёт вторник 14:00 или среда 11:00?"
+  proposal:
+    objective: "decision_or_next_commitment"
 
 tone:
   attributes:
@@ -107,35 +196,76 @@ tone:
     - buyer_language
   pronoun_rule: "Prefer buyer-focused language; minimize 'we' paragraphs."
   sentence_rule: "One idea per sentence."
-  translation_rule: "Translate intent and business language, not Russian syntax literally."
+  translation_rule: "Translate intent and business language, not Russian or English syntax literally."
+  localization_rule: "For Vietnamese messaging, verify natural anh/chị/bác sĩ usage and Zalo/Facebook conversational register."
 
 follow_up:
   email_default:
     touches: 6
     window_days: "14-28"
+    cadence_days: [0, 3, 7, 12, 19, 28]
     rule: "Do not repeat the full pitch; bump or add one new useful proof/angle."
   messenger_default:
     touches_max: 4
+    cadence_days: [0, 3, 8, 15]
     rule: "Use fewer touches than email; stop on explicit disinterest or channel discomfort."
+  sequence:
+    - "touch_1: trigger + outcome + proof + permission CTA"
+    - "touch_2: short bump or one concrete proof"
+    - "touch_3: alternative angle tied to the same buyer job"
+    - "touch_4: polite close-the-loop"
 
-quality_gate:
-  scoring:
-    observable_relevance: 2
-    buyer_language: 1
-    single_problem: 1
-    clear_outcome: 1
-    relevant_proof: 1
-    low_friction_cta: 1
-    concise: 1
-    no_hype: 1
-    no_unverified_claims: 1
-  pass_score: 8
-  hard_fail:
-    - "invented metric or loss claim"
-    - "wrong company/person"
-    - "unsupported compatibility claim"
-    - "more than one primary CTA"
-    - "cold message asks for a meeting before interest"
+reply_playbook:
+  interested:
+    action: "send relevant proof and ask one diagnostic question"
+  asks_price:
+    action: "answer with the supported price/range or state discovery dependency; do not dodge"
+  already_have_system:
+    action: "ask one gap/edge-case question; position as module/integration only if relevant"
+  send_info:
+    action: "send one concise asset, not a long proposal"
+  not_interested:
+    action: "acknowledge, record reason if offered, stop sequence"
+  wrong_person:
+    action: "ask who owns the workflow; do not restart full pitch"
+  asks_who_are_you:
+    action: "one-line VIIVERSION identity + relevant proof + no biography"
+
+sales_enablement:
+  proof_kit_required_per_offer:
+    - "one-line outcome"
+    - "30-60 second demo or equivalent quick proof"
+    - "3 representative screenshots"
+    - "live demo link when available"
+    - "one limitation / what is not implemented"
+    - "one next-step CTA"
+  persona_required:
+    - owner
+    - operations_manager
+    - sales_manager
+    - technical_buyer
+  rule: "Do not create a full proposal before a meaningful commercial signal unless the experiment explicitly tests proposals."
+
+measurement:
+  pre_send:
+    - signal_strength
+    - product_market_fit
+    - message_clarity
+    - proof_strength
+    - cta_friction
+    - localization
+    - claim_safety
+  market_performance:
+    - positive_reply_rate
+    - demo_accept_rate
+    - qualified_conversation_rate
+    - paid_entry_rate
+  secondary:
+    - reply_rate
+  do_not_optimize_alone:
+    - open_rate
+  ab_test_rule: "Change one meaningful variable at a time and record the variant in the experiment."
+  performance_rule: "Never label a message commercially strong solely from a pre-send score."
 
 landing_and_offer_copy:
   above_fold_order:
@@ -154,16 +284,4 @@ landing_and_offer_copy:
       - friction
       - anxiety
       - distraction
-  cta_rule: "Button/CTA states the next useful action, not generic 'Submit' or 'Learn more' when a more concrete action exists."
-
-measurement:
-  primary:
-    - positive_reply_rate
-    - demo_accept_rate
-    - qualified_conversation_rate
-    - paid_entry_rate
-  secondary:
-    - reply_rate
-  do_not_optimize_alone:
-    - open_rate
-  ab_test_rule: "Change one meaningful variable at a time and record the variant in the experiment."
+  cta_rule: "CTA states the next useful action, not generic 'Submit' or 'Learn more' when a more concrete action exists."
