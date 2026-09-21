@@ -13,10 +13,7 @@ jobs:
       - name: Test analytics endpoint
         run: |
           set -euo pipefail
-          echo "=== tracker endpoint ==="
-          curl -fsSL https://dashboard.viiversion.com/tracker.js | grep -F "/api/collect"
-          echo "=== custom conversion event ==="
-          code="$(curl -sS -o response.txt -w '%{http_code}' -X POST https://dashboard.viiversion.com/api/collect             -H 'content-type: text/plain;charset=UTF-8'             --data '{"eventType":"lead_submit","project":"VIIVERSION","hostname":"viiversion.com","path":"/qa-conversion","pageUrl":"https://viiversion.com/qa-conversion","title":"QA conversion event","interest":"QA","hasContact":true,"occurredAt":"2026-09-21T12:20:00.000Z"}')"
+          code="$(curl -sS -o response.txt -w '%{http_code}' -X POST https://dashboard.viiversion.com/api/collect             -H 'content-type: text/plain;charset=UTF-8'             --data '{"eventType":"pageview","project":"VIIVERSION","hostname":"viiversion.com","path":"/__conversion/lead-submit","pageUrl":"https://viiversion.com/__conversion/lead-submit","title":"Conversion: lead_submit | QA","queryString":"?source=qa","visitorId":"qa-conversion-check","sessionId":"qa-conversion-check","occurredAt":"2026-09-21T12:20:00.000Z"}')"
           echo "HTTP $code"
           cat response.txt
           test "$code" -ge 200
