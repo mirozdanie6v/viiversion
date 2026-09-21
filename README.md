@@ -10,69 +10,132 @@ Production website for **VIIVERSION — Digital Business Systems**.
 Deployment branch: `viiversion`  
 Cloudflare Worker: `landing`
 
-## Site architecture
+## Commercial architecture
 
-The public site is generated as a connected product system rather than a single landing page.
+The public website is built around a simple customer-facing path:
 
-### Products
-- `/products/sales/`
-- `/products/booking/`
-- `/products/operations/`
-- `/products/ai-operator/`
-- `/products/paybridge/`
+```
+problem → product → proof → small first offer → expansion
+```
 
-### Industries
-- `/industries/`
-- Tourism, rental, clinics, beauty, hospitality, restaurants, retail, real estate, education, events, e-commerce and service businesses.
+The internal product matrix remains:
 
-### Solutions
-- `/solutions/online-sales/`
-- `/solutions/booking-automation/`
-- `/solutions/ai-sales/`
-- `/solutions/fast-checkout/`
-- `/solutions/private-operations/`
+```
+product × industry × problem × offer
+```
 
-### Proof / special lanes
-- `/cases/`
-- `/enterprise/`
-- `/labs/`
-- `/about/`
-- `/proposal-studio/`
+but internal terms such as buyer journey, entry offer, commercial core and vertical are not exposed as client copy.
 
-## Build model
+### Main products
 
-The repository still restores the legacy static site because existing case/prototype pages remain valuable proof assets.
+- Online Sales
+- Booking
+- Operations
+- AI Operator
+- PayBridge
 
-Build order:
+### Deep industry pages
 
-1. restore legacy site;
+- Tourism
+- Rental
+- Clinics
+
+Other industries remain visible in the catalogue but do not get thin SEO pages until there is enough specific content and proof.
+
+### Starting offers
+
+- Booking Start
+- Mini App Pilot
+- AI Operator Pilot
+- Operations Core
+- Integration Sprint
+
+### Targeted Product × Industry landings
+
+Examples:
+
+- `/solutions/tourism/booking/`
+- `/solutions/tourism/ai-operator/`
+- `/solutions/rental/booking/`
+- `/solutions/clinics/booking/`
+- `/solutions/clinics/ai-operator/`
+- `/solutions/restaurants/paybridge/`
+
+## Languages
+
+Russian is published at root URLs.
+
+English mirrors the same commercial architecture under:
+
+`/en/`
+
+Generated pages include canonical and hreflang links.
+
+## Content and rendering
+
+Client-facing marketing content is stored separately from rendering logic:
+
+- `scripts/site_content.py` — RU/EN product, offer, industry, case, Labs and team content.
+- `scripts/build-product-site.py` — page rendering, shared components, SEO, conversion UX and sitemap generation.
+
+This allows copy to be edited without rewriting page templates.
+
+## Conversion layer
+
+Every generated commercial page includes a contextual enquiry form.
+
+The form captures:
+
+- page path;
+- UTM source / medium / campaign / content / term;
+- referrer;
+- selected CTA / interest;
+- contact and task supplied by the visitor.
+
+The current static implementation prepares a structured message for an already-published VIIVERSION contact channel and does **not** pretend to submit to a CRM endpoint that does not exist yet. The form UI can later be connected to a webhook/CRM without changing page structure.
+
+## Proof status
+
+Public proof is explicitly labelled:
+
+- WORKING DEMO
+- PUBLIC PROTOTYPE
+- CLIENT CONCEPT
+
+A prototype is not presented as a production deployment.
+
+Legacy proof routes remain published because several working demos and existing case pages depend on them.
+
+## Build order
+
+1. restore legacy proof site;
 2. apply legacy compatibility patches;
 3. verify legacy prototype links;
-4. generate the new product site with `scripts/build-product-site.py`;
-5. build Proposal Studio public/legal pages;
+4. generate the commercial RU/EN product site;
+5. generate Proposal Studio public/legal pages;
 6. inject analytics into all generated HTML.
-
-The new homepage and product architecture are therefore generated **after** legacy verification, while old prototype/case pages remain published.
 
 ## QA
 
 Every push to `viiversion` runs:
 
-- `Build check`
-- `VIIVERSION build QA`
-- `Public smoke check`
-- `Live diagnostics`
+- Build check
+- VIIVERSION build QA
+- Public smoke check
+- Live diagnostics
 
-The checks verify both the new product routes and the existing proof/demo routes.
+QA covers:
 
-## Product principle
+- RU and EN homepages;
+- product, offer and targeted solution routes;
+- price/timeline content;
+- proof status labels;
+- contextual lead form;
+- Product × Industry interaction;
+- absence of internal marketing jargon on the homepage;
+- mobile navigation;
+- legacy public demos.
 
-The public architecture follows:
+## Current technical note
 
-```
-product core × industry × business problem
-            ↓
-entry offer → module combination → vertical system → private system
-```
-
-The internal commercial catalogue can contain many modules, but the public site presents a smaller number of understandable product cores and composes them into industry-specific solutions.
+The repository still restores the original archived site because legacy proof pages remain in use. The commercial site itself is now data-driven through `site_content.py`; the next infrastructure cleanup can remove the archive dependency once legacy proof pages are migrated into the same content architecture.
