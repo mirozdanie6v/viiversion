@@ -44,9 +44,9 @@ COPY = {
         "solutions": "Решения",
         "products": "Продукты",
         "cases": "Кейсы",
-        "enterprise": "Enterprise",
-        "labs": "Labs",
-        "about": "Компания",
+        "enterprise": "Крупные системы",
+        "labs": "Готовые продукты",
+        "about": "О нас",
         "contact": "Обсудить задачу",
         "view_demo": "Открыть демо",
         "view_case": "Разобрать кейс",
@@ -451,10 +451,11 @@ def header(lang, path="/"):
 
 def footer(lang):
     links = "".join(f'<a href="{nav_path(lang,u)}">{escape(n)}</a>' for n,u in NAV[lang])
-    labs_url = loc(lang, "/labs/")
+    software_url = loc(lang, "/software/")
+    partners_url = loc(lang, "/partners/")
     return f'''<footer class="footer"><div class="wrap footer-row">
       <div><div class="brand-word">VIIVERSION</div><div style="font-size:11px">{("Цифровые решения для бизнеса" if lang=="ru" else "Digital Business Systems")}</div></div>
-      <div class="footer-links">{links}<a href="{labs_url}">Labs</a><a href="/proposal-studio/">Proposal Studio</a></div>
+      <div class="footer-links">{links}<a href="{software_url}">{("Готовые продукты" if lang=="ru" else "Software")}</a><a href="{partners_url}">{("Партнёрам" if lang=="ru" else "Partners")}</a><a href="/proposal-studio/">Proposal Studio</a></div>
     </div></footer>'''
 
 def contact(lang, default_interest=""):
