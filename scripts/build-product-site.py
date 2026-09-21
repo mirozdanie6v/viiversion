@@ -4,6 +4,7 @@ from urllib.parse import quote
 import json
 import re
 import sys
+import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = ROOT / "public"
@@ -12,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from site_content import (
     LANGS, BRAND, PRODUCTS, OFFERS, INDUSTRIES, INDUSTRY_CATALOG,
-    TARGET_LANDINGS, CASES, LABS, TEAM, NAV
+    TARGET_LANDINGS, MODULES, INDUSTRY_EXPLORER, CASES, LABS, TEAM, NAV
 )
 
 if not HOME.exists():
@@ -173,6 +174,7 @@ CSS = r'''
 .section{padding:72px 0;border-bottom:1px solid var(--line)}.section.soft{background:var(--soft)}.section.dark{background:var(--navy);color:#fff;border-bottom:0}.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:28px}.section-head h2,.section h2{font-size:clamp(30px,4vw,47px);line-height:1.04;letter-spacing:-.04em;margin:8px 0 0}.section-head p{max-width:590px;color:var(--muted);margin:0}.dark .section-head p,.dark p{color:#b7c6d8}.text-link{font-size:14px;font-weight:800}
 .grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid{display:grid;gap:15px}.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}.grid5{grid-template-columns:repeat(5,1fr)}.case-grid{grid-template-columns:repeat(3,1fr)}.offer-grid{grid-template-columns:repeat(4,1fr)}.team-grid{grid-template-columns:repeat(2,1fr)}
 .card{border:1px solid var(--line);border-radius:var(--r);padding:23px;background:#fff}.card:hover{border-color:#b8c8dc;box-shadow:var(--shadow)}.card .kicker{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7c8b9d;font-weight:850}.card h3{font-size:22px;line-height:1.13;margin:9px 0}.card p{font-size:14px;color:var(--muted)}.product-card{min-height:300px;display:flex;flex-direction:column}.product-mark{width:42px;height:42px;border-radius:12px;background:#edf3ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:900;margin-bottom:20px}.product-card .text-link,.case-card .actions{margin-top:auto}
+.industry-browser{border:1px solid var(--line);border-radius:24px;background:#fff;overflow:hidden}.industry-tabs{display:flex;gap:7px;overflow:auto;padding:14px;border-bottom:1px solid var(--line);background:var(--soft)}.industry-tabs button{white-space:nowrap;border:1px solid #ccd7e4;background:#fff;border-radius:999px;padding:10px 15px;font-weight:800;cursor:pointer;color:#44546a}.industry-tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink)}.industry-panel{padding:26px}.industry-panel-head{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:20px}.industry-panel-head h3{font-size:30px;letter-spacing:-.03em;margin:0 0 5px}.industry-panel-head p{margin:0;color:var(--muted)}.module-buy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.module-buy-card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}.module-buy-card h4{font-size:18px;margin:0 0 7px}.module-buy-card p{font-size:13px;color:var(--muted);margin:0 0 14px}.module-buy-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:auto}.module-buy-meta div{background:var(--soft);border-radius:9px;padding:9px}.module-buy-meta small{display:block;font-size:9px;color:#7a8797;text-transform:uppercase;letter-spacing:.06em}.module-buy-meta b{font-size:12px}.module-buy-card .text-link{margin-top:13px}.trust-team{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.team-person{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center;border:1px solid var(--line);border-radius:22px;padding:18px;background:#fff}.team-photo{width:150px;height:150px;border-radius:16px;object-fit:cover;display:block}.team-person h3{font-size:24px;margin:3px 0 7px}.team-person .role{font-weight:800;font-size:13px}.team-person p{font-size:13px;color:var(--muted);margin:8px 0 0}.trust-box{margin-top:18px;border-radius:20px;background:#edf4ff;border:1px solid #d3e0fb;padding:22px}.trust-box h3{margin:0 0 14px;font-size:22px}.trust-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.trust-item{padding:13px 14px;border-radius:12px;background:#fff;font-size:13px;font-weight:700}.buy-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.buy-step{border:1px solid var(--line);border-radius:15px;padding:16px;background:#fff}.buy-step b{display:block;margin-bottom:6px}.buy-step span{font-size:12px;color:var(--muted)}.hero-safety{border-radius:26px;padding:25px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15)}.hero-safety h3{font-size:19px;margin:0 0 16px}.hero-safety ul{list-style:none;margin:0;padding:0}.hero-safety li{padding:12px 0;border-top:1px solid rgba(255,255,255,.12);font-size:14px;color:#d3dfec}.hero-safety li:before{content:"✓";display:inline-block;margin-right:9px;color:#78d9b7;font-weight:900}.module-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.module-step{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff}.module-step .num{display:block;color:var(--blue);font-size:11px;font-weight:900;margin-bottom:7px}
 .problem-card{padding:22px;border-radius:17px;border:1px solid var(--line);background:#fff}.problem-card h3{font-size:18px;margin:0 0 8px}.problem-card p{margin:0;color:var(--muted);font-size:14px}.problem-card a{display:block;margin-top:12px;color:var(--blue);font-size:13px;font-weight:800}
 .status{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:10px;letter-spacing:.08em;font-weight:900;background:#eef2f7;color:#596a7c}.status.working-demo{background:#e7f7f1;color:#087355}.status.prototype{background:#edf3ff;color:#225fcc}.status.concept{background:#fff3e3;color:#985c0c}
 .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}.badge{font-size:11px;font-weight:720;background:#eef2f7;color:#526177;border-radius:999px;padding:5px 8px}.case-card{display:flex;flex-direction:column;min-height:265px}.case-top{display:flex;justify-content:space-between;gap:15px}.case-card .actions{display:flex}
@@ -186,8 +188,8 @@ CSS = r'''
 .special-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.special-box{border-radius:24px;padding:29px;background:#0d2138;color:#fff}.special-box.alt{background:#edf3ff;color:var(--ink)}.special-box p{color:#bbcadb}.special-box.alt p{color:var(--muted)}
 .contact-bar{padding:62px 0;background:#eef4ff}.contact-layout{display:grid;grid-template-columns:.92fr 1.08fr;gap:38px}.contact-layout h2{font-size:38px;line-height:1.04;letter-spacing:-.04em;margin:8px 0 12px}.contact-layout p{color:var(--muted)}.lead-form{background:#fff;border:1px solid #d8e1ec;border-radius:22px;padding:22px;box-shadow:var(--shadow)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.lead-form label{display:block;font-size:11px;color:#667588;font-weight:750;margin-bottom:5px}.lead-form input,.lead-form textarea{width:100%;border:1px solid #ccd7e4;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink)}.lead-form textarea{min-height:112px;resize:vertical}.form-full{grid-column:1/-1}.form-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:13px}.form-note,.form-status{font-size:11px;color:#718095;margin-top:11px}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .footer{padding:32px 0;background:#06111f;color:#aab9ca}.footer-row{display:flex;justify-content:space-between;gap:25px}.footer-links{display:flex;gap:16px;flex-wrap:wrap;font-size:12px}
-@media(max-width:1050px){.nav{display:none}.mobile-toggle{display:block}.nav.open{display:flex;position:absolute;left:20px;right:20px;top:66px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.hero-grid{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(2,1fr)}.grid4{grid-template-columns:repeat(2,1fr)}.offer-grid{grid-template-columns:repeat(2,1fr)}.matrix-wrap{grid-template-columns:1fr}.matrix-tabs{flex-direction:row;overflow:auto}.matrix-results{grid-template-columns:repeat(2,1fr)}.industry-flow{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:720px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-row{height:62px}.vii-logo{height:29px!important}.header-cta{display:none}.hero{padding:52px 0 44px}.hero h1,.page-hero h1{font-size:41px}.hero p,.page-hero p{font-size:17px}.section{padding:50px 0}.section-head{display:block}.section-head p{margin-top:12px}.grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid,.two-col,.compare,.module-grid,.special-grid,.contact-layout,.matrix-results,.industry-flow,.form-grid{grid-template-columns:1fr}.matrix-tabs{padding-bottom:4px}.matrix-tabs button{white-space:nowrap}.product-card,.case-card,.offer-card{min-height:0}.industry-step:not(:last-child):after{content:"↓";right:auto;left:50%;top:auto;bottom:-16px}.scope-meta{grid-template-columns:1fr}.form-full{grid-column:auto}.footer-row{display:block}.footer-links{margin-top:18px}}
+@media(max-width:1050px){.module-buy-grid{grid-template-columns:repeat(2,1fr)}.trust-team{grid-template-columns:1fr}.buy-steps,.module-steps{grid-template-columns:repeat(3,1fr)}.nav{display:none}.mobile-toggle{display:block}.nav.open{display:flex;position:absolute;left:20px;right:20px;top:66px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.hero-grid{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(2,1fr)}.grid4{grid-template-columns:repeat(2,1fr)}.offer-grid{grid-template-columns:repeat(2,1fr)}.matrix-wrap{grid-template-columns:1fr}.matrix-tabs{flex-direction:row;overflow:auto}.matrix-results{grid-template-columns:repeat(2,1fr)}.industry-flow{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-row{height:62px}.vii-logo{height:29px!important}.header-cta{display:none}.hero{padding:52px 0 44px}.hero h1,.page-hero h1{font-size:41px}.hero p,.page-hero p{font-size:17px}.section{padding:50px 0}.section-head{display:block}.section-head p{margin-top:12px}.grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid,.two-col,.compare,.module-grid,.special-grid,.contact-layout,.matrix-results,.industry-flow,.form-grid,.module-buy-grid,.trust-list,.buy-steps,.module-steps{grid-template-columns:1fr}.industry-panel{padding:18px}.industry-panel-head{display:block}.team-person{grid-template-columns:92px 1fr}.team-photo{width:92px;height:92px}.matrix-tabs{padding-bottom:4px}.matrix-tabs button{white-space:nowrap}.product-card,.case-card,.offer-card{min-height:0}.industry-step:not(:last-child):after{content:"↓";right:auto;left:50%;top:auto;bottom:-16px}.scope-meta{grid-template-columns:1fr}.form-full{grid-column:auto}.footer-row{display:block}.footer-links{margin-top:18px}}
 '''
 
 JS = r'''
@@ -196,6 +198,21 @@ document.addEventListener("DOMContentLoaded",()=>{
   const PROJECT="VIIVERSION";
   const toggle=document.querySelector(".mobile-toggle"), nav=document.querySelector(".nav");
   if(toggle&&nav) toggle.addEventListener("click",()=>nav.classList.toggle("open"));
+
+  const industryTabs=[...document.querySelectorAll("[data-industry-tab]")];
+  const industryPanels=[...document.querySelectorAll("[data-industry-panel]")];
+  if(industryTabs.length&&industryPanels.length){
+    const showIndustry=(slug)=>{
+      industryTabs.forEach(x=>{
+        const active=x.dataset.industryTab===slug;
+        x.classList.toggle("active",active);
+        x.setAttribute("aria-selected",active?"true":"false");
+      });
+      industryPanels.forEach(x=>x.hidden=x.dataset.industryPanel!==slug);
+    };
+    industryTabs.forEach(x=>x.addEventListener("click",()=>showIndustry(x.dataset.industryTab)));
+    showIndustry(industryTabs[0].dataset.industryTab);
+  }
 
   const tabs=[...document.querySelectorAll("[data-matrix-product]")];
   const results=[...document.querySelectorAll("[data-products]")];
@@ -209,7 +226,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
 
   const qs=new URLSearchParams(location.search);
-  const campaign={
+  const currentTouch={
     source:qs.get("utm_source")||"",
     medium:qs.get("utm_medium")||"",
     campaign:qs.get("utm_campaign")||"",
@@ -219,7 +236,18 @@ document.addEventListener("DOMContentLoaded",()=>{
     referrer:document.referrer||"",
     path:location.pathname
   };
-  try{sessionStorage.setItem("viiversion_campaign",JSON.stringify(campaign))}catch(_){}
+  let campaign=currentTouch;
+  try{
+    const saved=JSON.parse(sessionStorage.getItem("viiversion_campaign")||"null");
+    const hasCampaign=Boolean(currentTouch.source||currentTouch.medium||currentTouch.campaign||currentTouch.vvCampaign);
+    if(saved){
+      campaign={...saved,lastPath:location.pathname,lastReferrer:document.referrer||saved.lastReferrer||""};
+      if(hasCampaign) campaign.lastTouch=currentTouch;
+    }else{
+      campaign={...currentTouch,landingPage:location.pathname,firstReferrer:document.referrer||"",firstTouch:currentTouch};
+    }
+    sessionStorage.setItem("viiversion_campaign",JSON.stringify(campaign));
+  }catch(_){}
 
   const analytics=(logicalType,detail={})=>{
     const storage=(name)=>{try{return window[name]}catch(_){return null}};
@@ -497,65 +525,138 @@ def offer_card(lang, slug):
       <a class="text-link" href="{loc(lang,'/offers/'+slug+'/')}">{COPY[lang]["learn_more"]} →</a>
     </article>'''
 
+def module_buy_card(lang, slug):
+    m = MODULES[slug][lang]
+    c = COPY[lang]
+    return f'''<article class="module-buy-card">
+      <h4>{escape(m["name"])}</h4>
+      <p>{escape(m["short"])}</p>
+      <div class="module-buy-meta"><div><small>{c["price"]}</small><b>{escape(m["price"])}</b></div><div><small>{c["timeline"]}</small><b>{escape(m["timeline"])}</b></div></div>
+      <a class="text-link" href="{loc(lang,'/modules/'+slug+'/')}">{'Что входит и как начать' if lang=='ru' else 'What is included and how to start'} →</a>
+    </article>'''
+
+def industry_browser(lang):
+    tabs=[]
+    panels=[]
+    for idx,(slug,item) in enumerate(INDUSTRY_EXPLORER.items()):
+        info=item[lang]
+        tabs.append(f'<button type="button" role="tab" aria-selected="{"true" if idx==0 else "false"}" class="{"active" if idx==0 else ""}" data-industry-tab="{slug}">{escape(info["name"])}</button>')
+        cards="".join(module_buy_card(lang,m) for m in item["modules"])
+        panels.append(f'''<div class="industry-panel" data-industry-panel="{slug}" {"hidden" if idx else ""}>
+          <div class="industry-panel-head"><div><h3>{escape(info["name"])}</h3><p>{escape(info["lead"])}</p></div><a class="text-link" href="{loc(lang,'/modules/')}">{'Все решения' if lang=='ru' else 'All solutions'} →</a></div>
+          <div class="module-buy-grid">{cards}</div>
+        </div>''')
+    title="Что можно купить для вашего бизнеса" if lang=="ru" else "What you can buy for your business"
+    lead="Выберите сферу — ниже появятся конкретные решения, которые можно заказать отдельно." if lang=="ru" else "Choose your industry to see concrete solutions that can be purchased separately."
+    return f'''<section class="section" id="industries"><div class="wrap">
+      <div class="section-head"><div><div class="eyebrow">{"Отрасли" if lang=="ru" else "Industries"}</div><h2>{title}</h2></div><p>{lead}</p></div>
+      <div class="industry-browser"><div class="industry-tabs" role="tablist">{"".join(tabs)}</div>{"".join(panels)}</div>
+    </div></section>'''
+
+def team_trust(lang):
+    c=COPY[lang]
+    photos=["/assets/team/dmitrii.webp","/assets/team/olga.webp"]
+    people=[]
+    for idx,(name,role,desc) in enumerate(TEAM[lang]):
+        people.append(f'''<article class="team-person"><img class="team-photo" src="{photos[idx]}" alt="{escape(name)}" loading="lazy"><div>
+          <div class="eyebrow">{c["team"]}</div><h3>{escape(name)}</h3><div class="role">{escape(role)}</div><p>{escape(desc)}</p>
+        </div></article>''')
+    if lang=="ru":
+        trust=["Сначала показываем, какой именно участок будем менять","До разработки фиксируем, что входит в первый этап, срок и стоимость","Не заменяем рабочие системы, если задачу можно решить интеграцией","Демо, прототипы и клиентские концепции всегда помечаем отдельно"]
+        title="Почему безопасно начинать с небольшого этапа"
+        lead="Вы общаетесь напрямую с людьми, которые проектируют и собирают решение — без цепочки аккаунтов и случайных подрядчиков."
+    else:
+        trust=["We show exactly what will change before development","Scope, timeline and price are agreed before the first build","We keep working systems when integration is enough","Demos, prototypes and client concepts are labelled separately"]
+        title="Why the first step stays controlled"
+        lead="You work directly with the people designing and building the solution — without a chain of account managers and unknown subcontractors."
+    items="".join(f'<div class="trust-item">✓ {escape(x)}</div>' for x in trust)
+    return f'''<section class="section soft" id="team"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["about"]}</div><h2>{escape(BRAND[lang]["team_title"])}</h2></div><p>{escape(lead)}</p></div><div class="trust-team">{"".join(people)}</div><div class="trust-box"><h3>{escape(title)}</h3><div class="trust-list">{items}</div></div></div></section>'''
+
 def home(lang):
-    b = BRAND[lang]; c = COPY[lang]
-    products = "".join(product_card(lang,s) for s in PRODUCTS)
-    top_cases = "".join(case_card(lang,s) for s in ("max-tour","uniq-smart-rent","pet-nika"))
-    offers = "".join(offer_card(lang,s) for s in ("booking-start","mini-app-pilot","ai-operator-pilot","integration-sprint"))
-    problems = [
-        (c["problem_booking"],c["problem_booking_desc"],"booking"),
-        (c["problem_leads"],c["problem_leads_desc"],"online-sales"),
-        (c["problem_ai"],c["problem_ai_desc"],"ai-operator"),
-        (c["problem_pay"],c["problem_pay_desc"],"paybridge"),
-        (c["problem_ops"],c["problem_ops_desc"],"operations"),
-        (c["problem_custom"],c["problem_custom_desc"],"enterprise"),
-    ]
-    prob_html=""
-    for title,desc,slug in problems:
-        url = loc(lang,"/enterprise/") if slug=="enterprise" else loc(lang,"/products/"+slug+"/")
-        prob_html += f'<article class="problem-card"><h3>{escape(title)}</h3><p>{escape(desc)}</p><a href="{url}">{c["learn_more"]} →</a></article>'
-    matrix_cards = []
-    mapping = {
-        "tourism":["online-sales","booking","operations","ai-operator","paybridge"],
-        "rental":["online-sales","booking","operations","paybridge"],
-        "clinics":["online-sales","booking","operations","ai-operator"],
-    }
-    for ind,prods in mapping.items():
-        label=INDUSTRIES[ind][lang]["name"]
-        matrix_cards.append(f'<a class="matrix-result" data-products="{",".join(prods)}" href="{loc(lang,"/industries/"+ind+"/")}"><b>{escape(label)}</b><span>{escape(INDUSTRIES[ind][lang]["entry"])}</span></a>')
-    for label in INDUSTRY_CATALOG[lang][3:]:
-        matrix_cards.append(f'<div class="matrix-result" data-products="online-sales,booking,operations,ai-operator,paybridge"><b>{escape(label)}</b><span>{c["contact"]}</span></div>')
-    tabs = '<button class="active" data-matrix-product="all">'+c["all_industries"]+'</button>' + "".join(f'<button data-matrix-product="{s}">{escape(PRODUCTS[s][lang]["name"])}</button>' for s in PRODUCTS)
-    team = "".join(f'<article class="card"><div class="kicker">{c["team"]}</div><h3>{escape(n)}</h3><p><b>{escape(role)}</b></p><p>{escape(desc)}</p></article>' for n,role,desc in TEAM[lang])
+    b=BRAND[lang]; c=COPY[lang]
+    top_cases="".join(case_card(lang,s) for s in ("max-tour","uniq-smart-rent","pet-nika"))
+    if lang=="ru":
+        safety=["Можно начать с одной задачи","Состав работ и ориентир по цене фиксируем до разработки","Не просим менять то, что уже работает","Подключение к рабочим системам — только после проверки"]
+        steps=[
+            ("1. Показываете текущий процесс","Сайт, переписку, таблицу или экран системы."),
+            ("2. Выбираем один первый модуль","Только то, что решает конкретную задачу."),
+            ("3. Фиксируем условия","Что входит, срок, цена и какие доступы нужны."),
+            ("4. Собираем и показываем","Сначала проверяем сценарий на согласованной версии."),
+            ("5. Подключаем","После проверки связываем с действующими системами, если это нужно."),
+        ]
+        proof_lead="Статус каждого примера указан отдельно: интерактивное демо, публичный прототип или клиентская концепция."
+        enterprise_title="Нужна не отдельная функция, а сложная внутренняя система?"
+        enterprise_text="Для интеграций, данных, Oracle / PL/SQL и закрытых рабочих процессов есть отдельное инженерное направление."
+    else:
+        safety=["Start with one defined task","Scope, timeline and price guide are agreed before development","Keep what already works","Connect to live systems only after review"]
+        steps=[
+            ("1. Show the current process","Website, messages, spreadsheet or system screen."),
+            ("2. Choose one first module","Only what solves the immediate problem."),
+            ("3. Agree the conditions","Scope, timeline, price and required access."),
+            ("4. Build and review","Validate the workflow on the agreed version first."),
+            ("5. Connect","Integrate with live systems only after review, when needed."),
+        ]
+        proof_lead="Every example has an explicit status: interactive demo, public prototype or client concept."
+        enterprise_title="Need more than one module?"
+        enterprise_text="Complex integrations, data, Oracle / PL/SQL and private internal workflows have a separate engineering path."
+    safety_html="".join(f'<li>{escape(x)}</li>' for x in safety)
+    steps_html="".join(f'<div class="buy-step"><b>{escape(a)}</b><span>{escape(b)}</span></div>' for a,b in steps)
     return f'''
     <section class="hero"><div class="wrap hero-grid"><div>
       <div class="eyebrow">{escape(b["tagline"])}</div><h1>{escape(b["hero_title"])}</h1><p>{escape(b["hero_lead"])}</p>
-      <div class="hero-actions"><a class="btn btn-primary" href="{loc(lang,'/solutions/')}" data-interest="solution" data-cta="hero-primary">{escape(b["hero_primary"])} →</a><a class="btn btn-secondary" href="#proof">{escape(b["hero_secondary"])}</a></div>
-      <div class="hero-proof"><span>Booking</span><span>CRM / Operations</span><span>AI Operator</span><span>Payments</span><span>Integrations</span></div>
-    </div><div class="process-map"><h3>{'Как может расти система' if lang=='ru' else 'How the system can grow'}</h3><div class="process-flow">
-      <div class="process-node"><b>{'Один проблемный процесс' if lang=='ru' else 'One broken process'}</b><span>Start</span></div><div class="process-arrow">↓</div>
-      <div class="process-node"><b>{'Рабочий модуль' if lang=='ru' else 'Working module'}</b><span>Booking / AI / Integration</span></div><div class="process-arrow">↓</div>
-      <div class="process-node"><b>{'Связка с текущими системами' if lang=='ru' else 'Connect to current systems'}</b><span>CRM / Payments / Data</span></div><div class="process-arrow">↓</div>
-      <div class="process-node"><b>{'Единая рабочая система' if lang=='ru' else 'Connected operating system'}</b><span>Scale</span></div>
-    </div></div></div></section>
+      <div class="hero-actions"><a class="btn btn-primary" href="#industries">{escape(b["hero_primary"])} ↓</a><a class="btn btn-secondary" href="#proof">{escape(b["hero_secondary"])}</a></div>
+    </div><aside class="hero-safety"><h3>{"Как начинаем без лишнего риска" if lang=="ru" else "A controlled way to start"}</h3><ul>{safety_html}</ul></aside></div></section>
 
-    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions"]}</div><h2>{escape(b["problem_title"])}</h2></div><p>{escape(b["problem_lead"])}</p></div><div class="grid3">{prob_html}</div></div></section>
+    {industry_browser(lang)}
+    {team_trust(lang)}
 
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["products"]}</div><h2>{escape(b["products_title"])}</h2></div><p>{escape(b["products_lead"])}</p></div><div class="grid5">{products}</div></div></section>
+    <section class="section" id="proof"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{escape(b["proof_title"])}</h2></div><p>{escape(proof_lead)}</p></div><div class="case-grid">{top_cases}</div><div style="margin-top:18px"><a class="text-link" href="{loc(lang,'/cases/')}">{c["all_cases"]} →</a></div></div></section>
 
-    <section class="section" id="proof"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{escape(b["proof_title"])}</h2></div><p>{escape(b["proof_lead"])}</p></div><div class="case-grid">{top_cases}</div><div style="margin-top:18px"><a class="text-link" href="{loc(lang,'/cases/')}">{c["all_cases"]} →</a></div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Как купить" if lang=="ru" else "How to start"}</div><h2>{"Пять понятных шагов до первого результата" if lang=="ru" else "Five clear steps to the first result"}</h2></div><p>{"Никакого обязательного большого внедрения на старте." if lang=="ru" else "No mandatory large implementation at the start."}</p></div><div class="buy-steps">{steps_html}</div></div></section>
 
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["offer"]}</div><h2>{escape(b["start_title"])}</h2></div><p>{escape(b["start_lead"])}</p></div><div class="offer-grid">{offers}</div></div></section>
-
-    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{'Для разных отраслей' if lang=='ru' else 'Across industries'}</div><h2>{escape(b["matrix_title"])}</h2></div><p>{escape(b["matrix_lead"])}</p></div><div class="matrix-wrap"><div class="matrix-tabs">{tabs}</div><div class="matrix-results">{''.join(matrix_cards)}</div></div></div></section>
-
-    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{escape(b["special_title"])}</div><h2>{escape(b["special_title"])}</h2></div></div><div class="special-grid">
-      <article class="special-box"><div class="kicker">Partners</div><h3>{c["partners_head"]}</h3><p>{c["partners_body"]}</p><a class="btn btn-secondary" href="{loc(lang,'/labs/')}">{c["learn_more"]} →</a></article>
-      <article class="special-box alt"><div class="kicker">Enterprise</div><h3>{c["enterprise_head"]}</h3><p>{c["enterprise_body"]}</p><a class="btn btn-primary" href="{loc(lang,'/enterprise/')}">{c["learn_more"]} →</a></article>
-    </div></div></section>
-
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["about"]}</div><h2>{escape(b["team_title"])}</h2></div><p>{c["team_lead"]}</p></div><div class="team-grid">{team}</div></div></section>
+    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{"Инженерные задачи" if lang=="ru" else "Engineering"}</div><h2>{escape(enterprise_title)}</h2></div><p>{escape(enterprise_text)}</p></div><div class="actions"><a class="btn btn-secondary" href="{loc(lang,'/enterprise/')}">{"Для крупных систем" if lang=="ru" else "Enterprise engineering"} →</a><a class="btn btn-secondary" href="{loc(lang,'/labs/')}">VIIVERSION Labs →</a></div></div></section>
     '''
+
+def modules_index(lang):
+    cards="".join(module_buy_card(lang,s) for s in MODULES)
+    title="Что можно купить" if lang=="ru" else "What you can buy"
+    lead="Каждая карточка — отдельная понятная задача с описанием результата, срока и способа старта." if lang=="ru" else "Each card is a concrete task with a result, timeline and a clear way to start."
+    return hero(lang,title,title,lead,"/modules/")+f'<section class="section"><div class="wrap"><div class="module-buy-grid">{cards}</div></div></section>'
+
+def module_page(lang,slug):
+    c=COPY[lang]; m=MODULES[slug][lang]
+    steps="".join(f'<div class="module-step"><span class="num">{i:02d}</span>{escape(x)}</div>' for i,x in enumerate(m["steps"],1))
+    includes="".join(f'<li>{escape(x)}</li>' for x in m["includes"])
+    excludes="".join(f'<li>{escape(x)}</li>' for x in m["excludes"])
+    proof="".join(case_card(lang,s) for s in m["proof"][:3] if s in CASES)
+    audience=", ".join(m["for"])
+    if lang=="ru":
+        title=f'{m["name"]} — что это, что входит и как заказать'
+        buy_title="Как заказать"
+        buy_text="Пришлите ссылку, скриншот или коротко опишите, как эта задача решается сейчас. Мы ответим, подходит ли готовый модуль, что потребуется изменить и какой первый этап имеет смысл."
+        safe_title="Что мы не будем делать без согласования"
+        included="Что входит"
+        excluded="Что не входит в базовую оценку"
+        how="Как это работает"
+        result="Что меняется для бизнеса"
+        for_label="Подходит для"
+    else:
+        title=f'{m["name"]} — what it is, what is included and how to start'
+        buy_title="How to buy"
+        buy_text="Send a link, screenshot or short description of how this task works today. We will tell you whether the module fits, what must change and what the first step should be."
+        safe_title="What we will not change without agreement"
+        included="Included"
+        excluded="Not included in the base estimate"
+        how="How it works"
+        result="What changes for the business"
+        for_label="Suitable for"
+    body=hero(lang,"Модуль" if lang=="ru" else "Module",title,m["short"],"/modules/"+slug+"/",(("Что можно купить" if lang=="ru" else "Modules"),"/modules/"))
+    body+=f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{result}</div><h2>{escape(m["result"])}</h2><p><b>{for_label}:</b> {escape(audience)}</p></div><div class="scope-box"><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(m["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(m["timeline"])}</strong></div></div><a class="btn btn-primary" href="#contact" data-interest="{escape(m["name"])}" data-cta="module">{escape(m["cta"])} →</a></div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{how}</div><h2>{how}</h2></div></div><div class="module-steps">{steps}</div></div></section>
+    <section class="section"><div class="wrap compare"><div class="compare-box after"><div class="eyebrow">{included}</div><h3>{included}</h3><ul>{includes}</ul></div><div class="compare-box"><div class="eyebrow">{safe_title}</div><h3>{excluded}</h3><ul>{excludes}</ul></div></div></section>
+    <section class="section soft"><div class="wrap two-col"><div><div class="eyebrow">{buy_title}</div><h2>{buy_title}</h2><p class="quote">{escape(buy_text)}</p></div><div class="trust-box" style="margin-top:0"><h3>{"До старта фиксируем" if lang=="ru" else "Agreed before starting"}</h3><div class="trust-list"><div class="trust-item">✓ {"Что именно делаем" if lang=="ru" else "Exact scope"}</div><div class="trust-item">✓ {"Срок первого этапа" if lang=="ru" else "First-stage timeline"}</div><div class="trust-item">✓ {"Стоимость" if lang=="ru" else "Price"}</div><div class="trust-item">✓ {"Какие доступы нужны" if lang=="ru" else "Required access"}</div></div></div></div></section>
+    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
+    return body
 
 def products_index(lang):
     c=COPY[lang]
@@ -687,6 +788,11 @@ for lang in LANGS:
         p=PRODUCTS[slug][lang]
         pages[base_dir+f"products/{slug}/index.html"] = page(lang, f'VIIVERSION {p["name"]}', p["summary"], product_page(lang,slug), f"/products/{slug}/", page_type="Product", interest=p["name"])
 
+    pages[base_dir+"modules/index.html"] = page(lang, ("Что можно купить — VIIVERSION" if lang=="ru" else "Modules — VIIVERSION"), ("Конкретные цифровые модули с понятным результатом, сроком и способом старта." if lang=="ru" else "Concrete digital modules with clear results, timelines and a way to start."), modules_index(lang), "/modules/")
+    for slug in MODULES:
+        m=MODULES[slug][lang]
+        pages[base_dir+f"modules/{slug}/index.html"] = page(lang, f'{m["name"]} — VIIVERSION', m["short"], module_page(lang,slug), f"/modules/{slug}/", page_type="Service", interest=m["name"])
+
     pages[base_dir+"offers/index.html"] = page(lang, ("Стартовые форматы — VIIVERSION" if lang=="ru" else "Starting offers — VIIVERSION"), BRAND[lang]["start_lead"], offers_index(lang), "/offers/")
     for slug in OFFERS:
         o=OFFERS[slug][lang]
@@ -714,6 +820,13 @@ for lang in LANGS:
 
 assets=PUBLIC/"assets"
 assets.mkdir(parents=True,exist_ok=True)
+team_src=ROOT/"site_assets"/"team"
+team_dst=assets/"team"
+team_dst.mkdir(parents=True,exist_ok=True)
+for portrait in ("dmitrii.webp","olga.webp"):
+    source=team_src/portrait
+    if source.exists():
+        shutil.copy2(source,team_dst/portrait)
 (assets/"viiversion.css").write_text(CSS,encoding="utf-8")
 (assets/"viiversion.js").write_text(JS,encoding="utf-8")
 for rel,html in pages.items():
@@ -737,10 +850,11 @@ xml+='</urlset>\n'
 required=[
     "index.html","en/index.html",
     "products/booking/index.html","en/products/booking/index.html",
+    "modules/index.html","modules/online-booking/index.html","modules/crm/index.html","modules/ai-consultant/index.html",
     "offers/booking-start/index.html","solutions/tourism/booking/index.html",
     "industries/tourism/index.html","industries/rental/index.html","industries/clinics/index.html",
     "cases/index.html","enterprise/index.html","labs/index.html","about/index.html",
-    "assets/viiversion.css","assets/viiversion.js","sitemap.xml"
+    "assets/viiversion.css","assets/viiversion.js","assets/team/dmitrii.webp","assets/team/olga.webp","sitemap.xml"
 ]
 for rel in required:
     p=PUBLIC/rel
@@ -751,7 +865,7 @@ home_text=(PUBLIC/"index.html").read_text(encoding="utf-8")
 for bad in ("коммерческих ядер","buyer journey","Entry offers","client work","Большая продажа"):
     if bad in home_text:
         raise SystemExit("Client-facing jargon leaked into home: "+bad)
-for marker in ("Автоматизируем продажи и операции","Рабочие демо и прототипы","Начните с одной небольшой задачи","Один продукт — разные сценарии"):
+for marker in ("Цифровые решения для конкретных задач бизнеса","Что можно купить для вашего бизнеса","Вы общаетесь напрямую с теми, кто делает продукт","Пять понятных шагов до первого результата"):
     if marker not in home_text:
         raise SystemExit("Product site QA missing: "+marker)
 
