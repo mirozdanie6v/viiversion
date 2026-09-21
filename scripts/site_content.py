@@ -7,7 +7,7 @@ BRAND = {
     "ru": {
         "tagline": "Цифровые системы для продаж и операций",
         "hero_title": "Цифровые решения для конкретных задач бизнеса.",
-        "hero_lead": "Настраиваем онлайн-бронирование, клиентские приложения, CRM, AI-консультантов, оплату и интеграции. Можно начать с одной задачи и не менять то, что уже работает.",
+        "hero_lead": "Разрабатываем онлайн-бронирование, клиентские приложения, CRM, AI-консультантов, оплату и интеграции. Можно начать с одной задачи и не менять то, что уже работает.",
         "hero_primary": "Выбрать свою отрасль",
         "hero_secondary": "Посмотреть рабочие демо",
         "problem_title": "Что сейчас тормозит процесс?",
@@ -54,40 +54,40 @@ BRAND = {
 
 CASES = {
     "max-tour": {
-        "ru": {"name": "MAX TOUR", "industry": "Туризм", "status": "working-demo", "status_label": "ИНТЕРАКТИВНОЕ ДЕМО", "summary": "Клиентский путь, бронирование, роли, рабочая панель и аналитика для экскурсионного бизнеса.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
-        "en": {"name": "MAX TOUR", "industry": "Tourism", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Customer flow, booking, roles, admin and owner analytics for a tour business.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
+        "ru": {"name": "MAX TOUR", "industry": "Туризм", "status": "working-demo", "status_label": "ИНТЕРАКТИВНОЕ ДЕМО", "summary": "Клиентский путь, бронирование, роли, рабочая панель и аналитика для экскурсионного бизнеса.", "shows": ["Онлайн-бронирование", "CRM и работа команды", "AI"], "demo": "https://max-tour.viiversion.com/"},
+        "en": {"name": "MAX TOUR", "industry": "Tourism", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Customer flow, booking, roles, admin and owner analytics for a tour business.", "shows": ["Онлайн-бронирование", "CRM и работа команды", "AI"], "demo": "https://max-tour.viiversion.com/"},
     },
     "uniq-smart-rent": {
-        "ru": {"name": "UNIQ SMART RENT", "industry": "Аренда", "status": "working-demo", "status_label": "ИНТЕРАКТИВНОЕ ДЕМО", "summary": "Каталог, цены и путь заявки для аренды транспорта.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
-        "en": {"name": "UNIQ SMART RENT", "industry": "Rental", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Catalogue, pricing and request lifecycle for vehicle rental.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
+        "ru": {"name": "UNIQ SMART RENT", "industry": "Аренда", "status": "working-demo", "status_label": "ИНТЕРАКТИВНОЕ ДЕМО", "summary": "Каталог, цены и путь заявки для аренды транспорта.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "CRM и работа команды"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
+        "en": {"name": "UNIQ SMART RENT", "industry": "Rental", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Catalogue, pricing and request lifecycle for vehicle rental.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "CRM и работа команды"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
     },
     "pet-nika": {
-        "ru": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Клиентский кабинет, питомцы, обращения, запись и рабочая панель.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
-        "en": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Customer account, pets, requests, booking and admin layer.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
+        "ru": {"name": "PET NIKA", "industry": "Ветеринария", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Клиентский кабинет, питомцы, обращения, запись и рабочая панель.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "CRM и работа команды"], "demo": "https://pet-nika.viiversion.com/"},
+        "en": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Customer account, pets, requests, booking and admin layer.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "CRM и работа команды"], "demo": "https://pet-nika.viiversion.com/"},
     },
     "ave-dental": {
-        "ru": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Мультиязычный Mini App и сценарий онлайн-записи для клиники.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
-        "en": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Multilingual Mini App and booking flow for a clinic.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
+        "ru": {"name": "AVE Dental", "industry": "Стоматология", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Мультиязычный Mini App и сценарий онлайн-записи для клиники.", "shows": ["Онлайн-продажи", "Онлайн-бронирование"], "demo": "https://ave-dental-miniapp.vercel.app/"},
+        "en": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Multilingual Mini App and booking flow for a clinic.", "shows": ["Онлайн-продажи", "Онлайн-бронирование"], "demo": "https://ave-dental-miniapp.vercel.app/"},
     },
     "rusinfocenter": {
-        "ru": {"name": "Русский Информационный Центр", "industry": "Туризм", "status": "concept", "status_label": "КЛИЕНТСКАЯ КОНЦЕПЦИЯ", "summary": "Цифровой клиентский путь и архитектура будущей системы продаж.", "shows": ["Online Sales", "Booking", "Integrations"], "demo": "https://rusinfocenter.viiversion.com/"},
-        "en": {"name": "Russian Information Center", "industry": "Tourism", "status": "concept", "status_label": "CLIENT CONCEPT", "summary": "Customer journey and architecture for a future sales system.", "shows": ["Online Sales", "Booking", "Integrations"], "demo": "https://rusinfocenter.viiversion.com/"},
+        "ru": {"name": "Русский Информационный Центр", "industry": "Туризм", "status": "concept", "status_label": "КЛИЕНТСКАЯ КОНЦЕПЦИЯ", "summary": "Цифровой клиентский путь и архитектура будущей системы продаж.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "Интеграции"], "demo": "https://rusinfocenter.viiversion.com/"},
+        "en": {"name": "Russian Information Center", "industry": "Tourism", "status": "concept", "status_label": "CLIENT CONCEPT", "summary": "Customer journey and architecture for a future sales system.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "Интеграции"], "demo": "https://rusinfocenter.viiversion.com/"},
     },
     "g-beauty": {
-        "ru": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Лендинг, Mini App, онлайн-запись и демонстрационная рабочая панель для beauty-бизнеса.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
-        "en": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Landing, Mini App, booking and demo admin for a local beauty business.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
+        "ru": {"name": "G-Beauty", "industry": "Бьюти / SPA", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Лендинг, Mini App, онлайн-запись и демонстрационная рабочая панель для beauty-бизнеса.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "CRM и работа команды"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
+        "en": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Landing, Mini App, booking and demo admin for a local beauty business.", "shows": ["Онлайн-продажи", "Онлайн-бронирование", "CRM и работа команды"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
     },
     "true-surf": {
-        "ru": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Онлайн-запись, профиль клиента и повторные действия в формате Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
-        "en": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Booking, client passport and repeat flow in a Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
+        "ru": {"name": "TRUE SURF", "industry": "Активности и спорт", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Онлайн-запись, профиль клиента и повторные действия в формате Mini App.", "shows": ["Онлайн-продажи", "Онлайн-бронирование"], "demo": "https://truesurf-app.viiversion.com/"},
+        "en": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Booking, client passport and repeat flow in a Mini App.", "shows": ["Онлайн-продажи", "Онлайн-бронирование"], "demo": "https://truesurf-app.viiversion.com/"},
     },
 }
 
 
 TEAM = {
     "ru": [
-        ("Дмитрий Владимиров", "Серверная архитектура и данные · базы данных · интеграции", "20+ лет в IT и telecom. Отвечает за серверную логику, данные, интеграции, надёжность и техническую архитектуру."),
-        ("Ольга Ногтич", "Продуктовая архитектура · интерфейсы · AI-автоматизация", "16+ лет в digital и визуальных коммуникациях. Отвечает за логику продукта, пользовательские сценарии, интерфейсы, исследования и AI-автоматизацию."),
+        ("Дмитрий Владимиров", "Серверная архитектура и данные · базы данных · интеграции", "20+ лет в IT и телеком. Отвечает за серверную логику, данные, интеграции, надёжность и техническую архитектуру."),
+        ("Ольга Ногтич", "Продуктовая архитектура · интерфейсы · AI-автоматизация", "16+ лет в цифровых и визуальных коммуникациях. Отвечает за логику продукта, пользовательские сценарии, интерфейсы, исследования и AI-автоматизацию."),
     ],
     "en": [
         ("Dmitrii Vladimirov", "Systems architecture · databases · integrations · development", "Oracle, PL/SQL, ETL, Linux, API, telecom BSS / Revenue Assurance. Experience with complex telecom and international systems."),
