@@ -45,6 +45,13 @@ jobs:
           grep -Fq "8–18M ₫" public/offers/booking-start/index.html
           grep -Fq 'hreflang="en"' public/index.html
           grep -Fq 'class="lead-form"' public/index.html
+          grep -Fq '/__conversion/' public/assets/viiversion.js
+          grep -Fq 'href="/en/solutions/"' public/en/index.html
+          grep -Fq "WORKING DEMO" public/en/cases/index.html
+          ! grep -Fq '/en/en/' public/en/index.html
+          ! grep -Fq "РАБОЧЕЕ ДЕМО" public/en/cases/index.html
+          ! grep -Fq "ПУБЛИЧНЫЙ ПРОТОТИП" public/en/cases/index.html
+          ! grep -Fq "КЛИЕНТСКАЯ КОНЦЕПЦИЯ" public/en/cases/index.html
           ! grep -Fq "коммерческих ядер" public/index.html
           ! grep -Fq "buyer journey" public/index.html
           ! grep -Fq "Большая продажа" public/index.html
