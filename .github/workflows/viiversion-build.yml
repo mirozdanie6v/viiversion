@@ -1,0 +1,37 @@
+name: VIIVERSION build QA
+
+on:
+  push:
+    branches:
+      - viiversion
+  pull_request:
+    branches:
+      - viiversion
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build site
+        run: npm run build
+      - name: Verify generated routes
+        run: |
+          test -s public/index.html
+          test -s public/products/index.html
+          test -s public/products/booking/index.html
+          test -s public/products/paybridge/index.html
+          test -s public/industries/tourism/index.html
+          test -s public/solutions/index.html
+          test -s public/cases/index.html
+          test -s public/enterprise/index.html
+          test -s public/labs/index.html
+          grep -Fq "Product × Industry" public/index.html
+          grep -Fq "Booking Start" public/products/booking/index.html
