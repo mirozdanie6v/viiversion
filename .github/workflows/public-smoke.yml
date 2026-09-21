@@ -36,13 +36,15 @@ jobs:
           require_text(){ grep -Fq "$2" "$1" || { echo "FAIL missing $3" >&2; return 1; }; echo "OK $3"; }
           reject_text(){ if grep -Fq "$2" "$1"; then echo "FAIL unexpected $3" >&2; return 1; fi; echo "OK absent $3"; }
 
-          main="$(mktemp)"; custom="$(mktemp)"; en="$(mktemp)"; booking="$(mktemp)"; offer="$(mktemp)"
+          main="$(mktemp)"; custom="$(mktemp)"; en="$(mktemp)"; en_cases="$(mktemp)"; js="$(mktemp)"; booking="$(mktemp)"; offer="$(mktemp)"
           target="$(mktemp)"; tourism="$(mktemp)"; cases="$(mktemp)"; enterprise="$(mktemp)"; labs="$(mktemp)"
           prototypes="$(mktemp)"; pet="$(mktemp)"; uniq="$(mktemp)"; ric="$(mktemp)"
 
           fetch_page "$BASE/" "$main"
           fetch_page "$CUSTOM/" "$custom"
           fetch_page "$CUSTOM/en/" "$en"
+          fetch_page "$CUSTOM/en/cases/" "$en_cases"
+          fetch_page "$CUSTOM/assets/viiversion.js" "$js"
           fetch_page "$BASE/products/booking/" "$booking"
           fetch_page "$BASE/offers/booking-start/" "$offer"
           fetch_page "$BASE/solutions/tourism/booking/" "$target"
@@ -57,6 +59,11 @@ jobs:
           require_text "$main" 'class="lead-form"' "conversion form"
           require_text "$custom" "Автоматизируем продажи и операции" "custom domain homepage"
           require_text "$en" "Automate sales and operations" "English homepage"
+          require_text "$en" 'href="/en/solutions/"' "English navigation"
+          reject_text "$en" '/en/en/' "double English prefix"
+          require_text "$en_cases" "WORKING DEMO" "English proof status"
+          reject_text "$en_cases" "РАБОЧЕЕ ДЕМО" "Russian status in English cases"
+          require_text "$js" "/__conversion/" "conversion analytics"
           require_text "$booking" "Как процесс выглядит сейчас" "Booking before/after"
           require_text "$offer" "8–18M ₫" "Booking Start price"
           require_text "$target" "Турист бронирует экскурсию сам" "Tourism × Booking landing"
@@ -78,5 +85,5 @@ jobs:
           require_text "$uniq" "UNIQ" "UNIQ live"
           require_text "$ric" "РИЦ" "RIC live"
 
-          rm -f "$main" "$custom" "$en" "$booking" "$offer" "$target" "$tourism" "$cases" "$enterprise" "$labs" "$prototypes" "$pet" "$uniq" "$ric"
+          rm -f "$main" "$custom" "$en" "$en_cases" "$js" "$booking" "$offer" "$target" "$tourism" "$cases" "$enterprise" "$labs" "$prototypes" "$pet" "$uniq" "$ric"
           echo "PUBLIC COMMERCIAL QA PASS"
