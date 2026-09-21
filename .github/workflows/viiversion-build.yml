@@ -22,42 +22,63 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build site
         run: npm run build
-      - name: Verify industry-first commercial architecture
+      - name: Verify canonical product architecture
         run: |
           set -euo pipefail
           test -s public/index.html
           test -s public/en/index.html
-          test -s public/modules/index.html
-          test -s public/modules/online-booking/index.html
-          test -s public/modules/telegram-mini-app/index.html
-          test -s public/modules/crm/index.html
-          test -s public/modules/ai-consultant/index.html
-          test -s public/modules/payment-integration/index.html
+          test -s public/products/index.html
+          test -s public/products/online-booking/index.html
+          test -s public/products/telegram-mini-app/index.html
+          test -s public/products/catalog/index.html
+          test -s public/products/crm/index.html
+          test -s public/products/ai-consultant/index.html
+          test -s public/products/payment-integration/index.html
+          test -s public/products/system-integration/index.html
+          test -s public/software/index.html
+          test -s public/partners/index.html
+          test -s public/enterprise/index.html
           test -s public/assets/team/dmitrii.webp
           test -s public/assets/team/olga.webp
-          test -s public/cases/index.html
-          test -s public/enterprise/index.html
+          test -s public/assets/cases/max-tour.webp
+          test -s public/assets/cases/uniq-smart-rent.webp
+          test -s public/assets/cases/pet-nika.webp
+
           grep -Fq "Цифровые решения для конкретных задач бизнеса" public/index.html
           grep -Fq "Что можно купить для вашего бизнеса" public/index.html
-          grep -Fq 'data-industry-tab="tourism"' public/index.html
+          grep -Fq "Обычно начинают с" public/index.html
+          grep -Fq "Можно добавить позже" public/index.html
           grep -Fq 'data-industry-tab="hotels"' public/index.html
           grep -Fq 'data-industry-tab="shops"' public/index.html
-          grep -Fq "Онлайн-бронирование" public/index.html
-          grep -Fq "CRM для заявок и заказов" public/index.html
-          grep -Fq "AI-консультант" public/index.html
-          grep -Fq "Подключение оплаты" public/index.html
-          grep -Fq "Вы общаетесь напрямую с теми, кто делает продукт" public/index.html
-          grep -Fq "/assets/team/dmitrii.webp" public/index.html
-          grep -Fq "/assets/team/olga.webp" public/index.html
-          grep -Fq "Что входит и как начать" public/index.html
-          grep -Fq "Что мы не будем делать без согласования" public/modules/online-booking/index.html
-          grep -Fq "8–18M ₫" public/modules/online-booking/index.html
-          grep -Fq 'class="lead-form"' public/index.html
-          grep -Fq '/__conversion/' public/assets/viiversion.js
-          grep -Fq 'viiversion_campaign' public/assets/viiversion.js
+          ! grep -Fq 'data-industry-tab="enterprise"' public/index.html
+
+          grep -Fq "Первый пакет" public/products/online-booking/index.html
+          grep -Fq "8–18M ₫" public/products/online-booking/index.html
+          grep -Fq "Что входит в продукт" public/products/online-booking/index.html
+          grep -Fq "Можно подключить дополнительно" public/products/online-booking/index.html
+          grep -Fq "Интеграция двух систем" public/products/system-integration/index.html
+
+          grep -Fq 'noindex,follow' public/modules/online-booking/index.html
+          grep -Fq '/products/online-booking/' public/modules/online-booking/index.html
+          grep -Fq 'noindex,follow' public/offers/booking-start/index.html
+          grep -Fq '/products/online-booking/' public/offers/booking-start/index.html
+          ! grep -Fq '<loc>https://viiversion.com/modules/' public/sitemap.xml
+          ! grep -Fq '<loc>https://viiversion.com/offers/' public/sitemap.xml
+
+          grep -Fq '/api/leads' public/assets/viiversion.js
           grep -Fq 'landingPage' public/assets/viiversion.js
-          grep -Fq 'href="/en/solutions/"' public/en/index.html
+          grep -Fq 'class="lead-form"' public/index.html
+          grep -Fq 'href="/en/products/"' public/en/index.html
+          grep -Fq 'href="/en/software/"' public/en/index.html
+          grep -Fq 'href="/en/partners/"' public/en/index.html
           ! grep -Fq '/en/en/' public/en/index.html
+
+          ! grep -Fq "Booking Start" public/index.html
+          ! grep -Fq "Operations Core" public/index.html
           ! grep -Fq "коммерческих ядер" public/index.html
-          ! grep -Fq "buyer journey" public/index.html
-          ! grep -Fq "Большая продажа" public/index.html
+
+      - name: Validate Worker and Durable Object config
+        run: |
+          set -euo pipefail
+          node --check src/worker.js
+          npx wrangler deploy --dry-run --outdir /tmp/viiversion-worker
