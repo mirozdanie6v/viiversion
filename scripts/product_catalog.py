@@ -445,7 +445,7 @@ SOFTWARE_PRODUCTS = {
 
 PARTNER_PRODUCTS = {
     "mini-app-factory": {
-        "ru": {"name": "Mini App Factory", "status": "ЗАКРЫТАЯ БЕТА", "summary": "Платформа для серийной сборки Mini Apps под брендом агентства или партнёра.", "cta": "Обсудить white-label партнёрство"},
+        "ru": {"name": "Mini App Factory", "status": "ЗАКРЫТАЯ БЕТА", "summary": "Платформа для серийной сборки Mini Apps под брендом агентства или партнёра.", "cta": "Обсудить работу под брендом партнёра"},
         "en": {"name": "Mini App Factory", "status": "PRIVATE BETA", "summary": "A repeatable Mini App production platform for agency and white-label delivery.", "cta": "Discuss a white-label partnership"},
     },
     "payment-partnership": {
