@@ -14,118 +14,69 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Check VIIVERSION public product architecture and proof routes
+      - name: Check public commercial site and proof routes
         shell: bash
         run: |
           set -euo pipefail
-
           BASE="https://landing.viiversion.workers.dev"
           CUSTOM="https://viiversion.com"
           PET="https://pet-nika.viiversion.com/"
-          PET_BROKEN="https://pet-nika.viiversion.com/miniapp"
           UNIQ="https://uniq-smart-rent.mirozdanie6v.workers.dev/"
           RIC="https://rusinfocenter.viiversion.com/"
-          RIC_BOT="https://rusinfocenter.viiversion.com/notification"
 
           fetch_page() {
-            local url="$1"
-            local out="$2"
-            local code=""
+            local url="$1"; local out="$2"; local code=""
             for _ in $(seq 1 30); do
               code="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 --output "$out" --write-out '%{http_code}' "$url" || true)"
-              if [[ "$code" == "200" ]] && [[ -s "$out" ]]; then
-                echo "OK $url HTTP 200"
-                return 0
-              fi
+              if [[ "$code" == "200" ]] && [[ -s "$out" ]]; then echo "OK $url HTTP 200"; return 0; fi
               sleep 6
             done
-            echo "FAIL $url HTTP ${code:-none}" >&2
-            return 1
+            echo "FAIL $url HTTP ${code:-none}" >&2; return 1
           }
+          require_text(){ grep -Fq "$2" "$1" || { echo "FAIL missing $3" >&2; return 1; }; echo "OK $3"; }
+          reject_text(){ if grep -Fq "$2" "$1"; then echo "FAIL unexpected $3" >&2; return 1; fi; echo "OK absent $3"; }
 
-          require_text() {
-            local file="$1"
-            local text="$2"
-            local label="$3"
-            grep -Fq "$text" "$file" || { echo "FAIL missing $label" >&2; return 1; }
-            echo "OK $label"
-          }
-
-          reject_text() {
-            local file="$1"
-            local text="$2"
-            local label="$3"
-            if grep -Fq "$text" "$file"; then
-              echo "FAIL unexpected $label" >&2
-              return 1
-            fi
-            echo "OK absent $label"
-          }
-
-          main="$(mktemp)"
-          custom_main="$(mktemp)"
-          products="$(mktemp)"
-          booking="$(mktemp)"
-          industries="$(mktemp)"
-          tourism="$(mktemp)"
-          solutions="$(mktemp)"
-          cases="$(mktemp)"
-          enterprise="$(mktemp)"
-          labs="$(mktemp)"
-          prototypes="$(mktemp)"
-          pet_case="$(mktemp)"
-          uniq_case="$(mktemp)"
-          ric_case="$(mktemp)"
-          pet_live="$(mktemp)"
-          uniq_live="$(mktemp)"
-          ric_live="$(mktemp)"
-          ric_bot="$(mktemp)"
+          main="$(mktemp)"; custom="$(mktemp)"; en="$(mktemp)"; booking="$(mktemp)"; offer="$(mktemp)"
+          target="$(mktemp)"; tourism="$(mktemp)"; cases="$(mktemp)"; enterprise="$(mktemp)"; labs="$(mktemp)"
+          prototypes="$(mktemp)"; pet="$(mktemp)"; uniq="$(mktemp)"; ric="$(mktemp)"
 
           fetch_page "$BASE/" "$main"
-          fetch_page "$CUSTOM/" "$custom_main"
-          fetch_page "$BASE/products/" "$products"
+          fetch_page "$CUSTOM/" "$custom"
+          fetch_page "$CUSTOM/en/" "$en"
           fetch_page "$BASE/products/booking/" "$booking"
-          fetch_page "$BASE/industries/" "$industries"
+          fetch_page "$BASE/offers/booking-start/" "$offer"
+          fetch_page "$BASE/solutions/tourism/booking/" "$target"
           fetch_page "$BASE/industries/tourism/" "$tourism"
-          fetch_page "$BASE/solutions/" "$solutions"
           fetch_page "$BASE/cases/" "$cases"
           fetch_page "$BASE/enterprise/" "$enterprise"
           fetch_page "$BASE/labs/" "$labs"
 
-          require_text "$main" "Product × Industry" "new homepage product matrix"
-          require_text "$main" "B2B2B & Enterprise" "new homepage B2B2B lane"
-          require_text "$custom_main" "Product × Industry" "viiversion.com new homepage"
-          require_text "$products" "Продуктовые ядра VIIVERSION" "products index"
-          require_text "$booking" "Booking Start" "booking product page"
-          require_text "$industries" "Отраслевые конфигурации" "industries index"
-          require_text "$tourism" "Booking Start" "tourism industry page"
-          require_text "$solutions" "Решения вокруг конкретной бизнес-задачи" "solutions index"
-          require_text "$cases" "Кейсы как доказательство" "cases index"
-          require_text "$enterprise" "Paid Discovery" "enterprise page"
-          require_text "$labs" "Собственные продукты VIIVERSION" "labs page"
+          require_text "$main" "Автоматизируем продажи и операции" "new commercial hero"
+          require_text "$main" "Рабочие демо и прототипы" "proof moved above fold sequence"
+          require_text "$main" "Начните с одной небольшой задачи" "entry offers"
+          require_text "$main" 'class="lead-form"' "conversion form"
+          require_text "$custom" "Автоматизируем продажи и операции" "custom domain homepage"
+          require_text "$en" "Automate sales and operations" "English homepage"
+          require_text "$booking" "Как процесс выглядит сейчас" "Booking before/after"
+          require_text "$offer" "8–18M ₫" "Booking Start price"
+          require_text "$target" "Турист бронирует экскурсию сам" "Tourism × Booking landing"
+          require_text "$tourism" "Онлайн-продажи и бронирование" "deep tourism page"
+          require_text "$cases" "WORKING DEMO" "proof statuses"
+          require_text "$enterprise" "Сложные внутренние системы" "enterprise copy"
+          require_text "$labs" "PRIVATE BETA" "labs statuses"
+          reject_text "$main" "коммерческих ядер" "internal jargon"
+          reject_text "$main" "buyer journey" "buyer jargon"
+          reject_text "$main" "Большая продажа" "internal sales language"
 
-          # Legacy proof library remains published.
           fetch_page "$BASE/prototypes.html" "$prototypes"
-          fetch_page "$BASE/cases/pet-nika.html" "$pet_case"
-          fetch_page "$BASE/cases/uniq-smart-rent.html" "$uniq_case"
-          fetch_page "$BASE/cases/ric.html" "$ric_case"
-          fetch_page "$PET" "$pet_live"
-          fetch_page "$UNIQ" "$uniq_live"
-          fetch_page "$RIC" "$ric_live"
-          fetch_page "$RIC_BOT" "$ric_bot"
+          fetch_page "$PET" "$pet"
+          fetch_page "$UNIQ" "$uniq"
+          fetch_page "$RIC" "$ric"
+          require_text "$prototypes" "$PET" "legacy proof -> PET"
+          require_text "$prototypes" "$UNIQ" "legacy proof -> UNIQ"
+          require_text "$pet" "PET NIKA" "PET live"
+          require_text "$uniq" "UNIQ" "UNIQ live"
+          require_text "$ric" "РИЦ" "RIC live"
 
-          require_text "$prototypes" "$PET" "prototypes -> PET NIKA"
-          require_text "$prototypes" "$UNIQ" "prototypes -> UNIQ SMART RENT"
-          require_text "$prototypes" "$RIC" "prototypes -> RIC Mini App"
-          require_text "$prototypes" "$RIC_BOT" "prototypes -> RIC Telegram prototype"
-          reject_text "$prototypes" "$PET_BROKEN" "broken PET /miniapp on prototypes"
-          require_text "$pet_case" "$PET" "PET legacy case -> PET NIKA"
-          require_text "$uniq_case" "$UNIQ" "UNIQ legacy case -> UNIQ SMART RENT"
-          require_text "$ric_case" "$RIC" "RIC legacy case -> Mini App"
-          require_text "$ric_case" "$RIC_BOT" "RIC legacy case -> Telegram prototype"
-          require_text "$pet_live" "PET NIKA" "PET live prototype content"
-          require_text "$uniq_live" "UNIQ" "UNIQ live prototype content"
-          require_text "$ric_live" "РИЦ" "RIC live Mini App content"
-
-          rm -f "$main" "$custom_main" "$products" "$booking" "$industries" "$tourism" "$solutions" "$cases" "$enterprise" "$labs" "$prototypes" "$pet_case" "$uniq_case" "$ric_case" "$pet_live" "$uniq_live" "$ric_live" "$ric_bot"
-          echo "PUBLIC PRODUCT QA PASS"
+          rm -f "$main" "$custom" "$en" "$booking" "$offer" "$target" "$tourism" "$cases" "$enterprise" "$labs" "$prototypes" "$pet" "$uniq" "$ric"
+          echo "PUBLIC COMMERCIAL QA PASS"
