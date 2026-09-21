@@ -4,13 +4,14 @@ Machine-readable commercial rules for the VIIVERSION sales operating system.
 
 ## Source-of-truth contract
 
+- **Google Doc `VIIVERSION — Corporate Strategy & Positioning`** — highest semantic Source of Truth for company identity, business model, product architecture, markets and external positioning. https://docs.google.com/document/d/1nfRAgnSiEv13XUOcqgRostFYdUlbFo83eOLRLQNLnN4/edit
 - **Google Sheet `VIIVERSION Commercial Matrix`** — operational data: Products, Assets, Verticals, Offers, Experiments, Sales Router, Cross Sell, actual outcomes and working price hypotheses. https://docs.google.com/spreadsheets/d/14i9E4WGazfwwsGl2mP_0TtZa9URBI-zeKj-qromAl-4/edit
 - **Google Doc `VIIVERSION Sales Playbook v1`** — human operating rules and governance. https://docs.google.com/document/d/1itFsDhoPZqyH1NN1emca9u1HFeqYouPu4gcuuzm9BL4/edit
-- **This directory** — stable IDs, machine rules, routing, scoring, discovery and schemas.
+- **This directory** — machine implementation of the strategy and Sales OS: stable IDs, routing, scoring, discovery, messaging and schemas. It must not contradict Corporate Strategy or live operational data.
 
 ## Rules
 
-1. Stable IDs are never reused for a different meaning.
+1. Corporate Strategy & Positioning has semantic precedence for brand identity, business model and product architecture. Commercial Matrix has operational precedence for live products/offers/assets/prices/experiments/leads/outcomes.
 2. Lead Discovery starts from evidence and a commercially meaningful buyer job/problem, then maps it to one concrete VIIVERSION product. It must not invent an offer from a missing feature merely to create outreach volume.
 3. A qualified lead is routed from validated problem/job → `problem_code` → eligible products → one concrete entry offer → proof asset → buyer → next action.
 4. The client-facing product must be understandable in buyer language. Internal abstractions such as “mobile layer” or “structured flow” are not product names.
