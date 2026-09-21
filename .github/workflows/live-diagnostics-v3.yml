@@ -22,9 +22,9 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Verify live commercial UX
+      - name: Verify live industry-first UX
         env:
-          TARGET_URL: https://landing.viiversion.workers.dev/
+          TARGET_URL: https://viiversion.com/
         run: |
           cat > diagnose-live.cjs <<'JS'
           const { chromium } = require('playwright');
@@ -37,61 +37,69 @@ jobs:
             await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
 
             let deployed=false;
-            for(let i=0;i<10;i++){
-              await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:30000});
+            for(let i=0;i<15;i++){
+              await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=industry-first`,{waitUntil:'domcontentloaded',timeout:30000});
               await page.waitForTimeout(700);
               const text=await page.locator('body').innerText();
-              deployed=text.includes('Автоматизируем продажи и операции') && await page.locator('.lead-form').count()>0;
+              deployed=text.includes('Цифровые решения для конкретных задач бизнеса') &&
+                       text.includes('Что можно купить для вашего бизнеса') &&
+                       await page.locator('[data-industry-tab]').count()>=6;
               if(deployed) break;
-              await page.waitForTimeout(2000);
+              await page.waitForTimeout(3000);
             }
-            if(!deployed) throw new Error('Commercial site version is not live');
+            if(!deployed) throw new Error('Industry-first site version is not live');
 
             const toggle=page.locator('.mobile-toggle');
             if(!(await toggle.isVisible())) throw new Error('Mobile menu toggle missing');
             await toggle.click(); await page.waitForTimeout(100);
             if(!(await page.locator('.nav.open').isVisible())) throw new Error('Mobile menu did not open');
 
-            await page.goto(new URL('/products/booking/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
-            let text=await page.locator('body').innerText();
-            if(!text.includes('Как процесс выглядит сейчас')||!text.includes('8–18M ₫')) throw new Error('Booking commercial content missing');
+            await page.goto(`${target}?utm_source=qa&utm_campaign=industry-first`,{waitUntil:'domcontentloaded',timeout:30000});
+            const hotelTab=page.locator('[data-industry-tab="hotels"]');
+            await hotelTab.click(); await page.waitForTimeout(120);
+            const hotelPanel=page.locator('[data-industry-panel="hotels"]');
+            if(!(await hotelPanel.isVisible())) throw new Error('Hotel panel did not open');
+            const hotelText=await hotelPanel.innerText();
+            if(!hotelText.includes('Онлайн-бронирование')||!hotelText.includes('Личный кабинет клиента')) throw new Error('Hotel modules missing');
 
-            await page.goto(new URL('/solutions/tourism/booking/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            const shopTab=page.locator('[data-industry-tab="shops"]');
+            await shopTab.click(); await page.waitForTimeout(120);
+            const shopText=await page.locator('[data-industry-panel="shops"]').innerText();
+            if(!shopText.includes('Каталог с ценами')||!shopText.includes('Подключение оплаты')) throw new Error('Retail modules missing');
+
+            const team=page.locator('#team');
+            await team.scrollIntoViewIfNeeded();
+            if(await team.locator('.team-photo').count()!==2) throw new Error('Team portraits missing');
+            for(const img of await team.locator('.team-photo').all()){
+              if(!(await img.evaluate(el=>el.complete && el.naturalWidth>50))) throw new Error('Team portrait failed to load');
+            }
+
+            await page.goto(new URL('/modules/online-booking/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            let text=await page.locator('body').innerText();
+            if(!text.includes('Что входит')||!text.includes('Что мы не будем делать без согласования')||!text.includes('8–18M ₫')) throw new Error('Concrete module page incomplete');
+
+            await page.goto(new URL('/modules/ai-consultant/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             text=await page.locator('body').innerText();
-            if(!text.includes('Турист бронирует экскурсию сам')) throw new Error('Targeted landing missing');
+            if(!text.includes('AI-консультант')||!text.includes('утверждённой')) throw new Error('AI module page incomplete');
+
+            await page.goto(`${target}?utm_source=qa&utm_campaign=first-touch`,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.goto(new URL('/modules/crm/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
+            const form=page.locator('.lead-form');
+            const context=await form.locator('[name="page_context"]').inputValue();
+            if(!context.includes('"source":"qa"')||!context.includes('"landingPage":"/"')) throw new Error('First-touch attribution was not preserved');
 
             await page.goto(new URL('/en/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             text=await page.locator('body').innerText();
-            if(!text.includes('Automate sales and operations')) throw new Error('English homepage missing');
-
-            await page.goto(`${target}?utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:30000});
-            const allResults=await page.locator('[data-products]').count();
-            await page.locator('[data-matrix-product="booking"]').click();
-            await page.waitForTimeout(100);
-            const hidden=await page.locator('[data-products].hidden').count();
-            if(allResults<2||hidden<1) throw new Error('Product × Industry filter failed');
-
-            const form=page.locator('.lead-form');
-            await form.locator('[name="contact"]').fill('qa@example.com');
-            await form.locator('[name="task"]').fill('QA test only');
-            const context=await form.locator('[name="page_context"]').inputValue();
-            if(!context.includes('"source":"qa"')) throw new Error('UTM context was not captured');
-
-            const routes=['/offers/booking-start/','/industries/rental/','/industries/clinics/','/cases/','/enterprise/','/labs/'];
-            for(const route of routes){
-              const response=await page.goto(new URL(route,target).href,{waitUntil:'domcontentloaded',timeout:30000});
-              if(!response||response.status()!==200) throw new Error(`Route failed: ${route}`);
-            }
+            if(!text.includes('Digital systems for sales and operations')) throw new Error('English homepage missing');
 
             await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
             await page.waitForTimeout(900);
-            await page.screenshot({path:'viiversion-commercial-mobile.png',fullPage:true});
-            const result={target,deployed,allResults,hidden};
-            fs.writeFileSync('viiversion-commercial-live.json',JSON.stringify(result,null,2));
-            console.log(JSON.stringify(result,null,2));
+            await page.screenshot({path:'viiversion-industry-first-mobile.png',fullPage:true});
+            fs.writeFileSync('viiversion-industry-first-live.json',JSON.stringify({target,deployed},null,2));
+            console.log(JSON.stringify({target,deployed},null,2));
             await browser.close();
           })().catch(e=>{
-            fs.writeFileSync('viiversion-commercial-live-error.txt',String(e&&e.stack||e));
+            fs.writeFileSync('viiversion-industry-first-error.txt',String(e&&e.stack||e));
             console.error(e); process.exitCode=1;
           });
           JS
@@ -99,9 +107,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: viiversion-commercial-live
+          name: viiversion-industry-first-live
           path: |
-            viiversion-commercial-live.json
-            viiversion-commercial-live-error.txt
-            viiversion-commercial-mobile.png
+            viiversion-industry-first-live.json
+            viiversion-industry-first-error.txt
+            viiversion-industry-first-mobile.png
           if-no-files-found: warn
