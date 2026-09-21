@@ -13,7 +13,10 @@
     "deal_class",
     "stage",
     "owner",
-    "next_action"
+    "next_action",
+    "source_url",
+    "source_type",
+    "created_at"
   ],
   "properties": {
     "lead_id": {"type": "string", "minLength": 1},
@@ -34,6 +37,8 @@
     "owner": {"type": "string", "minLength": 1},
     "asset": {"type": ["string", "null"]},
     "notes": {"type": ["string", "null"]},
-    "source_url": {"type": ["string", "null"], "format": "uri"}
+    "source_url": {"type": "string", "format": "uri"},
+    "source_type": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date"}
   }
 }
