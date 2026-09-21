@@ -77,9 +77,10 @@ jobs:
           done
           grep -Fq '"storage":"durable-object"' "$api" || { echo "FAIL lead API health" >&2; exit 1; }
 
-          # Exercise the POST route with honeypot set: validates routing without storing a real lead.
-          code="$(curl -sS -o "$api" -w '%{http_code}' -X POST "$CUSTOM/api/leads" -H 'content-type: application/json' --data '{"contact":"qa@example.invalid","task":"qa","website":"bot"}' || true)"
-          [[ "$code" == "202" ]] || { echo "FAIL lead API POST HTTP $code" >&2; cat "$api"; exit 1; }
+          # Exercise real Durable Object storage with a disposable QA record.
+          code="$(curl -sS -o "$api" -w '%{http_code}' -X POST "$CUSTOM/api/leads" -H 'content-type: application/json' --data '{"contact":"qa@example.invalid","task":"QA storage probe","qa":true}' || true)"
+          [[ "$code" == "201" ]] || { echo "FAIL lead storage probe HTTP $code" >&2; cat "$api"; exit 1; }
+          grep -Fq '"probe":true' "$api" || { echo "FAIL lead storage probe payload" >&2; cat "$api"; exit 1; }
 
           fetch_page "$PET" "$pet"
           fetch_page "$UNIQ" "$uniq"
