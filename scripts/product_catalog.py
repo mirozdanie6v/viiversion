@@ -322,6 +322,105 @@ INDUSTRY_CONFIGS = {
     },
 }
 
+TARGET_LANDINGS = {
+    "tourism/online-booking": {
+        "industry": "tourism",
+        "product": "online-booking",
+        "ru": {
+            "title": "Онлайн-бронирование экскурсий",
+            "headline": "Турист бронирует экскурсию сам. Менеджер получает готовый заказ.",
+            "lead": "Экскурсия, дата, количество людей и дополнительные параметры оформляются без длинной переписки.",
+            "specific": ["ночные заявки не ждут открытия офиса", "менеджер меньше времени тратит на одинаковые уточнения", "структура заказа сразу готова для CRM или рабочей панели"],
+        },
+        "en": {
+            "title": "Online booking for tours",
+            "headline": "The traveller books the tour; the team receives a complete order.",
+            "lead": "Tour, date, party size and options are captured without a long chat exchange.",
+            "specific": ["after-hours enquiries do not wait for the office", "staff spend less time on repetitive clarification", "the order arrives ready for CRM or operations"],
+        },
+    },
+    "tourism/ai-consultant": {
+        "industry": "tourism",
+        "product": "ai-consultant",
+        "ru": {
+            "title": "AI-консультант для туров и экскурсий",
+            "headline": "AI помогает туристу выбрать и передаёт менеджеру уже понятный запрос.",
+            "lead": "Консультант работает по вашему каталогу и правилам, задаёт уточняющие вопросы и ведёт к бронированию или человеку.",
+            "specific": ["ответы по каталогу 24/7", "подбор по интересам, дате и составу группы", "передача контекста в бронирование или менеджеру"],
+        },
+        "en": {
+            "title": "AI assistant for tour companies",
+            "headline": "AI helps the traveller choose and hands a clear request to the team.",
+            "lead": "The assistant works from your catalogue and rules, asks clarifying questions and moves the customer to booking or a human.",
+            "specific": ["catalogue answers 24/7", "recommendations by interest, date and party", "context passed to booking or staff"],
+        },
+    },
+    "rental/online-booking": {
+        "industry": "rental",
+        "product": "online-booking",
+        "ru": {
+            "title": "Онлайн-бронирование для проката",
+            "headline": "Клиент выбирает транспорт и даты без ручного расчёта в мессенджере.",
+            "lead": "Каталог, период аренды, тариф и заявка соединяются в один понятный сценарий.",
+            "specific": ["меньше вопросов «сколько стоит на эти даты?»", "заявка сразу содержит модель и период", "дальше можно подключить доступность, оплату и CRM"],
+        },
+        "en": {
+            "title": "Online booking for rental businesses",
+            "headline": "Customers choose the vehicle and dates without manual quoting in chat.",
+            "lead": "Catalogue, rental period, pricing and request work as one clear flow.",
+            "specific": ["fewer repetitive price questions", "the request already contains model and dates", "availability, payments and CRM can connect later"],
+        },
+    },
+    "clinics/online-booking": {
+        "industry": "clinics",
+        "product": "online-booking",
+        "ru": {
+            "title": "Онлайн-запись для клиники",
+            "headline": "Пациент выбирает услугу и время, администратор получает структурированную запись.",
+            "lead": "Запись можно связать с врачами, услугами, напоминаниями и CRM без полной замены текущей системы клиники.",
+            "specific": ["меньше ручного согласования времени", "контекст пациента приходит вместе с записью", "напоминания можно подключить позже"],
+        },
+        "en": {
+            "title": "Online booking for clinics",
+            "headline": "Patients choose the service and time; the clinic receives a structured booking.",
+            "lead": "Booking can connect to doctors, services, reminders and CRM without replacing the clinic's entire system.",
+            "specific": ["less manual slot coordination", "patient context arrives with the booking", "reminders can be added later"],
+        },
+    },
+    "clinics/ai-consultant": {
+        "industry": "clinics",
+        "product": "ai-consultant",
+        "ru": {
+            "title": "AI-консультант для клиники",
+            "headline": "AI отвечает на типовые вопросы и помогает довести обращение до записи.",
+            "lead": "Работает только по утверждённой информации о клинике и услугах, не заменяет врача и не выдаёт медицинских заключений.",
+            "specific": ["режим работы, услуги, подготовка и общая информация", "уточнение нужной услуги", "передача администратору контекста обращения"],
+        },
+        "en": {
+            "title": "AI assistant for clinics",
+            "headline": "AI handles routine questions and helps move the enquiry toward booking.",
+            "lead": "It uses approved clinic and service information only; it does not replace a clinician or provide medical diagnosis.",
+            "specific": ["hours, services, preparation and general information", "clarifies which service the customer needs", "hands context to clinic staff"],
+        },
+    },
+    "restaurants/payment-integration": {
+        "industry": "restaurants",
+        "product": "payment-integration",
+        "ru": {
+            "title": "Подключение оплаты для ресторанов и POS",
+            "headline": "Свяжите оплату с заказом и подтверждённым статусом без ручной сверки.",
+            "lead": "Подходит ресторанам, POS-вендорам, интеграторам и сетям, которым нужно надёжно связать кассу с платёжным провайдером.",
+            "specific": ["статус оплаты возвращается в заказ", "повторные события и ошибки обрабатываются системно", "можно расширить до сверки и нескольких точек"],
+        },
+        "en": {
+            "title": "Payment integration for restaurants and POS",
+            "headline": "Connect payment to the order and verified status without manual reconciliation.",
+            "lead": "For restaurants, POS vendors, integrators and chains that need reliable payment-provider integration.",
+            "specific": ["payment status returns to the order", "repeat events and errors are handled systematically", "can expand to reconciliation and multi-location"],
+        },
+    },
+}
+
 COMPOSITE_SYSTEMS = {
     "tour-sales": {"family_products": ["catalog", "online-booking", "payment-integration", "crm"], "ru": "Онлайн-продажи экскурсий", "en": "Tour sales system"},
     "hotel-direct": {"family_products": ["online-booking", "payment-integration", "crm"], "ru": "Прямое бронирование отеля", "en": "Hotel direct booking"},
