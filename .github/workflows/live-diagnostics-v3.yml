@@ -82,7 +82,8 @@ jobs:
               if(!response||response.status()!==200) throw new Error(`Route failed: ${route}`);
             }
 
-            await page.goto(target,{waitUntil:'domcontentloaded',timeout:120000});\n            await page.waitForTimeout(900);
+            await page.goto(target,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.waitForTimeout(900);
             await page.screenshot({path:'viiversion-commercial-mobile.png',fullPage:true});
             const result={target,deployed,allResults,hidden};
             fs.writeFileSync('viiversion-commercial-live.json',JSON.stringify(result,null,2));
