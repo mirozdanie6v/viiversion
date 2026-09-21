@@ -504,7 +504,9 @@ def badges(items):
 
 def case_card(lang, slug):
     c = CASES[slug][lang]
+    img=f"/assets/cases/{slug}.webp"
     return f'''<article class="card case-card">
+      <div class="case-media"><img src="{img}" alt="{escape(c["name"])}" loading="lazy" onerror="this.parentElement.hidden=true"></div>
       <div class="case-top"><div><div class="kicker">{escape(c["industry"])}</div><h3>{escape(c["name"])}</h3></div><span class="status {c["status"]}">{escape(c["status_label"])}</span></div>
       <p>{escape(c["summary"])}</p>{badges(c["shows"])}
       <div class="actions"><a class="btn btn-primary" href="{loc(lang,'/cases/'+slug+'/')}">{COPY[lang]["view_case"]}</a><a class="btn btn-secondary" href="{escape(c["demo"])}" target="_blank" rel="noopener">{COPY[lang]["view_demo"]}</a></div>
@@ -626,7 +628,7 @@ def home(lang):
 
     <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Как купить" if lang=="ru" else "How to start"}</div><h2>{"Пять понятных шагов до первого результата" if lang=="ru" else "Five clear steps to the first result"}</h2></div><p>{"Никакого обязательного большого внедрения на старте." if lang=="ru" else "No mandatory large implementation at the start."}</p></div><div class="buy-steps">{steps_html}</div></div></section>
 
-    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{"Инженерные задачи" if lang=="ru" else "Engineering"}</div><h2>{escape(enterprise_title)}</h2></div><p>{escape(enterprise_text)}</p></div><div class="actions"><a class="btn btn-secondary" href="{loc(lang,'/enterprise/')}">{"Для крупных систем" if lang=="ru" else "Enterprise engineering"} →</a><a class="btn btn-secondary" href="{loc(lang,'/labs/')}">VIIVERSION Labs →</a></div></div></section>
+    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{"Другие направления" if lang=="ru" else "Other paths"}</div><h2>{escape(enterprise_title)}</h2></div><p>{escape(enterprise_text)}</p></div><div class="actions"><a class="btn btn-secondary" href="{loc(lang,'/software/')}">{"Готовые продукты" if lang=="ru" else "Software products"} →</a><a class="btn btn-secondary" href="{loc(lang,'/partners/')}">{"Партнёрам" if lang=="ru" else "Partners"} →</a><a class="btn btn-secondary" href="{loc(lang,'/enterprise/')}">{"Для крупных систем" if lang=="ru" else "Enterprise engineering"} →</a></div></div></section>
     '''
 
 def modules_index(lang):
@@ -722,15 +724,17 @@ def offer_page(lang,slug):
     return hero(lang,c["offer"],f'{o["name"]} — {o["headline"]}',p["summary"],"/offers/"+slug+"/",(c["products"],"/products/"))+f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["scope"]}</div><h2>{c["how_works"]}</h2><ul class="list-clean">{scope}</ul></div><div class="scope-box"><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(o["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(o["timeline"])}</strong></div></div><p><b>{c["proof"]}:</b> {escape(o["proof"])}</p><p>{c["not_fixed"]}</p><a class="btn btn-primary" href="#contact" data-interest="{escape(o["name"])}" data-cta="offer">{escape(o["cta"])} →</a></div></div></section>'''
 
 def solutions_index(lang):
-    c=COPY[lang]
-    targets=[]
-    for slug,d in TARGET_LANDINGS.items():
-        t=d[lang]
-        targets.append(f'<article class="card"><div class="kicker">{escape(t["title"])}</div><h3>{escape(t["headline"])}</h3><p>{escape(t["lead"])}</p><a class="text-link" href="{loc(lang,"/solutions/"+slug+"/")}">{c["learn_more"]} →</a></article>')
-    inds="".join(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{c["solutions_industry"]}</div><h3>{escape(d[lang]["name"])}</h3><p>{escape(d[lang]["headline"])}</p></a>' for slug,d in INDUSTRIES.items())
-    title="Решения по задаче и отрасли" if lang=="ru" else "Solutions by problem and industry"
-    lead="Конкретные посадочные страницы для одного понятного сценария — без необходимости разбираться во всей архитектуре VIIVERSION." if lang=="ru" else "Focused landing pages for one clear workflow without needing to understand the whole VIIVERSION architecture."
-    return hero(lang,c["solutions"],title,lead,"/solutions/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions_problem"]}</div><h2>{c["solutions_problem"]}</h2></div></div><div class="grid3">{"".join(targets)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions_industry"]}</div><h2>{c["solutions_industry"]}</h2></div></div><div class="grid3">{inds}</div></div></section>'
+    target_cards=[]
+    for slug,item in TARGET_LANDINGS.items():
+        d=item[lang]
+        target_cards.append(f'<a class="card" href="{loc(lang,"/solutions/"+slug+"/")}"><div class="kicker">{"Отраслевая страница" if lang=="ru" else "Industry landing"}</div><h3>{escape(d["title"])}</h3><p>{escape(d["lead"])}</p><span class="text-link">{"Подробнее" if lang=="ru" else "Learn more"} →</span></a>')
+    industry_cards=[]
+    for slug,item in INDUSTRY_CONFIGS.items():
+        d=item[lang]
+        industry_cards.append(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{"Отрасль" if lang=="ru" else "Industry"}</div><h3>{escape(d["name"])}</h3><p>{escape(d["lead"])}</p><span class="text-link">{"Посмотреть продукты" if lang=="ru" else "See products"} →</span></a>')
+    title="Решения по задаче и сфере бизнеса" if lang=="ru" else "Solutions by problem and industry"
+    lead="Эти страницы не создают новые продукты: они показывают один и тот же канонический продукт в конкретной отрасли." if lang=="ru" else "These pages do not create new products; they show the same canonical product in a specific industry."
+    return hero(lang,"Решения" if lang=="ru" else "Solutions",title,lead,"/solutions/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Конкретные сценарии" if lang=="ru" else "Specific scenarios"}</div><h2>{"Продукт × отрасль" if lang=="ru" else "Product × industry"}</h2></div></div><div class="grid3">{"".join(target_cards)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"По сфере бизнеса" if lang=="ru" else "By industry"}</div><h2>{"Все отрасли" if lang=="ru" else "All industries"}</h2></div></div><div class="grid3">{"".join(industry_cards)}</div></div></section>'
 
 def target_page(lang,slug):
     c=COPY[lang]; d=TARGET_LANDINGS[slug]; t=d[lang]
@@ -839,46 +843,46 @@ def write(rel, html):
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(html,encoding="utf-8")
 
-# Build all pages.
+# Build all canonical commercial pages.
 pages = {}
+redirect_rels = set()
 
 for lang in LANGS:
     base_dir="" if lang=="ru" else "en/"
     pages[base_dir+"index.html"] = page(lang, "VIIVERSION — "+BRAND[lang]["tagline"], BRAND[lang]["hero_lead"], home(lang), "/", interest="general")
-    pages[base_dir+"products/index.html"] = page(lang, ("Продукты VIIVERSION" if lang=="ru" else "VIIVERSION products"), BRAND[lang]["products_lead"], products_index(lang), "/products/")
-    for slug in PRODUCTS:
-        p=PRODUCTS[slug][lang]
-        pages[base_dir+f"products/{slug}/index.html"] = page(lang, f'VIIVERSION {p["name"]}', p["summary"], product_page(lang,slug), f"/products/{slug}/", page_type="Product", interest=p["name"])
 
-    pages[base_dir+"modules/index.html"] = page(lang, ("Что можно купить — VIIVERSION" if lang=="ru" else "Modules — VIIVERSION"), ("Конкретные цифровые модули с понятным результатом, сроком и способом старта." if lang=="ru" else "Concrete digital modules with clear results, timelines and a way to start."), modules_index(lang), "/modules/")
-    for slug in MODULES:
-        m=MODULES[slug][lang]
-        pages[base_dir+f"modules/{slug}/index.html"] = page(lang, f'{m["name"]} — VIIVERSION', m["short"], module_page(lang,slug), f"/modules/{slug}/", page_type="Service", interest=m["name"])
+    pages[base_dir+"products/index.html"] = page(lang, ("Что можно купить — VIIVERSION" if lang=="ru" else "VIIVERSION products"), ("Канонический каталог продуктов VIIVERSION." if lang=="ru" else "Canonical VIIVERSION product catalogue."), products_index(lang), "/products/")
+    for slug in SELLABLE_PRODUCTS:
+        p=SELLABLE_PRODUCTS[slug][lang]
+        pages[base_dir+f"products/{slug}/index.html"] = page(lang, f'{p["name"]} — VIIVERSION', p["short"], product_page(lang,slug), f"/products/{slug}/", page_type="Product", interest=p["name"])
 
-    pages[base_dir+"offers/index.html"] = page(lang, ("Стартовые форматы — VIIVERSION" if lang=="ru" else "Starting offers — VIIVERSION"), BRAND[lang]["start_lead"], offers_index(lang), "/offers/")
-    for slug in OFFERS:
-        o=OFFERS[slug][lang]
-        pages[base_dir+f"offers/{slug}/index.html"] = page(lang, f'{o["name"]} — VIIVERSION', o["headline"], offer_page(lang,slug), f"/offers/{slug}/", page_type="Service", interest=o["name"])
-
-    pages[base_dir+"solutions/index.html"] = page(lang, ("Решения — VIIVERSION" if lang=="ru" else "Solutions — VIIVERSION"), ("Решения по конкретной задаче и отрасли." if lang=="ru" else "Solutions for specific problems and industries."), solutions_index(lang), "/solutions/")
+    pages[base_dir+"solutions/index.html"] = page(lang, ("Решения — VIIVERSION" if lang=="ru" else "Solutions — VIIVERSION"), ("Один продукт в конкретной отрасли и задаче." if lang=="ru" else "One product applied to a specific industry and problem."), solutions_index(lang), "/solutions/")
     for slug in TARGET_LANDINGS:
         t=TARGET_LANDINGS[slug][lang]
         pages[base_dir+f"solutions/{slug}/index.html"] = page(lang, f'{t["title"]} — VIIVERSION', t["lead"], target_page(lang,slug), f"/solutions/{slug}/", page_type="Service", interest=t["title"])
 
-    pages[base_dir+"industries/index.html"] = page(lang, ("Отрасли — VIIVERSION" if lang=="ru" else "Industries — VIIVERSION"), ("Глубокие отраслевые сценарии VIIVERSION." if lang=="ru" else "Deep industry scenarios from VIIVERSION."), industries_index(lang), "/industries/")
-    for slug in INDUSTRIES:
-        d=INDUSTRIES[slug][lang]
+    pages[base_dir+"industries/index.html"] = page(lang, ("Отрасли — VIIVERSION" if lang=="ru" else "Industries — VIIVERSION"), ("Продукты VIIVERSION по типу бизнеса." if lang=="ru" else "VIIVERSION products by business type."), industries_index(lang), "/industries/")
+    for slug in INDUSTRY_CONFIGS:
+        d=INDUSTRY_CONFIGS[slug][lang]
         pages[base_dir+f"industries/{slug}/index.html"] = page(lang, f'{d["name"]} — VIIVERSION', d["lead"], industry_page(lang,slug), f"/industries/{slug}/", page_type="Service", interest=d["name"])
 
-    pages[base_dir+"cases/index.html"] = page(lang, ("Кейсы — VIIVERSION" if lang=="ru" else "Cases — VIIVERSION"), ("Рабочие демо, публичные прототипы и клиентские концепты." if lang=="ru" else "Working demos, public prototypes and client concepts."), cases_index(lang), "/cases/")
+    pages[base_dir+"cases/index.html"] = page(lang, ("Примеры — VIIVERSION" if lang=="ru" else "Cases — VIIVERSION"), ("Интерактивные демо, публичные прототипы и клиентские концепции." if lang=="ru" else "Interactive demos, public prototypes and client concepts."), cases_index(lang), "/cases/")
     for slug in CASES:
         d=CASES[slug][lang]
         pages[base_dir+f"cases/{slug}/index.html"] = page(lang, f'{d["name"]} — VIIVERSION', d["summary"], case_page(lang,slug), f"/cases/{slug}/", interest=d["name"])
 
-    pages[base_dir+"enterprise/index.html"] = page(lang, ("Enterprise — VIIVERSION"), ("Закрытые внутренние системы, data и integrations." if lang=="ru" else "Private internal systems, data and integrations."), enterprise_page(lang), "/enterprise/", page_type="Service", interest="Enterprise")
-    pages[base_dir+"labs/index.html"] = page(lang, "VIIVERSION Labs", ("Собственные продукты VIIVERSION." if lang=="ru" else "Products developed by VIIVERSION."), labs_page(lang), "/labs/")
+    pages[base_dir+"software/index.html"] = page(lang, ("Готовые продукты VIIVERSION" if lang=="ru" else "VIIVERSION software products"), ("Самостоятельные программные продукты VIIVERSION." if lang=="ru" else "Standalone software products developed by VIIVERSION."), software_page(lang), "/software/")
+    pages[base_dir+"partners/index.html"] = page(lang, ("Партнёрам — VIIVERSION" if lang=="ru" else "Partners — VIIVERSION"), ("White-label и партнёрские форматы VIIVERSION." if lang=="ru" else "White-label and partner delivery from VIIVERSION."), partners_page(lang), "/partners/")
+    pages[base_dir+"enterprise/index.html"] = page(lang, "Enterprise — VIIVERSION", ("Сложные внутренние системы, данные и интеграции." if lang=="ru" else "Complex internal systems, data and integrations."), enterprise_page(lang), "/enterprise/", page_type="Service", interest="Enterprise")
     pages[base_dir+"about/index.html"] = page(lang, ("О VIIVERSION" if lang=="ru" else "About VIIVERSION"), ("Команда, компетенции и метод работы." if lang=="ru" else "Team, capabilities and delivery method."), about_page(lang), "/about/")
     pages[base_dir+"contact/index.html"] = page(lang, ("Контакты — VIIVERSION" if lang=="ru" else "Contact — VIIVERSION"), BRAND[lang]["final_lead"], hero(lang,COPY[lang]["contact"],BRAND[lang]["final_title"],BRAND[lang]["final_lead"],"/contact/"), "/contact/", interest="general")
+
+    # Keep old URLs alive without indexing duplicate commercial content.
+    for old_path,target in LEGACY_REDIRECTS.items():
+        rel=base_dir+old_path.strip("/")+"/index.html"
+        if rel not in pages:
+            pages[rel]=redirect_page(lang,target)
+            redirect_rels.add(rel)
 
 assets=PUBLIC/"assets"
 assets.mkdir(parents=True,exist_ok=True)
@@ -889,6 +893,12 @@ for portrait in ("dmitrii.webp","olga.webp"):
     source=team_src/portrait
     if source.exists():
         shutil.copy2(source,team_dst/portrait)
+case_src=ROOT/"site_assets"/"cases"
+case_dst=assets/"cases"
+case_dst.mkdir(parents=True,exist_ok=True)
+if case_src.exists():
+    for screenshot in case_src.glob("*.webp"):
+        shutil.copy2(screenshot,case_dst/screenshot.name)
 (assets/"viiversion.css").write_text(CSS,encoding="utf-8")
 (assets/"viiversion.js").write_text(JS,encoding="utf-8")
 for rel,html in pages.items():
@@ -897,6 +907,8 @@ for rel,html in pages.items():
 # Sitemap includes generated product pages plus Proposal Studio pages generated later in the build.
 urls=set()
 for rel in pages:
+    if rel in redirect_rels:
+        continue
     if rel.endswith("index.html"):
         parent=Path(rel).parent.as_posix()
         urls.add("/" if parent=="." else "/"+parent.strip("/")+"/")
@@ -911,11 +923,11 @@ xml+='</urlset>\n'
 
 required=[
     "index.html","en/index.html",
-    "products/booking/index.html","en/products/booking/index.html",
-    "modules/index.html","modules/online-booking/index.html","modules/crm/index.html","modules/ai-consultant/index.html",
-    "offers/booking-start/index.html","solutions/tourism/booking/index.html",
-    "industries/tourism/index.html","industries/rental/index.html","industries/clinics/index.html",
-    "cases/index.html","enterprise/index.html","labs/index.html","about/index.html",
+    "products/index.html","products/online-booking/index.html","products/telegram-mini-app/index.html",
+    "products/crm/index.html","products/ai-consultant/index.html","products/payment-integration/index.html","products/system-integration/index.html",
+    "solutions/tourism/online-booking/index.html","solutions/clinics/ai-consultant/index.html",
+    "industries/tourism/index.html","industries/hotels/index.html","industries/shops/index.html",
+    "cases/index.html","software/index.html","partners/index.html","enterprise/index.html","about/index.html",
     "assets/viiversion.css","assets/viiversion.js","assets/team/dmitrii.webp","assets/team/olga.webp","sitemap.xml"
 ]
 for rel in required:
@@ -931,4 +943,4 @@ for marker in ("Цифровые решения для конкретных за
     if marker not in home_text:
         raise SystemExit("Product site QA missing: "+marker)
 
-print(f"PASS: VIIVERSION commercial site generated: {len(pages)} bilingual pages + assets + sitemap.")
+print(f"PASS: VIIVERSION canonical product site generated: {len(pages)} pages including noindex legacy redirects + assets + sitemap.")
