@@ -17,21 +17,34 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Build site
         run: npm run build
-      - name: Verify generated routes
+      - name: Verify commercial architecture
         run: |
+          set -euo pipefail
           test -s public/index.html
-          test -s public/products/index.html
+          test -s public/en/index.html
           test -s public/products/booking/index.html
-          test -s public/products/paybridge/index.html
+          test -s public/en/products/booking/index.html
+          test -s public/offers/booking-start/index.html
+          test -s public/offers/mini-app-pilot/index.html
+          test -s public/solutions/tourism/booking/index.html
+          test -s public/solutions/clinics/booking/index.html
+          test -s public/solutions/restaurants/paybridge/index.html
           test -s public/industries/tourism/index.html
-          test -s public/solutions/index.html
+          test -s public/industries/rental/index.html
+          test -s public/industries/clinics/index.html
           test -s public/cases/index.html
           test -s public/enterprise/index.html
           test -s public/labs/index.html
-          grep -Fq "Product × Industry" public/index.html
-          grep -Fq "Booking Start" public/products/booking/index.html
+          grep -Fq "Автоматизируем продажи и операции" public/index.html
+          grep -Fq "Рабочие демо и прототипы" public/index.html
+          grep -Fq "8–18M ₫" public/offers/booking-start/index.html
+          grep -Fq 'hreflang="en"' public/index.html
+          grep -Fq 'class="lead-form"' public/index.html
+          ! grep -Fq "коммерческих ядер" public/index.html
+          ! grep -Fq "buyer journey" public/index.html
+          ! grep -Fq "Большая продажа" public/index.html
