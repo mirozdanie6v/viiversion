@@ -38,7 +38,9 @@ jobs:
             'uniq-smart-rent': 'https://uniq-smart-rent.mirozdanie6v.workers.dev/',
             'pet-nika': 'https://pet-nika.viiversion.com/',
             'ave-dental': 'https://ave-dental-miniapp.vercel.app/',
-            'true-surf': 'https://truesurf-app.viiversion.com/'
+            'true-surf': 'https://truesurf-app.viiversion.com/',
+            'rusinfocenter': 'https://rusinfocenter.viiversion.com/',
+            'g-beauty': 'https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/'
           };
 
           (async()=>{
