@@ -23,17 +23,29 @@ check() {
   return 1
 }
 
-# VIIVERSION main, prototype library and case pages
-check "https://landing.viiversion.workers.dev/" "VIIVERSION"
-check "https://landing.viiversion.workers.dev/prototypes.html" "PET NIKA"
-check "https://landing.viiversion.workers.dev/prototypes.html" "UNIQ SMART RENT"
-check "https://landing.viiversion.workers.dev/cases/pet-nika.html" "PET NIKA"
-check "https://landing.viiversion.workers.dev/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
+BASE="https://landing.viiversion.workers.dev"
 
-# Verified PET NIKA public prototype route
+# New product architecture
+check "$BASE/" "Product × Industry"
+check "$BASE/products/" "Продуктовые ядра VIIVERSION"
+check "$BASE/products/booking/" "Booking Start"
+check "$BASE/products/paybridge/" "PayBridge"
+check "$BASE/industries/" "Отраслевые конфигурации"
+check "$BASE/industries/tourism/" "Booking Start"
+check "$BASE/solutions/" "Решения вокруг конкретной бизнес-задачи"
+check "$BASE/cases/" "Кейсы как доказательство"
+check "$BASE/enterprise/" "Paid Discovery"
+check "$BASE/labs/" "Собственные продукты VIIVERSION"
+check "$BASE/sitemap.xml" "viiversion.com/products/"
+
+# Legacy proof library must remain reachable.
+check "$BASE/prototypes.html" "PET NIKA"
+check "$BASE/prototypes.html" "UNIQ SMART RENT"
+check "$BASE/cases/pet-nika.html" "PET NIKA"
+check "$BASE/cases/uniq-smart-rent.html" "UNIQ SMART RENT"
+
+# External demos used as proof.
 check "https://pet-nika.mirozdanie6v.workers.dev/" "PET NIKA"
-
-# UNIQ SMART RENT current public app
 check "https://uniq-smart-rent.mirozdanie6v.workers.dev/" "UNIQ"
 
-echo "PUBLIC QA PASS: VIIVERSION main/prototypes/cases and verified PET NIKA/UNIQ SMART RENT routes are reachable."
+echo "PUBLIC QA PASS: product architecture, legacy proof pages and verified demos are reachable."
