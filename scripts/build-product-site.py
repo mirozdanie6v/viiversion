@@ -1,10 +1,20 @@
 from pathlib import Path
 from html import escape
+from urllib.parse import quote
+import json
 import re
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = ROOT / "public"
 HOME = PUBLIC / "index.html"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from site_content import (
+    LANGS, BRAND, PRODUCTS, OFFERS, INDUSTRIES, INDUSTRY_CATALOG,
+    TARGET_LANDINGS, CASES, LABS, TEAM, NAV
+)
+
 if not HOME.exists():
     raise SystemExit("legacy public/index.html is required")
 
@@ -12,310 +22,666 @@ legacy = HOME.read_text(encoding="utf-8")
 m = re.search(r'<img class="vii-logo"[^>]*>', legacy)
 LOGO = m.group(0) if m else '<span class="brand-word">VIIVERSION</span>'
 
-# Keep already-published communication channels from the legacy footer.
-footer = re.search(r"<footer\b.*?</footer>", legacy, re.S | re.I)
+# Preserve already-published contact channels, but do not depend on their wording.
+footer_match = re.search(r"<footer\b.*?</footer>", legacy, re.S | re.I)
 CONTACTS = []
-if footer:
+if footer_match:
     seen = set()
-    for href, label in re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', footer.group(0), re.S | re.I):
+    for href, label in re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', footer_match.group(0), re.S | re.I):
         if href.startswith(("mailto:", "https://t.me/", "https://wa.me/", "https://api.whatsapp.com/")) and href not in seen:
             seen.add(href)
             clean = re.sub(r"<[^>]+>", " ", label)
-            clean = re.sub(r"\s+", " ", clean).strip() or "Связаться"
+            clean = re.sub(r"\s+", " ", clean).strip() or "Contact"
             CONTACTS.append((href, clean))
 CONTACTS = CONTACTS[:4]
 
-PRODUCTS = {
-"sales":("Sales","Клиентский слой","Цифровой вход в продукт и продажу",
-"Сайт, Telegram, QR или Zalo превращаются в управляемый путь: показать предложение, помочь выбрать и получить структурированную заявку.",
-["Landing / conversion page","Telegram Bot","Telegram Mini App","Zalo Mini App","Каталог и pricing","Клиентский кабинет","Мультиязычный слой"],
-["Туризм","Аренда","Клиники","Beauty","Сервисный бизнес"],"Запуск одного клиентского сценария",
-["UNIQ SMART RENT","AVE Dental","G-Beauty","TRUE SURF"],["Booking","Operations","AI Operator","PayBridge"]),
-"booking":("Booking","Бронирование и расписание","Бронирование без ручной сборки заказа в чате",
-"Клиент выбирает услугу, дату и параметры сам. Бизнес получает полный заказ, а не цепочку сообщений, которую ещё нужно вручную переносить.",
-["Booking Engine","Availability / Schedule","Каталог","Pricing","Подтверждения","Напоминания"],
-["Туризм","Аренда","Клиники","Beauty","Activities","Education"],"Booking Start — один законченный booking-flow",
-["MAX TOUR","AVE Dental","PET NIKA","TRUE SURF"],["Schedule","PayBridge","Operations","AI Operator"]),
-"operations":("Operations","Внутренний контур","Клиенты, заказы и управление — в одном рабочем контуре",
-"CRM, back-office, статусы, аналитика и действия команды связываются вокруг реального процесса, а не вокруг очередного отдельного сервиса.",
-["CRM / lead pipeline","Admin / Back-office","Customer profile","Owner dashboard","Analytics / KPI","Notifications","Repeat-sales automation"],
-["SME","Туризм","Клиники","Rental","E-commerce","Multi-location"],"CRM Core или Back-office Core",
-["MAX TOUR","PET NIKA","РИЦ"],["Automation","Analytics","AI Operator","Integrations"]),
-"ai-operator":("AI Operator","AI в рабочем процессе","AI, который работает с вашим продуктом и вашими данными",
-"Отвечает в заданном контуре, уточняет запрос, подбирает предложение и передаёт контекст дальше — в заявку, бронь или CRM.",
-["AI Consultant","AI Search","Recommendation","Lead qualification","Knowledge layer","Workflow automation"],
-["Туризм","Клиники","Каталоги","E-commerce","Сервисный бизнес"],"Один AI-сценарий на утверждённой базе знаний",
-["MAX TOUR concepts","AVE concepts","ZL Web Agent"],["Sales","Booking","Operations","Analytics"]),
-"paybridge":("PayBridge","Payments & middleware","Платёжный слой между клиентским действием и бизнес-системой",
-"Связывает checkout, POS или приложение с платёжным провайдером и возвращает подтверждённый статус в CRM, ERP или back-office.",
-["Payment integration","POS middleware","Webhooks","Status handling","Reconciliation","API layer"],
-["POS vendors","Restaurants","Retail","E-commerce","Сети","Интеграторы"],"Технический pilot на одном checkout-flow",
-["MAX TOUR payment flow","VIIVERSION middleware architecture"],["Multi-location rollout","Analytics","Loyalty","Managed support"])
+BASE = "https://viiversion.com"
+
+COPY = {
+    "ru": {
+        "solutions": "Решения",
+        "products": "Продукты",
+        "cases": "Кейсы",
+        "enterprise": "Enterprise",
+        "labs": "Labs",
+        "about": "Компания",
+        "contact": "Обсудить задачу",
+        "view_demo": "Открыть демо",
+        "view_case": "Разобрать кейс",
+        "learn_more": "Подробнее",
+        "price": "Ориентир по стоимости",
+        "timeline": "Ориентир по сроку",
+        "scope": "Что входит в первый этап",
+        "before": "Как процесс выглядит сейчас",
+        "after": "Как он может работать",
+        "modules": "Что можно подключить",
+        "proof": "Что можно посмотреть",
+        "other_markets": "Также адаптируем под",
+        "all_cases": "Все кейсы",
+        "all_products": "Все продукты",
+        "all_solutions": "Все решения",
+        "all_industries": "Отрасли",
+        "problem_booking": "Бронирование ведётся вручную",
+        "problem_leads": "Заявки теряются между чатами и таблицами",
+        "problem_ai": "Менеджеры отвечают на одни и те же вопросы",
+        "problem_pay": "Оплата и заказ живут в разных системах",
+        "problem_ops": "Руководителю не видно, что происходит в операциях",
+        "problem_custom": "Готовые SaaS не подходят под ваш процесс",
+        "problem_booking_desc": "Переносим выбор даты, параметров и подтверждение в Booking.",
+        "problem_leads_desc": "Собираем клиентский путь и CRM вокруг одного процесса.",
+        "problem_ai_desc": "AI консультирует по утверждённой базе и передаёт контекст дальше.",
+        "problem_pay_desc": "Соединяем checkout, provider status и back-office.",
+        "problem_ops_desc": "CRM, back-office и аналитика работают в одном контуре.",
+        "problem_custom_desc": "Проектируем закрытую систему вокруг ролей, данных и workflow.",
+        "partners_head": "White-label и партнёрская разработка",
+        "partners_body": "Mini App Factory, PayBridge и отдельные delivery-компоненты можно использовать через агентство, интегратора или software-партнёра.",
+        "enterprise_head": "Сложные внутренние системы",
+        "enterprise_body": "API, ETL, базы данных, Oracle / PL/SQL, роли, approvals, audit и managed support — отдельное инженерное направление.",
+        "team_lead": "Архитектура, интеграции и разработка соединены с продуктовой логикой, UX и исследованием пользовательского пути.",
+        "form_name": "Имя",
+        "form_contact": "Как с вами связаться",
+        "form_company": "Компания / сайт",
+        "form_task": "Что хотите улучшить?",
+        "form_submit": "Подготовить обращение",
+        "form_note": "Форма не отправляет данные в неизвестный сервис. Она собирает контекст страницы и готовит структурированное сообщение для одного из наших опубликованных каналов связи.",
+        "form_done": "Сообщение подготовлено. Оно скопировано в буфер обмена; выбранный канал связи откроется автоматически.",
+        "context": "Контекст",
+        "lang_switch": "EN",
+        "home": "Главная",
+        "offer": "Стартовый формат",
+        "status": "Статус",
+        "how_works": "Как устроен первый этап",
+        "not_fixed": "Итоговый scope подтверждаем после короткого разбора текущего процесса.",
+        "similar": "Нужно похожее решение?",
+        "team": "Команда",
+        "product_use": "Что показывает этот кейс",
+        "case_disclaimer": "Статус указан явно: working demo, public prototype или client concept. Мы не выдаём прототип за production-внедрение.",
+        "solutions_problem": "По задаче",
+        "solutions_industry": "По отрасли",
+        "target_cta": "Получить оценку этого сценария",
+    },
+    "en": {
+        "solutions": "Solutions",
+        "products": "Products",
+        "cases": "Cases",
+        "enterprise": "Enterprise",
+        "labs": "Labs",
+        "about": "Company",
+        "contact": "Discuss a problem",
+        "view_demo": "Open demo",
+        "view_case": "View case",
+        "learn_more": "Learn more",
+        "price": "Price guide",
+        "timeline": "Timeline guide",
+        "scope": "What the first step includes",
+        "before": "How the process works today",
+        "after": "How it can work",
+        "modules": "What can be connected",
+        "proof": "What you can inspect",
+        "other_markets": "Also adaptable to",
+        "all_cases": "All cases",
+        "all_products": "All products",
+        "all_solutions": "All solutions",
+        "all_industries": "Industries",
+        "problem_booking": "Booking is handled manually",
+        "problem_leads": "Leads are lost across chats and spreadsheets",
+        "problem_ai": "Staff answer the same questions repeatedly",
+        "problem_pay": "Payment and order status live in separate systems",
+        "problem_ops": "Management lacks a clear operating view",
+        "problem_custom": "Off-the-shelf SaaS does not fit the workflow",
+        "problem_booking_desc": "Move date, parameters and confirmation into Booking.",
+        "problem_leads_desc": "Build the customer flow and CRM around one process.",
+        "problem_ai_desc": "AI answers from approved knowledge and passes context onward.",
+        "problem_pay_desc": "Connect checkout, provider status and back office.",
+        "problem_ops_desc": "CRM, back office and analytics work in one operating flow.",
+        "problem_custom_desc": "Design a private system around roles, data and workflow.",
+        "partners_head": "White-label and partner delivery",
+        "partners_body": "Mini App Factory, PayBridge and delivery components can be supplied through agencies, integrators and software partners.",
+        "enterprise_head": "Complex internal systems",
+        "enterprise_body": "API, ETL, databases, Oracle / PL/SQL, roles, approvals, audit and managed support form a separate engineering lane.",
+        "team_lead": "Architecture, integrations and development are combined with product logic, UX and customer-journey research.",
+        "form_name": "Name",
+        "form_contact": "How should we contact you?",
+        "form_company": "Company / website",
+        "form_task": "What do you want to improve?",
+        "form_submit": "Prepare enquiry",
+        "form_note": "The form does not send data to an unknown third party. It captures page context and prepares a structured message for one of our published contact channels.",
+        "form_done": "Message prepared and copied to clipboard. The selected contact channel will open automatically.",
+        "context": "Context",
+        "lang_switch": "RU",
+        "home": "Home",
+        "offer": "Starting format",
+        "status": "Status",
+        "how_works": "How the first step works",
+        "not_fixed": "Final scope is confirmed after a short review of the current process.",
+        "similar": "Need a similar solution?",
+        "team": "Team",
+        "product_use": "What this case demonstrates",
+        "case_disclaimer": "Status is explicit: working demo, public prototype or client concept. We do not present prototypes as production deployments.",
+        "solutions_problem": "By problem",
+        "solutions_industry": "By industry",
+        "target_cta": "Get a scope for this scenario",
+    },
 }
 
-INDUSTRIES = {
-"tourism":("Туризм","Продажа тура не должна зависеть от того, когда менеджер открыл мессенджер.",
-"Каталог, подбор, бронирование, оплата и работа команды собираются в один цифровой контур — от первого интереса туриста до подтверждённого заказа.",
-["долгая консультация в чате","ручное уточнение дат и состава","разрозненные брони","нет единой картины по каналам"],"Booking Start",
-["sales","booking","operations","ai-operator","paybridge"],["MAX TOUR","Русский Информационный Центр"]),
-"rental":("Аренда","Каталог, доступность, цена и заявка должны работать как одна система.",
-"Клиент видит актуальный выбор и условия, бизнес получает структурированный запрос и может подключить бронирование, депозит, CRM и историю объекта.",
-["цены считаются вручную","доступность проверяется в переписке","заявки не связаны с парком","депозиты и статусы живут отдельно"],"Catalog + Quote",
-["sales","booking","operations","paybridge"],["UNIQ SMART RENT"]),
-"clinics":("Клиники","Запись — только начало клиентского процесса.",
-"Клиентский интерфейс, запись, напоминания, история обращения и повторные действия связываются вокруг пациента и работы клиники.",
-["лид теряется до записи","расписание согласуется вручную","повторный визит не автоматизирован","данные разнесены по системам"],"Mini App + Booking",
-["sales","booking","operations","ai-operator"],["AVE Dental","PET NIKA"]),
-"beauty":("Beauty / SPA","Из QR и соцсетей — сразу в понятный сценарий записи.",
-"Услуга, мастер, слот, подтверждение и повторный визит без лишних переходов между страницами и чатами.",
-["лиды из соцсетей теряются","запись вручную","нет напоминаний","повторные продажи зависят от менеджера"],"QR → Mini App Pilot",
-["sales","booking","operations","ai-operator"],["G-Beauty"]),
-"hospitality":("Hospitality","Прямой цифровой сервис до и после заселения.",
-"Бронирование, вопросы гостя, дополнительные услуги и follow-up можно собрать вокруг одного клиентского пути.",
-["зависимость от OTA","повторяющиеся вопросы","upsell вручную","разрозненные данные гостя"],"Booking + AI Concierge",
-["sales","booking","ai-operator","operations","paybridge"],["Reusable tourism stack"]),
-"restaurants":("Restaurants / Cafes","Платёж и возвратный клиент — часть одного потока.",
-"PayBridge связывает checkout и статус оплаты с внутренними системами; дальше к этому же контуру подключаются loyalty и analytics.",
-["фрагментированный checkout","ручная сверка","данные оплаты не возвращаются в операции","loyalty живёт отдельно"],"Fast Checkout Pilot",
-["paybridge","operations"],["Payment middleware"]),
-"retail":("Retail","Нормализовать события между POS, платежами и back-office.",
-"Интеграционный слой снижает количество ручных сверок и даёт основу для аналитики и multi-location управления.",
-["несколько POS/провайдеров","ручные сверки","разный формат событий","нет центральной картины"],"Payment / Integration Pilot",
-["paybridge","operations"],["Payment middleware","Integration stack"]),
-"real-estate":("Real Estate","Объекты, лиды и сделки не должны жить в разных чатах и таблицах.",
-"Сначала моделируем текущий путь сделки, затем собираем object database, CRM, matching и owner-service вокруг него.",
-["объекты дублируются","история лида теряется","подбор вручную","нет единой сделки"],"Sales Core Discovery",
-["sales","operations","ai-operator"],["MyVietHome Pro architecture"]),
-"education":("Education","Расписание, регистрация, оплата и история ученика — один процесс.",
-"Модульный контур для курсов, школ и программ: от слота до напоминаний и клиентского кабинета.",
-["расписание вручную","оплаты отдельно","напоминания отдельно","нет целостной истории"],"Schedule + Booking",
-["booking","operations","paybridge"],["Reusable service stack"]),
-"events":("Events","Регистрация и event-operations без хрупкой ручной сборки.",
-"Участники, команды, статусы оплаты и очередь организатора собираются в простой операционный контур.",
-["регистрация в формах и чатах","платёж проверяется вручную","команды ведутся отдельно","система падает в день события"],"Event Registration Mini App",
-["sales","booking","operations","paybridge"],["Mini App / back-office stack"]),
-"ecommerce":("E-commerce","Checkout, сообщения и CRM должны обмениваться событиями без ручных переносов.",
-"Соединяем заказ, оплату, уведомления и CRM в надёжный интеграционный поток.",
-["checkout отдельно от CRM","статусы расходятся","follow-up вручную","нет наблюдаемости интеграций"],"Commerce Integration Sprint",
-["paybridge","operations","ai-operator"],["Integration stack"]),
-"services":("Service Business","Один понятный путь от обращения до выполненной услуги.",
-"Для небольшого бизнеса можно начать с Booking или CRM Lite, а затем подключить автоматизацию, оплату и AI.",
-["всё в мессенджере","статусы держат в голове","клиентам забывают ответить","повторные продажи случайны"],"Booking Lite",
-["sales","booking","operations","ai-operator"],["Reusable service stack"])
-}
-
-SOLUTIONS = {
-"online-sales":("Online Sales System","Путь от первого интереса до структурированной продажи.",
-"Клиентский интерфейс, каталог, подбор, бронирование или заявка, оплата и передача в CRM — как один сценарий.",
-["Sales","Catalog / Pricing","Booking","PayBridge","Operations"],["Туризм","Rental","Clinics","Service business"],"Начать с одного клиентского пути, не со всей системы."),
-"booking-automation":("Booking Automation","Убрать согласование дат, параметров и подтверждений из ручной переписки.",
-"Booking Engine, schedule и reminders работают как единый процесс и при необходимости подключаются к оплате и CRM.",
-["Booking","Schedule","Availability","Notifications","Operations"],["Туризм","Clinics","Beauty","Activities","Education"],"Один рабочий booking-flow."),
-"ai-sales":("AI Sales Operator","Консультация и подбор без неконтролируемого «чатбота обо всём».",
-"AI работает на утверждённой базе знаний, знает допустимые действия и передаёт контекст в следующий бизнес-шаг.",
-["AI Operator","Knowledge layer","Catalog","Lead handoff","CRM"],["Туризм","Catalog businesses","Clinics","E-commerce"],"Один канал + одна измеримая задача."),
-"fast-checkout":("Fast Checkout","Связать checkout, оплату и подтверждённый статус без ручной сверки.",
-"Интеграционный слой между POS / приложением и платёжным провайдером с возвратом события в back-office.",
-["PayBridge","Webhooks","Status handling","Reconciliation","API"],["Restaurants","Retail","E-commerce","POS vendors"],"Pilot с одним POS / checkout-flow."),
-"private-operations":("Closed Operations System","Закрытая система под процесс, который не помещается в готовый SaaS.",
-"Роли, данные, workflow, approvals, audit, интеграции и dashboards проектируются вокруг реальной внутренней операции.",
-["RBAC","Workflow","Approvals","Data","API / ETL","Audit","Dashboards"],["Enterprise","Logistics","Manufacturing","Telecom","Multi-location"],"Paid Discovery → PoC → Implementation.")
-}
-
-CASES = {
-"max-tour":("MAX TOUR","Туризм","Full-stack demo: клиентский путь, заказы, роли, admin и owner analytics.",["Booking","Operations","AI"],"https://max-tour.viiversion.com/"),
-"rusinfocenter":("Русский Информационный Центр","Туризм","Цифровой клиентский путь и архитектура будущей единой системы продаж.",["Sales","Booking","Integrations"],"https://rusinfocenter.viiversion.com/"),
-"uniq-smart-rent":("UNIQ SMART RENT","Rental","Каталог, pricing и request lifecycle для аренды транспорта.",["Sales","Booking","Operations"],"https://uniq-smart-rent.mirozdanie6v.workers.dev/"),
-"pet-nika":("PET NIKA","Veterinary","Клиентский кабинет, питомцы, обращения, admin и аналитический слой.",["Sales","Booking","Operations"],"https://pet-nika.viiversion.com/"),
-"ave-dental":("AVE Dental","Dental","Мультиязычный Mini App и booking-flow для клиники.",["Sales","Booking"],"https://ave-dental-miniapp.vercel.app/"),
-"g-beauty":("G-Beauty","Beauty","Landing + Mini App + booking + demo admin для локального beauty-бизнеса.",["Sales","Booking","Operations"],""),
-"true-surf":("TRUE SURF","Activities","Booking / client passport / repeat-flow в формате Mini App.",["Sales","Booking"],"https://truesurf-app.viiversion.com/")
-}
-
-LABS = [
-("Proposal Studio","Research → diagnosis → solution → commercial proposal → QA.","/proposal-studio/"),
-("Mini App Factory","White-label production line для серийной сборки клиентских Mini Apps.","#contact"),
-("ZL Web Agent","Evidence-based read-only аудит WordPress и план безопасных изменений.","#contact"),
-("Event Video Human Editor","Semantic analysis больших массивов event-video до ручного монтажа.","#contact")
-]
-
-NAV=[("Продукты","/products/"),("Отрасли","/industries/"),("Решения","/solutions/"),("Кейсы","/cases/"),("Enterprise","/enterprise/"),("Labs","/labs/"),("О нас","/about/")]
-
-CSS=r'''
-:root{--ink:#081423;--muted:#5c6b7e;--line:#dfe6ee;--soft:#f6f8fb;--blue:#175cff;--navy:#071524;--max:1180px;--r:20px;--shadow:0 18px 55px rgba(15,35,68,.08)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;background:#fff}a{text-decoration:none;color:inherit}.wrap{width:min(var(--max),calc(100% - 40px));margin:auto}
-.site-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.header-row{height:72px;display:flex;align-items:center;gap:26px}.brand{margin-right:auto}.vii-logo{height:34px!important;width:auto!important;max-width:190px!important;object-fit:contain}.brand-word{font-weight:900;letter-spacing:.08em;font-size:21px}.nav{display:flex;gap:21px;font-size:14px;font-weight:650}.nav a:hover,.link{color:var(--blue)}.header-cta,.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;padding:12px 17px;font-size:14px;font-weight:780;border:1px solid transparent}.header-cta,.btn-primary{background:var(--ink);color:#fff}.header-cta:hover,.btn-primary:hover{background:var(--blue)}.btn-secondary{border-color:#cbd6e4;background:#fff}.mobile-toggle{display:none;border:0;background:none;font-size:24px}
-.hero{padding:82px 0 64px;background:radial-gradient(circle at 80% 10%,rgba(23,92,255,.22),transparent 34%),linear-gradient(135deg,#06111f,#0c2139 70%,#102c4d);color:#fff}.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:58px;align-items:center}.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:850;color:#718096}.hero .eyebrow{color:#8fb2ff}.hero h1,.page-hero h1{font-size:clamp(44px,6.3vw,80px);line-height:.96;letter-spacing:-.055em;margin:15px 0 24px}.hero p{font-size:20px;color:#c7d2df;max-width:760px}.hero-actions,.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.hero .btn-secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}.hero-note{display:flex;gap:28px;margin-top:40px;padding-top:26px;border-top:1px solid rgba(255,255,255,.14);color:#afbed1;font-size:12px}.hero-note b{display:block;color:#fff;font-size:17px;margin-bottom:3px}
-.matrix-visual{padding:22px;border-radius:26px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 90px rgba(0,0,0,.22)}.matrix-head{font-size:13px;color:#b9c9dc;margin-bottom:16px}.mini-matrix{display:grid;grid-template-columns:1.15fr repeat(5,.72fr);gap:6px;font-size:10px}.mini-matrix>div{min-height:43px;border-radius:9px;background:rgba(255,255,255,.055);display:flex;align-items:center;justify-content:center;padding:5px;text-align:center}.mini-matrix .top{background:transparent;color:#8fa8c8;min-height:26px}.mini-matrix .label{justify-content:flex-start;color:#dce7f3;padding-left:9px}.mini-matrix .on{background:linear-gradient(135deg,rgba(23,92,255,.78),rgba(111,76,246,.62));font-weight:850}.matrix-caption{font-size:11px;color:#90a5c0;margin-top:14px}
-.section{padding:74px 0;border-bottom:1px solid var(--line)}.section.soft{background:var(--soft)}.section.dark{background:var(--navy);color:#fff;border-bottom:0}.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:28px}.section-head h2{font-size:clamp(30px,4vw,48px);line-height:1.02;letter-spacing:-.04em;margin:8px 0 0}.section-head p{max-width:560px;color:var(--muted);margin:0}.dark .section-head p{color:#adbdcf}.link{font-size:14px;font-weight:780}
-.grid3,.grid4,.grid5,.case-grid,.lab-grid{display:grid;gap:15px}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}.grid5{grid-template-columns:repeat(5,1fr)}.case-grid{grid-template-columns:repeat(3,1fr)}.lab-grid{grid-template-columns:repeat(2,1fr)}
-.card{border:1px solid var(--line);border-radius:var(--r);padding:23px;background:#fff}.card:hover{border-color:#b8c8dc;box-shadow:var(--shadow)}.card .kicker{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#7d8b9c;font-weight:850}.card h3{font-size:22px;line-height:1.12;margin:9px 0}.card p{font-size:14px;color:var(--muted)}.product-card{min-height:310px;display:flex;flex-direction:column}.product-mark{width:42px;height:42px;border-radius:12px;background:#edf3ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:900;margin-bottom:20px}.product-card .link{margin-top:auto;padding-top:15px}.path-card{position:relative}.path-card h3{font-size:25px}.path-card:after{content:"→";position:absolute;right:20px;bottom:17px;color:var(--blue);font-weight:900}
-.growth{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.growth-step{padding:20px;border:1px solid var(--line);border-radius:17px;background:#fff;position:relative}.growth-step:not(:last-child):after{content:"→";position:absolute;right:-12px;top:50%;z-index:2;background:var(--soft);width:24px;text-align:center;color:#8290a3}.growth-step b{display:block;margin:8px 0 5px}.growth-step small{color:var(--muted)}
-.matrix-section{display:grid;grid-template-columns:250px 1fr;gap:26px}.matrix-tabs{display:flex;flex-direction:column;gap:8px}.matrix-tabs button{border:1px solid var(--line);background:#fff;border-radius:11px;padding:12px;text-align:left;font-weight:760;cursor:pointer}.matrix-tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink)}.matrix-results{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.matrix-result{border:1px solid var(--line);border-radius:15px;padding:17px;background:#fff}.matrix-result.hidden{display:none}.matrix-result b{display:block}.matrix-result span{font-size:12px;color:var(--muted)}
-.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}.badge{font-size:11px;font-weight:720;background:#eef2f7;color:#526177;border-radius:999px;padding:5px 8px}.case-card{display:flex;flex-direction:column;min-height:245px}.case-top{display:flex;justify-content:space-between;gap:15px}.case-code{font-weight:900;color:#a0acba;letter-spacing:.08em}.case-card .actions{margin-top:auto}.case-card .btn{padding:9px 11px;font-size:12px}
-.partner-strip{display:grid;grid-template-columns:1fr 1fr;gap:18px}.partner-box{border-radius:23px;padding:28px;background:#0d2138;color:#fff}.partner-box.alt{background:#edf3ff;color:var(--ink)}.partner-box p{color:#b9c8da}.partner-box.alt p{color:var(--muted)}
-.page-hero{padding:70px 0 50px;background:linear-gradient(180deg,#f6f8fb,#fff)}.page-hero h1{font-size:clamp(42px,6vw,70px);color:var(--ink)}.page-hero p{font-size:20px;color:var(--muted);max-width:840px}.breadcrumb{font-size:12px;color:#8391a3;margin-bottom:18px}.breadcrumb a{color:var(--blue)}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:36px}.list-clean{list-style:none;padding:0;margin:0}.list-clean li{padding:13px 0;border-bottom:1px solid var(--line)}.quote{font-size:26px;line-height:1.3;letter-spacing:-.02em;border-left:4px solid var(--blue);padding-left:20px}.stat-panel{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.stat{padding:19px;border:1px solid var(--line);border-radius:15px}.stat strong{display:block;font-size:25px}.stat span{font-size:12px;color:var(--muted)}
-.contact-bar{padding:54px 0;background:#eef4ff}.contact-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:26px;align-items:center}.contact-grid h2{font-size:39px;line-height:1;letter-spacing:-.04em;margin:0 0 10px}.contact-grid p{color:var(--muted);margin:0}.contact-links{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}.footer{padding:32px 0;background:#06111f;color:#aab9ca}.footer-row{display:flex;justify-content:space-between;gap:25px}.footer-links{display:flex;gap:16px;flex-wrap:wrap;font-size:12px}
-@media(max-width:1050px){.nav{display:none}.mobile-toggle{display:block}.nav.open{display:flex;position:absolute;left:20px;right:20px;top:66px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.hero-grid{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(2,1fr)}.grid4{grid-template-columns:repeat(3,1fr)}.matrix-section{grid-template-columns:1fr}.matrix-tabs{flex-direction:row;flex-wrap:wrap}.matrix-results{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:720px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-row{height:62px}.vii-logo{height:29px!important}.header-cta{display:none}.hero{padding:55px 0 44px}.hero h1,.page-hero h1{font-size:42px}.hero p,.page-hero p{font-size:17px}.hero-note{flex-wrap:wrap;gap:16px}.mini-matrix{font-size:8px}.section{padding:52px 0}.section-head{display:block}.section-head p{margin-top:12px}.grid3,.grid4,.grid5,.case-grid,.lab-grid,.growth,.two-col,.partner-strip,.contact-grid,.matrix-results{grid-template-columns:1fr}.growth-step:not(:last-child):after{content:"↓";right:auto;left:50%;top:auto;bottom:-18px;background:#fff}.matrix-tabs{overflow:auto;flex-wrap:nowrap;padding-bottom:4px}.matrix-tabs button{white-space:nowrap}.product-card{min-height:0}.footer-row{display:block}.footer-links{margin-top:18px}.contact-links{justify-content:flex-start}.contact-grid h2{font-size:33px}}
-'''
-JS='''document.addEventListener("DOMContentLoaded",()=>{const t=document.querySelector(".mobile-toggle"),n=document.querySelector(".nav");if(t&&n)t.addEventListener("click",()=>n.classList.toggle("open"));const b=[...document.querySelectorAll("[data-matrix-product]")],r=[...document.querySelectorAll("[data-products]")];if(b.length&&r.length){const a=s=>{b.forEach(x=>x.classList.toggle("active",x.dataset.matrixProduct===s));r.forEach(x=>x.classList.toggle("hidden",s!=="all"&&!(x.dataset.products||"").split(",").includes(s)))};b.forEach(x=>x.addEventListener("click",()=>a(x.dataset.matrixProduct)));a("all")}});'''
-
-def purl(s): return f"/products/{s}/"
-def iurl(s): return f"/industries/{s}/"
-def surl(s): return f"/solutions/{s}/"
-def curl(s): return f"/cases/{s}/"
-
-def header():
-    nav="".join(f'<a href="{u}">{escape(n)}</a>' for n,u in NAV)
-    return f'<header class="site-header"><div class="wrap header-row"><a class="brand" href="/">{LOGO}</a><nav class="nav">{nav}</nav><a class="header-cta" href="#contact">Обсудить задачу →</a><button class="mobile-toggle" aria-label="Меню">☰</button></div></header>'
-def contact():
-    if CONTACTS:
-        buttons="".join(f'<a class="btn btn-primary" href="{escape(u)}" rel="noopener">{escape(n)}</a>' for u,n in CONTACTS)
-        note="Выберите существующий канал связи и пришлите один проблемный процесс — этого достаточно, чтобы начать."
-    else:
-        buttons='<a class="btn btn-primary" href="/about/">О команде →</a>'
-        note="Покажите один проблемный процесс. На первой встрече определим минимальный контур, который имеет смысл проверять."
-    return f'<section class="contact-bar" id="contact"><div class="wrap contact-grid"><div><div class="eyebrow">Следующий шаг</div><h2>Начнём не с «большой системы», а с конкретного процесса.</h2><p>{note}</p></div><div class="contact-links">{buttons}</div></div></section>'
-def footer():
-    links="".join(f'<a href="{u}">{escape(n)}</a>' for n,u in NAV)
-    return f'<footer class="footer"><div class="wrap footer-row"><div><div class="brand-word">VIIVERSION</div><div style="font-size:11px">Digital Business Systems</div></div><div class="footer-links">{links}<a href="/proposal-studio/">Proposal Studio</a></div></div></footer>'
-def page(title,desc,body,canonical):
-    return f'<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)}</title><meta name="description" content="{escape(desc)}"><link rel="canonical" href="https://viiversion.com{canonical}"><meta property="og:title" content="{escape(title)}"><meta property="og:description" content="{escape(desc)}"><meta property="og:type" content="website"><link rel="stylesheet" href="/assets/viiversion.css"></head><body>{header()}<main>{body}</main>{contact()}{footer()}<script src="/assets/viiversion.js" defer></script></body></html>'
-def hero(kicker,title,lead,parent=None,parent_url=None):
-    crumb='<div class="breadcrumb"><a href="/">VIIVERSION</a>'
-    if parent: crumb+=f' / <a href="{parent_url}">{escape(parent)}</a>'
-    crumb+=f' / {escape(title.split(" — ")[0])}</div>'
-    return f'<section class="page-hero"><div class="wrap">{crumb}<div class="eyebrow">{escape(kicker)}</div><h1>{escape(title)}</h1><p>{escape(lead)}</p></div></section>'
-def card(inner,extra=""): return f'<article class="card {extra}">{inner}</article>'
-def badges(items): return '<div class="badges">'+"".join(f'<span class="badge">{escape(x)}</span>' for x in items)+'</div>'
-
-# HOME
-prod=[]
-for slug,p in PRODUCTS.items():
-    prod.append(card(f'<div class="product-mark">{escape(p[0][0])}</div><div class="kicker">{escape(p[1])}</div><h3>{escape(p[0])}</h3><p>{escape(p[3])}</p><a class="link" href="{purl(slug)}">Разобрать продукт →</a>',"product-card"))
-inds=[]
-for slug,i in list(INDUSTRIES.items())[:8]:
-    inds.append(card(f'<div class="kicker">{escape(i[4])}</div><h3>{escape(i[0])}</h3><p>{escape(i[1])}</p><a class="link" href="{iurl(slug)}">Сценарий отрасли →</a>'))
-sols=[]
-for slug,s in SOLUTIONS.items():
-    sols.append(card(f'<div class="kicker">Solution</div><h3>{escape(s[0])}</h3><p>{escape(s[1])}</p>{badges(s[3][:4])}<a class="link" href="{surl(slug)}">Как устроено →</a>'))
-cases=[]
-for slug,c in CASES.items():
-    demo=f'<a class="btn btn-secondary" href="{escape(c[4])}" target="_blank" rel="noopener">Demo</a>' if c[4] else ""
-    cases.append(card(f'<div class="case-top"><div><div class="kicker">{escape(c[1])}</div><h3>{escape(c[0])}</h3></div><div class="case-code">CASE</div></div><p>{escape(c[2])}</p>{badges(c[3])}<div class="actions"><a class="btn btn-primary" href="{curl(slug)}">Разобрать</a>{demo}</div>',"case-card"))
-matrix=[]
-for slug,i in INDUSTRIES.items():
-    matrix.append(f'<a class="matrix-result" data-products="{escape(",".join(i[5]))}" href="{iurl(slug)}"><b>{escape(i[0])}</b><span>{escape(i[4])}</span></a>')
-
-home=f'''
-<section class="hero"><div class="wrap hero-grid"><div><div class="eyebrow">Modular Business Systems</div><h1>От отдельного процесса — к работающей цифровой системе.</h1><p>VIIVERSION собирает клиентские интерфейсы, бронирование, CRM, AI, платежи и интеграции вокруг конкретной бизнес-задачи. Один модуль, отраслевая конфигурация или закрытый внутренний контур — без обязательного «внедрения всего сразу».</p><div class="hero-actions"><a class="btn btn-primary" href="/products/">Посмотреть продукты →</a><a class="btn btn-secondary" href="/solutions/">Найти решение по задаче</a></div><div class="hero-note"><div><b>36+</b>модулей и инженерных компонентов</div><div><b>25+</b>отраслевых сценариев</div><div><b>1 → N</b>один входной продукт может расширяться</div></div></div>
-<div class="matrix-visual"><div class="matrix-head">Одна технологическая база. Разные конфигурации под отрасль.</div><div class="mini-matrix"><div class="top"></div><div class="top">Sales</div><div class="top">Booking</div><div class="top">Ops</div><div class="top">AI</div><div class="top">Pay</div><div class="label">Tourism</div><div class="on">●</div><div class="on">●</div><div class="on">●</div><div class="on">●</div><div class="on">●</div><div class="label">Rental</div><div class="on">●</div><div class="on">●</div><div class="on">●</div><div>—</div><div class="on">●</div><div class="label">Clinics</div><div class="on">●</div><div class="on">●</div><div class="on">●</div><div class="on">●</div><div>—</div><div class="label">Retail</div><div>—</div><div>—</div><div class="on">●</div><div>—</div><div class="on">●</div><div class="label">Enterprise</div><div>—</div><div>—</div><div class="on">●</div><div class="on">●</div><div class="on">●</div></div><div class="matrix-caption">Матрица показывает, какие ядра можно использовать в конкретном процессе; это не фиксированные пакеты.</div></div></div></section>
-
-<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Три входа</div><h2>Не нужно знать название технологии.</h2></div><p>К одной системе можно прийти по продукту, отрасли или конкретному разрыву в процессе.</p></div><div class="grid3"><a class="card path-card" href="/products/"><div class="kicker">01 / Products</div><h3>Знаю, что нужно</h3><p>Booking, AI Operator, Operations, клиентский интерфейс или платежный слой.</p></a><a class="card path-card" href="/industries/"><div class="kicker">02 / Industries</div><h3>Ищу решение для отрасли</h3><p>Смотреть на конфигурацию вокруг реального процесса, а не на список функций.</p></a><a class="card path-card" href="/solutions/"><div class="kicker">03 / Problem</div><h3>Есть конкретный сбой</h3><p>Ручная бронь, потерянные лиды, разрыв между системами, checkout или повторяющиеся консультации.</p></a></div></div></section>
-
-<section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Products</div><h2>Пять коммерческих ядер.</h2></div><p>Каждое можно внедрять отдельно. Следующий слой подключается только когда он нужен процессу.</p></div><div class="grid5">{''.join(prod)}</div></div></section>
-
-<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Product × Industry</div><h2>Один продукт — разные отраслевые сценарии.</h2></div><p>Технологическое ядро переупаковывается вокруг buyer, процесса и операционной логики конкретного рынка.</p></div><div class="matrix-section"><div class="matrix-tabs"><button class="active" data-matrix-product="all">Все отрасли</button>{''.join(f'<button data-matrix-product="{slug}">{escape(p[0])}</button>' for slug,p in PRODUCTS.items())}</div><div class="matrix-results">{''.join(matrix)}</div></div></div></section>
-
-<section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Модульная модель</div><h2>Масштаб решения определяется задачей, а не прайс-пакетом.</h2></div><p>Первый модуль должен давать самостоятельный результат. Рост идёт от доказанного процесса.</p></div><div class="growth"><div class="growth-step"><div class="eyebrow">01 / Start</div><b>Один процесс</b><small>Booking, AI-консультация или checkout.</small></div><div class="growth-step"><div class="eyebrow">02 / Connect</div><b>Связка модулей</b><small>Booking + CRM, Sales + AI, Checkout + PayBridge.</small></div><div class="growth-step"><div class="eyebrow">03 / Vertical</div><b>Отраслевой контур</b><small>Конфигурация вокруг специфики рынка.</small></div><div class="growth-step"><div class="eyebrow">04 / Private</div><b>Закрытая система</b><small>Роли, data, workflow, integrations и audit.</small></div></div></div></section>
-
-<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Industries</div><h2>Начинаем с процесса отрасли.</h2></div><a class="link" href="/industries/">Все отрасли →</a></div><div class="grid4">{''.join(inds)}</div></div></section>
-<section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Solutions</div><h2>Конфигурации для повторяющихся задач.</h2></div><a class="link" href="/solutions/">Все решения →</a></div><div class="grid3">{''.join(sols)}</div></div></section>
-
-<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Entry offers</div><h2>Большая продажа не должна быть первым шагом.</h2></div><p>Входной продукт — pilot, sprint, audit или один законченный flow с проверяемым результатом.</p></div><div class="grid5"><article class="card"><div class="kicker">Booking</div><h3>Booking Start</h3><p>Один законченный сценарий выбора и бронирования.</p></article><article class="card"><div class="kicker">Mini App</div><h3>Mini App Pilot</h3><p>Один клиентский путь внутри Telegram или Zalo.</p></article><article class="card"><div class="kicker">AI</div><h3>AI Operator Pilot</h3><p>Одна задача и одна утверждённая база знаний.</p></article><article class="card"><div class="kicker">Integrations</div><h3>Integration Sprint</h3><p>Один надёжный bridge между двумя системами.</p></article><article class="card"><div class="kicker">Enterprise</div><h3>Discovery + PoC</h3><p>Сначала моделируем процесс и проверяем архитектуру.</p></article></div></div></section>
-
-<section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Cases</div><h2>Доказательства продуктовых ядер, а не галерея дизайна.</h2></div><a class="link" href="/cases/">Все кейсы →</a></div><div class="case-grid">{''.join(cases)}</div></div></section>
-
-<section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#88aaff">B2B2B & Enterprise</div><h2>Не все продукты продаются конечному бизнесу напрямую.</h2></div><p>Отдельные линии рассчитаны на POS-вендоров, агентства, интеграторов, software teams и enterprise-заказчиков.</p></div><div class="partner-strip"><div class="partner-box"><div class="kicker">Partners</div><h3>White-label и партнёрская дистрибуция</h3><p>Mini App Factory, PayBridge и delivery-capacity могут поставляться через партнёра и масштабироваться на его клиентскую базу.</p><a class="btn btn-secondary" href="/labs/">Продукты для партнёров →</a></div><div class="partner-box alt"><div class="kicker">Enterprise</div><h3>Systems & Engineering</h3><p>API, ETL, database migration, Oracle / PL/SQL, RBAC workflow, Revenue Assurance и L2/L3 support — отдельный технический buyer journey.</p><a class="btn btn-primary" href="/enterprise/">Enterprise capabilities →</a></div></div></div></section>
-
-<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">VIIVERSION Labs</div><h2>Собственные продукты масштабируются отдельно от client work.</h2></div><a class="link" href="/labs/">Открыть Labs →</a></div><div class="lab-grid">{''.join(card(f'<h3>{escape(n)}</h3><p>{escape(d)}</p><a class="link" href="{u}">Подробнее →</a>') for n,d,u in LABS)}</div></div></section>
+CSS = r'''
+:root{--ink:#071524;--muted:#5a6878;--line:#dfe6ee;--soft:#f5f7fa;--soft2:#eef3f8;--blue:#145dff;--navy:#06111f;--green:#0c8f68;--orange:#b76a12;--max:1180px;--r:20px;--shadow:0 18px 55px rgba(15,35,68,.08)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;background:#fff}a{text-decoration:none;color:inherit}button,input,textarea{font:inherit}.wrap{width:min(var(--max),calc(100% - 40px));margin:auto}
+.site-header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.93);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.header-row{height:72px;display:flex;align-items:center;gap:24px}.brand{margin-right:auto}.vii-logo{height:34px!important;width:auto!important;max-width:190px!important;object-fit:contain}.brand-word{font-weight:900;letter-spacing:.08em;font-size:21px}.nav{display:flex;gap:20px;font-size:14px;font-weight:680}.nav a:hover,.text-link{color:var(--blue)}.header-actions{display:flex;align-items:center;gap:9px}.lang-link{font-size:12px;font-weight:850;border:1px solid var(--line);border-radius:9px;padding:8px 9px}.header-cta,.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;padding:12px 17px;font-size:14px;font-weight:800;border:1px solid transparent;cursor:pointer}.header-cta,.btn-primary{background:var(--ink);color:#fff}.header-cta:hover,.btn-primary:hover{background:var(--blue)}.btn-secondary{border-color:#cbd6e4;background:#fff}.mobile-toggle{display:none;border:0;background:none;font-size:24px}
+.hero{padding:82px 0 68px;background:radial-gradient(circle at 82% 10%,rgba(20,93,255,.20),transparent 34%),linear-gradient(135deg,#06111f,#0d2138 68%,#103154);color:#fff}.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:62px;align-items:center}.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:#6f7d8e}.hero .eyebrow{color:#8fb5ff}.hero h1,.page-hero h1{font-size:clamp(42px,6vw,76px);line-height:.98;letter-spacing:-.052em;margin:15px 0 23px}.hero p{font-size:20px;color:#c8d4e2;max-width:770px}.hero-actions,.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.hero .btn-secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,.32)}.hero-proof{margin-top:34px;display:flex;gap:10px;flex-wrap:wrap}.hero-proof span{font-size:12px;border:1px solid rgba(255,255,255,.18);padding:8px 10px;border-radius:999px;color:#d3deea}
+.process-map{border-radius:26px;padding:24px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);box-shadow:0 32px 90px rgba(0,0,0,.22)}.process-map h3{margin:0 0 18px;font-size:15px;color:#cfe0f2}.process-flow{display:grid;gap:9px}.process-node{padding:13px 15px;border-radius:12px;background:rgba(255,255,255,.07);display:flex;justify-content:space-between;align-items:center}.process-node b{font-size:14px}.process-node span{color:#8fb5ff;font-size:12px}.process-arrow{text-align:center;color:#6f8caf}
+.section{padding:72px 0;border-bottom:1px solid var(--line)}.section.soft{background:var(--soft)}.section.dark{background:var(--navy);color:#fff;border-bottom:0}.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:28px}.section-head h2,.section h2{font-size:clamp(30px,4vw,47px);line-height:1.04;letter-spacing:-.04em;margin:8px 0 0}.section-head p{max-width:590px;color:var(--muted);margin:0}.dark .section-head p,.dark p{color:#b7c6d8}.text-link{font-size:14px;font-weight:800}
+.grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid{display:grid;gap:15px}.grid2{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}.grid5{grid-template-columns:repeat(5,1fr)}.case-grid{grid-template-columns:repeat(3,1fr)}.offer-grid{grid-template-columns:repeat(4,1fr)}.team-grid{grid-template-columns:repeat(2,1fr)}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:23px;background:#fff}.card:hover{border-color:#b8c8dc;box-shadow:var(--shadow)}.card .kicker{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7c8b9d;font-weight:850}.card h3{font-size:22px;line-height:1.13;margin:9px 0}.card p{font-size:14px;color:var(--muted)}.product-card{min-height:300px;display:flex;flex-direction:column}.product-mark{width:42px;height:42px;border-radius:12px;background:#edf3ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:900;margin-bottom:20px}.product-card .text-link,.case-card .actions{margin-top:auto}
+.problem-card{padding:22px;border-radius:17px;border:1px solid var(--line);background:#fff}.problem-card h3{font-size:18px;margin:0 0 8px}.problem-card p{margin:0;color:var(--muted);font-size:14px}.problem-card a{display:block;margin-top:12px;color:var(--blue);font-size:13px;font-weight:800}
+.status{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:10px;letter-spacing:.08em;font-weight:900;background:#eef2f7;color:#596a7c}.status.working-demo{background:#e7f7f1;color:#087355}.status.prototype{background:#edf3ff;color:#225fcc}.status.concept{background:#fff3e3;color:#985c0c}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}.badge{font-size:11px;font-weight:720;background:#eef2f7;color:#526177;border-radius:999px;padding:5px 8px}.case-card{display:flex;flex-direction:column;min-height:265px}.case-top{display:flex;justify-content:space-between;gap:15px}.case-card .actions{display:flex}
+.offer-card{display:flex;flex-direction:column;min-height:310px}.offer-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.offer-meta div{padding:10px;border-radius:10px;background:var(--soft)}.offer-meta small{display:block;color:#768596;font-size:10px;text-transform:uppercase;letter-spacing:.07em}.offer-meta b{font-size:13px}
+.matrix-wrap{display:grid;grid-template-columns:240px 1fr;gap:24px}.matrix-tabs{display:flex;flex-direction:column;gap:8px}.matrix-tabs button{border:1px solid var(--line);background:#fff;border-radius:11px;padding:12px;text-align:left;font-weight:760;cursor:pointer}.matrix-tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink)}.matrix-results{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.matrix-result{border:1px solid var(--line);border-radius:15px;padding:17px;background:#fff}.matrix-result.hidden{display:none}.matrix-result b{display:block}.matrix-result span{font-size:12px;color:var(--muted)}
+.page-hero{padding:66px 0 48px;background:linear-gradient(180deg,#f5f7fa,#fff)}.page-hero h1{font-size:clamp(40px,5.7vw,67px);color:var(--ink)}.page-hero p{font-size:19px;color:var(--muted);max-width:850px}.breadcrumb{font-size:12px;color:#8290a2;margin-bottom:18px}.breadcrumb a{color:var(--blue)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:36px}.list-clean{list-style:none;padding:0;margin:0}.list-clean li{padding:13px 0;border-bottom:1px solid var(--line)}.quote{font-size:25px;line-height:1.32;letter-spacing:-.02em;border-left:4px solid var(--blue);padding-left:20px}.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}.compare-box{border-radius:19px;padding:24px;border:1px solid var(--line);background:#fff}.compare-box.after{background:#f1f6ff;border-color:#cad9fb}.compare-box h3{margin-top:0}.compare-box li{margin-bottom:9px;color:var(--muted)}
+.module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.module{border:1px solid var(--line);border-radius:16px;padding:19px;background:#fff}.module h3{font-size:17px;margin:0 0 8px}.module p{font-size:13px;color:var(--muted);margin:0}
+.scope-box{border-radius:22px;padding:26px;background:#f0f4fa;border:1px solid #d7e0eb}.scope-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.scope-meta div{background:#fff;border-radius:13px;padding:15px}.scope-meta small{display:block;color:#778598;text-transform:uppercase;letter-spacing:.08em;font-size:10px}.scope-meta strong{display:block;margin-top:4px;font-size:16px}.scope-list{padding-left:20px}.scope-list li{margin-bottom:8px}
+.industry-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.industry-step{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff;font-size:13px;font-weight:750;position:relative}.industry-step:not(:last-child):after{content:"→";position:absolute;right:-9px;top:50%;z-index:2;color:#75869a}
+.special-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.special-box{border-radius:24px;padding:29px;background:#0d2138;color:#fff}.special-box.alt{background:#edf3ff;color:var(--ink)}.special-box p{color:#bbcadb}.special-box.alt p{color:var(--muted)}
+.contact-bar{padding:62px 0;background:#eef4ff}.contact-layout{display:grid;grid-template-columns:.92fr 1.08fr;gap:38px}.contact-layout h2{font-size:38px;line-height:1.04;letter-spacing:-.04em;margin:8px 0 12px}.contact-layout p{color:var(--muted)}.lead-form{background:#fff;border:1px solid #d8e1ec;border-radius:22px;padding:22px;box-shadow:var(--shadow)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.lead-form label{display:block;font-size:11px;color:#667588;font-weight:750;margin-bottom:5px}.lead-form input,.lead-form textarea{width:100%;border:1px solid #ccd7e4;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink)}.lead-form textarea{min-height:112px;resize:vertical}.form-full{grid-column:1/-1}.form-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:13px}.form-note,.form-status{font-size:11px;color:#718095;margin-top:11px}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.footer{padding:32px 0;background:#06111f;color:#aab9ca}.footer-row{display:flex;justify-content:space-between;gap:25px}.footer-links{display:flex;gap:16px;flex-wrap:wrap;font-size:12px}
+@media(max-width:1050px){.nav{display:none}.mobile-toggle{display:block}.nav.open{display:flex;position:absolute;left:20px;right:20px;top:66px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.hero-grid{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(2,1fr)}.grid4{grid-template-columns:repeat(2,1fr)}.offer-grid{grid-template-columns:repeat(2,1fr)}.matrix-wrap{grid-template-columns:1fr}.matrix-tabs{flex-direction:row;overflow:auto}.matrix-results{grid-template-columns:repeat(2,1fr)}.industry-flow{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-row{height:62px}.vii-logo{height:29px!important}.header-cta{display:none}.hero{padding:52px 0 44px}.hero h1,.page-hero h1{font-size:41px}.hero p,.page-hero p{font-size:17px}.section{padding:50px 0}.section-head{display:block}.section-head p{margin-top:12px}.grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid,.two-col,.compare,.module-grid,.special-grid,.contact-layout,.matrix-results,.industry-flow,.form-grid{grid-template-columns:1fr}.matrix-tabs{padding-bottom:4px}.matrix-tabs button{white-space:nowrap}.product-card,.case-card,.offer-card{min-height:0}.industry-step:not(:last-child):after{content:"↓";right:auto;left:50%;top:auto;bottom:-16px}.scope-meta{grid-template-columns:1fr}.form-full{grid-column:auto}.footer-row{display:block}.footer-links{margin-top:18px}}
 '''
 
-pages={}
-pages["index.html"]=page("VIIVERSION — модульные цифровые системы для бизнеса","Клиентские интерфейсы, booking, CRM/operations, AI, payments, integrations и закрытые внутренние системы.",home,"/")
+JS = r'''
+document.addEventListener("DOMContentLoaded",()=>{
+  const toggle=document.querySelector(".mobile-toggle"), nav=document.querySelector(".nav");
+  if(toggle&&nav) toggle.addEventListener("click",()=>nav.classList.toggle("open"));
 
-p_cards=[]
-for slug,p in PRODUCTS.items():
-    p_cards.append(card(f'<div class="kicker">{escape(p[1])}</div><h3>{escape(p[0])}</h3><p>{escape(p[2])}</p>{badges(p[5][:4])}<a class="link" href="{purl(slug)}">Открыть продукт →</a>',"product-card"))
-body=hero("Products","Продуктовые ядра VIIVERSION","Пять коммерческих ядер для клиентского пути, бронирования, операций, AI и платежной инфраструктуры.")+f'<section class="section"><div class="wrap"><div class="grid5">{"".join(p_cards)}</div></div></section>'
-pages["products/index.html"]=page("Продукты VIIVERSION","Модульные цифровые продукты VIIVERSION.",body,"/products/")
-for slug,p in PRODUCTS.items():
-    related=[(s,i) for s,i in INDUSTRIES.items() if slug in i[5]]
-    body=hero(p[1],f'VIIVERSION {p[0]} — {p[2]}',p[3],"Products","/products/")
-    body+=f'<section class="section"><div class="wrap two-col"><div><div class="eyebrow">Что покупает клиент</div><h2>{escape(p[2])}</h2><p>{escape(p[3])}</p><div class="actions"><a class="btn btn-primary" href="#contact">Обсудить стартовый сценарий →</a></div></div><div><div class="eyebrow">Входной формат</div><p class="quote">{escape(p[6])}</p>{badges(p[5])}</div></div></section>'
-    body+=f'<section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Состав</div><h2>Компоненты {escape(p[0])}.</h2></div><p>Конфигурация определяется процессом; не все компоненты нужны в каждом внедрении.</p></div><div class="grid4">{"".join(card(f"<h3>{escape(x)}</h3><p>Подключается отдельно или как часть общего flow.</p>") for x in p[4])}</div></div></section>'
-    body+=f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Industry fit</div><h2>Где используется это ядро.</h2></div></div><div class="grid4">{"".join(card(f"<div class=kicker>{escape(i[4])}</div><h3>{escape(i[0])}</h3><p>{escape(i[1])}</p><a class=link href={iurl(s)}>Отраслевой сценарий →</a>") for s,i in related)}</div></div></section>'
-    body+=f'<section class="section soft"><div class="wrap two-col"><div><div class="eyebrow">Proof</div><h2>Референсы</h2><ul class="list-clean">{"".join(f"<li>{escape(x)}</li>" for x in p[7])}</ul></div><div><div class="eyebrow">Expansion</div><h2>Следующий слой</h2><ul class="list-clean">{"".join(f"<li>{escape(x)}</li>" for x in p[8])}</ul></div></div></section>'
-    pages[f"products/{slug}/index.html"]=page(f'VIIVERSION {p[0]}',p[3],body,purl(slug))
+  const tabs=[...document.querySelectorAll("[data-matrix-product]")];
+  const results=[...document.querySelectorAll("[data-products]")];
+  if(tabs.length&&results.length){
+    const apply=(slug)=>{
+      tabs.forEach(x=>x.classList.toggle("active",x.dataset.matrixProduct===slug));
+      results.forEach(x=>x.classList.toggle("hidden",slug!=="all"&&!(x.dataset.products||"").split(",").includes(slug)));
+    };
+    tabs.forEach(x=>x.addEventListener("click",()=>apply(x.dataset.matrixProduct)));
+    apply("all");
+  }
 
-ind_cards=[]
-for slug,i in INDUSTRIES.items():
-    ind_cards.append(card(f'<div class="kicker">{escape(i[4])}</div><h3>{escape(i[0])}</h3><p>{escape(i[1])}</p>{badges([PRODUCTS[x][0] for x in i[5]][:4])}<a class="link" href="{iurl(slug)}">Открыть сценарий →</a>'))
-body=hero("Industries","Отраслевые конфигурации","Одна технологическая база превращается в разные продукты, когда меняется процесс, buyer и операционная логика отрасли.")+f'<section class="section"><div class="wrap"><div class="grid4">{"".join(ind_cards)}</div></div></section>'
-pages["industries/index.html"]=page("Отрасли — VIIVERSION","Отраслевые конфигурации продуктов VIIVERSION.",body,"/industries/")
-for slug,i in INDUSTRIES.items():
-    pc=[]
-    for ps in i[5]:
-        p=PRODUCTS[ps];pc.append(card(f'<div class="kicker">{escape(p[1])}</div><h3>{escape(p[0])}</h3><p>{escape(p[2])}</p><a class="link" href="{purl(ps)}">Продукт →</a>',"product-card"))
-    body=hero("Industry",f'{i[0]} — цифровой контур вокруг реального процесса',i[2],"Industries","/industries/")
-    body+=f'<section class="section"><div class="wrap two-col"><div><div class="eyebrow">Типичные разрывы</div><h2>{escape(i[1])}</h2><ul class="list-clean">{"".join(f"<li>{escape(x)}</li>" for x in i[3])}</ul></div><div><div class="eyebrow">Первый коммерческий шаг</div><p class="quote">{escape(i[4])}</p><p>Первый этап проверяет один законченный процесс; расширение идёт после результата.</p></div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Recommended stack</div><h2>Какие ядра обычно участвуют.</h2></div></div><div class="grid5">{"".join(pc)}</div></div></section><section class="section"><div class="wrap"><div class="eyebrow">Proof / reference</div><h2>Связанные кейсы и архитектуры</h2>{badges(i[6])}</div></section>'
-    pages[f"industries/{slug}/index.html"]=page(f'{i[0]} — VIIVERSION',i[2],body,iurl(slug))
+  const qs=new URLSearchParams(location.search);
+  const campaign={
+    source:qs.get("utm_source")||"",
+    medium:qs.get("utm_medium")||"",
+    campaign:qs.get("utm_campaign")||"",
+    content:qs.get("utm_content")||"",
+    term:qs.get("utm_term")||"",
+    referrer:document.referrer||"",
+    path:location.pathname
+  };
+  sessionStorage.setItem("viiversion_campaign",JSON.stringify(campaign));
 
-sc=[]
-for slug,s in SOLUTIONS.items():
-    sc.append(card(f'<div class="kicker">Solution</div><h3>{escape(s[0])}</h3><p>{escape(s[1])}</p>{badges(s[3])}<a class="link" href="{surl(slug)}">Открыть решение →</a>'))
-body=hero("Solutions","Решения вокруг конкретной бизнес-задачи","Solution — это рабочая конфигурация нескольких ядер под повторяющийся процесс, а не новый независимый продукт.")+f'<section class="section"><div class="wrap"><div class="grid3">{"".join(sc)}</div></div></section>'
-pages["solutions/index.html"]=page("Решения — VIIVERSION","Готовые конфигурации продуктов VIIVERSION.",body,"/solutions/")
-for slug,s in SOLUTIONS.items():
-    body=hero("Solution",f'{s[0]} — {s[1]}',s[2],"Solutions","/solutions/")
-    body+=f'<section class="section"><div class="wrap two-col"><div><div class="eyebrow">Архитектура</div><h2>Из чего собирается решение.</h2><ul class="list-clean">{"".join(f"<li>{escape(x)}</li>" for x in s[3])}</ul></div><div><div class="eyebrow">Где подходит</div><h2>Типовые рынки</h2>{badges(s[4])}<p class="quote">{escape(s[5])}</p></div></div></section>'
-    pages[f"solutions/{slug}/index.html"]=page(f'{s[0]} — VIIVERSION',s[2],body,surl(slug))
+  document.querySelectorAll("[data-interest]").forEach(el=>{
+    el.addEventListener("click",()=>{
+      sessionStorage.setItem("viiversion_interest",el.dataset.interest||"");
+      sessionStorage.setItem("viiversion_cta",el.dataset.cta||el.textContent.trim());
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({event:"cta_click",interest:el.dataset.interest||"",cta:el.dataset.cta||el.textContent.trim(),path:location.pathname});
+    });
+  });
 
-cc=[]
-for slug,c in CASES.items():
-    demo=f'<a class="btn btn-secondary" href="{escape(c[4])}" target="_blank" rel="noopener">Demo</a>' if c[4] else ""
-    cc.append(card(f'<div class="case-top"><div><div class="kicker">{escape(c[1])}</div><h3>{escape(c[0])}</h3></div><div class="case-code">CASE</div></div><p>{escape(c[2])}</p>{badges(c[3])}<div class="actions"><a class="btn btn-primary" href="{curl(slug)}">Разобрать</a>{demo}</div>',"case-card"))
-body=hero("Cases","Кейсы как доказательство продуктовых ядер","Показываем не только интерфейс, а какой процесс моделировался, какие модули использованы и что реально работает в demo.")+f'<section class="section"><div class="wrap"><div class="case-grid">{"".join(cc)}</div></div></section>'
-pages["cases/index.html"]=page("Кейсы — VIIVERSION","Кейсы и рабочие демонстрации VIIVERSION.",body,"/cases/")
-for slug,c in CASES.items():
-    demo=f'<a class="btn btn-primary" href="{escape(c[4])}" target="_blank" rel="noopener">Открыть demo →</a>' if c[4] else '<a class="btn btn-primary" href="#contact">Запросить показ →</a>'
-    body=hero(c[1],f'{c[0]} — продуктовые ядра в реальном сценарии',c[2],"Cases","/cases/")
-    body+=f'<section class="section"><div class="wrap two-col"><div><div class="eyebrow">Что демонстрирует кейс</div><h2>Связанный процесс, а не отдельный экран.</h2><p>{escape(c[2])}</p>{demo}</div><div><div class="eyebrow">Products used</div>{badges(c[3])}<p style="margin-top:22px;color:var(--muted)">Статус отдельных интеграций может отличаться от production. Demo используется как доказательство UX, архитектуры и reusable-компонентов.</p></div></div></section>'
-    pages[f"cases/{slug}/index.html"]=page(f'{c[0]} — VIIVERSION',c[2],body,curl(slug))
+  const form=document.querySelector(".lead-form");
+  if(form){
+    const interest=form.querySelector('[name="interest"]');
+    const context=form.querySelector('[name="page_context"]');
+    const storedInterest=sessionStorage.getItem("viiversion_interest")||qs.get("interest")||form.dataset.defaultInterest||"";
+    if(interest) interest.value=storedInterest;
+    if(context) context.value=JSON.stringify(campaign);
 
-enterprise=hero("Enterprise","Когда готового продукта недостаточно","Закрытые внутренние системы и инженерные контуры вокруг ролей, данных, integrations и реального workflow.")+'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">Private systems</div><h2>Сначала моделируем процесс. Потом выбираем, что действительно нужно строить.</h2><p class="quote">Paid Discovery → Architecture → PoC → Implementation → Managed Support</p></div><div><ul class="list-clean"><li><b>RBAC / closed workflows</b> — роли, approvals, audit.</li><li><b>API / Webhooks</b> — надёжные мосты между системами.</li><li><b>ETL / Data pipelines</b> — сбор и синхронизация данных.</li><li><b>Database migration</b> — Oracle / PostgreSQL / legacy cleanup.</li><li><b>Oracle / PL/SQL</b> — сложные production-системы.</li><li><b>RA / reconciliation</b> — telecom Revenue Assurance / FM.</li><li><b>L2/L3 support</b> — managed engineering.</li></ul></div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Technical buyer journey</div><h2>Enterprise продаётся иначе, чем Booking или Mini App.</h2></div><p>Первый продукт — диагностика, технический sprint или PoC с проверяемым результатом.</p></div><div class="growth"><div class="growth-step"><b>1. Discovery</b><small>Роли, data, ограничения, current state.</small></div><div class="growth-step"><b>2. PoC</b><small>Проверяем критичный технический участок.</small></div><div class="growth-step"><b>3. Implementation</b><small>Строим согласованный контур.</small></div><div class="growth-step"><b>4. Support</b><small>Эксплуатация и развитие.</small></div></div></div></section>'''
-pages["enterprise/index.html"]=page("Enterprise — VIIVERSION","Закрытые системы, integrations, data engineering, Oracle/PLSQL и managed support.",enterprise,"/enterprise/")
+    form.addEventListener("submit",async e=>{
+      e.preventDefault();
+      const data=Object.fromEntries(new FormData(form).entries());
+      const camp=JSON.parse(sessionStorage.getItem("viiversion_campaign")||"{}");
+      const lines=[
+        "VIIVERSION enquiry",
+        "",
+        "Name: "+(data.name||""),
+        "Contact: "+(data.contact||""),
+        "Company / URL: "+(data.company||""),
+        "Interest: "+(data.interest||""),
+        "Task: "+(data.task||""),
+        "",
+        "Page: "+location.href,
+        "Source: "+(camp.source||"direct"),
+        "Medium: "+(camp.medium||""),
+        "Campaign: "+(camp.campaign||""),
+        "Referrer: "+(camp.referrer||"")
+      ];
+      const message=lines.join("\n");
+      try{await navigator.clipboard.writeText(message)}catch(_){}
+      localStorage.setItem("viiversion_last_enquiry",JSON.stringify({...data,...camp,createdAt:new Date().toISOString()}));
+      window.dataLayer=window.dataLayer||[];
+      window.dataLayer.push({event:"lead_prepare",interest:data.interest||"",path:location.pathname,utm_source:camp.source||""});
+      window.dispatchEvent(new CustomEvent("viiversion:lead",{detail:{...data,...camp}}));
 
-labs=hero("Labs","Собственные продукты VIIVERSION","Labs отделяет масштабируемые продукты от заказной разработки: у них другой рынок, канал дистрибуции и модель монетизации.")+f'<section class="section"><div class="wrap"><div class="lab-grid">{"".join(card(f"<div class=kicker>VIIVERSION Labs</div><h3>{escape(n)}</h3><p>{escape(d)}</p><a class=link href={u}>Открыть →</a>") for n,d,u in LABS)}</div></div></section><section class="section soft"><div class="wrap two-col"><div><div class="eyebrow">Distribution</div><h2>Не все продукты должны продаваться через direct B2B.</h2></div><div><ul class="list-clean"><li>ChatGPT ecosystem / apps</li><li>Product Hunt и product communities</li><li>Agency white-label partnerships</li><li>Freelance / technical marketplaces</li><li>Direct technical sales</li></ul></div></div></section>'
-pages["labs/index.html"]=page("VIIVERSION Labs","Собственные продукты и платформы VIIVERSION.",labs,"/labs/")
+      const status=form.querySelector(".form-status");
+      if(status){status.hidden=false}
 
-about=hero("About","Инженерная архитектура и продуктовый дизайн — в одном контуре","VIIVERSION строит системы от клиентского интерфейса до data и integrations — без разрыва между «показать» и «работает».")+'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">Team</div><h2>Две компетенции в одной команде.</h2><p class="quote">Architecture / DB / integrations / development + product / UX / copy / research.</p></div><div><div class="stat-panel"><div class="stat"><strong>20+ лет</strong><span>IT / telecom expertise</span></div><div class="stat"><strong>16+ лет</strong><span>digital и visual communications</span></div><div class="stat"><strong>BSS / Data</strong><span>Oracle, PL/SQL, ETL, Linux, API</span></div><div class="stat"><strong>Product</strong><span>UX/UI, prototyping, research, content</span></div></div></div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Method</div><h2>До разработки нас интересует устройство процесса.</h2></div><p>Точка входа клиента, handoff между сотрудниками, источник данных, узкое место и минимальный результат, который можно проверить.</p></div></div></section>'''
-pages["about/index.html"]=page("О VIIVERSION","Команда VIIVERSION: product, UX, architecture, data и integrations.",about,"/about/")
+      const target=form.dataset.contact||"";
+      if(target.startsWith("mailto:")){
+        const subject=encodeURIComponent("VIIVERSION — "+(data.interest||"new enquiry"));
+        location.href=target+"?subject="+subject+"&body="+encodeURIComponent(message);
+      }else if(target.includes("wa.me/")||target.includes("whatsapp.com")){
+        const joiner=target.includes("?")?"&":"?";
+        window.open(target+joiner+"text="+encodeURIComponent(message),"_blank","noopener");
+      }else if(target){
+        window.open(target,"_blank","noopener");
+      }
+    });
+  }
+});
+'''
 
-assets=PUBLIC/"assets";assets.mkdir(parents=True,exist_ok=True)
+def prefix(lang):
+    return "" if lang == "ru" else "/en"
+
+def loc(lang, path="/"):
+    path = "/" + path.strip("/") + ("/" if path.strip("/") else "")
+    return prefix(lang) + path
+
+def alternate(lang, path="/"):
+    return loc("en" if lang == "ru" else "ru", path)
+
+def contact_target():
+    if not CONTACTS:
+        return ""
+    return CONTACTS[0][0]
+
+def nav_path(lang, raw):
+    if lang == "ru":
+        return raw
+    if raw == "/":
+        return "/en/"
+    return "/en" + raw
+
+def header(lang):
+    nav = "".join(f'<a href="{nav_path(lang,u)}">{escape(n)}</a>' for n,u in NAV[lang])
+    c = COPY[lang]
+    return f'''<header class="site-header"><div class="wrap header-row">
+      <a class="brand" href="{loc(lang)}">{LOGO}</a>
+      <nav class="nav">{nav}</nav>
+      <div class="header-actions">
+        <a class="lang-link" href="{alternate(lang)}">{c["lang_switch"]}</a>
+        <a class="header-cta" href="#contact" data-interest="general" data-cta="header">{c["contact"]} →</a>
+        <button class="mobile-toggle" aria-label="Menu">☰</button>
+      </div>
+    </div></header>'''
+
+def footer(lang):
+    links = "".join(f'<a href="{nav_path(lang,u)}">{escape(n)}</a>' for n,u in NAV[lang])
+    labs_url = loc(lang, "/labs/")
+    return f'''<footer class="footer"><div class="wrap footer-row">
+      <div><div class="brand-word">VIIVERSION</div><div style="font-size:11px">Digital Business Systems</div></div>
+      <div class="footer-links">{links}<a href="{labs_url}">Labs</a><a href="/proposal-studio/">Proposal Studio</a></div>
+    </div></footer>'''
+
+def contact(lang, default_interest=""):
+    c = COPY[lang]
+    channels = "".join(f'<a class="btn btn-secondary" href="{escape(u)}" rel="noopener">{escape(n)}</a>' for u,n in CONTACTS)
+    target = escape(contact_target())
+    return f'''<section class="contact-bar" id="contact"><div class="wrap contact-layout">
+      <div>
+        <div class="eyebrow">{c["contact"]}</div>
+        <h2>{BRAND[lang]["final_title"]}</h2>
+        <p>{BRAND[lang]["final_lead"]}</p>
+        <div class="contact-links">{channels}</div>
+      </div>
+      <form class="lead-form" data-contact="{target}" data-default-interest="{escape(default_interest)}">
+        <div class="form-grid">
+          <div><label>{c["form_name"]}</label><input name="name" autocomplete="name"></div>
+          <div><label>{c["form_contact"]}</label><input name="contact" required autocomplete="email"></div>
+          <div class="form-full"><label>{c["form_company"]}</label><input name="company" autocomplete="url"></div>
+          <div class="form-full"><label>{c["form_task"]}</label><textarea name="task" required></textarea></div>
+        </div>
+        <input type="hidden" name="interest"><input type="hidden" name="page_context">
+        <div class="form-actions"><button class="btn btn-primary" type="submit">{c["form_submit"]} →</button></div>
+        <div class="form-note">{c["form_note"]}</div>
+        <div class="form-status" hidden>{c["form_done"]}</div>
+      </form>
+    </div></section>'''
+
+def structured_data(lang, title, path, page_type="WebPage"):
+    data = {
+        "@context": "https://schema.org",
+        "@type": page_type,
+        "name": title,
+        "url": BASE + loc(lang, path),
+        "inLanguage": "ru" if lang == "ru" else "en",
+        "isPartOf": {"@type": "WebSite", "name": "VIIVERSION", "url": BASE + "/"},
+        "publisher": {"@type": "Organization", "name": "VIIVERSION", "url": BASE + "/"},
+    }
+    return '<script type="application/ld+json">'+json.dumps(data, ensure_ascii=False)+'</script>'
+
+def page(lang, title, desc, body, path="/", page_type="WebPage", interest=""):
+    canonical = BASE + loc(lang, path)
+    alt = BASE + alternate(lang, path)
+    html_lang = "ru" if lang == "ru" else "en"
+    return f'''<!doctype html><html lang="{html_lang}"><head>
+      <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>{escape(title)}</title><meta name="description" content="{escape(desc)}">
+      <link rel="canonical" href="{canonical}">
+      <link rel="alternate" hreflang="{html_lang}" href="{canonical}">
+      <link rel="alternate" hreflang="{'en' if lang == 'ru' else 'ru'}" href="{alt}">
+      <link rel="alternate" hreflang="x-default" href="{BASE + path}">
+      <meta property="og:title" content="{escape(title)}"><meta property="og:description" content="{escape(desc)}">
+      <meta property="og:type" content="website"><meta property="og:url" content="{canonical}">
+      <meta property="og:site_name" content="VIIVERSION">
+      <meta name="twitter:card" content="summary_large_image">
+      <link rel="stylesheet" href="/assets/viiversion.css">
+      {structured_data(lang,title,path,page_type)}
+    </head><body>{header(lang)}<main>{body}</main>{contact(lang,interest)}{footer(lang)}
+    <script src="/assets/viiversion.js" defer></script></body></html>'''
+
+def breadcrumb(lang, items):
+    c = COPY[lang]
+    parts = [f'<a href="{loc(lang)}">{c["home"]}</a>']
+    for name, path in items[:-1]:
+        parts.append(f'<a href="{loc(lang,path)}">{escape(name)}</a>')
+    parts.append(escape(items[-1][0]))
+    return '<div class="breadcrumb">' + " / ".join(parts) + "</div>"
+
+def hero(lang, eyebrow, title, lead, path, parent=None):
+    items = []
+    if parent:
+        items.append(parent)
+    items.append((title.split(" — ")[0], path))
+    return f'''<section class="page-hero"><div class="wrap">
+      {breadcrumb(lang,items)}
+      <div class="eyebrow">{escape(eyebrow)}</div>
+      <h1>{escape(title)}</h1>
+      <p>{escape(lead)}</p>
+    </div></section>'''
+
+def badges(items):
+    return '<div class="badges">' + "".join(f'<span class="badge">{escape(x)}</span>' for x in items) + "</div>"
+
+def case_card(lang, slug):
+    c = CASES[slug][lang]
+    return f'''<article class="card case-card">
+      <div class="case-top"><div><div class="kicker">{escape(c["industry"])}</div><h3>{escape(c["name"])}</h3></div><span class="status {c["status"]}">{escape(c["status_label"])}</span></div>
+      <p>{escape(c["summary"])}</p>{badges(c["shows"])}
+      <div class="actions"><a class="btn btn-primary" href="{loc(lang,'/cases/'+slug+'/')}">{COPY[lang]["view_case"]}</a><a class="btn btn-secondary" href="{escape(c["demo"])}" target="_blank" rel="noopener">{COPY[lang]["view_demo"]}</a></div>
+    </article>'''
+
+def product_card(lang, slug):
+    p = PRODUCTS[slug][lang]
+    return f'''<article class="card product-card">
+      <div class="product-mark">{escape(p["name"][0])}</div>
+      <div class="kicker">{escape(p["label"])}</div><h3>{escape(p["name"])}</h3><p>{escape(p["headline"])}</p>
+      <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{COPY[lang]["learn_more"]} →</a>
+    </article>'''
+
+def offer_card(lang, slug):
+    o = OFFERS[slug][lang]
+    return f'''<article class="card offer-card">
+      <div class="kicker">{COPY[lang]["offer"]}</div><h3>{escape(o["name"])}</h3><p>{escape(o["headline"])}</p>
+      <div class="offer-meta"><div><small>{COPY[lang]["price"]}</small><b>{escape(o["price"])}</b></div><div><small>{COPY[lang]["timeline"]}</small><b>{escape(o["timeline"])}</b></div></div>
+      <a class="text-link" href="{loc(lang,'/offers/'+slug+'/')}">{COPY[lang]["learn_more"]} →</a>
+    </article>'''
+
+def home(lang):
+    b = BRAND[lang]; c = COPY[lang]
+    products = "".join(product_card(lang,s) for s in PRODUCTS)
+    top_cases = "".join(case_card(lang,s) for s in ("max-tour","uniq-smart-rent","pet-nika"))
+    offers = "".join(offer_card(lang,s) for s in ("booking-start","mini-app-pilot","ai-operator-pilot","integration-sprint"))
+    problems = [
+        (c["problem_booking"],c["problem_booking_desc"],"booking"),
+        (c["problem_leads"],c["problem_leads_desc"],"online-sales"),
+        (c["problem_ai"],c["problem_ai_desc"],"ai-operator"),
+        (c["problem_pay"],c["problem_pay_desc"],"paybridge"),
+        (c["problem_ops"],c["problem_ops_desc"],"operations"),
+        (c["problem_custom"],c["problem_custom_desc"],"enterprise"),
+    ]
+    prob_html=""
+    for title,desc,slug in problems:
+        url = loc(lang,"/enterprise/") if slug=="enterprise" else loc(lang,"/products/"+slug+"/")
+        prob_html += f'<article class="problem-card"><h3>{escape(title)}</h3><p>{escape(desc)}</p><a href="{url}">{c["learn_more"]} →</a></article>'
+    matrix_cards = []
+    mapping = {
+        "tourism":["online-sales","booking","operations","ai-operator","paybridge"],
+        "rental":["online-sales","booking","operations","paybridge"],
+        "clinics":["online-sales","booking","operations","ai-operator"],
+    }
+    for ind,prods in mapping.items():
+        label=INDUSTRIES[ind][lang]["name"]
+        matrix_cards.append(f'<a class="matrix-result" data-products="{",".join(prods)}" href="{loc(lang,"/industries/"+ind+"/")}"><b>{escape(label)}</b><span>{escape(INDUSTRIES[ind][lang]["entry"])}</span></a>')
+    for label in INDUSTRY_CATALOG[lang][3:]:
+        matrix_cards.append(f'<div class="matrix-result" data-products="online-sales,booking,operations,ai-operator,paybridge"><b>{escape(label)}</b><span>{c["contact"]}</span></div>')
+    tabs = '<button class="active" data-matrix-product="all">'+c["all_industries"]+'</button>' + "".join(f'<button data-matrix-product="{s}">{escape(PRODUCTS[s][lang]["name"])}</button>' for s in PRODUCTS)
+    team = "".join(f'<article class="card"><div class="kicker">{c["team"]}</div><h3>{escape(n)}</h3><p><b>{escape(role)}</b></p><p>{escape(desc)}</p></article>' for n,role,desc in TEAM[lang])
+    return f'''
+    <section class="hero"><div class="wrap hero-grid"><div>
+      <div class="eyebrow">{escape(b["tagline"])}</div><h1>{escape(b["hero_title"])}</h1><p>{escape(b["hero_lead"])}</p>
+      <div class="hero-actions"><a class="btn btn-primary" href="{loc(lang,'/solutions/')}" data-interest="solution" data-cta="hero-primary">{escape(b["hero_primary"])} →</a><a class="btn btn-secondary" href="#proof">{escape(b["hero_secondary"])}</a></div>
+      <div class="hero-proof"><span>Booking</span><span>CRM / Operations</span><span>AI Operator</span><span>Payments</span><span>Integrations</span></div>
+    </div><div class="process-map"><h3>{'Как может расти система' if lang=='ru' else 'How the system can grow'}</h3><div class="process-flow">
+      <div class="process-node"><b>{'Один проблемный процесс' if lang=='ru' else 'One broken process'}</b><span>Start</span></div><div class="process-arrow">↓</div>
+      <div class="process-node"><b>{'Рабочий модуль' if lang=='ru' else 'Working module'}</b><span>Booking / AI / Integration</span></div><div class="process-arrow">↓</div>
+      <div class="process-node"><b>{'Связка с текущими системами' if lang=='ru' else 'Connect to current systems'}</b><span>CRM / Payments / Data</span></div><div class="process-arrow">↓</div>
+      <div class="process-node"><b>{'Единый операционный контур' if lang=='ru' else 'Connected operating system'}</b><span>Scale</span></div>
+    </div></div></div></section>
+
+    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions"]}</div><h2>{escape(b["problem_title"])}</h2></div><p>{escape(b["problem_lead"])}</p></div><div class="grid3">{prob_html}</div></div></section>
+
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["products"]}</div><h2>{escape(b["products_title"])}</h2></div><p>{escape(b["products_lead"])}</p></div><div class="grid5">{products}</div></div></section>
+
+    <section class="section" id="proof"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{escape(b["proof_title"])}</h2></div><p>{escape(b["proof_lead"])}</p></div><div class="case-grid">{top_cases}</div><div style="margin-top:18px"><a class="text-link" href="{loc(lang,'/cases/')}">{c["all_cases"]} →</a></div></div></section>
+
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["offer"]}</div><h2>{escape(b["start_title"])}</h2></div><p>{escape(b["start_lead"])}</p></div><div class="offer-grid">{offers}</div></div></section>
+
+    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Product × Industry</div><h2>{escape(b["matrix_title"])}</h2></div><p>{escape(b["matrix_lead"])}</p></div><div class="matrix-wrap"><div class="matrix-tabs">{tabs}</div><div class="matrix-results">{''.join(matrix_cards)}</div></div></div></section>
+
+    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{c["special_title"]}</div><h2>{escape(b["special_title"])}</h2></div></div><div class="special-grid">
+      <article class="special-box"><div class="kicker">Partners</div><h3>{c["partners_head"]}</h3><p>{c["partners_body"]}</p><a class="btn btn-secondary" href="{loc(lang,'/labs/')}">{c["learn_more"]} →</a></article>
+      <article class="special-box alt"><div class="kicker">Enterprise</div><h3>{c["enterprise_head"]}</h3><p>{c["enterprise_body"]}</p><a class="btn btn-primary" href="{loc(lang,'/enterprise/')}">{c["learn_more"]} →</a></article>
+    </div></div></section>
+
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["about"]}</div><h2>{escape(b["team_title"])}</h2></div><p>{c["team_lead"]}</p></div><div class="team-grid">{team}</div></div></section>
+    '''
+
+def products_index(lang):
+    c=COPY[lang]
+    cards="".join(product_card(lang,s) for s in PRODUCTS)
+    return hero(lang,c["products"],c["all_products"],"Booking, Online Sales, Operations, AI Operator and PayBridge." if lang=="en" else "Booking, Online Sales, Operations, AI Operator и PayBridge — самостоятельные продукты, которые можно соединять между собой.","/products/")+f'<section class="section"><div class="wrap"><div class="grid5">{cards}</div></div></section>'
+
+def product_page(lang,slug):
+    c=COPY[lang]; p=PRODUCTS[slug][lang]
+    before="".join(f"<li>{escape(x)}</li>" for x in p["before"])
+    after="".join(f"<li>{escape(x)}</li>" for x in p["after"])
+    modules="".join(f'<article class="module"><h3>{escape(n)}</h3><p>{escape(d)}</p></article>' for n,d in p["modules"])
+    proof="".join(case_card(lang,s) for s in p["proof"][:3] if s in CASES)
+    offer=OFFERS[p["offer"]][lang]
+    body=hero(lang,p["label"],f'{p["name"]} — {p["headline"]}',p["summary"],"/products/"+slug+"/",(c["products"],"/products/"))
+    body+=f'''<section class="section"><div class="wrap"><div class="compare">
+      <div class="compare-box"><div class="eyebrow">{c["before"]}</div><h3>{c["before"]}</h3><ul>{before}</ul></div>
+      <div class="compare-box after"><div class="eyebrow">{c["after"]}</div><h3>{c["after"]}</h3><ul>{after}</ul></div>
+    </div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["modules"]}</div><h2>{c["modules"]}</h2></div><p>{'Не все компоненты нужны в каждом внедрении.' if lang=='ru' else 'Not every component is required in every implementation.'}</p></div><div class="module-grid">{modules}</div></div></section>
+    <section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["offer"]}</div><h2>{escape(offer["name"])}</h2><p class="quote">{escape(offer["headline"])}</p><a class="btn btn-primary" href="{loc(lang,'/offers/'+p["offer"]+'/')}">{escape(p["cta"])} →</a></div>
+      <div class="scope-box"><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(p["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(p["timeline"])}</strong></div></div><p>{c["not_fixed"]}</p></div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
+    return body
+
+def offers_index(lang):
+    cards="".join(offer_card(lang,s) for s in OFFERS)
+    title="Стартовые форматы" if lang=="ru" else "Starting offers"
+    lead="Небольшие, понятные первые этапы с конкретным scope, сроком и ориентиром по стоимости." if lang=="ru" else "Small, concrete first steps with a defined scope, timeline and price guide."
+    return hero(lang,COPY[lang]["offer"],title,lead,"/offers/")+f'<section class="section"><div class="wrap"><div class="offer-grid">{cards}</div></div></section>'
+
+def offer_page(lang,slug):
+    c=COPY[lang]; o=OFFERS[slug][lang]; pslug=OFFERS[slug]["product"]; p=PRODUCTS[pslug][lang]
+    scope="".join(f"<li>{escape(x)}</li>" for x in o["scope"])
+    return hero(lang,c["offer"],f'{o["name"]} — {o["headline"]}',p["summary"],"/offers/"+slug+"/",(c["products"],"/products/"))+f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["scope"]}</div><h2>{c["how_works"]}</h2><ul class="list-clean">{scope}</ul></div><div class="scope-box"><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(o["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(o["timeline"])}</strong></div></div><p><b>{c["proof"]}:</b> {escape(o["proof"])}</p><p>{c["not_fixed"]}</p><a class="btn btn-primary" href="#contact" data-interest="{escape(o["name"])}" data-cta="offer">{escape(o["cta"])} →</a></div></div></section>'''
+
+def solutions_index(lang):
+    c=COPY[lang]
+    targets=[]
+    for slug,d in TARGET_LANDINGS.items():
+        t=d[lang]
+        targets.append(f'<article class="card"><div class="kicker">{escape(t["title"])}</div><h3>{escape(t["headline"])}</h3><p>{escape(t["lead"])}</p><a class="text-link" href="{loc(lang,"/solutions/"+slug+"/")}">{c["learn_more"]} →</a></article>')
+    inds="".join(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{c["solutions_industry"]}</div><h3>{escape(d[lang]["name"])}</h3><p>{escape(d[lang]["headline"])}</p></a>' for slug,d in INDUSTRIES.items())
+    title="Решения по задаче и отрасли" if lang=="ru" else "Solutions by problem and industry"
+    lead="Конкретные посадочные страницы для одного понятного сценария — без необходимости разбираться во всей архитектуре VIIVERSION." if lang=="ru" else "Focused landing pages for one clear workflow without needing to understand the whole VIIVERSION architecture."
+    return hero(lang,c["solutions"],title,lead,"/solutions/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions_problem"]}</div><h2>{c["solutions_problem"]}</h2></div></div><div class="grid3">{"".join(targets)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions_industry"]}</div><h2>{c["solutions_industry"]}</h2></div></div><div class="grid3">{inds}</div></div></section>'
+
+def target_page(lang,slug):
+    c=COPY[lang]; d=TARGET_LANDINGS[slug]; t=d[lang]; p=PRODUCTS[d["product"]][lang]; o=OFFERS[d["offer"]][lang]
+    specific="".join(f"<li>{escape(x)}</li>" for x in t["specific"])
+    proof="".join(case_card(lang,s) for s in p["proof"][:2] if s in CASES)
+    body=hero(lang,c["solutions_problem"],f'{t["title"]} — {t["headline"]}',t["lead"],"/solutions/"+slug+"/",(c["solutions"],"/solutions/"))
+    body+=f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["after"]}</div><h2>{escape(t["headline"])}</h2><ul class="list-clean">{specific}</ul></div><div class="scope-box"><div class="eyebrow">{c["offer"]}</div><h3>{escape(o["name"])}</h3><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(o["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(o["timeline"])}</strong></div></div><a class="btn btn-primary" href="#contact" data-interest="{escape(t["title"])}" data-cta="target-landing">{c["target_cta"]} →</a></div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
+    return body
+
+def industries_index(lang):
+    c=COPY[lang]
+    deep="".join(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{c["solutions_industry"]}</div><h3>{escape(d[lang]["name"])}</h3><p>{escape(d[lang]["headline"])}</p><span class="text-link">{c["learn_more"]} →</span></a>' for slug,d in INDUSTRIES.items())
+    others=badges(INDUSTRY_CATALOG[lang][3:])
+    title="Отраслевые сценарии" if lang=="ru" else "Industry scenarios"
+    lead="Глубокие страницы публикуем там, где уже есть конкретный процесс и убедительный proof. Остальные отрасли адаптируем по тому же принципу после короткого разбора." if lang=="ru" else "We publish deep industry pages where we already have a specific workflow and credible proof. Other industries are adapted using the same method after a short review."
+    return hero(lang,c["all_industries"],title,lead,"/industries/")+f'<section class="section"><div class="wrap"><div class="grid3">{deep}</div></div></section><section class="section soft"><div class="wrap"><div class="eyebrow">{c["other_markets"]}</div><h2>{c["other_markets"]}</h2>{others}</div></section>'
+
+def industry_page(lang,slug):
+    c=COPY[lang]; d=INDUSTRIES[slug][lang]
+    probs="".join(f"<li>{escape(x)}</li>" for x in d["problems"])
+    flow="".join(f'<div class="industry-step">{escape(x)}</div>' for x in d["path"])
+    proof="".join(case_card(lang,s) for s in d["proof"])
+    return hero(lang,c["solutions_industry"],f'{d["name"]} — {d["headline"]}',d["lead"],"/industries/"+slug+"/",(c["all_industries"],"/industries/"))+f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["before"]}</div><h2>{c["before"]}</h2><ul class="list-clean">{probs}</ul></div><div class="scope-box"><div class="eyebrow">{c["offer"]}</div><h3>{escape(d["entry"])}</h3><p>{'Начинаем с одного процесса, который можно показать и проверить.' if lang=='ru' else 'Start with one workflow that can be demonstrated and verified.'}</p><a class="btn btn-primary" href="{loc(lang,'/offers/'+d["entry_slug"]+'/')}">{c["learn_more"]} →</a></div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["after"]}</div><h2>{'Рекомендуемый путь' if lang=='ru' else 'Recommended flow'}</h2></div></div><div class="industry-flow">{flow}</div></div></section><section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
+
+def cases_index(lang):
+    cards="".join(case_card(lang,s) for s in CASES)
+    title="Кейсы, демо и прототипы" if lang=="ru" else "Cases, demos and prototypes"
+    lead="Каждая карточка имеет явный статус. Рабочее демо, публичный прототип и клиентский концепт — не одно и то же." if lang=="ru" else "Every card has an explicit status. A working demo, public prototype and client concept are not the same thing."
+    return hero(lang,COPY[lang]["cases"],title,lead,"/cases/")+f'<section class="section"><div class="wrap"><div class="case-grid">{cards}</div></div></section>'
+
+def case_page(lang,slug):
+    c=COPY[lang]; d=CASES[slug][lang]
+    return hero(lang,d["status_label"],f'{d["name"]} — {d["summary"]}',d["summary"],"/cases/"+slug+"/",(c["cases"],"/cases/"))+f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["product_use"]}</div><h2>{c["product_use"]}</h2>{badges(d["shows"])}<p style="margin-top:20px">{c["case_disclaimer"]}</p></div><div class="scope-box"><div class="eyebrow">{c["status"]}</div><h3><span class="status {d["status"]}">{escape(d["status_label"])}</span></h3><p>{escape(d["summary"])}</p><a class="btn btn-primary" href="{escape(d["demo"])}" target="_blank" rel="noopener">{c["view_demo"]} →</a></div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["similar"]}</div><h2>{c["similar"]}</h2></div></div><a class="btn btn-primary" href="#contact" data-interest="{escape(d["name"])}" data-cta="case">{c["contact"]} →</a></div></section>'''
+
+def enterprise_page(lang):
+    c=COPY[lang]
+    title="Сложные внутренние системы" if lang=="ru" else "Complex internal systems"
+    lead="Когда готовый SaaS не соответствует процессу, сначала фиксируем роли, данные, ограничения и интеграции, затем проверяем критичный участок через PoC." if lang=="ru" else "When off-the-shelf SaaS does not fit the workflow, we map roles, data, constraints and integrations first, then validate the critical part with a PoC."
+    items=[
+        ("RBAC / workflows","Роли, approvals и audit." if lang=="ru" else "Roles, approvals and audit."),
+        ("API / Webhooks","Надёжные мосты между системами." if lang=="ru" else "Reliable bridges between systems."),
+        ("ETL / Data","Сбор, преобразование и синхронизация данных." if lang=="ru" else "Collect, transform and synchronise data."),
+        ("Database migration","Oracle / PostgreSQL / legacy cleanup."),
+        ("Oracle / PL/SQL","Производительность, процедуры и production support." if lang=="ru" else "Performance, procedures and production support."),
+        ("RA / reconciliation","Telecom Revenue Assurance / FM."),
+        ("L2/L3 support","Managed engineering and troubleshooting."),
+    ]
+    mods="".join(f'<article class="module"><h3>{escape(n)}</h3><p>{escape(d)}</p></article>' for n,d in items)
+    steps=["Discovery","Architecture / PoC","Implementation","Managed Support"]
+    flow="".join(f'<div class="industry-step">{escape(x)}</div>' for x in steps)
+    return hero(lang,"Enterprise",title,lead,"/enterprise/")+f'''<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Capabilities</div><h2>{'Что можно подключить' if lang=='ru' else 'Capabilities'}</h2></div></div><div class="module-grid">{mods}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">Delivery</div><h2>{'Сначала проверяем критичный участок' if lang=='ru' else 'Validate the critical part first'}</h2></div><p>{'Полная система не продаётся как фиксированный пакет.' if lang=='ru' else 'A full private system is not sold as a fixed package.'}</p></div><div class="industry-flow">{flow}</div><div class="actions"><a class="btn btn-primary" href="#contact" data-interest="Enterprise Discovery" data-cta="enterprise">{'Запросить технический разбор' if lang=='ru' else 'Request a technical review'} →</a></div></div></section>'''
+
+def labs_page(lang):
+    cards=[]
+    for slug,item in LABS.items():
+        d=item[lang]; href=d["url"] or "#contact"; interest="" if d["url"] else f' data-interest="{escape(d["name"])}" data-cta="labs"'
+        cards.append(f'<article class="card"><div class="kicker">{escape(d["status"])}</div><h3>{escape(d["name"])}</h3><p>{escape(d["summary"])}</p><a class="text-link" href="{href}"{interest}>{COPY[lang]["learn_more"]} →</a></article>')
+    title="Собственные продукты VIIVERSION" if lang=="ru" else "VIIVERSION products"
+    lead="Отделяем продукты с собственной моделью распространения от заказной разработки." if lang=="ru" else "Products with their own distribution model are separated from client development work."
+    return hero(lang,"Labs",title,lead,"/labs/")+f'<section class="section"><div class="wrap"><div class="grid2">{"".join(cards)}</div></div></section>'
+
+def about_page(lang):
+    c=COPY[lang]
+    team="".join(f'<article class="card"><div class="kicker">{c["team"]}</div><h3>{escape(n)}</h3><p><b>{escape(role)}</b></p><p>{escape(desc)}</p></article>' for n,role,desc in TEAM[lang])
+    title="VIIVERSION — инженерная продуктовая компания" if lang=="ru" else "VIIVERSION — an engineering product company"
+    lead="Строим цифровые системы для бизнеса и одновременно развиваем собственные программные продукты." if lang=="ru" else "We build digital systems for businesses and develop our own software products."
+    method="До разработки разбираем путь клиента, действия команды, источники данных и конкретное место, где процесс ломается." if lang=="ru" else "Before development we map the customer journey, team actions, data sources and the exact point where the workflow breaks."
+    return hero(lang,c["about"],title,lead,"/about/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["team"]}</div><h2>{BRAND[lang]["team_title"]}</h2></div><p>{c["team_lead"]}</p></div><div class="team-grid">{team}</div></div></section><section class="section soft"><div class="wrap"><div class="eyebrow">Method</div><h2>{'Сначала процесс, затем технология' if lang=='ru' else 'Process first, technology second'}</h2><p class="quote">{escape(method)}</p></div></section>'
+
+def write(rel, html):
+    path=PUBLIC/rel
+    path.parent.mkdir(parents=True,exist_ok=True)
+    path.write_text(html,encoding="utf-8")
+
+# Build all pages.
+pages = {}
+
+for lang in LANGS:
+    base_dir="" if lang=="ru" else "en/"
+    pages[base_dir+"index.html"] = page(lang, "VIIVERSION — "+BRAND[lang]["tagline"], BRAND[lang]["hero_lead"], home(lang), "/", interest="general")
+    pages[base_dir+"products/index.html"] = page(lang, ("Продукты VIIVERSION" if lang=="ru" else "VIIVERSION products"), BRAND[lang]["products_lead"], products_index(lang), "/products/")
+    for slug in PRODUCTS:
+        p=PRODUCTS[slug][lang]
+        pages[base_dir+f"products/{slug}/index.html"] = page(lang, f'VIIVERSION {p["name"]}', p["summary"], product_page(lang,slug), f"/products/{slug}/", page_type="Product", interest=p["name"])
+
+    pages[base_dir+"offers/index.html"] = page(lang, ("Стартовые форматы — VIIVERSION" if lang=="ru" else "Starting offers — VIIVERSION"), BRAND[lang]["start_lead"], offers_index(lang), "/offers/")
+    for slug in OFFERS:
+        o=OFFERS[slug][lang]
+        pages[base_dir+f"offers/{slug}/index.html"] = page(lang, f'{o["name"]} — VIIVERSION', o["headline"], offer_page(lang,slug), f"/offers/{slug}/", page_type="Service", interest=o["name"])
+
+    pages[base_dir+"solutions/index.html"] = page(lang, ("Решения — VIIVERSION" if lang=="ru" else "Solutions — VIIVERSION"), ("Решения по конкретной задаче и отрасли." if lang=="ru" else "Solutions for specific problems and industries."), solutions_index(lang), "/solutions/")
+    for slug in TARGET_LANDINGS:
+        t=TARGET_LANDINGS[slug][lang]
+        pages[base_dir+f"solutions/{slug}/index.html"] = page(lang, f'{t["title"]} — VIIVERSION', t["lead"], target_page(lang,slug), f"/solutions/{slug}/", page_type="Service", interest=t["title"])
+
+    pages[base_dir+"industries/index.html"] = page(lang, ("Отрасли — VIIVERSION" if lang=="ru" else "Industries — VIIVERSION"), ("Глубокие отраслевые сценарии VIIVERSION." if lang=="ru" else "Deep industry scenarios from VIIVERSION."), industries_index(lang), "/industries/")
+    for slug in INDUSTRIES:
+        d=INDUSTRIES[slug][lang]
+        pages[base_dir+f"industries/{slug}/index.html"] = page(lang, f'{d["name"]} — VIIVERSION', d["lead"], industry_page(lang,slug), f"/industries/{slug}/", page_type="Service", interest=d["name"])
+
+    pages[base_dir+"cases/index.html"] = page(lang, ("Кейсы — VIIVERSION" if lang=="ru" else "Cases — VIIVERSION"), ("Рабочие демо, публичные прототипы и клиентские концепты." if lang=="ru" else "Working demos, public prototypes and client concepts."), cases_index(lang), "/cases/")
+    for slug in CASES:
+        d=CASES[slug][lang]
+        pages[base_dir+f"cases/{slug}/index.html"] = page(lang, f'{d["name"]} — VIIVERSION', d["summary"], case_page(lang,slug), f"/cases/{slug}/", interest=d["name"])
+
+    pages[base_dir+"enterprise/index.html"] = page(lang, ("Enterprise — VIIVERSION"), ("Закрытые внутренние системы, data и integrations." if lang=="ru" else "Private internal systems, data and integrations."), enterprise_page(lang), "/enterprise/", page_type="Service", interest="Enterprise")
+    pages[base_dir+"labs/index.html"] = page(lang, "VIIVERSION Labs", ("Собственные продукты VIIVERSION." if lang=="ru" else "Products developed by VIIVERSION."), labs_page(lang), "/labs/")
+    pages[base_dir+"about/index.html"] = page(lang, ("О VIIVERSION" if lang=="ru" else "About VIIVERSION"), ("Команда, компетенции и метод работы." if lang=="ru" else "Team, capabilities and delivery method."), about_page(lang), "/about/")
+    pages[base_dir+"contact/index.html"] = page(lang, ("Контакты — VIIVERSION" if lang=="ru" else "Contact — VIIVERSION"), BRAND[lang]["final_lead"], hero(lang,COPY[lang]["contact"],BRAND[lang]["final_title"],BRAND[lang]["final_lead"],"/contact/"), "/contact/", interest="general")
+
+assets=PUBLIC/"assets"
+assets.mkdir(parents=True,exist_ok=True)
 (assets/"viiversion.css").write_text(CSS,encoding="utf-8")
 (assets/"viiversion.js").write_text(JS,encoding="utf-8")
 for rel,html in pages.items():
-    path=PUBLIC/rel;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(html,encoding="utf-8")
+    write(rel,html)
 
-urls={"/"}
+# Sitemap includes generated product pages plus Proposal Studio pages generated later in the build.
+urls=set()
 for rel in pages:
-    if rel=="index.html": continue
-    parent=Path(rel).parent.as_posix().strip(".")
-    urls.add("/"+parent.strip("/")+"/")
+    if rel.endswith("index.html"):
+        parent=Path(rel).parent.as_posix()
+        urls.add("/" if parent=="." else "/"+parent.strip("/")+"/")
+for route in ("/proposal-studio/","/proposal-studio/support/","/proposal-studio/privacy/","/proposal-studio/terms/"):
+    urls.add(route)
 xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-for u in sorted(urls): xml+=f'  <url><loc>https://viiversion.com{u}</loc></url>\n'
+for u in sorted(urls):
+    xml+=f'  <url><loc>{BASE}{u}</loc></url>\n'
 xml+='</urlset>\n'
 (PUBLIC/"sitemap.xml").write_text(xml,encoding="utf-8")
-(PUBLIC/"robots.txt").write_text("User-agent: *\nAllow: /\nSitemap: https://viiversion.com/sitemap.xml\n",encoding="utf-8")
+(PUBLIC/"robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {BASE}/sitemap.xml\n",encoding="utf-8")
 
-required=["index.html","products/index.html","products/booking/index.html","products/paybridge/index.html","industries/index.html","industries/tourism/index.html","solutions/index.html","cases/index.html","enterprise/index.html","labs/index.html","about/index.html","assets/viiversion.css","assets/viiversion.js"]
+required=[
+    "index.html","en/index.html",
+    "products/booking/index.html","en/products/booking/index.html",
+    "offers/booking-start/index.html","solutions/tourism/booking/index.html",
+    "industries/tourism/index.html","industries/rental/index.html","industries/clinics/index.html",
+    "cases/index.html","enterprise/index.html","labs/index.html","about/index.html",
+    "assets/viiversion.css","assets/viiversion.js","sitemap.xml"
+]
 for rel in required:
     p=PUBLIC/rel
-    if not p.exists() or p.stat().st_size<100: raise SystemExit("Product site QA failed: "+rel)
-home=(PUBLIC/"index.html").read_text(encoding="utf-8")
-for marker in ("Product × Industry","Booking Start","B2B2B & Enterprise","VIIVERSION Labs"):
-    if marker not in home: raise SystemExit("Product site QA failed: "+marker)
-print(f"PASS: VIIVERSION product site generated: {len(pages)} pages + assets + sitemap.")
+    if not p.exists() or p.stat().st_size<150:
+        raise SystemExit("Product site QA failed: "+rel)
+
+home_text=(PUBLIC/"index.html").read_text(encoding="utf-8")
+for bad in ("коммерческих ядер","buyer journey","Entry offers","client work","Большая продажа"):
+    if bad in home_text:
+        raise SystemExit("Client-facing jargon leaked into home: "+bad)
+for marker in ("Автоматизируем продажи и операции","Рабочие демо и прототипы","Начните с одной небольшой задачи","Product × Industry"):
+    if marker not in home_text:
+        raise SystemExit("Product site QA missing: "+marker)
+
+print(f"PASS: VIIVERSION commercial site generated: {len(pages)} bilingual pages + assets + sitemap.")
