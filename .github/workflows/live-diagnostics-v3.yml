@@ -22,7 +22,7 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Verify live canonical product UX
+      - name: Verify live system-first product UX
         env:
           TARGET_URL: https://viiversion.com/
         run: |
@@ -42,13 +42,13 @@ jobs:
               await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=canonical-products`,{waitUntil:'domcontentloaded',timeout:30000});
               await page.waitForTimeout(500);
               const text=await page.locator('body').innerText();
-              deployed=text.includes('Что можно купить для вашего бизнеса') &&
-                       text.includes('Обычно начинают с') &&
+              deployed=text.includes('Четыре контура одной цифровой системы') &&
+                       text.includes('Системы, которые можно открыть и проверить') &&
                        await page.locator('[data-industry-tab]').count()>=6;
               if(deployed) break;
               await page.waitForTimeout(3000);
             }
-            if(!deployed) throw new Error('Canonical product site is not live');
+            if(!deployed) throw new Error('System-first product site is not live');
 
             await page.setViewportSize({width:1440,height:1000});
             await page.goto(`${target}?qa=desktop-overflow-${Date.now()}`,{waitUntil:'domcontentloaded',timeout:30000});
@@ -80,8 +80,8 @@ jobs:
             const hotelPanel=page.locator('[data-industry-panel="hotels"]');
             if(!(await hotelPanel.isVisible())) throw new Error('Hotel panel did not open');
             let text=await hotelPanel.innerText();
-            if(!text.includes('Онлайн-бронирование')||!text.includes('Подключение оплаты')||!text.includes('CRM для заявок и заказов')) throw new Error('Hotel primary products missing');
-            if(!text.includes('Можно добавить позже')) throw new Error('Hotel later-products group missing');
+            if(!text.includes('Онлайн-бронирование')||!text.includes('Подключение оплаты')||!text.includes('Операционная рабочая панель')) throw new Error('Hotel system building blocks missing');
+            if(!text.includes('Прямое бронирование')||!text.includes('Рабочая панель')) throw new Error('Hotel workflow missing');
 
             const shopTab=page.locator('[data-industry-tab="shops"]');
             await shopTab.click(); await page.waitForTimeout(120);
@@ -136,7 +136,7 @@ jobs:
 
             await page.goto(new URL('/en/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             text=await page.locator('body').innerText();
-            if(!text.includes('Digital solutions for specific business tasks')) throw new Error('English architecture is not aligned');
+            if(!text.includes('We design and build digital systems around the real business process')) throw new Error('English architecture is not aligned');
 
             await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
             await page.waitForTimeout(700);
