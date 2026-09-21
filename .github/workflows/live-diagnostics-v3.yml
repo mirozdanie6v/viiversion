@@ -99,10 +99,10 @@ jobs:
             if(health.status!==200||health.body.storage!=='durable-object') throw new Error('Lead API health failed');
 
             const apiProbe=await page.evaluate(async()=>{
-              const r=await fetch('/api/leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({contact:'qa@example.invalid',task:'qa',website:'bot'})});
+              const r=await fetch('/api/leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({contact:'qa@example.invalid',task:'QA storage probe',qa:true})});
               return {status:r.status,body:await r.json()};
             });
-            if(apiProbe.status!==202||!apiProbe.body.ok) throw new Error('Lead API POST probe failed');
+            if(apiProbe.status!==201||!apiProbe.body.ok||!apiProbe.body.probe) throw new Error('Lead Durable Object storage probe failed');
 
             const team=page.locator('#team');
             await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
