@@ -1,0 +1,169 @@
+version: "1.0"
+name: "VIIVERSION Messaging System"
+
+principles:
+  - "One message = one commercial job."
+  - "Lead with buyer context and outcome, not the VIIVERSION stack."
+  - "Use only observable facts; uncertain internal problems are hypotheses."
+  - "Clarity beats cleverness."
+  - "Proof beats adjectives."
+  - "The first cold CTA asks for interest or permission, not calendar time."
+  - "AI is a mechanism, not the headline, unless the buyer is explicitly shopping for AI."
+
+cold_outreach:
+  email:
+    subject_words_max: 4
+    body_words_max: 100
+    preferred_sentences: "3-4"
+  messenger:
+    body_words_target: "35-70"
+    preferred_blocks: "3-4"
+  structure:
+    - trigger
+    - problem_hypothesis
+    - outcome_or_mechanism
+    - proof
+    - interest_cta
+  subject_rules:
+    prefer:
+      - "buyer priority"
+      - "observable workflow"
+      - "problem language used by buyer"
+    avoid:
+      - "AI"
+      - "ROI claims"
+      - "numbers used as hype"
+      - "social proof in subject"
+      - "questions"
+      - "buzzwords"
+  first_touch_avoid:
+    - "full platform pitch"
+    - "feature lists"
+    - "unverified loss/revenue claims"
+    - "meeting request"
+    - "fake urgency"
+    - "generic compliments"
+    - "personal trivia"
+    - "technical stack unless buyer is technical"
+    - "price unless the experiment explicitly tests price or buyer asked"
+
+personalization_priority:
+  - "activity_or_trigger"
+  - "company_workflow"
+  - "role_priority"
+  - "industry_pattern"
+  - "personal_trivia"
+
+cta_ladder:
+  cold:
+    objective: "interest_or_permission"
+    examples:
+      - "Отправить короткое демо?"
+      - "Would it be useful if I send the 60-second demo?"
+      - "Можно показать, как это выглядит на телефоне?"
+  positive_reply:
+    objective: "deliver_asset_then_one_question"
+  after_demo:
+    objective: "validate_fit"
+    examples:
+      - "Есть смысл примерить это к вашему процессу?"
+  qualified:
+    objective: "specific_next_step"
+    examples:
+      - "Подойдёт вторник 14:00 или среда 11:00?"
+  proposal:
+    objective: "decision_or_next_commitment"
+
+value_proposition:
+  formula: "For [buyer/ICP] with [observable situation], [offer] helps [desired job/outcome] by [mechanism], without [main friction/anxiety]. Proof: [relevant asset]."
+  required:
+    - buyer
+    - situation
+    - outcome
+    - mechanism
+    - proof
+  forbidden_as_primary_value:
+    - "AI-powered"
+    - "all-in-one"
+    - "innovative"
+    - "digital transformation"
+    - "10x ROI"
+
+proof_hierarchy:
+  - live_relevant_demo
+  - relevant_case_or_production_system
+  - clickable_prototype
+  - screenshot_or_sample_output
+  - architecture_or_description
+  - unsupported_claim
+
+tone:
+  attributes:
+    - calm
+    - factual
+    - peer_to_peer
+    - concise
+    - specific
+    - buyer_language
+  pronoun_rule: "Prefer buyer-focused language; minimize 'we' paragraphs."
+  sentence_rule: "One idea per sentence."
+  translation_rule: "Translate intent and business language, not Russian syntax literally."
+
+follow_up:
+  email_default:
+    touches: 6
+    window_days: "14-28"
+    rule: "Do not repeat the full pitch; bump or add one new useful proof/angle."
+  messenger_default:
+    touches_max: 4
+    rule: "Use fewer touches than email; stop on explicit disinterest or channel discomfort."
+
+quality_gate:
+  scoring:
+    observable_relevance: 2
+    buyer_language: 1
+    single_problem: 1
+    clear_outcome: 1
+    relevant_proof: 1
+    low_friction_cta: 1
+    concise: 1
+    no_hype: 1
+    no_unverified_claims: 1
+  pass_score: 8
+  hard_fail:
+    - "invented metric or loss claim"
+    - "wrong company/person"
+    - "unsupported compatibility claim"
+    - "more than one primary CTA"
+    - "cold message asks for a meeting before interest"
+
+landing_and_offer_copy:
+  above_fold_order:
+    - buyer_and_job
+    - value_proposition
+    - proof
+    - primary_cta
+  heuristic:
+    maximize:
+      - relevance
+      - clarity
+      - value
+      - motivation
+      - proof
+    minimize:
+      - friction
+      - anxiety
+      - distraction
+  cta_rule: "Button/CTA states the next useful action, not generic 'Submit' or 'Learn more' when a more concrete action exists."
+
+measurement:
+  primary:
+    - positive_reply_rate
+    - demo_accept_rate
+    - qualified_conversation_rate
+    - paid_entry_rate
+  secondary:
+    - reply_rate
+  do_not_optimize_alone:
+    - open_rate
+  ab_test_rule: "Change one meaningful variable at a time and record the variant in the experiment."
