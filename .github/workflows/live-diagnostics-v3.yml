@@ -24,7 +24,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify live commercial UX
         env:
-          TARGET_URL: https://viiversion.com/
+          TARGET_URL: https://landing.viiversion.workers.dev/
         run: |
           cat > diagnose-live.cjs <<'JS'
           const { chromium } = require('playwright');
