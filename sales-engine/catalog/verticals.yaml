@@ -1,0 +1,29 @@
+version: 1
+verticals:
+  - {id: TOUR_AGENCY, name: "Tour agencies / excursions"}
+  - {id: HOTEL, name: "Hotels / guesthouses"}
+  - {id: VEHICLE_RENTAL, name: "Vehicle rental"}
+  - {id: ACTIVITIES, name: "Sports / surf / diving / activities"}
+  - {id: DENTAL, name: "Dental clinics"}
+  - {id: MEDICAL, name: "Medical clinics"}
+  - {id: VETERINARY, name: "Veterinary clinics"}
+  - {id: BEAUTY_SPA, name: "Beauty / SPA / aesthetic"}
+  - {id: REAL_ESTATE, name: "Real estate agencies"}
+  - {id: HORECA, name: "Restaurants / cafes"}
+  - {id: RETAIL, name: "Retail / stores"}
+  - {id: FRANCHISE, name: "Franchises / multi-location"}
+  - {id: EDUCATION, name: "Education / courses"}
+  - {id: EVENTS, name: "Events / quizzes / clubs"}
+  - {id: ECOMMERCE, name: "E-commerce / social commerce"}
+  - {id: SERVICE_BUSINESS, name: "Service businesses"}
+  - {id: LOGISTICS, name: "Logistics / delivery"}
+  - {id: MANUFACTURING, name: "Manufacturing / industrial SME"}
+  - {id: AGENCY, name: "Software agencies / studios"}
+  - {id: SALES_TEAM, name: "Corporate sales teams / agencies"}
+  - {id: WORDPRESS_OWNER, name: "WordPress site owners"}
+  - {id: TELECOM_OPERATOR, name: "Telecom operators"}
+  - {id: TELECOM_VENDOR, name: "Telecom / BSS vendors"}
+  - {id: ENTERPRISE_OPS, name: "Enterprise internal ops"}
+  - {id: VIDEO_STUDIO, name: "Video studios / event creators"}
+
+classification_rule: "Choose the vertical that best matches the buyer's operating model, not merely its legal industry label."
