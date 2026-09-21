@@ -38,6 +38,8 @@ jobs:
           test -s public/software/index.html
           test -s public/partners/index.html
           test -s public/enterprise/index.html
+          test -s public/privacy/index.html
+          test -s public/en/privacy/index.html
           test -s public/assets/team/dmitrii.webp
           test -s public/assets/team/olga.webp
           test -s public/assets/cases/max-tour.webp
@@ -76,6 +78,12 @@ jobs:
           ! grep -Fq "Booking Start" public/index.html
           ! grep -Fq "Operations Core" public/index.html
           ! grep -Fq "коммерческих ядер" public/index.html
+
+          # Product data must have exactly one source of truth.
+          grep -Fq "SELLABLE_PRODUCTS = {" scripts/product_catalog.py
+          grep -Fq "INDUSTRY_CONFIGS = {" scripts/product_catalog.py
+          ! grep -Eq '^(PRODUCTS|OFFERS|MODULES|INDUSTRY_EXPLORER|LABS) = ' scripts/site_content.py
+          grep -Fq "Заявки сохраняются" public/privacy/index.html
 
       - name: Validate Worker and Durable Object config
         run: |
