@@ -99,7 +99,7 @@ export default {
       if (env.LEADS_WEBHOOK_URL) {
         ctx.waitUntil(fetch(env.LEADS_WEBHOOK_URL, { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ type:"viiversion_lead", lead:{ id:lead.id, createdAt:lead.createdAt, name:lead.name, contact:lead.contact, company:lead.company, interest:lead.interest, task:lead.task, page:lead.page, source:lead.source, campaign:lead.campaign } }) }).catch(() => {}));
       }
-      return json({ ok:true, id:result.id }, 201);
+      return json({ ok:true, id:result.id, probe:Boolean(result.probe) }, 201);
     }
 
     if (url.pathname === "/api/leads" && request.method === "GET") {
