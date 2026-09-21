@@ -475,4 +475,10 @@ LEGACY_REDIRECTS = {
     "/offers/operations-core/": "/products/crm/",
     "/offers/integration-sprint/": "/products/system-integration/",
     "/labs/": "/software/",
+    "/solutions/tourism/booking/": "/solutions/tourism/online-booking/",
+    "/solutions/tourism/ai-operator/": "/solutions/tourism/ai-consultant/",
+    "/solutions/rental/booking/": "/solutions/rental/online-booking/",
+    "/solutions/clinics/booking/": "/solutions/clinics/online-booking/",
+    "/solutions/clinics/ai-operator/": "/solutions/clinics/ai-consultant/",
+    "/solutions/restaurants/paybridge/": "/solutions/restaurants/payment-integration/",
 }
