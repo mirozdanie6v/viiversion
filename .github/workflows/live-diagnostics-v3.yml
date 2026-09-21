@@ -36,13 +36,13 @@ jobs:
             await page.setExtraHTTPHeaders({'Cache-Control':'no-cache','Pragma':'no-cache'});
 
             let deployed=false;
-            for(let i=0;i<30;i++){
-              await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:120000});
+            for(let i=0;i<10;i++){
+              await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:30000});
               await page.waitForTimeout(700);
               const text=await page.locator('body').innerText();
               deployed=text.includes('Автоматизируем продажи и операции') && await page.locator('.lead-form').count()>0;
               if(deployed) break;
-              await page.waitForTimeout(5000);
+              await page.waitForTimeout(2000);
             }
             if(!deployed) throw new Error('Commercial site version is not live');
 
@@ -51,19 +51,19 @@ jobs:
             await toggle.click(); await page.waitForTimeout(100);
             if(!(await page.locator('.nav.open').isVisible())) throw new Error('Mobile menu did not open');
 
-            await page.goto(new URL('/products/booking/',target).href,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.goto(new URL('/products/booking/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             let text=await page.locator('body').innerText();
             if(!text.includes('Как процесс выглядит сейчас')||!text.includes('8–18M ₫')) throw new Error('Booking commercial content missing');
 
-            await page.goto(new URL('/solutions/tourism/booking/',target).href,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.goto(new URL('/solutions/tourism/booking/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             text=await page.locator('body').innerText();
             if(!text.includes('Турист бронирует экскурсию сам')) throw new Error('Targeted landing missing');
 
-            await page.goto(new URL('/en/',target).href,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.goto(new URL('/en/',target).href,{waitUntil:'domcontentloaded',timeout:30000});
             text=await page.locator('body').innerText();
             if(!text.includes('Automate sales and operations')) throw new Error('English homepage missing');
 
-            await page.goto(`${target}?utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.goto(`${target}?utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:30000});
             const allResults=await page.locator('[data-products]').count();
             await page.locator('[data-matrix-product="booking"]').click();
             await page.waitForTimeout(100);
@@ -78,11 +78,11 @@ jobs:
 
             const routes=['/offers/booking-start/','/industries/rental/','/industries/clinics/','/cases/','/enterprise/','/labs/'];
             for(const route of routes){
-              const response=await page.goto(new URL(route,target).href,{waitUntil:'domcontentloaded',timeout:120000});
+              const response=await page.goto(new URL(route,target).href,{waitUntil:'domcontentloaded',timeout:30000});
               if(!response||response.status()!==200) throw new Error(`Route failed: ${route}`);
             }
 
-            await page.goto(target,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
             await page.waitForTimeout(900);
             await page.screenshot({path:'viiversion-commercial-mobile.png',fullPage:true});
             const result={target,deployed,allResults,hidden};
