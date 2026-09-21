@@ -51,14 +51,14 @@ BRAND = {
 PRODUCTS = {
     "online-sales": {
         "ru": {
-            "name": "Online Sales",
-            "label": "Клиентский путь",
+            "name": "Онлайн-продажи",
+            "label": "Сайт, каталог и клиентский интерфейс",
             "headline": "Сайт, Mini App или каталог, который ведёт клиента к понятному действию.",
             "summary": "Показываем предложение, помогаем выбрать, собираем нужные параметры и передаём заявку или заказ дальше без лишней переписки.",
             "before": ["клиент ищет цену в переписке", "заявки приходят из разных каналов", "менеджер вручную уточняет одни и те же данные"],
             "after": ["клиент видит предложение и условия", "система собирает нужные параметры", "заявка сразу приходит в понятном формате"],
             "modules": [
-                ("Landing / сайт", "Один понятный путь от оффера до действия."),
+                ("Лендинг / сайт", "Один понятный путь от предложения до заявки или покупки."),
                 ("Telegram Mini App", "Каталог, услуги, профиль или заявка внутри Telegram."),
                 ("Zalo Mini App", "Локальный клиентский сценарий для рынка Вьетнама."),
                 ("Каталог и цены", "Клиент видит варианты и стоимость до разговора с менеджером."),
@@ -93,14 +93,14 @@ PRODUCTS = {
     },
     "booking": {
         "ru": {
-            "name": "Booking",
+            "name": "Онлайн-бронирование",
             "label": "Бронирование и расписание",
             "headline": "Бронирование без длинной переписки с менеджером.",
             "summary": "Клиент выбирает услугу, дату и параметры сам. Команда получает полный заказ, а не цепочку сообщений, которую ещё нужно собирать вручную.",
             "before": ["клиент спрашивает о свободной дате", "менеджер проверяет таблицу или чат", "цена и параметры уточняются в нескольких сообщениях", "бронь переносится вручную"],
             "after": ["клиент выбирает дату и параметры", "система рассчитывает или показывает условия", "бронь создаётся в структурированном виде", "команда получает готовый заказ"],
             "modules": [
-                ("Booking Engine", "Собирает услугу, дату, количество и дополнительные параметры."),
+                ("Модуль бронирования", "Собирает услугу, дату, количество и дополнительные параметры."),
                 ("Расписание", "Показывает доступные даты и слоты."),
                 ("Каталог и цены", "Связывает бронирование с услугой и тарифом."),
                 ("Подтверждения", "Отправляет клиенту и команде статус брони."),
@@ -135,18 +135,18 @@ PRODUCTS = {
     },
     "operations": {
         "ru": {
-            "name": "Operations",
-            "label": "CRM и рабочая панель",
+            "name": "CRM и работа команды",
+            "label": "Заявки, заказы и рабочая панель",
             "headline": "Клиенты, заказы и работа команды — в одной системе.",
             "summary": "CRM, рабочая панель, статусы и аналитика собираются вокруг реального процесса бизнеса — без переноса данных между отдельными таблицами и чатами.",
             "before": ["лиды и заказы разбросаны по чатам", "сотрудники держат следующий шаг в голове", "статусы обновляются вручную", "руководитель не видит общую картину"],
             "after": ["единая очередь клиентов и заказов", "понятные статусы и ответственные", "операции ведутся из одной панели", "руководитель видит ключевые показатели"],
             "modules": [
                 ("CRM", "Лиды, история, статус и следующий шаг."),
-                ("Back-office", "Заказы, расписание, каталог и рабочие действия команды."),
-                ("Owner Dashboard", "Ключевые показатели и очередь для руководителя."),
-                ("Analytics", "Источники, конверсия, загрузка и SLA."),
-                ("Repeat Sales", "Напоминания и возврат клиентов по истории."),
+                ("Рабочая панель", "Заказы, расписание, каталог и рабочие действия команды."),
+                ("Панель руководителя", "Ключевые показатели и очередь для руководителя."),
+                ("Аналитика", "Источники, конверсия, загрузка и скорость обработки."),
+                ("Повторные продажи", "Напоминания и возврат клиентов по истории."),
             ],
             "price": "15–35M ₫ за CRM Core или Back-office Core",
             "timeline": "ориентир 2–4 недели для первого рабочего контура",
@@ -177,18 +177,18 @@ PRODUCTS = {
     },
     "ai-operator": {
         "ru": {
-            "name": "AI Operator",
+            "name": "AI-консультант",
             "label": "AI для продаж и поддержки",
             "headline": "AI-консультант, который знает ваш продукт и ведёт клиента к следующему действию.",
             "summary": "Отвечает только в согласованном контуре, уточняет запрос, подбирает подходящий вариант и передаёт контекст в заявку, бронирование или CRM.",
             "before": ["менеджеры отвечают на повторяющиеся вопросы", "клиенту трудно выбрать из большого каталога", "ночные обращения ждут утра", "контекст теряется при передаче человеку"],
             "after": ["AI отвечает по утверждённой базе знаний", "уточняет параметры и помогает выбрать", "передаёт структурированный контекст", "сложные запросы уходят человеку"],
             "modules": [
-                ("AI Consultant", "Отвечает на вопросы и уточняет запрос."),
-                ("AI Search", "Подбирает услугу, тур, объект или товар по естественному запросу."),
-                ("Recommendations", "Сужает выбор по параметрам клиента."),
-                ("Lead Handoff", "Передаёт менеджеру контекст, а не пустой контакт."),
-                ("Workflow Automation", "Запускает допустимые действия после консультации."),
+                ("AI-консультант", "Отвечает на вопросы и уточняет запрос."),
+                ("AI-поиск", "Подбирает услугу, тур, объект или товар по обычному запросу клиента."),
+                ("Рекомендации", "Сужает выбор по параметрам клиента."),
+                ("Передача менеджеру", "Передаёт менеджеру контекст, а не пустой контакт."),
+                ("Автоматизация действий", "Запускает согласованные действия после консультации."),
             ],
             "price": "8–25M ₫ за типовой AI Consultant",
             "timeline": "ориентир 7–14 дней для одного канала и одной задачи",
@@ -220,17 +220,17 @@ PRODUCTS = {
     "paybridge": {
         "ru": {
             "name": "PayBridge",
-            "label": "Платежи и интеграционный слой",
-            "headline": "Связывает checkout, оплату и подтверждённый статус с вашей бизнес-системой.",
-            "summary": "Интеграционный слой между POS, сайтом или приложением и платёжным провайдером. Статус оплаты возвращается туда, где команда ведёт заказ.",
+            "label": "Оплата и интеграции",
+            "headline": "Связывает оплату с заказом и возвращает подтверждённый статус в вашу рабочую систему.",
+            "summary": "Связывает POS, сайт или приложение с платёжным провайдером. После оплаты заказ получает подтверждённый статус там, где с ним работает команда.",
             "before": ["оплата и заказ живут в разных системах", "статус приходится проверять вручную", "webhook-события обрабатываются нестабильно", "сверка занимает время"],
             "after": ["один понятный payment flow", "подтверждённый статус возвращается в back-office", "ошибки и повторные события обрабатываются системно", "есть база для reconciliation и analytics"],
             "modules": [
-                ("Payment integration", "Подключает оплату к booking или order flow."),
-                ("POS middleware", "Связывает кассовый сценарий с платёжным контуром."),
+                ("Подключение оплаты", "Связывает оплату с бронированием или заказом."),
+                ("Связка POS и оплаты", "Связывает кассовый сценарий с платёжным провайдером."),
                 ("Webhooks", "Принимает и нормализует статусы."),
-                ("Reconciliation", "Даёт основу для сверки транзакций."),
-                ("API layer", "Передаёт события дальше в CRM, ERP или аналитику."),
+                ("Сверка платежей", "Даёт основу для автоматической сверки транзакций."),
+                ("API-интеграция", "Передаёт события дальше в CRM, ERP или аналитику."),
             ],
             "price": "10–30M ₫ за типовую payment integration; middleware pilot — после технического scope",
             "timeline": "срок фиксируется после проверки POS, provider API и callback flow",
@@ -814,19 +814,19 @@ INDUSTRY_EXPLORER = {
 
 CASES = {
     "max-tour": {
-        "ru": {"name": "MAX TOUR", "industry": "Туризм", "status": "working-demo", "status_label": "РАБОЧЕЕ ДЕМО", "summary": "Клиентский путь, бронирование, роли, admin и owner analytics для экскурсионного бизнеса.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
+        "ru": {"name": "MAX TOUR", "industry": "Туризм", "status": "working-demo", "status_label": "ИНТЕРАКТИВНОЕ ДЕМО", "summary": "Клиентский путь, бронирование, роли, рабочая панель и аналитика для экскурсионного бизнеса.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
         "en": {"name": "MAX TOUR", "industry": "Tourism", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Customer flow, booking, roles, admin and owner analytics for a tour business.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
     },
     "uniq-smart-rent": {
-        "ru": {"name": "UNIQ SMART RENT", "industry": "Аренда", "status": "working-demo", "status_label": "РАБОЧЕЕ ДЕМО", "summary": "Каталог, pricing и request lifecycle для аренды транспорта.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
+        "ru": {"name": "UNIQ SMART RENT", "industry": "Аренда", "status": "working-demo", "status_label": "ИНТЕРАКТИВНОЕ ДЕМО", "summary": "Каталог, цены и путь заявки для аренды транспорта.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
         "en": {"name": "UNIQ SMART RENT", "industry": "Rental", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Catalogue, pricing and request lifecycle for vehicle rental.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://uniq-smart-rent.mirozdanie6v.workers.dev/"},
     },
     "pet-nika": {
-        "ru": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Клиентский кабинет, питомцы, обращения, booking и admin-слой.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
+        "ru": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Клиентский кабинет, питомцы, обращения, запись и рабочая панель.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
         "en": {"name": "PET NIKA", "industry": "Veterinary", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Customer account, pets, requests, booking and admin layer.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://pet-nika.viiversion.com/"},
     },
     "ave-dental": {
-        "ru": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Мультиязычный Mini App и booking-flow для клиники.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
+        "ru": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Мультиязычный Mini App и сценарий онлайн-записи для клиники.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
         "en": {"name": "AVE Dental", "industry": "Dental", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Multilingual Mini App and booking flow for a clinic.", "shows": ["Online Sales", "Booking"], "demo": "https://ave-dental-miniapp.vercel.app/"},
     },
     "rusinfocenter": {
@@ -834,30 +834,30 @@ CASES = {
         "en": {"name": "Russian Information Center", "industry": "Tourism", "status": "concept", "status_label": "CLIENT CONCEPT", "summary": "Customer journey and architecture for a future sales system.", "shows": ["Online Sales", "Booking", "Integrations"], "demo": "https://rusinfocenter.viiversion.com/"},
     },
     "g-beauty": {
-        "ru": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Landing, Mini App, booking и demo admin для локального beauty-бизнеса.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
+        "ru": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Лендинг, Mini App, онлайн-запись и демонстрационная рабочая панель для beauty-бизнеса.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
         "en": {"name": "G-Beauty", "industry": "Beauty", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Landing, Mini App, booking and demo admin for a local beauty business.", "shows": ["Online Sales", "Booking", "Operations"], "demo": "https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/"},
     },
     "true-surf": {
-        "ru": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Booking, client passport и repeat-flow в формате Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
+        "ru": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "ПУБЛИЧНЫЙ ПРОТОТИП", "summary": "Онлайн-запись, профиль клиента и повторные действия в формате Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
         "en": {"name": "TRUE SURF", "industry": "Activities", "status": "prototype", "status_label": "PUBLIC PROTOTYPE", "summary": "Booking, client passport and repeat flow in a Mini App.", "shows": ["Online Sales", "Booking"], "demo": "https://truesurf-app.viiversion.com/"},
     },
 }
 
 LABS = {
     "proposal-studio": {
-        "ru": {"name": "Proposal Studio", "status": "ДОСТУПНО", "summary": "Research → diagnosis → solution → commercial proposal → QA.", "url": "/proposal-studio/"},
-        "en": {"name": "Proposal Studio", "status": "AVAILABLE", "summary": "Research → diagnosis → solution → commercial proposal → QA.", "url": "/proposal-studio/"},
+        "ru": {"name": "Proposal Studio", "status": "ДОСТУПНО", "summary": "Исследование → диагностика → решение → коммерческое предложение → проверка.", "url": "/proposal-studio/"},
+        "en": {"name": "Proposal Studio", "status": "AVAILABLE", "summary": "Исследование → диагностика → решение → коммерческое предложение → проверка.", "url": "/proposal-studio/"},
     },
     "mini-app-factory": {
-        "ru": {"name": "Mini App Factory", "status": "ЗАКРЫТАЯ БЕТА", "summary": "White-label production line для серийной сборки клиентских Mini Apps.", "url": None},
+        "ru": {"name": "Mini App Factory", "status": "ЗАКРЫТАЯ БЕТА", "summary": "Платформа для серийной сборки клиентских Mini Apps под брендом партнёра.", "url": None},
         "en": {"name": "Mini App Factory", "status": "PRIVATE BETA", "summary": "A white-label production line for repeatable client Mini App delivery.", "url": None},
     },
     "zl-web-agent": {
-        "ru": {"name": "ZL Web Agent", "status": "ЗАКРЫТАЯ БЕТА", "summary": "Evidence-based аудит WordPress и план безопасных изменений.", "url": None},
+        "ru": {"name": "ZL Web Agent", "status": "ЗАКРЫТАЯ БЕТА", "summary": "Аудит WordPress на основе фактических данных и план безопасных изменений.", "url": None},
         "en": {"name": "ZL Web Agent", "status": "PRIVATE BETA", "summary": "Evidence-based WordPress audit and a safe change plan.", "url": None},
     },
     "video-human-editor": {
-        "ru": {"name": "Event Video Human Editor", "status": "В РАЗРАБОТКЕ", "summary": "Семантический анализ больших массивов event-video до ручного монтажа.", "url": None},
+        "ru": {"name": "Event Video Human Editor", "status": "В РАЗРАБОТКЕ", "summary": "Семантический анализ больших массивов видео до ручного монтажа.", "url": None},
         "en": {"name": "Event Video Human Editor", "status": "IN DEVELOPMENT", "summary": "Semantic analysis of large event-video collections before human editing.", "url": None},
     },
 }
