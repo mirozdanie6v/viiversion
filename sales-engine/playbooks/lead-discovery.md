@@ -1,4 +1,10 @@
-# VIIVERSION Lead Discovery Playbook v1.0
+# VIIVERSION Lead Discovery Playbook v1.1
+
+## Corporate positioning contract
+
+Before prospecting, Lead Discovery must use the Google Doc **VIIVERSION — Corporate Strategy & Positioning** as the highest semantic source of truth. VIIVERSION is an engineering product company: it builds digital systems for businesses and also develops its own software products. Vertical packages are market packaging; cases are proof; Vietnam is a market of presence, not the brand identity.
+
+If any discovery, product naming or outreach rule conflicts with that positioning, the positioning wins. Live prices, statuses, experiments and operational catalog data remain governed by the Commercial Matrix.
 
 ## Purpose
 
@@ -94,9 +100,9 @@ Cold outreach must not leave the recipient asking who we are.
 
 Use a short identity line appropriate to the channel, for example:
 
-> Мы VIIVERSION — команда разработчиков из Нячанга.
+> Мы VIIVERSION — инженерная команда, создаём цифровые системы для бизнеса и собственные программные продукты.
 
-Then name the concrete product.
+Then name the concrete product. For local outreach, Nha Trang can be added as context (for example, «работаем в Нячанге»), but not as the definition of the company.
 
 The first message does **not** need to explain the entire VIIVERSION stack. But after reading it, the recipient must be able to answer:
 
