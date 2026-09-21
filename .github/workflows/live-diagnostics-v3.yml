@@ -63,7 +63,7 @@ jobs:
             text=await page.locator('body').innerText();
             if(!text.includes('Automate sales and operations')) throw new Error('English homepage missing');
 
-            await page.goto(target,{waitUntil:'domcontentloaded',timeout:120000});
+            await page.goto(`${target}?utm_source=qa&utm_campaign=commercial`,{waitUntil:'domcontentloaded',timeout:120000});
             const allResults=await page.locator('[data-products]').count();
             await page.locator('[data-matrix-product="booking"]').click();
             await page.waitForTimeout(100);
