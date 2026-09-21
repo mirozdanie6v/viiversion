@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-BASE = 'https://pet-nika.mirozdanie6v.workers.dev'
+BASE = 'https://pet-nika.viiversion.com'
 
 
 def load(path, marker):
@@ -22,9 +22,8 @@ def save(path, text, start, end, data, semicolon):
     path.write_text(text[:start] + payload + text[end:], encoding='utf-8')
 
 
-# The current public Worker serves the PET NIKA client/Mini App interface at `/`.
-# `/miniapp` exists in source, but the production Worker still returns 404 there,
-# so every public CTA must use the verified live root route.
+# The public PET NIKA client/Mini App is published on the VIIVERSION custom domain at `/`.
+# Public CTAs use the verified root route; `/miniapp` is not published as a separate alias.
 live = {
     'ru': [
         {'label': 'Прототип / Mini App', 'url': BASE + '/'},
