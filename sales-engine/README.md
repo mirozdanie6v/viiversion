@@ -20,6 +20,7 @@ Machine-readable commercial rules for the VIIVERSION sales operating system.
 7. Never claim an internal business problem as fact unless it is supported by evidence; use a hypothesis/question otherwise.
 8. Large proposals are not a default cold-outreach artifact. Proposal Studio is invoked after commercial interest or discovery.
 9. Enterprise/custom work enters through paid discovery, PoC, diagnostic or technical sprint.
+10. Lead Discovery is only the FAST_DIRECT acquisition lane. Daily GTM must also allocate work to platform distribution, product launches, partners, freelance marketplaces and enterprise/vendor pipeline according to product-channel fit.
 
 ## Directory
 
@@ -30,8 +31,10 @@ Machine-readable commercial rules for the VIIVERSION sales operating system.
 - `config/scoring.yaml` — speed-to-cash scoring and lanes.
 - `config/messaging.yaml` — client-facing messaging, CTA and pre-send QA.
 - `config/lead-discovery.yaml` — machine rules for candidate discovery, qualification, rejection and product mapping.
+- `config/gtm-motions.yaml` — multi-channel GTM portfolio, daily allocation rules and channel-specific KPIs.
 - `schemas/lead.schema.json` — Sales Router contract.
 - `playbooks/lead-discovery.md` — human Lead Discovery workflow and examples.
+- `playbooks/daily-gtm.md` — daily multi-channel execution model across direct, platform, launch, partner, freelance and enterprise motions.
 - `playbooks/outreach.md` — outbound messaging workflow.
 - `playbooks/replies.md` — reply handling.
 - `playbooks/experiment-rules.md` — commercial experiment rules.
