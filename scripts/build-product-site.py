@@ -45,7 +45,7 @@ COPY = {
         "products": "Продукты",
         "cases": "Кейсы",
         "enterprise": "Крупные системы",
-        "labs": "Готовые продукты",
+        "labs": "Программные продукты",
         "about": "О нас",
         "contact": "Обсудить задачу",
         "view_demo": "Открыть демо",
@@ -76,7 +76,7 @@ COPY = {
         "problem_ops_desc": "CRM, рабочая панель и аналитика работают вместе.",
         "problem_custom_desc": "Проектируем закрытую систему вокруг ролей, данных и рабочего процесса.",
         "partners_head": "Разработка для агентств и интеграторов",
-        "partners_body": "Mini App Factory, PayBridge и отдельные компоненты можно поставлять через агентство, интегратора или программного партнёра.",
+        "partners_body": "Mini App Factory, платёжные интеграции и отдельные компоненты можно поставлять через агентство, интегратора или программного партнёра.",
         "enterprise_head": "Сложные внутренние системы",
         "enterprise_body": "API, ETL, базы данных, Oracle / PL/SQL, роли, согласования, журнал действий и техническое сопровождение — отдельное инженерное направление.",
         "team_lead": "Архитектура, интеграции и разработка соединены с продуктовой логикой, UX и исследованием пользовательского пути.",
@@ -138,7 +138,7 @@ COPY = {
         "problem_ops_desc": "CRM, back office and analytics work in one operating flow.",
         "problem_custom_desc": "Design a private system around roles, data and workflow.",
         "partners_head": "White-label and partner delivery",
-        "partners_body": "Mini App Factory, PayBridge and delivery components can be supplied through agencies, integrators and software partners.",
+        "partners_body": "Mini App Factory, payment integrations and delivery components can be supplied through agencies, integrators and software partners.",
         "enterprise_head": "Complex internal systems",
         "enterprise_body": "API, ETL, databases, Oracle / PL/SQL, roles, approvals, audit and managed support form a separate engineering lane.",
         "team_lead": "Architecture, integrations and development are combined with product logic, UX and customer-journey research.",
@@ -189,8 +189,9 @@ CSS = r'''
 .special-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.special-box{border-radius:24px;padding:29px;background:#0d2138;color:#fff}.special-box.alt{background:#edf3ff;color:var(--ink)}.special-box p{color:#bbcadb}.special-box.alt p{color:var(--muted)}
 .contact-bar{padding:62px 0;background:#eef4ff}.contact-layout{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:38px}.contact-layout h2{font-size:38px;line-height:1.04;letter-spacing:-.04em;margin:8px 0 12px}.contact-layout p{color:var(--muted)}.lead-form{background:#fff;border:1px solid #d8e1ec;border-radius:22px;padding:22px;box-shadow:var(--shadow)}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.lead-form label{display:block;font-size:11px;color:#667588;font-weight:750;margin-bottom:5px}.lead-form input,.lead-form textarea{width:100%;border:1px solid #ccd7e4;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink)}.lead-form textarea{min-height:112px;resize:vertical}.form-full{grid-column:1/-1}.form-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:13px}.form-note,.form-status{font-size:11px;color:#718095;margin-top:11px}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .footer{padding:32px 0;background:#06111f;color:#aab9ca}.footer-row{display:flex;justify-content:space-between;gap:25px}.footer-links{display:flex;gap:16px;flex-wrap:wrap;font-size:12px}
-@media(max-width:1050px){.module-buy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.trust-team{grid-template-columns:1fr}.buy-steps,.module-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.nav{display:none}.mobile-toggle{display:block}.nav.open{display:flex;position:absolute;left:20px;right:20px;top:66px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.hero-grid{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(2,minmax(0,1fr))}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.offer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.matrix-wrap{grid-template-columns:1fr}.matrix-tabs{flex-direction:row;overflow:auto}.matrix-results{grid-template-columns:repeat(2,minmax(0,1fr))}.industry-flow{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:720px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-row{height:62px;gap:12px}.vii-logo{height:29px!important;max-width:150px!important}.header-cta{display:none}.hero{padding:52px 0 44px}.hero h1,.page-hero h1{font-size:41px}.hero p,.page-hero p{font-size:17px}.section{padding:50px 0}.section-head{display:block}.section-head p{margin-top:12px}.grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid,.two-col,.compare,.module-grid,.special-grid,.contact-layout,.matrix-results,.industry-flow,.form-grid,.module-buy-grid,.trust-list,.buy-steps,.module-steps{grid-template-columns:minmax(0,1fr)}.industry-panel{padding:18px}.industry-panel-head{display:block}.team-person{grid-template-columns:92px 1fr}.team-photo{width:92px;height:92px}.matrix-tabs{padding-bottom:4px}.matrix-tabs button{white-space:nowrap}.product-card,.case-card,.offer-card{min-height:0}.industry-step:not(:last-child):after{content:"↓";right:auto;left:50%;top:auto;bottom:-16px}.scope-meta{grid-template-columns:1fr}.form-full{grid-column:auto}.footer-row{display:block}.footer-links{margin-top:18px}}
+.systems-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.system-card{min-width:0;border:1px solid var(--line);border-radius:24px;padding:28px;background:#fff;position:relative;overflow:hidden}.system-card:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--blue)}.system-index{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;color:var(--blue)}.system-card h3{font-size:29px;line-height:1.05;letter-spacing:-.035em;margin:10px 0}.system-card p{color:var(--muted);margin:0 0 18px}.system-components{display:flex;gap:7px;flex-wrap:wrap}.system-pill{display:inline-flex;padding:7px 9px;border-radius:999px;background:var(--soft2);font-size:11px;font-weight:750;color:#44546a}.architecture-stack{display:grid;gap:10px}.architecture-layer{border:1px solid rgba(255,255,255,.14);border-radius:15px;padding:15px 16px;background:rgba(255,255,255,.065)}.architecture-layer b{display:block;font-size:14px;margin-bottom:4px}.architecture-layer span{display:block;color:#9fb7d1;font-size:12px}.architecture-connector{text-align:center;color:#7091b4;font-size:14px;line-height:1}.component-card{min-width:0;border:1px solid var(--line);border-radius:18px;padding:22px;background:#fff;display:flex;flex-direction:column}.component-card h3{font-size:21px;line-height:1.12;margin:7px 0 9px}.component-card p{font-size:14px;color:var(--muted);margin:0 0 16px}.component-card .text-link{margin-top:auto}.flow-track{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0}.flow-node{display:inline-flex;align-items:center;border:1px solid #d2dce8;border-radius:12px;background:#fff;padding:10px 12px;font-size:12px;font-weight:800}.flow-arrow{color:#8294a9;font-size:13px}.industry-components{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.industry-component{display:inline-flex;border-radius:999px;padding:8px 10px;background:#eef3f8;color:#405167;font-size:12px;font-weight:750}.industry-component:hover{color:var(--blue);background:#e8f0ff}.system-note{border:1px solid #cad9fb;background:#f1f6ff;border-radius:20px;padding:22px}.system-note h3{margin:0 0 8px;font-size:21px}.system-note p{margin:0;color:var(--muted)}
+@media(max-width:1050px){.systems-grid{grid-template-columns:1fr}.module-buy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.trust-team{grid-template-columns:1fr}.buy-steps,.module-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.nav{display:none}.mobile-toggle{display:block}.nav.open{display:flex;position:absolute;left:20px;right:20px;top:66px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.hero-grid{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(2,minmax(0,1fr))}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.offer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.matrix-wrap{grid-template-columns:1fr}.matrix-tabs{flex-direction:row;overflow:auto}.matrix-results{grid-template-columns:repeat(2,minmax(0,1fr))}.industry-flow{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.wrap{width:min(var(--max),calc(100% - 28px))}.header-row{height:62px;gap:12px}.vii-logo{height:29px!important;max-width:150px!important}.header-cta{display:none}.hero{padding:52px 0 44px}.hero h1,.page-hero h1{font-size:41px}.hero p,.page-hero p{font-size:17px}.section{padding:50px 0}.section-head{display:block}.section-head p{margin-top:12px}.grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid,.two-col,.compare,.module-grid,.special-grid,.contact-layout,.matrix-results,.industry-flow,.form-grid,.module-buy-grid,.trust-list,.buy-steps,.module-steps,.systems-grid{grid-template-columns:minmax(0,1fr)}.industry-panel{padding:18px}.industry-panel-head{display:block}.team-person{grid-template-columns:92px 1fr}.team-photo{width:92px;height:92px}.matrix-tabs{padding-bottom:4px}.matrix-tabs button{white-space:nowrap}.product-card,.case-card,.offer-card{min-height:0}.industry-step:not(:last-child):after{content:"↓";right:auto;left:50%;top:auto;bottom:-16px}.scope-meta{grid-template-columns:1fr}.form-full{grid-column:auto}.footer-row{display:block}.footer-links{margin-top:18px}}
 '''
 
 JS = r'''
@@ -551,12 +552,11 @@ def case_card(lang, slug):
 def product_card(lang, slug):
     p = SELLABLE_PRODUCTS[slug][lang]
     family = FAMILIES[SELLABLE_PRODUCTS[slug]["family"]][lang]
-    start = SELLABLE_PRODUCTS[slug]["packages"]["start"][lang]
-    return f'''<article class="card product-card">
-      <div class="product-mark">{escape(p["name"][0])}</div>
-      <div class="kicker">{escape(family["name"])}</div><h3>{escape(p["name"])}</h3><p>{escape(p["short"])}</p>
-      <div class="module-buy-meta"><div><small>{COPY[lang]["price"]}</small><b>{escape(start["price"])}</b></div><div><small>{COPY[lang]["timeline"]}</small><b>{escape(start["timeline"])}</b></div></div>
-      <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{'Что входит и как начать' if lang=='ru' else 'What is included and how to start'} →</a>
+    return f'''<article class="component-card">
+      <div class="kicker">{escape(family["name"])}</div>
+      <h3>{escape(p["name"])}</h3>
+      <p>{escape(p["short"])}</p>
+      <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{'Как используется и что входит' if lang=='ru' else 'How it is used and what is included'} →</a>
     </article>'''
 
 def module_buy_card(lang, slug):
@@ -570,28 +570,84 @@ def module_buy_card(lang, slug):
       <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{'Что входит и как начать' if lang=='ru' else 'What is included and how to start'} →</a>
     </article>'''
 
+def industry_flow_steps(lang, slug):
+    flows = {
+        "tourism": {
+            "ru": ["Каталог", "Подбор / AI", "Бронирование", "Оплата", "Работа команды", "CRM / аналитика"],
+            "en": ["Catalogue", "Selection / AI", "Booking", "Payment", "Team operations", "CRM / analytics"],
+        },
+        "hotels": {
+            "ru": ["Прямое бронирование", "Оплата", "Гость", "Рабочая панель", "CRM"],
+            "en": ["Direct booking", "Payment", "Guest", "Operational workspace", "CRM"],
+        },
+        "shops": {
+            "ru": ["Каталог", "Заказ", "Оплата", "Операции", "Учёт / интеграции"],
+            "en": ["Catalogue", "Order", "Payment", "Operations", "Systems / integrations"],
+        },
+        "rental": {
+            "ru": ["Каталог", "Доступность", "Бронирование", "Оплата", "Выдача / возврат"],
+            "en": ["Catalogue", "Availability", "Booking", "Payment", "Handover / return"],
+        },
+        "clinics": {
+            "ru": ["Услуга", "Запись", "Напоминание", "Администратор", "CRM"],
+            "en": ["Service", "Booking", "Reminder", "Administrator", "CRM"],
+        },
+        "restaurants": {
+            "ru": ["Бронь / заказ", "Оплата", "POS", "Операции", "Аналитика"],
+            "en": ["Reservation / order", "Payment", "POS", "Operations", "Analytics"],
+        },
+        "services": {
+            "ru": ["Услуга", "Запись / заявка", "AI / консультация", "Рабочая панель", "Повторный контакт"],
+            "en": ["Service", "Booking / enquiry", "AI / consultation", "Workspace", "Repeat contact"],
+        },
+    }
+    return flows.get(slug, {}).get(lang, [])
+
+def industry_proof_slugs(slug):
+    return {
+        "tourism": ["max-tour", "rusinfocenter"],
+        "rental": ["uniq-smart-rent"],
+        "clinics": ["ave-dental", "pet-nika"],
+        "services": ["g-beauty", "true-surf"],
+    }.get(slug, [])
+
+def flow_track(lang, slug):
+    steps = industry_flow_steps(lang, slug)
+    parts = []
+    for idx, step in enumerate(steps):
+        if idx:
+            parts.append('<span class="flow-arrow">→</span>')
+        parts.append(f'<span class="flow-node">{escape(step)}</span>')
+    return '<div class="flow-track">' + "".join(parts) + '</div>'
+
+def component_links(lang, slugs):
+    seen = []
+    for slug in slugs:
+        if slug in SELLABLE_PRODUCTS and slug not in seen:
+            seen.append(slug)
+    return '<div class="industry-components">' + "".join(
+        f'<a class="industry-component" href="{loc(lang,"/products/"+slug+"/")}">{escape(SELLABLE_PRODUCTS[slug][lang]["name"])}</a>'
+        for slug in seen
+    ) + '</div>'
+
 def industry_browser(lang):
     tabs=[]
     panels=[]
     for idx,(slug,item) in enumerate(INDUSTRY_CONFIGS.items()):
         info=item[lang]
         tabs.append(f'<button type="button" role="tab" aria-selected="{"true" if idx==0 else "false"}" class="{"active" if idx==0 else ""}" data-industry-tab="{slug}">{escape(info["name"])}</button>')
-        primary="".join(module_buy_card(lang,p) for p in item["primary"])
-        later="".join(module_buy_card(lang,p) for p in item.get("later",[]))
-        addon_names=[ADDONS[a][lang] for a in item.get("addons",[]) if a in ADDONS]
-        addon_html=badges(addon_names) if addon_names else ""
-        primary_title="Обычно начинают с" if lang=="ru" else "Usually start with"
-        later_title="Можно добавить позже" if lang=="ru" else "Can be added later"
+        components=item["primary"] + item.get("later",[])
         panels.append(f'''<div class="industry-panel" data-industry-panel="{slug}" {"hidden" if idx else ""}>
-          <div class="industry-panel-head"><div><h3>{escape(info["name"])}</h3><p>{escape(info["lead"])}</p></div><a class="text-link" href="{loc(lang,'/industries/'+slug+'/')}">{'Вся конфигурация' if lang=='ru' else 'Full industry view'} →</a></div>
-          <div class="eyebrow" style="margin-bottom:10px">{primary_title}</div><div class="module-buy-grid">{primary}</div>
-          {f'<div class="eyebrow" style="margin:24px 0 10px">{later_title}</div><div class="module-buy-grid">{later}</div>' if later else ''}
-          {f'<div style="margin-top:20px"><div class="eyebrow">{"Дополнительные функции" if lang=="ru" else "Optional add-ons"}</div>{addon_html}</div>' if addon_html else ''}
+          <div class="industry-panel-head"><div><h3>{escape(info["name"])}</h3><p>{escape(info["lead"])}</p></div><a class="text-link" href="{loc(lang,'/industries/'+slug+'/')}">{'Посмотреть типовой контур' if lang=='ru' else 'See the typical system'} →</a></div>
+          <div class="eyebrow">{"Как может идти процесс" if lang=="ru" else "Typical workflow"}</div>
+          {flow_track(lang,slug)}
+          <div class="eyebrow" style="margin-top:18px">{"Из каких блоков собирается" if lang=="ru" else "Building blocks"}</div>
+          {component_links(lang,components)}
         </div>''')
-    title="Что можно купить для вашего бизнеса" if lang=="ru" else "What you can buy for your business"
-    lead="Выберите сферу. Сначала покажем 2–3 решения, с которых обычно есть смысл начинать; остальное можно подключить позже." if lang=="ru" else "Choose your industry. We show the 2–3 products that usually make sense first, then what can be added later."
-    return f'''<section class="section" id="industries"><div class="wrap">
-      <div class="section-head"><div><div class="eyebrow">{"Какой у вас бизнес?" if lang=="ru" else "What kind of business do you run?"}</div><h2>{title}</h2></div><p>{lead}</p></div>
+    title="Как система меняется под отрасль" if lang=="ru" else "How the system changes by industry"
+    lead="Не набор одинаковых модулей: в каждой сфере меняется сам процесс, роли и связи между клиентским интерфейсом, операциями и данными." if lang=="ru" else "Not a repeated module list: each industry changes the workflow, roles and connections between customer interface, operations and data."
+    return f'''<section class="section soft" id="industries"><div class="wrap">
+      <div class="section-head"><div><div class="eyebrow">{"Отраслевые процессы" if lang=="ru" else "Industry workflows"}</div><h2>{title}</h2></div><p>{lead}</p></div>
       <div class="industry-browser"><div class="industry-tabs" role="tablist">{"".join(tabs)}</div>{"".join(panels)}</div>
     </div></section>'''
 
@@ -618,52 +674,76 @@ def home(lang):
     b=BRAND[lang]; c=COPY[lang]
     top_cases="".join(case_card(lang,s) for s in ("max-tour","uniq-smart-rent","pet-nika"))
     if lang=="ru":
-        safety=["Можно начать с одной задачи","Состав работ и ориентир по цене фиксируем до разработки","Не просим менять то, что уже работает","Подключение к рабочим системам — только после проверки"]
-        steps=[
-            ("1. Показываете текущий процесс","Сайт, переписку, таблицу или экран системы."),
-            ("2. Выбираем один первый модуль","Только то, что решает конкретную задачу."),
-            ("3. Фиксируем условия","Что входит, срок, цена и какие доступы нужны."),
-            ("4. Собираем и показываем","Сначала проверяем сценарий на согласованной версии."),
-            ("5. Подключаем","После проверки связываем с действующими системами, если это нужно."),
+        architecture=[
+            ("Клиентский слой","Сайт · Mini App · каталог · бронирование"),
+            ("Операционный слой","Заказы · роли · рабочая панель · аналитика"),
+            ("Автоматизация","AI · уведомления · правила · маршрутизация"),
+            ("Интеграции и данные","Оплата · CRM · API · базы данных"),
         ]
-        proof_lead="Статус каждого примера указан отдельно: интерактивное демо, публичный прототип или клиентская концепция."
-        enterprise_title="Нужна не отдельная функция, а сложная внутренняя система?"
-        enterprise_text="Для интеграций, данных, Oracle / PL/SQL и закрытых рабочих процессов есть отдельное инженерное направление."
+        systems=[
+            ("01 · SELL & BOOK","Продажи и бронирование","Клиент видит предложение, выбирает, бронирует или оставляет заявку и при необходимости оплачивает — без ручной сборки заказа в переписке.",["Каталог","Web / Mini App","Booking","Payment"]),
+            ("02 · OPERATE","Операционный контур","Команда получает заказ в рабочую панель, ведёт статусы, роли и предметные действия. Существующая CRM подключается там, где она нужна.",["Orders","Operational workspace","Roles","Analytics","CRM connection"]),
+            ("03 · AUTOMATE","AI и автоматизация","Система отвечает на типовые вопросы, уточняет запрос, отправляет уведомления и передаёт контекст человеку или следующему шагу процесса.",["AI assistant","Notifications","Rules","Handoffs"]),
+            ("04 · CONNECT & ENGINEER","Интеграции и данные","Связываем клиентский слой и операции с CRM, POS, оплатой, API, базами данных и внутренними системами.",["API","CRM / POS","Payments","Data","Databases"]),
+        ]
+        systems_lead="Мы строим не отдельный экран, а связанный контур. Каждый слой можно внедрять поэтапно, но он проектируется как часть общей системы."
+        proof_lead="В этих примерах видно не только интерфейс, но и связь клиентского пути с бронированием, операциями, ролями и аналитикой."
+        blocks_title="Компоненты — ниже уровнем, чем сама система"
+        blocks_text="Booking, Mini App, AI, оплата, рабочая панель и интеграции остаются отдельными каноническими компонентами. Их можно внедрить самостоятельно или использовать внутри связанной системы."
+        engineering_title="От продуктового интерфейса до сложной инженерии"
+        engineering_text="Если процесс требует API, ETL, миграции данных, Oracle / PL/SQL, ролей, согласований или закрытых внутренних контуров — это продолжение той же системной архитектуры, а не отдельная компания."
     else:
-        safety=["Start with one defined task","Scope, timeline and price guide are agreed before development","Keep what already works","Connect to live systems only after review"]
-        steps=[
-            ("1. Show the current process","Website, messages, spreadsheet or system screen."),
-            ("2. Choose one first module","Only what solves the immediate problem."),
-            ("3. Agree the conditions","Scope, timeline, price and required access."),
-            ("4. Build and review","Validate the workflow on the agreed version first."),
-            ("5. Connect","Integrate with live systems only after review, when needed."),
+        architecture=[
+            ("Customer layer","Web · Mini App · catalogue · booking"),
+            ("Operations layer","Orders · roles · workspace · analytics"),
+            ("Automation","AI · notifications · rules · routing"),
+            ("Integrations & data","Payments · CRM · APIs · databases"),
         ]
-        proof_lead="Every example has an explicit status: interactive demo, public prototype or client concept."
-        enterprise_title="Need more than one module?"
-        enterprise_text="Complex integrations, data, Oracle / PL/SQL and private internal workflows have a separate engineering path."
-    safety_html="".join(f'<li>{escape(x)}</li>' for x in safety)
-    steps_html="".join(f'<div class="buy-step"><b>{escape(a)}</b><span>{escape(b)}</span></div>' for a,b in steps)
+        systems=[
+            ("01 · SELL & BOOK","Sales and booking","Customers see the offer, choose, book or submit an enquiry and pay when needed — without reconstructing the order from chat.",["Catalogue","Web / Mini App","Booking","Payment"]),
+            ("02 · OPERATE","Operational layer","The team receives the order in an operational workspace, manages status, roles and domain actions. Existing CRM stays connected where useful.",["Orders","Operational workspace","Roles","Analytics","CRM connection"]),
+            ("03 · AUTOMATE","AI and automation","The system handles routine questions, clarifies requests, sends notifications and passes context to a human or the next process step.",["AI assistant","Notifications","Rules","Handoffs"]),
+            ("04 · CONNECT & ENGINEER","Integrations and data","We connect the customer and operations layers to CRM, POS, payments, APIs, databases and internal systems.",["API","CRM / POS","Payments","Data","Databases"]),
+        ]
+        systems_lead="We do not build isolated screens. Each layer can be delivered in phases, but it is designed as part of one connected system."
+        proof_lead="These examples show the connection between customer journey, booking, operations, roles and analytics — not just interface screens."
+        blocks_title="Building blocks sit below the system level"
+        blocks_text="Booking, Mini Apps, AI, payments, operational workspaces and integrations remain canonical components. They can work alone or as parts of a connected system."
+        engineering_title="From product interface to complex engineering"
+        engineering_text="When the workflow needs APIs, ETL, data migration, Oracle / PL/SQL, roles, approvals or private internal systems, that is a continuation of the same system architecture."
+    arch_html=""
+    for idx,(name,detail) in enumerate(architecture):
+        if idx:
+            arch_html+='<div class="architecture-connector">↓</div>'
+        arch_html+=f'<div class="architecture-layer"><b>{escape(name)}</b><span>{escape(detail)}</span></div>'
+    system_cards=""
+    for kicker,title,desc,parts in systems:
+        system_cards+=f'''<article class="system-card"><div class="system-index">{escape(kicker)}</div><h3>{escape(title)}</h3><p>{escape(desc)}</p><div class="system-components">{"".join(f'<span class="system-pill">{escape(x)}</span>' for x in parts)}</div></article>'''
     return f'''
     <section class="hero"><div class="wrap hero-grid"><div>
       <div class="eyebrow">{escape(b["tagline"])}</div><h1>{escape(b["hero_title"])}</h1><p>{escape(b["hero_lead"])}</p>
-      <div class="hero-actions"><a class="btn btn-primary" href="#industries">{escape(b["hero_primary"])} ↓</a><a class="btn btn-secondary" href="#proof">{escape(b["hero_secondary"])}</a></div>
-    </div><aside class="hero-safety"><h3>{"Как начинаем без лишнего риска" if lang=="ru" else "A controlled way to start"}</h3><ul>{safety_html}</ul></aside></div></section>
-
-    {industry_browser(lang)}
-    {team_trust(lang)}
+      <div class="hero-actions"><a class="btn btn-primary" href="#systems">{escape(b["hero_primary"])} ↓</a><a class="btn btn-secondary" href="#proof">{escape(b["hero_secondary"])}</a></div>
+    </div><aside class="process-map"><h3>{"Один связанный контур" if lang=="ru" else "One connected system"}</h3><div class="architecture-stack">{arch_html}</div></aside></div></section>
 
     <section class="section" id="proof"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{escape(b["proof_title"])}</h2></div><p>{escape(proof_lead)}</p></div><div class="case-grid">{top_cases}</div><div style="margin-top:18px"><a class="text-link" href="{loc(lang,'/cases/')}">{c["all_cases"]} →</a></div></div></section>
 
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Как купить" if lang=="ru" else "How to start"}</div><h2>{"Пять понятных шагов до первого результата" if lang=="ru" else "Five clear steps to the first result"}</h2></div><p>{"Никакого обязательного большого внедрения на старте." if lang=="ru" else "No mandatory large implementation at the start."}</p></div><div class="buy-steps">{steps_html}</div></div></section>
+    <section class="section soft" id="systems"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Системная архитектура" if lang=="ru" else "System architecture"}</div><h2>{"Четыре контура одной цифровой системы" if lang=="ru" else "Four layers of one digital system"}</h2></div><p>{escape(systems_lead)}</p></div><div class="systems-grid">{system_cards}</div></div></section>
 
-    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{"Другие направления" if lang=="ru" else "Other paths"}</div><h2>{escape(enterprise_title)}</h2></div><p>{escape(enterprise_text)}</p></div><div class="actions"><a class="btn btn-secondary" href="{loc(lang,'/software/')}">{"Готовые продукты" if lang=="ru" else "Software products"} →</a><a class="btn btn-secondary" href="{loc(lang,'/partners/')}">{"Партнёрам" if lang=="ru" else "Partners"} →</a><a class="btn btn-secondary" href="{loc(lang,'/enterprise/')}">{"Для крупных систем" if lang=="ru" else "Enterprise engineering"} →</a></div></div></section>
+    {industry_browser(lang)}
+
+    <section class="section"><div class="wrap two-col"><div><div class="eyebrow">{"Строительные блоки" if lang=="ru" else "Building blocks"}</div><h2>{escape(blocks_title)}</h2><p class="quote">{escape(blocks_text)}</p></div><div class="system-note"><h3>{"Нужен один конкретный компонент?" if lang=="ru" else "Need one specific component?"}</h3><p>{"На страницах компонентов сохраняем конкретный первый этап, состав, срок и ориентир по стоимости — но это коммерческий слой, а не позиционирование всей VIIVERSION." if lang=="ru" else "Component pages keep a concrete starter scope, timeline and price guide — as the commercial layer, not the identity of VIIVERSION."}</p><div class="actions"><a class="btn btn-primary" href="{loc(lang,'/products/')}">{"Посмотреть компоненты" if lang=="ru" else "See building blocks"} →</a></div></div></div></section>
+
+    {team_trust(lang)}
+
+    <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{"Инженерная глубина" if lang=="ru" else "Engineering depth"}</div><h2>{escape(engineering_title)}</h2></div><p>{escape(engineering_text)}</p></div><div class="actions"><a class="btn btn-secondary" href="{loc(lang,'/enterprise/')}">{"Инженерия и крупные системы" if lang=="ru" else "Engineering & enterprise"} →</a><a class="btn btn-secondary" href="{loc(lang,'/software/')}">{"Программные продукты VIIVERSION" if lang=="ru" else "VIIVERSION software"} →</a><a class="btn btn-secondary" href="{loc(lang,'/partners/')}">{"Партнёрские форматы" if lang=="ru" else "Partner delivery"} →</a></div></div></section>
     '''
 
 def products_index(lang):
     cards="".join(product_card(lang,s) for s in SELLABLE_PRODUCTS)
-    title="Что можно купить" if lang=="ru" else "Products you can buy"
-    lead="Каждый продукт решает отдельную задачу, имеет понятный первый пакет и при необходимости расширяется дополнительными функциями." if lang=="ru" else "Each product solves a defined problem, has a clear starter package and can expand with add-ons when needed."
-    return hero(lang,"Продукты" if lang=="ru" else "Products",title,lead,"/products/")+f'<section class="section"><div class="wrap"><div class="module-buy-grid">{cards}</div></div></section>'
+    title="Компоненты цифровой системы" if lang=="ru" else "Digital system building blocks"
+    lead="Это не семь разных типов нашей компании. Это строительные блоки, которые можно внедрить отдельно или соединить в клиентский, операционный и интеграционный контур." if lang=="ru" else "These are not seven separate service lines. They are building blocks that can work alone or connect into customer, operations and integration layers."
+    note="На странице каждого компонента есть конкретный первый этап, состав, срок и ориентир по стоимости." if lang=="ru" else "Each component page contains a concrete starter scope, timeline and price guide."
+    return hero(lang,"Компоненты" if lang=="ru" else "Building blocks",title,lead,"/products/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Из чего собираем системы" if lang=="ru" else "What systems are built from"}</div><h2>{escape(BRAND[lang]["products_title"])}</h2></div><p>{escape(note)}</p></div><div class="grid3">{cards}</div></div></section>'
 
 def product_page(lang,slug):
     c=COPY[lang]
@@ -703,14 +783,14 @@ def solutions_index(lang):
     target_cards=[]
     for slug,item in TARGET_LANDINGS.items():
         d=item[lang]
-        target_cards.append(f'<a class="card" href="{loc(lang,"/solutions/"+slug+"/")}"><div class="kicker">{"Отраслевая страница" if lang=="ru" else "Industry landing"}</div><h3>{escape(d["title"])}</h3><p>{escape(d["lead"])}</p><span class="text-link">{"Подробнее" if lang=="ru" else "Learn more"} →</span></a>')
+        target_cards.append(f'<a class="card" href="{loc(lang,"/solutions/"+slug+"/")}"><div class="kicker">{"Сценарий" if lang=="ru" else "Scenario"}</div><h3>{escape(d["title"])}</h3><p>{escape(d["lead"])}</p><span class="text-link">{"Подробнее" if lang=="ru" else "Learn more"} →</span></a>')
     industry_cards=[]
     for slug,item in INDUSTRY_CONFIGS.items():
         d=item[lang]
-        industry_cards.append(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{"Отрасль" if lang=="ru" else "Industry"}</div><h3>{escape(d["name"])}</h3><p>{escape(d["lead"])}</p><span class="text-link">{"Посмотреть продукты" if lang=="ru" else "See products"} →</span></a>')
-    title="Решения по задаче и сфере бизнеса" if lang=="ru" else "Solutions by problem and industry"
-    lead="Эти страницы не создают новые продукты: они показывают один и тот же канонический продукт в конкретной отрасли." if lang=="ru" else "These pages do not create new products; they show the same canonical product in a specific industry."
-    return hero(lang,"Решения" if lang=="ru" else "Solutions",title,lead,"/solutions/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Конкретные сценарии" if lang=="ru" else "Specific scenarios"}</div><h2>{"Продукт × отрасль" if lang=="ru" else "Product × industry"}</h2></div></div><div class="grid3">{"".join(target_cards)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"По сфере бизнеса" if lang=="ru" else "By industry"}</div><h2>{"Все отрасли" if lang=="ru" else "All industries"}</h2></div></div><div class="grid3">{"".join(industry_cards)}</div></div></section>'
+        industry_cards.append(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{"Отрасль" if lang=="ru" else "Industry"}</div><h3>{escape(d["name"])}</h3><p>{escape(d["lead"])}</p><span class="text-link">{"Посмотреть типовой контур" if lang=="ru" else "See the typical system"} →</span></a>')
+    title="Сценарии цифровых систем" if lang=="ru" else "Digital system scenarios"
+    lead="Здесь показано, как конкретные строительные блоки работают внутри разных бизнес-процессов." if lang=="ru" else "See how specific building blocks work inside different business workflows."
+    return hero(lang,"Решения" if lang=="ru" else "Solutions",title,lead,"/solutions/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Конкретные сценарии" if lang=="ru" else "Specific scenarios"}</div><h2>{"От задачи к рабочему контуру" if lang=="ru" else "From task to working flow"}</h2></div></div><div class="grid3">{"".join(target_cards)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"По сфере бизнеса" if lang=="ru" else "By industry"}</div><h2>{"Все отрасли" if lang=="ru" else "All industries"}</h2></div></div><div class="grid3">{"".join(industry_cards)}</div></div></section>'
 
 def target_page(lang,slug):
     c=COPY[lang]; d=TARGET_LANDINGS[slug]; t=d[lang]
@@ -723,25 +803,26 @@ def target_page(lang,slug):
     return body
 
 def industries_index(lang):
-    cards="".join(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{"Отрасль" if lang=="ru" else "Industry"}</div><h3>{escape(item[lang]["name"])}</h3><p>{escape(item[lang]["lead"])}</p><span class="text-link">{"Посмотреть продукты" if lang=="ru" else "See products"} →</span></a>' for slug,item in INDUSTRY_CONFIGS.items())
-    title="Решения по типу бизнеса" if lang=="ru" else "Solutions by business type"
-    lead="В каждой сфере сначала показываем 2–3 продукта, с которых обычно есть смысл начинать, а затем — что можно подключить позже." if lang=="ru" else "For each industry we show the 2–3 products that usually make sense first, followed by what can be added later."
+    cards="".join(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{"Отрасль" if lang=="ru" else "Industry"}</div><h3>{escape(item[lang]["name"])}</h3><p>{escape(item[lang]["lead"])}</p><span class="text-link">{"Посмотреть типовой контур" if lang=="ru" else "See the typical system"} →</span></a>' for slug,item in INDUSTRY_CONFIGS.items())
+    title="Цифровые системы по типу бизнеса" if lang=="ru" else "Digital systems by business type"
+    lead="В каждой сфере показываем не рейтинг модулей, а типовой процесс: как связаны клиентский путь, операции, автоматизация и внешние системы." if lang=="ru" else "For each industry we show the typical workflow and how customer journey, operations, automation and external systems connect."
     return hero(lang,"Отрасли" if lang=="ru" else "Industries",title,lead,"/industries/")+f'<section class="section"><div class="wrap"><div class="grid3">{cards}</div></div></section>'
 
 def industry_page(lang,slug):
     item=INDUSTRY_CONFIGS[slug]; d=item[lang]
-    primary="".join(module_buy_card(lang,p) for p in item["primary"])
-    later="".join(module_buy_card(lang,p) for p in item.get("later",[]))
-    addon_names=[ADDONS[a][lang] for a in item.get("addons",[]) if a in ADDONS]
-    proofs=[]
-    for product_slug in item["primary"] + item.get("later",[]):
-        for case_slug in SELLABLE_PRODUCTS[product_slug][lang]["proof"]:
-            if case_slug in CASES and case_slug not in proofs:
-                proofs.append(case_slug)
-    proof_html="".join(case_card(lang,s) for s in proofs[:3])
-    return hero(lang,"Отрасль" if lang=="ru" else "Industry",d["name"],d["lead"],"/industries/"+slug+"/",(("Отрасли" if lang=="ru" else "Industries"),"/industries/"))+f'''<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Обычно начинают с" if lang=="ru" else "Usually start with"}</div><h2>{"Первые продукты" if lang=="ru" else "First products"}</h2></div></div><div class="module-buy-grid">{primary}</div></div></section>
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Можно добавить позже" if lang=="ru" else "Can be added later"}</div><h2>{"Расширение" if lang=="ru" else "Expansion"}</h2></div></div><div class="module-buy-grid">{later}</div>{f'<div style="margin-top:20px">{badges(addon_names)}</div>' if addon_names else ''}</div></section>
-    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{COPY[lang]["proof"]}</div><h2>{COPY[lang]["proof"]}</h2></div></div><div class="case-grid">{proof_html}</div></div></section>'''
+    component_slugs=item["primary"] + item.get("later",[])
+    components="".join(product_card(lang,p) for p in component_slugs)
+    proof_slugs=industry_proof_slugs(slug)
+    proof_html="".join(case_card(lang,s) for s in proof_slugs if s in CASES)
+    flow_title="Типовой цифровой контур" if lang=="ru" else "Typical digital system"
+    blocks_title="Компоненты этого контура" if lang=="ru" else "Building blocks for this system"
+    blocks_lead="Набор зависит от существующих систем и реального процесса. Компоненты можно подключать поэтапно." if lang=="ru" else "The exact set depends on the existing systems and real workflow. Components can be connected in phases."
+    proof_section=""
+    if proof_html:
+        proof_section=f'''<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{COPY[lang]["proof"]}</div><h2>{"Релевантные примеры" if lang=="ru" else "Relevant examples"}</h2></div></div><div class="case-grid">{proof_html}</div></div></section>'''
+    return hero(lang,"Отрасль" if lang=="ru" else "Industry",d["name"],d["lead"],"/industries/"+slug+"/",(("Отрасли" if lang=="ru" else "Industries"),"/industries/"))+f'''<section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Как устроен процесс" if lang=="ru" else "How the workflow connects"}</div><h2>{flow_title}</h2></div><p>{escape(d["lead"])}</p></div>{flow_track(lang,slug)}</div></section>
+    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Строительные блоки" if lang=="ru" else "Building blocks"}</div><h2>{blocks_title}</h2></div><p>{blocks_lead}</p></div><div class="grid3">{components}</div></div></section>
+    {proof_section}'''
 
 def cases_index(lang):
     cards="".join(case_card(lang,s) for s in CASES)
@@ -790,8 +871,8 @@ def software_page(lang):
     for slug,item in SOFTWARE_PRODUCTS.items():
         d=item[lang]; href=d["url"] or "#contact"; interest="" if d["url"] else f' data-interest="{escape(d["name"])}" data-cta="software-product"'
         cards.append(f'<article class="card"><div class="kicker">{escape(d["status"])}</div><h3>{escape(d["name"])}</h3><p>{escape(d["summary"])}</p><a class="text-link" href="{href}"{interest}>{"Открыть" if d["url"] and lang=="ru" else ("Open" if d["url"] else ("Узнать о доступе" if lang=="ru" else "Ask about access"))} →</a></article>')
-    title="Готовые продукты VIIVERSION" if lang=="ru" else "VIIVERSION software products"
-    lead="Это самостоятельные программные продукты VIIVERSION, а не заказная разработка для одного клиента." if lang=="ru" else "These are standalone VIIVERSION software products, separate from custom client delivery."
+    title="Программные продукты VIIVERSION" if lang=="ru" else "VIIVERSION software products"
+    lead="Собственные программные продукты VIIVERSION. Часть доступна публично, часть находится в beta или разработке." if lang=="ru" else "VIIVERSION software products. Some are public, while others are in beta or development."
     return hero(lang,"Программные продукты" if lang=="ru" else "Software products",title,lead,"/software/")+f'<section class="section"><div class="wrap"><div class="grid2">{"".join(cards)}</div></div></section>'
 
 def partners_page(lang):
@@ -805,7 +886,7 @@ def partners_page(lang):
 
 def about_page(lang):
     c=COPY[lang]
-    title="VIIVERSION — небольшая инженерная продуктовая команда" if lang=="ru" else "VIIVERSION — an engineering product team"
+    title="VIIVERSION — инженерная продуктовая команда" if lang=="ru" else "VIIVERSION — an engineering product team"
     lead="Проектируем клиентские сценарии, интерфейсы, серверную логику, данные и интеграции внутри одной команды." if lang=="ru" else "We design customer flows, interfaces, server logic, data and integrations within one team."
     method="До разработки разбираем, что делает клиент, что делает сотрудник, где хранятся данные и на каком шаге возникает ручная работа или потеря информации." if lang=="ru" else "Before development we map what the customer does, what staff do, where data lives and where manual work or information loss appears."
     return hero(lang,c["about"],title,lead,"/about/")+team_trust(lang)+f'<section class="section"><div class="wrap"><div class="eyebrow">{"Как работаем" if lang=="ru" else "Method"}</div><h2>{"Сначала конкретный процесс, затем технология" if lang=="ru" else "Process first, technology second"}</h2><p class="quote">{escape(method)}</p></div></section>'
@@ -851,7 +932,7 @@ for lang in LANGS:
     base_dir="" if lang=="ru" else "en/"
     pages[base_dir+"index.html"] = page(lang, "VIIVERSION — "+BRAND[lang]["tagline"], BRAND[lang]["hero_lead"], home(lang), "/", interest="general")
 
-    pages[base_dir+"products/index.html"] = page(lang, ("Что можно купить — VIIVERSION" if lang=="ru" else "VIIVERSION products"), ("Канонический каталог продуктов VIIVERSION." if lang=="ru" else "Canonical VIIVERSION product catalogue."), products_index(lang), "/products/")
+    pages[base_dir+"products/index.html"] = page(lang, ("Компоненты цифровых систем — VIIVERSION" if lang=="ru" else "VIIVERSION system building blocks"), ("Компоненты для клиентского, операционного и интеграционного контуров." if lang=="ru" else "Building blocks for customer, operations and integration layers."), products_index(lang), "/products/")
     for slug in SELLABLE_PRODUCTS:
         p=SELLABLE_PRODUCTS[slug][lang]
         pages[base_dir+f"products/{slug}/index.html"] = page(lang, f'{p["name"]} — VIIVERSION', p["short"], product_page(lang,slug), f"/products/{slug}/", page_type="Product", interest=p["name"])
@@ -861,7 +942,7 @@ for lang in LANGS:
         t=TARGET_LANDINGS[slug][lang]
         pages[base_dir+f"solutions/{slug}/index.html"] = page(lang, f'{t["title"]} — VIIVERSION', t["lead"], target_page(lang,slug), f"/solutions/{slug}/", page_type="Service", interest=t["title"])
 
-    pages[base_dir+"industries/index.html"] = page(lang, ("Отрасли — VIIVERSION" if lang=="ru" else "Industries — VIIVERSION"), ("Продукты VIIVERSION по типу бизнеса." if lang=="ru" else "VIIVERSION products by business type."), industries_index(lang), "/industries/")
+    pages[base_dir+"industries/index.html"] = page(lang, ("Отраслевые системы — VIIVERSION" if lang=="ru" else "Industry systems — VIIVERSION"), ("Типовые цифровые контуры по отраслям." if lang=="ru" else "Typical digital system flows by industry."), industries_index(lang), "/industries/")
     for slug in INDUSTRY_CONFIGS:
         d=INDUSTRY_CONFIGS[slug][lang]
         pages[base_dir+f"industries/{slug}/index.html"] = page(lang, f'{d["name"]} — VIIVERSION', d["lead"], industry_page(lang,slug), f"/industries/{slug}/", page_type="Service", interest=d["name"])
@@ -940,7 +1021,7 @@ home_text=(PUBLIC/"index.html").read_text(encoding="utf-8")
 for bad in ("коммерческих ядер","buyer journey","Entry offers","client work","Большая продажа"):
     if bad in home_text:
         raise SystemExit("Client-facing jargon leaked into home: "+bad)
-for marker in ("Цифровые решения для конкретных задач бизнеса","Что можно купить для вашего бизнеса","Вы общаетесь напрямую с теми, кто делает продукт","Пять понятных шагов до первого результата"):
+for marker in ("Проектируем и собираем цифровые системы вокруг реального процесса бизнеса","Четыре контура одной цифровой системы","Системы, которые можно открыть и проверить","Компоненты — ниже уровнем, чем сама система"):
     if marker not in home_text:
         raise SystemExit("Product site QA missing: "+marker)
 
