@@ -1,0 +1,42 @@
+version: 1
+products:
+  - {id: P01, key: landing_conversion, name: "Landing / conversion page", layer: web}
+  - {id: P02, key: web_replatform, name: "Website redesign / React replatform", layer: web}
+  - {id: P03, key: wordpress_audit_repair, name: "WordPress technical audit & repair", layer: web_ai}
+  - {id: P04, key: telegram_bot, name: "Telegram bot", layer: messaging}
+  - {id: P05, key: telegram_mini_app, name: "Telegram Mini App", layer: mini_apps}
+  - {id: P06, key: zalo_mini_app, name: "Zalo Mini App adaptation", layer: mini_apps}
+  - {id: P07, key: booking_engine, name: "Booking engine", layer: commerce_ops}
+  - {id: P08, key: availability_schedule, name: "Availability / schedule module", layer: commerce_ops}
+  - {id: P09, key: catalog_pricing, name: "Catalog + pricing configurator", layer: commerce}
+  - {id: P10, key: crm_pipeline, name: "CRM / lead pipeline", layer: crm}
+  - {id: P11, key: backoffice_portal, name: "Admin / back-office portal", layer: operations}
+  - {id: P12, key: customer_account, name: "Customer account / profile", layer: client_service}
+  - {id: P13, key: owner_dashboard, name: "Owner / partner dashboard", layer: analytics_ops}
+  - {id: P14, key: notifications_reminders, name: "Notifications & reminders", layer: automation}
+  - {id: P15, key: reactivation, name: "Repeat-sales / reactivation automation", layer: automation}
+  - {id: P16, key: ai_consultant, name: "AI consultant / sales assistant", layer: ai}
+  - {id: P17, key: ai_search, name: "AI search / recommendation", layer: ai}
+  - {id: P18, key: analytics_dashboard, name: "Analytics / KPI dashboard", layer: analytics}
+  - {id: P19, key: payment_integration, name: "Payment integration", layer: payments}
+  - {id: P20, key: pos_payment_middleware, name: "POS / payment Middleware for fast checkout", layer: payments}
+  - {id: P21, key: integration_layer, name: "API / webhooks integration layer", layer: integration}
+  - {id: P22, key: etl_pipeline, name: "ETL / data pipeline", layer: data}
+  - {id: P23, key: database_migration, name: "Database migration / cleanup", layer: data}
+  - {id: P24, key: oracle_plsql, name: "Oracle / PL/SQL engineering", layer: enterprise_data}
+  - {id: P25, key: revenue_assurance, name: "Revenue Assurance / reconciliation / fraud workflows", layer: telecom}
+  - {id: P26, key: closed_internal_system, name: "Custom closed internal system / RBAC workflow", layer: engineering}
+  - {id: P27, key: mini_app_factory, name: "Mini App Factory / white-label production line", layer: platform_b2b2b}
+  - {id: P28, key: proposal_studio, name: "VIIVERSION Proposal Studio", layer: ai_productivity}
+  - {id: P29, key: ai_wordpress_audit, name: "AI website / WordPress audit agent", layer: ai_web}
+  - {id: P30, key: cloudflare_modernization, name: "Cloudflare modernization / deployment", layer: infrastructure}
+  - {id: P31, key: ux_audit_prototype, name: "UX/UI audit + clickable prototype", layer: design_product}
+  - {id: P32, key: signage_design, name: "Brand / facade / signage design kit", layer: creative}
+  - {id: P33, key: multilingual_layer, name: "Multilingual customer layer", layer: localization}
+  - {id: P34, key: ai_workflow_automation, name: "AI workflow automation", layer: automation_ai}
+  - {id: P35, key: managed_engineering, name: "L2/L3 technical support / managed engineering", layer: support}
+  - {id: P36, key: event_video_semantic, name: "Event Video Human Editor / semantic footage analysis", layer: creative_ai}
+
+governance:
+  dynamic_fields_in_sheet: [status, price_hypothesis, readiness, evidence, speed_scores, cross_sell]
+  id_policy: "IDs are immutable and never reused."
