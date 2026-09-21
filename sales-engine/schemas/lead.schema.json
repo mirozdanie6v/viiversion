@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://viiversion.com/schemas/sales-lead.schema.json",
+  "title": "VIIVERSION Sales Lead",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "lead_id",
+    "company",
+    "vertical_id",
+    "problem_code",
+    "offer_id",
+    "deal_class",
+    "stage",
+    "owner",
+    "next_action"
+  ],
+  "properties": {
+    "lead_id": {"type": "string", "minLength": 1},
+    "company": {"type": "string", "minLength": 1},
+    "country": {"type": ["string", "null"]},
+    "vertical_id": {"type": "string", "minLength": 1},
+    "observed_trigger": {"type": ["string", "null"]},
+    "problem_code": {"type": "string", "minLength": 1},
+    "offer_id": {"type": "string", "pattern": "^O[0-9]{3}$"},
+    "deal_class": {"enum": ["S", "A", "B", "C", "D", "E", "A/B", "B/D", "D/E"]},
+    "decision_maker": {"type": ["string", "null"]},
+    "channel": {"type": ["string", "null"]},
+    "stage": {"enum": ["Target", "Contacted", "Replied", "Demo", "Discovery", "Proposal", "Negotiation", "Won", "Lost", "Nurture"]},
+    "indicative_ticket": {"type": ["string", "null"]},
+    "last_contact": {"type": ["string", "null"], "format": "date"},
+    "next_action": {"type": "string", "minLength": 1},
+    "next_date": {"type": ["string", "null"], "format": "date"},
+    "owner": {"type": "string", "minLength": 1},
+    "asset": {"type": ["string", "null"]},
+    "notes": {"type": ["string", "null"]},
+    "source_url": {"type": ["string", "null"], "format": "uri"}
+  }
+}
