@@ -4,8 +4,8 @@ Machine-readable commercial rules for the VIIVERSION sales operating system.
 
 ## Source-of-truth contract
 
-- **Google Sheet `VIIVERSION Commercial Matrix`** — operational data: Products, Assets, Verticals, Offers, Experiments, Sales Router, Cross Sell, actual outcomes and working price hypotheses.
-- **Google Doc `VIIVERSION Sales Playbook v1`** — human operating rules and governance.
+- **Google Sheet `VIIVERSION Commercial Matrix`** — operational data: Products, Assets, Verticals, Offers, Experiments, Sales Router, Cross Sell, actual outcomes and working price hypotheses. https://docs.google.com/spreadsheets/d/14i9E4WGazfwwsGl2mP_0TtZa9URBI-zeKj-qromAl-4/edit
+- **Google Doc `VIIVERSION Sales Playbook v1`** — human operating rules and governance. https://docs.google.com/document/d/1itFsDhoPZqyH1NN1emca9u1HFeqYouPu4gcuuzm9BL4/edit
 - **This directory** — stable IDs, machine rules, routing, scoring and schemas.
 
 ## Rules
