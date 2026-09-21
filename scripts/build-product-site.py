@@ -11,9 +11,10 @@ PUBLIC = ROOT / "public"
 HOME = PUBLIC / "index.html"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from site_content import (
-    LANGS, BRAND, PRODUCTS, OFFERS, INDUSTRIES, INDUSTRY_CATALOG,
-    TARGET_LANDINGS, MODULES, INDUSTRY_EXPLORER, CASES, LABS, TEAM, NAV
+from site_content import LANGS, BRAND, CASES, TEAM, NAV
+from product_catalog import (
+    FAMILIES, SELLABLE_PRODUCTS, ADDONS, INDUSTRY_CONFIGS, TARGET_LANDINGS,
+    SOFTWARE_PRODUCTS, PARTNER_PRODUCTS, LEGACY_REDIRECTS
 )
 
 if not HOME.exists():
@@ -510,11 +511,14 @@ def case_card(lang, slug):
     </article>'''
 
 def product_card(lang, slug):
-    p = PRODUCTS[slug][lang]
+    p = SELLABLE_PRODUCTS[slug][lang]
+    family = FAMILIES[SELLABLE_PRODUCTS[slug]["family"]][lang]
+    start = SELLABLE_PRODUCTS[slug]["packages"]["start"][lang]
     return f'''<article class="card product-card">
       <div class="product-mark">{escape(p["name"][0])}</div>
-      <div class="kicker">{escape(p["label"])}</div><h3>{escape(p["name"])}</h3><p>{escape(p["headline"])}</p>
-      <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{COPY[lang]["learn_more"]} →</a>
+      <div class="kicker">{escape(family["name"])}</div><h3>{escape(p["name"])}</h3><p>{escape(p["short"])}</p>
+      <div class="module-buy-meta"><div><small>{COPY[lang]["price"]}</small><b>{escape(start["price"])}</b></div><div><small>{COPY[lang]["timeline"]}</small><b>{escape(start["timeline"])}</b></div></div>
+      <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{'Что входит и как начать' if lang=='ru' else 'What is included and how to start'} →</a>
     </article>'''
 
 def offer_card(lang, slug):
@@ -526,30 +530,38 @@ def offer_card(lang, slug):
     </article>'''
 
 def module_buy_card(lang, slug):
-    m = MODULES[slug][lang]
+    p = SELLABLE_PRODUCTS[slug][lang]
+    start = SELLABLE_PRODUCTS[slug]["packages"]["start"][lang]
     c = COPY[lang]
     return f'''<article class="module-buy-card">
-      <h4>{escape(m["name"])}</h4>
-      <p>{escape(m["short"])}</p>
-      <div class="module-buy-meta"><div><small>{c["price"]}</small><b>{escape(m["price"])}</b></div><div><small>{c["timeline"]}</small><b>{escape(m["timeline"])}</b></div></div>
-      <a class="text-link" href="{loc(lang,'/modules/'+slug+'/')}">{'Что входит и как начать' if lang=='ru' else 'What is included and how to start'} →</a>
+      <h4>{escape(p["name"])}</h4>
+      <p>{escape(p["short"])}</p>
+      <div class="module-buy-meta"><div><small>{c["price"]}</small><b>{escape(start["price"])}</b></div><div><small>{c["timeline"]}</small><b>{escape(start["timeline"])}</b></div></div>
+      <a class="text-link" href="{loc(lang,'/products/'+slug+'/')}">{'Что входит и как начать' if lang=='ru' else 'What is included and how to start'} →</a>
     </article>'''
 
 def industry_browser(lang):
     tabs=[]
     panels=[]
-    for idx,(slug,item) in enumerate(INDUSTRY_EXPLORER.items()):
+    for idx,(slug,item) in enumerate(INDUSTRY_CONFIGS.items()):
         info=item[lang]
         tabs.append(f'<button type="button" role="tab" aria-selected="{"true" if idx==0 else "false"}" class="{"active" if idx==0 else ""}" data-industry-tab="{slug}">{escape(info["name"])}</button>')
-        cards="".join(module_buy_card(lang,m) for m in item["modules"])
+        primary="".join(module_buy_card(lang,p) for p in item["primary"])
+        later="".join(module_buy_card(lang,p) for p in item.get("later",[]))
+        addon_names=[ADDONS[a][lang] for a in item.get("addons",[]) if a in ADDONS]
+        addon_html=badges(addon_names) if addon_names else ""
+        primary_title="Обычно начинают с" if lang=="ru" else "Usually start with"
+        later_title="Можно добавить позже" if lang=="ru" else "Can be added later"
         panels.append(f'''<div class="industry-panel" data-industry-panel="{slug}" {"hidden" if idx else ""}>
-          <div class="industry-panel-head"><div><h3>{escape(info["name"])}</h3><p>{escape(info["lead"])}</p></div><a class="text-link" href="{loc(lang,'/modules/')}">{'Все решения' if lang=='ru' else 'All solutions'} →</a></div>
-          <div class="module-buy-grid">{cards}</div>
+          <div class="industry-panel-head"><div><h3>{escape(info["name"])}</h3><p>{escape(info["lead"])}</p></div><a class="text-link" href="{loc(lang,'/industries/'+slug+'/')}">{'Вся конфигурация' if lang=='ru' else 'Full industry view'} →</a></div>
+          <div class="eyebrow" style="margin-bottom:10px">{primary_title}</div><div class="module-buy-grid">{primary}</div>
+          {f'<div class="eyebrow" style="margin:24px 0 10px">{later_title}</div><div class="module-buy-grid">{later}</div>' if later else ''}
+          {f'<div style="margin-top:20px"><div class="eyebrow">{later_title}</div>{addon_html}</div>' if addon_html else ''}
         </div>''')
     title="Что можно купить для вашего бизнеса" if lang=="ru" else "What you can buy for your business"
-    lead="Выберите сферу — ниже появятся конкретные решения, которые можно заказать отдельно." if lang=="ru" else "Choose your industry to see concrete solutions that can be purchased separately."
+    lead="Выберите сферу. Сначала покажем 2–3 решения, с которых обычно есть смысл начинать; остальное можно подключить позже." if lang=="ru" else "Choose your industry. We show the 2–3 products that usually make sense first, then what can be added later."
     return f'''<section class="section" id="industries"><div class="wrap">
-      <div class="section-head"><div><div class="eyebrow">{"Отрасли" if lang=="ru" else "Industries"}</div><h2>{title}</h2></div><p>{lead}</p></div>
+      <div class="section-head"><div><div class="eyebrow">{"Какой у вас бизнес?" if lang=="ru" else "What kind of business do you run?"}</div><h2>{title}</h2></div><p>{lead}</p></div>
       <div class="industry-browser"><div class="industry-tabs" role="tablist">{"".join(tabs)}</div>{"".join(panels)}</div>
     </div></section>'''
 
@@ -659,26 +671,43 @@ def module_page(lang,slug):
     return body
 
 def products_index(lang):
-    c=COPY[lang]
-    cards="".join(product_card(lang,s) for s in PRODUCTS)
-    return hero(lang,c["products"],c["all_products"],"Booking, Online Sales, Operations, AI Operator and PayBridge." if lang=="en" else "Онлайн-бронирование, онлайн-продажи, CRM и работа команды, AI-консультант и PayBridge — решения, которые можно заказывать отдельно и при необходимости связывать между собой.","/products/")+f'<section class="section"><div class="wrap"><div class="grid5">{cards}</div></div></section>'
+    cards="".join(product_card(lang,s) for s in SELLABLE_PRODUCTS)
+    title="Что можно купить" if lang=="ru" else "Products you can buy"
+    lead="Каждый продукт решает отдельную задачу, имеет понятный первый пакет и при необходимости расширяется дополнительными функциями." if lang=="ru" else "Each product solves a defined problem, has a clear starter package and can expand with add-ons when needed."
+    return hero(lang,"Продукты" if lang=="ru" else "Products",title,lead,"/products/")+f'<section class="section"><div class="wrap"><div class="module-buy-grid">{cards}</div></div></section>'
 
 def product_page(lang,slug):
-    c=COPY[lang]; p=PRODUCTS[slug][lang]
-    before="".join(f"<li>{escape(x)}</li>" for x in p["before"])
-    after="".join(f"<li>{escape(x)}</li>" for x in p["after"])
-    modules="".join(f'<article class="module"><h3>{escape(n)}</h3><p>{escape(d)}</p></article>' for n,d in p["modules"])
+    c=COPY[lang]
+    product=SELLABLE_PRODUCTS[slug]
+    p=product[lang]
+    family=FAMILIES[product["family"]][lang]
+    start=product["packages"]["start"][lang]
+    steps="".join(f'<div class="module-step"><span class="num">{i:02d}</span>{escape(x)}</div>' for i,x in enumerate(p["steps"],1))
+    includes="".join(f'<li>{escape(x)}</li>' for x in p["includes"])
+    excludes="".join(f'<li>{escape(x)}</li>' for x in p["excludes"])
+    scope="".join(f'<li>{escape(x)}</li>' for x in start["scope"])
     proof="".join(case_card(lang,s) for s in p["proof"][:3] if s in CASES)
-    offer=OFFERS[p["offer"]][lang]
-    body=hero(lang,p["label"],f'{p["name"]} — {p["headline"]}',p["summary"],"/products/"+slug+"/",(c["products"],"/products/"))
-    body+=f'''<section class="section"><div class="wrap"><div class="compare">
-      <div class="compare-box"><div class="eyebrow">{c["before"]}</div><h3>{c["before"]}</h3><ul>{before}</ul></div>
-      <div class="compare-box after"><div class="eyebrow">{c["after"]}</div><h3>{c["after"]}</h3><ul>{after}</ul></div>
-    </div></div></section>
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["modules"]}</div><h2>{c["modules"]}</h2></div><p>{'Не все компоненты нужны в каждом внедрении.' if lang=='ru' else 'Not every component is required in every implementation.'}</p></div><div class="module-grid">{modules}</div></div></section>
-    <section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["offer"]}</div><h2>{escape(offer["name"])}</h2><p class="quote">{escape(offer["headline"])}</p><a class="btn btn-primary" href="{loc(lang,'/offers/'+p["offer"]+'/')}">{escape(p["cta"])} →</a></div>
-      <div class="scope-box"><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(p["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(p["timeline"])}</strong></div></div><p>{c["not_fixed"]}</p></div></div></section>
-    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
+    addons=[ADDONS[a][lang] if a in ADDONS else SELLABLE_PRODUCTS[a][lang]["name"] for a in product.get("recommended_addons",[]) if a in ADDONS or a in SELLABLE_PRODUCTS]
+    audience=", ".join(p["for"])
+    if lang=="ru":
+        title=f'{p["name"]} — что это, что входит и как заказать'
+        result_title="Что меняется для бизнеса"; for_label="Подходит для"; how="Как это работает"
+        included="Что входит в продукт"; excluded="Что не входит в базовую оценку"
+        package_title="Первый пакет"; addons_title="Можно подключить дополнительно"
+        buy_title="Как начать"; buy_text="Пришлите ссылку, скриншот или коротко опишите, как эта задача решается сейчас. Мы подтвердим, подходит ли продукт, что войдёт в первый пакет и какие доступы действительно нужны."
+    else:
+        title=f'{p["name"]} — what it is, what is included and how to start'
+        result_title="What changes for the business"; for_label="Suitable for"; how="How it works"
+        included="Included"; excluded="Not included in the base estimate"
+        package_title="Starter package"; addons_title="Optional add-ons"
+        buy_title="How to start"; buy_text="Send a link, screenshot or short description of how this task works today. We will confirm whether the product fits, what goes into the starter package and which access is actually required."
+    body=hero(lang,family["name"],title,p["short"],"/products/"+slug+"/",(COPY[lang]["products"],"/products/"))
+    body+=f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{result_title}</div><h2>{escape(p["result"])}</h2><p><b>{for_label}:</b> {escape(audience)}</p></div><div class="scope-box"><div class="eyebrow">{package_title}</div><h3>{escape(start["name"])}</h3><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(start["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(start["timeline"])}</strong></div></div><ul class="list-clean">{scope}</ul><a class="btn btn-primary" href="#contact" data-interest="{escape(p["name"])}" data-cta="product">{escape(p["cta"])} →</a></div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{how}</div><h2>{how}</h2></div></div><div class="module-steps">{steps}</div></div></section>
+    <section class="section"><div class="wrap compare"><div class="compare-box after"><div class="eyebrow">{included}</div><h3>{included}</h3><ul>{includes}</ul></div><div class="compare-box"><div class="eyebrow">{excluded}</div><h3>{excluded}</h3><ul>{excludes}</ul></div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{addons_title}</div><h2>{addons_title}</h2></div></div>{badges(addons) if addons else ''}</div></section>
+    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>
+    <section class="section soft"><div class="wrap two-col"><div><div class="eyebrow">{buy_title}</div><h2>{buy_title}</h2><p class="quote">{escape(buy_text)}</p></div><div class="trust-box" style="margin-top:0"><h3>{"До старта фиксируем" if lang=="ru" else "Agreed before starting"}</h3><div class="trust-list"><div class="trust-item">✓ {"Состав первого пакета" if lang=="ru" else "Starter scope"}</div><div class="trust-item">✓ {"Срок" if lang=="ru" else "Timeline"}</div><div class="trust-item">✓ {"Стоимость" if lang=="ru" else "Price"}</div><div class="trust-item">✓ {"Необходимые доступы" if lang=="ru" else "Required access"}</div></div></div></div></section>'''
     return body
 
 def offers_index(lang):
@@ -704,28 +733,35 @@ def solutions_index(lang):
     return hero(lang,c["solutions"],title,lead,"/solutions/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions_problem"]}</div><h2>{c["solutions_problem"]}</h2></div></div><div class="grid3">{"".join(targets)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["solutions_industry"]}</div><h2>{c["solutions_industry"]}</h2></div></div><div class="grid3">{inds}</div></div></section>'
 
 def target_page(lang,slug):
-    c=COPY[lang]; d=TARGET_LANDINGS[slug]; t=d[lang]; p=PRODUCTS[d["product"]][lang]; o=OFFERS[d["offer"]][lang]
+    c=COPY[lang]; d=TARGET_LANDINGS[slug]; t=d[lang]
+    product=SELLABLE_PRODUCTS[d["product"]]; p=product[lang]; start=product["packages"]["start"][lang]
     specific="".join(f"<li>{escape(x)}</li>" for x in t["specific"])
     proof="".join(case_card(lang,s) for s in p["proof"][:2] if s in CASES)
-    body=hero(lang,c["solutions_problem"],f'{t["title"]} — {t["headline"]}',t["lead"],"/solutions/"+slug+"/",(c["solutions"],"/solutions/"))
-    body+=f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["after"]}</div><h2>{escape(t["headline"])}</h2><ul class="list-clean">{specific}</ul></div><div class="scope-box"><div class="eyebrow">{c["offer"]}</div><h3>{escape(o["name"])}</h3><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(o["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(o["timeline"])}</strong></div></div><a class="btn btn-primary" href="#contact" data-interest="{escape(t["title"])}" data-cta="target-landing">{c["target_cta"]} →</a></div></div></section>
+    body=hero(lang,"Решение для отрасли" if lang=="ru" else "Industry solution",f'{t["title"]} — {t["headline"]}',t["lead"],"/solutions/"+slug+"/",(("Решения" if lang=="ru" else "Solutions"),"/solutions/"))
+    body+=f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{"Что изменится" if lang=="ru" else "What changes"}</div><h2>{escape(t["headline"])}</h2><ul class="list-clean">{specific}</ul></div><div class="scope-box"><div class="eyebrow">{"Первый пакет" if lang=="ru" else "Starter package"}</div><h3>{escape(p["name"])}</h3><div class="scope-meta"><div><small>{c["price"]}</small><strong>{escape(start["price"])}</strong></div><div><small>{c["timeline"]}</small><strong>{escape(start["timeline"])}</strong></div></div><a class="btn btn-primary" href="{loc(lang,'/products/'+d["product"]+'/')}">{"Что входит и как начать" if lang=="ru" else "What is included and how to start"} →</a></div></div></section>
     <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
     return body
 
 def industries_index(lang):
-    c=COPY[lang]
-    deep="".join(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{c["solutions_industry"]}</div><h3>{escape(d[lang]["name"])}</h3><p>{escape(d[lang]["headline"])}</p><span class="text-link">{c["learn_more"]} →</span></a>' for slug,d in INDUSTRIES.items())
-    others=badges(INDUSTRY_CATALOG[lang][3:])
-    title="Отраслевые сценарии" if lang=="ru" else "Industry scenarios"
-    lead="Глубокие страницы публикуем там, где уже есть конкретный процесс и убедительный proof. Остальные отрасли адаптируем по тому же принципу после короткого разбора." if lang=="ru" else "We publish deep industry pages where we already have a specific workflow and credible proof. Other industries are adapted using the same method after a short review."
-    return hero(lang,c["all_industries"],title,lead,"/industries/")+f'<section class="section"><div class="wrap"><div class="grid3">{deep}</div></div></section><section class="section soft"><div class="wrap"><div class="eyebrow">{c["other_markets"]}</div><h2>{c["other_markets"]}</h2>{others}</div></section>'
+    cards="".join(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{"Отрасль" if lang=="ru" else "Industry"}</div><h3>{escape(item[lang]["name"])}</h3><p>{escape(item[lang]["lead"])}</p><span class="text-link">{"Посмотреть продукты" if lang=="ru" else "See products"} →</span></a>' for slug,item in INDUSTRY_CONFIGS.items())
+    title="Решения по типу бизнеса" if lang=="ru" else "Solutions by business type"
+    lead="В каждой сфере сначала показываем 2–3 продукта, с которых обычно есть смысл начинать, а затем — что можно подключить позже." if lang=="ru" else "For each industry we show the 2–3 products that usually make sense first, followed by what can be added later."
+    return hero(lang,"Отрасли" if lang=="ru" else "Industries",title,lead,"/industries/")+f'<section class="section"><div class="wrap"><div class="grid3">{cards}</div></div></section>'
 
 def industry_page(lang,slug):
-    c=COPY[lang]; d=INDUSTRIES[slug][lang]
-    probs="".join(f"<li>{escape(x)}</li>" for x in d["problems"])
-    flow="".join(f'<div class="industry-step">{escape(x)}</div>' for x in d["path"])
-    proof="".join(case_card(lang,s) for s in d["proof"])
-    return hero(lang,c["solutions_industry"],f'{d["name"]} — {d["headline"]}',d["lead"],"/industries/"+slug+"/",(c["all_industries"],"/industries/"))+f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["before"]}</div><h2>{c["before"]}</h2><ul class="list-clean">{probs}</ul></div><div class="scope-box"><div class="eyebrow">{c["offer"]}</div><h3>{escape(d["entry"])}</h3><p>{'Начинаем с одного процесса, который можно показать и проверить.' if lang=='ru' else 'Start with one workflow that can be demonstrated and verified.'}</p><a class="btn btn-primary" href="{loc(lang,'/offers/'+d["entry_slug"]+'/')}">{c["learn_more"]} →</a></div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["after"]}</div><h2>{'Рекомендуемый путь' if lang=='ru' else 'Recommended flow'}</h2></div></div><div class="industry-flow">{flow}</div></div></section><section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{c["proof"]}</h2></div></div><div class="case-grid">{proof}</div></div></section>'''
+    item=INDUSTRY_CONFIGS[slug]; d=item[lang]
+    primary="".join(module_buy_card(lang,p) for p in item["primary"])
+    later="".join(module_buy_card(lang,p) for p in item.get("later",[]))
+    addon_names=[ADDONS[a][lang] for a in item.get("addons",[]) if a in ADDONS]
+    proofs=[]
+    for product_slug in item["primary"] + item.get("later",[]):
+        for case_slug in SELLABLE_PRODUCTS[product_slug][lang]["proof"]:
+            if case_slug in CASES and case_slug not in proofs:
+                proofs.append(case_slug)
+    proof_html="".join(case_card(lang,s) for s in proofs[:3])
+    return hero(lang,"Отрасль" if lang=="ru" else "Industry",d["name"],d["lead"],"/industries/"+slug+"/",(("Отрасли" if lang=="ru" else "Industries"),"/industries/"))+f'''<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Обычно начинают с" if lang=="ru" else "Usually start with"}</div><h2>{"Первые продукты" if lang=="ru" else "First products"}</h2></div></div><div class="module-buy-grid">{primary}</div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Можно добавить позже" if lang=="ru" else "Can be added later"}</div><h2>{"Расширение" if lang=="ru" else "Expansion"}</h2></div></div><div class="module-buy-grid">{later}</div>{f'<div style="margin-top:20px">{badges(addon_names)}</div>' if addon_names else ''}</div></section>
+    <section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{COPY[lang]["proof"]}</div><h2>{COPY[lang]["proof"]}</h2></div></div><div class="case-grid">{proof_html}</div></div></section>'''
 
 def cases_index(lang):
     cards="".join(case_card(lang,s) for s in CASES)
@@ -769,14 +805,23 @@ def enterprise_page(lang):
     flow="".join(f'<div class="industry-step">{escape(x)}</div>' for x in steps)
     return hero(lang,"Для крупных систем" if lang=="ru" else "Enterprise",title,lead,"/enterprise/")+f'''<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{eyebrow}</div><h2>{head}</h2></div></div><div class="module-grid">{mods}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{delivery}</div><h2>{check}</h2></div><p>{note}</p></div><div class="industry-flow">{flow}</div><div class="actions"><a class="btn btn-primary" href="#contact" data-interest="Enterprise Discovery" data-cta="enterprise">{cta} →</a></div></div></section>'''
 
-def labs_page(lang):
+def software_page(lang):
     cards=[]
-    for slug,item in LABS.items():
-        d=item[lang]; href=d["url"] or "#contact"; interest="" if d["url"] else f' data-interest="{escape(d["name"])}" data-cta="labs"'
-        cards.append(f'<article class="card"><div class="kicker">{escape(d["status"])}</div><h3>{escape(d["name"])}</h3><p>{escape(d["summary"])}</p><a class="text-link" href="{href}"{interest}>{COPY[lang]["learn_more"]} →</a></article>')
-    title="Собственные продукты VIIVERSION" if lang=="ru" else "VIIVERSION products"
-    lead="Отделяем продукты с собственной моделью распространения от заказной разработки." if lang=="ru" else "Products with their own distribution model are separated from client development work."
-    return hero(lang,"Labs",title,lead,"/labs/")+f'<section class="section"><div class="wrap"><div class="grid2">{"".join(cards)}</div></div></section>'
+    for slug,item in SOFTWARE_PRODUCTS.items():
+        d=item[lang]; href=d["url"] or "#contact"; interest="" if d["url"] else f' data-interest="{escape(d["name"])}" data-cta="software-product"'
+        cards.append(f'<article class="card"><div class="kicker">{escape(d["status"])}</div><h3>{escape(d["name"])}</h3><p>{escape(d["summary"])}</p><a class="text-link" href="{href}"{interest}>{"Открыть" if d["url"] and lang=="ru" else ("Open" if d["url"] else ("Узнать о доступе" if lang=="ru" else "Ask about access"))} →</a></article>')
+    title="Готовые продукты VIIVERSION" if lang=="ru" else "VIIVERSION software products"
+    lead="Это самостоятельные программные продукты VIIVERSION, а не заказная разработка для одного клиента." if lang=="ru" else "These are standalone VIIVERSION software products, separate from custom client delivery."
+    return hero(lang,"Программные продукты" if lang=="ru" else "Software products",title,lead,"/software/")+f'<section class="section"><div class="wrap"><div class="grid2">{"".join(cards)}</div></div></section>'
+
+def partners_page(lang):
+    cards=[]
+    for slug,item in PARTNER_PRODUCTS.items():
+        d=item[lang]
+        cards.append(f'<article class="card"><div class="kicker">{escape(d["status"])}</div><h3>{escape(d["name"])}</h3><p>{escape(d["summary"])}</p><a class="text-link" href="#contact" data-interest="{escape(d["name"])}" data-cta="partner">{escape(d["cta"])} →</a></article>')
+    title="Для агентств, интеграторов и платформ" if lang=="ru" else "For agencies, integrators and platforms"
+    lead="Отдельный путь для white-label поставки, серийной разработки и технических интеграций через партнёра." if lang=="ru" else "A separate path for white-label delivery, repeatable production and technical integrations through partners."
+    return hero(lang,"Партнёрам" if lang=="ru" else "Partners",title,lead,"/partners/")+f'<section class="section"><div class="wrap"><div class="grid2">{"".join(cards)}</div></div></section>'
 
 def about_page(lang):
     c=COPY[lang]
@@ -784,6 +829,10 @@ def about_page(lang):
     lead="Проектируем клиентские сценарии, интерфейсы, серверную логику, данные и интеграции внутри одной команды." if lang=="ru" else "We design customer flows, interfaces, server logic, data and integrations within one team."
     method="До разработки разбираем, что делает клиент, что делает сотрудник, где хранятся данные и на каком шаге возникает ручная работа или потеря информации." if lang=="ru" else "Before development we map what the customer does, what staff do, where data lives and where manual work or information loss appears."
     return hero(lang,c["about"],title,lead,"/about/")+team_trust(lang)+f'<section class="section"><div class="wrap"><div class="eyebrow">{"Как работаем" if lang=="ru" else "Method"}</div><h2>{"Сначала конкретный процесс, затем технология" if lang=="ru" else "Process first, technology second"}</h2><p class="quote">{escape(method)}</p></div></section>'
+
+def redirect_page(lang, target):
+    target_url=loc(lang,target)
+    return f'''<!doctype html><html lang="{'ru' if lang=='ru' else 'en'}"><head><meta charset="utf-8"><meta name="robots" content="noindex,follow"><meta http-equiv="refresh" content="0;url={target_url}"><link rel="canonical" href="{BASE+target_url}"><title>VIIVERSION</title></head><body><p><a href="{target_url}">Continue</a></p></body></html>'''
 
 def write(rel, html):
     path=PUBLIC/rel
