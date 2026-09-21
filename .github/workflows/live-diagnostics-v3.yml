@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: viiversion-live-${{ github.ref }}
+  group: viiversion-live-canonical-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
