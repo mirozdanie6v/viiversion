@@ -1,7 +1,6 @@
 name: Inspect analytics endpoint
 
 on:
-  workflow_dispatch:
   push:
     branches: [viiversion]
     paths:
@@ -11,9 +10,14 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch tracker
+      - name: Test analytics endpoint
         run: |
           set -euo pipefail
-          curl -fsSL https://dashboard.viiversion.com/tracker.js -o tracker.js
-          echo "=== tracker.js ==="
-          cat tracker.js
+          echo "=== tracker endpoint ==="
+          curl -fsSL https://dashboard.viiversion.com/tracker.js | grep -F "/api/collect"
+          echo "=== custom conversion event ==="
+          code="$(curl -sS -o response.txt -w '%{http_code}' -X POST https://dashboard.viiversion.com/api/collect             -H 'content-type: text/plain;charset=UTF-8'             --data '{"eventType":"lead_submit","project":"VIIVERSION","hostname":"viiversion.com","path":"/qa-conversion","pageUrl":"https://viiversion.com/qa-conversion","title":"QA conversion event","interest":"QA","hasContact":true,"occurredAt":"2026-09-21T12:20:00.000Z"}')"
+          echo "HTTP $code"
+          cat response.txt
+          test "$code" -ge 200
+          test "$code" -lt 300
