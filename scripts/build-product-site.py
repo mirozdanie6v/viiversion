@@ -192,6 +192,8 @@ CSS = r'''
 
 JS = r'''
 document.addEventListener("DOMContentLoaded",()=>{
+  const ANALYTICS_ENDPOINT="https://dashboard.viiversion.com/api/collect";
+  const PROJECT="VIIVERSION";
   const toggle=document.querySelector(".mobile-toggle"), nav=document.querySelector(".nav");
   if(toggle&&nav) toggle.addEventListener("click",()=>nav.classList.toggle("open"));
 
@@ -213,20 +215,51 @@ document.addEventListener("DOMContentLoaded",()=>{
     campaign:qs.get("utm_campaign")||"",
     content:qs.get("utm_content")||"",
     term:qs.get("utm_term")||"",
+    vvCampaign:qs.get("vv_campaign")||"",
     referrer:document.referrer||"",
     path:location.pathname
   };
-  sessionStorage.setItem("viiversion_campaign",JSON.stringify(campaign));
+  try{sessionStorage.setItem("viiversion_campaign",JSON.stringify(campaign))}catch(_){}
+
+  const analytics=(eventType,detail={})=>{
+    const payload={
+      eventType,
+      project:PROJECT,
+      hostname:location.hostname,
+      path:location.pathname.slice(0,500),
+      pageUrl:location.href.slice(0,4000),
+      title:document.title.slice(0,200),
+      referrer:String(document.referrer||"").slice(0,500),
+      utmSource:campaign.source,
+      utmMedium:campaign.medium,
+      utmCampaign:campaign.campaign,
+      utmContent:campaign.content,
+      vvCampaign:campaign.vvCampaign,
+      occurredAt:new Date().toISOString(),
+      ...detail
+    };
+    const body=JSON.stringify(payload);
+    try{
+      if(navigator.sendBeacon){
+        const ok=navigator.sendBeacon(ANALYTICS_ENDPOINT,new Blob([body],{type:"text/plain;charset=UTF-8"}));
+        if(ok)return;
+      }
+    }catch(_){}
+    try{
+      fetch(ANALYTICS_ENDPOINT,{method:"POST",mode:"no-cors",credentials:"omit",keepalive:true,headers:{"content-type":"text/plain;charset=UTF-8"},body}).catch(()=>{});
+    }catch(_){}
+  };
 
   document.querySelectorAll("[data-interest]").forEach(el=>{
     el.addEventListener("click",()=>{
       const selected=el.dataset.interest||"";
-      sessionStorage.setItem("viiversion_interest",selected);
-      sessionStorage.setItem("viiversion_cta",el.dataset.cta||el.textContent.trim());
+      try{
+        sessionStorage.setItem("viiversion_interest",selected);
+        sessionStorage.setItem("viiversion_cta",el.dataset.cta||el.textContent.trim());
+      }catch(_){}
       const liveInterest=document.querySelector('.lead-form [name="interest"]');
       if(liveInterest) liveInterest.value=selected;
-      window.dataLayer=window.dataLayer||[];
-      window.dataLayer.push({event:"cta_click",interest:selected,cta:el.dataset.cta||el.textContent.trim(),path:location.pathname});
+      analytics("cta_click",{interest:selected,cta:(el.dataset.cta||el.textContent.trim()).slice(0,160)});
     });
   });
 
@@ -234,14 +267,17 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(form){
     const interest=form.querySelector('[name="interest"]');
     const context=form.querySelector('[name="page_context"]');
-    const storedInterest=sessionStorage.getItem("viiversion_interest")||qs.get("interest")||form.dataset.defaultInterest||"";
+    let storedInterest="";
+    try{storedInterest=sessionStorage.getItem("viiversion_interest")||""}catch(_){}
+    storedInterest=storedInterest||qs.get("interest")||form.dataset.defaultInterest||"";
     if(interest) interest.value=storedInterest;
     if(context) context.value=JSON.stringify(campaign);
 
     form.addEventListener("submit",async e=>{
       e.preventDefault();
       const data=Object.fromEntries(new FormData(form).entries());
-      const camp=JSON.parse(sessionStorage.getItem("viiversion_campaign")||"{}");
+      let camp=campaign;
+      try{camp=JSON.parse(sessionStorage.getItem("viiversion_campaign")||"{}")}catch(_){}
       const lines=[
         "VIIVERSION enquiry",
         "",
@@ -258,14 +294,20 @@ document.addEventListener("DOMContentLoaded",()=>{
         "Referrer: "+(camp.referrer||"")
       ];
       const message=lines.join("\n");
+
+      analytics("lead_submit",{
+        interest:String(data.interest||"").slice(0,160),
+        hasContact:Boolean(data.contact),
+        hasCompany:Boolean(data.company),
+        taskLength:String(data.task||"").length,
+        cta:(sessionStorage.getItem("viiversion_cta")||"form").slice(0,160)
+      });
+
       try{await navigator.clipboard.writeText(message)}catch(_){}
-      localStorage.setItem("viiversion_last_enquiry",JSON.stringify({...data,...camp,createdAt:new Date().toISOString()}));
-      window.dataLayer=window.dataLayer||[];
-      window.dataLayer.push({event:"lead_prepare",interest:data.interest||"",path:location.pathname,utm_source:camp.source||""});
-      window.dispatchEvent(new CustomEvent("viiversion:lead",{detail:{...data,...camp}}));
+      try{localStorage.setItem("viiversion_last_enquiry",JSON.stringify({interest:data.interest||"",source:camp.source||"",campaign:camp.campaign||"",createdAt:new Date().toISOString()}))}catch(_){}
 
       const status=form.querySelector(".form-status");
-      if(status){status.hidden=false}
+      if(status) status.hidden=false;
 
       const target=form.dataset.contact||"";
       if(target.startsWith("mailto:")){
@@ -274,6 +316,8 @@ document.addEventListener("DOMContentLoaded",()=>{
       }else if(target.includes("wa.me/")||target.includes("whatsapp.com")){
         const joiner=target.includes("?")?"&":"?";
         window.open(target+joiner+"text="+encodeURIComponent(message),"_blank","noopener");
+      }else if(target.includes("t.me/")){
+        window.open(target,"_blank","noopener");
       }else if(target){
         window.open(target,"_blank","noopener");
       }
