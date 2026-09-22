@@ -18,6 +18,8 @@ Binding website rules:
 - `docs/WEBSITE_PRESENTATION_SYSTEM.md` — product/system-to-site mapping rules
 - Google Doc `VIIVERSION — Website Marketing & Communication Strategy` (`1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI`) — canonical marketing narrative and conversion logic
 - `docs/WEBSITE_MARKETING_PRESENTATION.md` — GitHub implementation summary of that Google Doc
+- Google Doc `VIIVERSION — Website UX & Design System` (`1nWOpqPFpTYG1N8OCPcc0GLwvN5ed3gl5NmeIqECRcNE`) — canonical UX/UI, layout, responsive, accessibility and performance rules
+- `docs/WEBSITE_UX_DESIGN_SYSTEM.md` — GitHub implementation summary of the UX/Design System
 
 Source-of-truth priority:
 
