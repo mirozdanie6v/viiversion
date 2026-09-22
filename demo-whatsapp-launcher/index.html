@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#111111" />
+  <title>VIIVERSION — WhatsApp Launcher</title>
+  <style>
+    *{box-sizing:border-box}
+    body{
+      margin:0;min-height:100vh;display:grid;place-items:center;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:#f5f5f5;color:#111;padding:24px
+    }
+    .card{
+      width:min(100%,460px);background:#fff;border:1px solid #e8e8e8;
+      border-radius:20px;padding:28px;box-shadow:0 14px 40px rgba(0,0,0,.06)
+    }
+    .brand{font-size:12px;font-weight:800;letter-spacing:.14em;margin-bottom:22px}
+    h1{margin:0 0 10px;font-size:28px;line-height:1.1}
+    p{line-height:1.5}.muted,.hint{color:#666}
+    .button{
+      width:100%;min-height:50px;border-radius:12px;display:grid;place-items:center;
+      font:inherit;font-weight:700;text-decoration:none;cursor:pointer;margin-top:12px
+    }
+    .primary{background:#111;color:#fff;border:1px solid #111}
+    .secondary{background:#fff;color:#111;border:1px solid #ddd}
+    .phone{margin:20px 0 0;font-weight:700}
+    .hint{margin:8px 0 0;font-size:13px}
+    .error{color:#a00;font-weight:650}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">VIIVERSION</div>
+    <h1>Open WhatsApp</h1>
+    <p class="muted" id="description">Preparing contact…</p>
+
+    <a class="button primary" id="openButton" href="#" hidden>Open WhatsApp</a>
+    <button class="button secondary" id="copyButton" type="button" hidden>Copy phone</button>
+
+    <p class="phone" id="phone"></p>
+    <p class="hint" id="hint"></p>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const phone = (params.get("phone") || "").replace(/\D/g, "");
+
+    const description = document.getElementById("description");
+    const openButton = document.getElementById("openButton");
+    const copyButton = document.getElementById("copyButton");
+    const phoneEl = document.getElementById("phone");
+    const hint = document.getElementById("hint");
+
+    if (!/^\d{8,15}$/.test(phone)) {
+      description.textContent = "Phone number is missing or invalid.";
+      description.className = "error";
+    } else {
+      description.textContent =
+        "The contact is ready. Open it in the WhatsApp app, then paste the prepared message from the outreach table.";
+
+      phoneEl.textContent = "+" + phone;
+      openButton.hidden = false;
+      copyButton.hidden = false;
+
+      // Important: the custom protocol is triggered only after the user's explicit click
+      // on this HTTPS page. This avoids Google Sheets stripping/blocking whatsapp:// links.
+      openButton.href = "whatsapp://send?phone=" + phone;
+
+      copyButton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText("+" + phone);
+          copyButton.textContent = "Copied";
+        } catch {
+          copyButton.textContent = "+" + phone;
+        }
+      });
+
+      hint.textContent =
+        'If the browser asks for permission, choose "Open WhatsApp".';
+    }
+  </script>
+</body>
+</html>
