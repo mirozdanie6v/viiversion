@@ -67,6 +67,20 @@ H1 should directly communicate what VIIVERSION creates. A lead may add one clari
 
 CTA and visual are approved separately from the Hero function.
 
+## Approved homepage Hero copy
+
+Current approved Homepage Hero text:
+
+**H1:** Разрабатываем приложения и системы для бизнеса.
+
+**Lead:** Для работы с клиентами и для работы команды.
+
+Decision IDs:
+- `HOME-B01-CP-01`
+- `HOME-B01-LD-01`
+
+This approval covers copy only. Hero CTA and visual remain unresolved and must be approved separately through the Website Decision & Execution Protocol.
+
 ## Non-negotiable implementation rules
 
 - Buyer language before seller/technical jargon.
