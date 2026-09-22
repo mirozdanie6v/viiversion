@@ -31,6 +31,16 @@ When sources conflict semantically, Corporate Strategy wins for identity/archite
 
 ---
 
+## Marketing layer
+
+Marketing sequence, homepage narrative, buyer-language hierarchy, proof placement and CTA rules are governed by:
+
+- `docs/WEBSITE_MARKETING_PRESENTATION.md`
+
+This marketing document is subordinate to Corporate Strategy, Commercial Matrix, Sales Playbook and this presentation-system document. It must not redefine products, verticals, statuses or brand identity.
+
+---
+
 ## 2. What the website is for
 
 The website must support the company VIIVERSION is building, not only the projects that happen to exist today.
