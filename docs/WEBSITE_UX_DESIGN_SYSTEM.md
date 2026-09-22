@@ -249,3 +249,25 @@ A page is not ready if it fails any of:
 - performance.
 
 For full rationale and canonical rules, use the Google Doc above.
+
+
+## Current visual baseline — preserve
+
+The current viiversion.com visual language is the baseline, not something to replace by default.
+
+Preserve unless a separate visual-brand task explicitly changes it:
+- dark navy hero foundation;
+- blue gradient/light treatment in hero;
+- calm light page backgrounds;
+- restrained ink/navy/blue/neutral palette;
+- minimalist spacing and typography;
+- stable multi-page corporate/product-site feel;
+- responsive behavior that currently avoids overflow and layout breakage;
+- current serious navigation vocabulary such as Cases / Engineering / Industries / Components where it remains understandable.
+
+The current UX migration changes information hierarchy and section composition first.
+
+Migration principle:
+**preserve visual language → rebuild information hierarchy → recompose selected sections → retest responsive**
+
+Do not treat the UX system as a mandate for a full visual redesign.
