@@ -13,14 +13,29 @@ This GitHub file is **not** an independent marketing strategy. It is the impleme
 2. Commercial Matrix — current Products, Offers, Verticals, Assets, status and commercial facts.
 3. Sales Playbook — sales/messaging governance.
 4. Website Marketing & Communication Strategy — canonical website marketing narrative and conversion logic.
-5. Website Presentation System — system-to-site mapping.
-6. Website code/content — implementation.
+5. Website UX & Design System — canonical UX/UI rules.
+6. Website Decision & Execution Protocol — approval/change-control for website decisions.
+7. Website Presentation System — system-to-site mapping.
+8. Website code/content — implementation.
+
+## Decision governance
+
+No DRAFT or REVIEW block/copy/CTA/visual may change this implementation contract or production code.
+
+Operational decision state lives in Commercial Matrix → `Website_Decisions`.
+Only APPROVED / IMPLEMENTATION_READY decisions may drive canonical sync and implementation.
+
+Canonical governance:
+- Google Doc `VIIVERSION — Website Decision & Execution Protocol`
+- `docs/WEBSITE_DECISION_EXECUTION_PROTOCOL.md`
+
+If a local draft conflicts with this file or the canonical Marketing Strategy, record the conflict instead of rewriting the rule around the draft.
 
 ## Homepage narrative
 
 The homepage must preserve this sequence:
 
-1. **Clarity** — one job only: make it immediately clear what VIIVERSION creates. Scale belongs to Block 3, not the hero.
+1. **Clarity** — what VIIVERSION can build and the range from one concrete solution to a custom system.
 2. **Immediate proof** — real Assets/demos with honest maturity labels.
 3. **Scale fit** — one task → connected processes → custom company system.
 4. **Buyer jobs** — navigation by recognisable business task, not internal taxonomy.
