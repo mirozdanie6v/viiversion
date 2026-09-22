@@ -14,8 +14,22 @@ This file is an implementation contract. It does not redefine the UX strategy. I
 3. Sales Playbook
 4. Website Marketing & Communication Strategy
 5. Website UX & Design System
-6. Website Presentation / implementation docs
-7. Code and rendered pages
+6. Website Decision & Execution Protocol
+7. Website Presentation / implementation docs
+8. Code and rendered pages
+
+## Decision governance
+
+This file is evaluated through the Website Decision & Execution Protocol.
+
+- DRAFT / REVIEW proposals do not modify canonical UX rules.
+- APPROVED decisions are synced before implementation.
+- Source conflicts are logged in Commercial Matrix → `Website_Decisions`.
+- Do not rewrite UX rules to make a local draft pass.
+
+Canonical governance:
+- Google Doc `VIIVERSION — Website Decision & Execution Protocol`
+- `docs/WEBSITE_DECISION_EXECUTION_PROTOCOL.md`
 
 ## Core experience
 
@@ -76,13 +90,11 @@ Prefer editorial splits, full-width proof, timelines, flows, comparisons, diagra
 ## Hero
 
 Must contain:
-- one H1 that directly says what VIIVERSION creates;
-- one short lead only if it adds one clarifying idea;
+- one H1;
+- one lead;
 - one primary CTA;
 - at most one secondary CTA;
-- real/traceable product visual where useful.
-
-Hero has one semantic job: category clarity. Do not use hero copy to explain scale, integrations, verticals, modularity or enterprise capability; those have dedicated later blocks.
+- real/traceable product proof where useful.
 
 Do not put in hero:
 - architecture map;
