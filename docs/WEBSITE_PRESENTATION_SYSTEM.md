@@ -310,24 +310,52 @@ The examples are translation patterns, not permanent product names.
 
 The homepage is the parent-brand surface, not the full catalogue.
 
-Above the fold follows Sales Playbook:
+Approved narrative architecture is governed by HOME-ARCH-CR-02:
 
-**buyer/job → clear value → proof → one primary CTA**
+**Hero → heterogeneous proof → scale → buyer job + concrete solution → industry fit → modular expansion → existing-system trust → engineering depth → cases → owned software → how work starts → team → partners → final CTA.**
 
 The homepage must:
 
 1. explain VIIVERSION in plain language;
-2. show a small number of recognisable things a buyer can actually obtain;
-3. avoid implying that every engagement is a large digital-system project;
-4. show real proof early;
-5. show that standalone products can connect into larger systems when needed;
-6. provide separate routes for industries, partners and deeper engineering;
-7. mention owned software as a company direction only to the degree it is publicly real.
+2. immediately prove that VIIVERSION is broader than websites, bots or Mini Apps;
+3. use 3–4 materially different proof scenarios before deeper case studies;
+4. show that a standalone solution can be a complete purchase;
+5. map buyer jobs to concrete solution types without exposing P01–P36 as a flat public catalogue;
+6. explain modular expansion only after proof, scale and buyer relevance are established;
+7. show that existing systems can remain and be integrated;
+8. preserve a clear route to deeper engineering;
+9. use cases later to explain composition of several solutions around a real process;
+10. show Owned Software as the second company direction only to the degree products are externally usable/distributable;
+11. provide separate routes for industries, partners and engineering depth.
 
-The homepage must not expose internal taxonomy simply because that taxonomy exists.
+### Early proof rule
+
+The first proof section must not be an app-heavy gallery.
+
+It should demonstrate materially different work such as:
+- a customer-facing action;
+- an operational/back-office action;
+- a real AI interaction;
+- a real integration/data/system response.
+
+Neutral/no-name functional recordings are acceptable when they are based on real working functionality and their maturity is stated honestly.
+
+A decorative concept animation is not equivalent to working proof.
+
+### Buyer-job solution rule
+
+The homepage may surface the six main commercial directions only through buyer-readable jobs/results:
+
+- customer-facing path to enquiry/purchase;
+- booking/appointment flow;
+- team operations for requests/orders;
+- AI inside a real workflow;
+- payments inside the process;
+- integration and data exchange.
+
+Internal family labels remain implementation/portfolio metadata, not mandatory public navigation.
 
 ---
-
 ## 12. Public product-page gate
 
 A Product/Offer gets a canonical public sales page only when all are true:
