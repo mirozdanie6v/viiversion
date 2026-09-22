@@ -15,7 +15,8 @@ The public website is a **buyer-facing projection** of the VIIVERSION product/co
 
 Binding website rules:
 
-- `docs/WEBSITE_PRESENTATION_SYSTEM.md`
+- `docs/WEBSITE_PRESENTATION_SYSTEM.md` — product/system-to-site mapping rules
+- `docs/WEBSITE_MARKETING_PRESENTATION.md` — marketing narrative, homepage sequence, buyer language, proof and CTA rules
 
 Source-of-truth priority:
 
