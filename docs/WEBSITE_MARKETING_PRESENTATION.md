@@ -33,22 +33,28 @@ If a local draft conflicts with this file or the canonical Marketing Strategy, r
 
 ## Homepage narrative
 
-The homepage must preserve this sequence:
+The homepage must preserve this approved sequence (HOME-ARCH-CR-02):
 
-1. **Clarity** — one job: make it immediately clear what kind of company VIIVERSION is and what it creates. Scale is explained in Block 3; buyer jobs in Block 4; existing-system trust in Block 7; engineering depth in Block 8.
-2. **Immediate proof** — real Assets/demos with honest maturity labels.
-3. **Scale fit** — one task → connected processes → custom company system.
-4. **Buyer jobs** — navigation by recognisable business task, not internal taxonomy.
-5. **Vertical fit** — how the same engineering base is applied to industries.
-6. **System composition** — only now explain how separate solutions connect.
-7. **Integration trust** — show that existing CRM/site/POS/payment systems do not need to be replaced without reason.
-8. **Engineering depth** — API/data/ETL/DB/Oracle/internal systems for complex buyers.
-9. **Deeper cases** — task → implementation → verified proof.
-10. **How work starts** — bounded first scope and clear next step.
-11. **Team/accountability**.
-12. **Partner gateway**.
-13. **Final CTA**.
+1. **Clarity** — explain what kind of company VIIVERSION is and what it creates.
+2. **Immediate heterogeneous proof** — prove breadth with 3–4 materially different working scenarios: customer-facing action, operations/back-office, AI interaction, and integration/data/system response. Do not use an app-heavy case gallery as the only early proof.
+3. **Scale fit** — one complete task → several connected solutions → custom company system.
+4. **Buyer job → concrete solution** — let the visitor recognise the job first, then show the corresponding finished solution type. Do not expose P01–P36 as a flat catalogue.
+5. **Vertical fit** — show how the same engineering base adapts to different business processes.
+6. **Modular expansion** — only now explain how standalone solutions can remain independent or connect into a larger flow.
+7. **Existing-system trust** — show that current CRM/site/POS/payment/databases can remain and be integrated when appropriate.
+8. **Engineering depth** — API/data/ETL/DB/Oracle/RBAC/internal systems/managed engineering for complex buyers.
+9. **Cases** — explain how multiple solutions were composed in real projects; a case is proof, not a product.
+10. **Owned software** — show the second VIIVERSION business direction using only externally usable/distributable software; current primary eligible example is Proposal Studio.
+11. **How work starts** — bounded first scope and optional expansion.
+12. **Team/accountability**.
+13. **Partner gateway**.
+14. **Final CTA**.
 
+Early-proof rule:
+- The first proof section is not a product catalogue, vertical catalogue, architecture map, or case library.
+- Prefer neutral/no-name functional recordings or equivalent working proof when they truthfully demonstrate the exact capability.
+- Every proof must state real maturity/status; decorative mockups do not count as primary proof.
+- The first two semantic steps remain: **understand → see proof**.
 ## Hero scope rule
 
 The homepage Hero has one dominant job: orientation and category clarity.
@@ -89,7 +95,7 @@ This approval covers copy only. Hero CTA and visual remain unresolved and must b
 - Do not imply every buyer needs a large system.
 - Do not make VIIVERSION look limited to small apps/modules.
 - Proof must appear immediately after the initial promise.
-- The primary hero CTA should normally lead to self-service proof; discussion/contact is secondary.
+- The primary hero CTA must be reviewed against the final Block 2 proof experience. The rejected CTA «Посмотреть реальные проекты» must not be restored automatically. Discussion/contact remains secondary above the fold.
 - Technology proves capability only after the buyer understands value.
 - Existing working systems are preserved when integration solves the job.
 - CRM means configuration/extension/integration of the client's chosen CRM; a custom operational/internal system is a separate class.
