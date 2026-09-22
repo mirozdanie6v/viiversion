@@ -76,11 +76,13 @@ Prefer editorial splits, full-width proof, timelines, flows, comparisons, diagra
 ## Hero
 
 Must contain:
-- one H1;
-- one lead;
+- one H1 that directly says what VIIVERSION creates;
+- one short lead only if it adds one clarifying idea;
 - one primary CTA;
 - at most one secondary CTA;
-- real/traceable product proof where useful.
+- real/traceable product visual where useful.
+
+Hero has one semantic job: category clarity. Do not use hero copy to explain scale, integrations, verticals, modularity or enterprise capability; those have dedicated later blocks.
 
 Do not put in hero:
 - architecture map;
