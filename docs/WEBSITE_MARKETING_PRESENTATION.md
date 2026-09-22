@@ -35,7 +35,7 @@ If a local draft conflicts with this file or the canonical Marketing Strategy, r
 
 The homepage must preserve this sequence:
 
-1. **Clarity** — what VIIVERSION can build and the range from one concrete solution to a custom system.
+1. **Clarity** — one job: make it immediately clear what kind of company VIIVERSION is and what it creates. Scale is explained in Block 3; buyer jobs in Block 4; existing-system trust in Block 7; engineering depth in Block 8.
 2. **Immediate proof** — real Assets/demos with honest maturity labels.
 3. **Scale fit** — one task → connected processes → custom company system.
 4. **Buyer jobs** — navigation by recognisable business task, not internal taxonomy.
@@ -48,6 +48,24 @@ The homepage must preserve this sequence:
 11. **Team/accountability**.
 12. **Partner gateway**.
 13. **Final CTA**.
+
+## Hero scope rule
+
+The homepage Hero has one dominant job: orientation and category clarity.
+
+Hero must not be used to fully explain:
+- project scale;
+- small-entry logic;
+- existing-system compatibility;
+- industries;
+- internal architecture;
+- engineering depth.
+
+Those meanings belong to their dedicated later blocks.
+
+H1 should directly communicate what VIIVERSION creates. A lead may add one clarifying idea, but must not become a multi-capability list.
+
+CTA and visual are approved separately from the Hero function.
 
 ## Non-negotiable implementation rules
 
