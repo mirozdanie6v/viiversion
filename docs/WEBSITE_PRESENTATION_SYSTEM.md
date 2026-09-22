@@ -42,7 +42,16 @@ GitHub implementation summary:
 
 - `docs/WEBSITE_MARKETING_PRESENTATION.md`
 
-The Google Doc is canonical for marketing presentation. The GitHub file is an implementation contract and must not evolve into a separate strategy. Neither document may redefine products, verticals, statuses or brand identity.
+Canonical UX/UI construction rules are governed by the Google Doc:
+
+- **VIIVERSION — Website UX & Design System**
+- Document ID: `1nWOpqPFpTYG1N8OCPcc0GLwvN5ed3gl5NmeIqECRcNE`
+
+GitHub UX implementation summary:
+
+- `docs/WEBSITE_UX_DESIGN_SYSTEM.md`
+
+The Google Docs are canonical for marketing and UX presentation. GitHub files are implementation contracts and must not evolve into separate strategies. None of these documents may redefine products, verticals, statuses or brand identity.
 
 ---
 
