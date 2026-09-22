@@ -33,11 +33,16 @@ When sources conflict semantically, Corporate Strategy wins for identity/archite
 
 ## Marketing layer
 
-Marketing sequence, homepage narrative, buyer-language hierarchy, proof placement and CTA rules are governed by:
+Canonical marketing sequence, homepage narrative, buyer-language hierarchy, proof placement and CTA logic are governed by the Google Doc:
+
+- **VIIVERSION — Website Marketing & Communication Strategy**
+- Document ID: `1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI`
+
+GitHub implementation summary:
 
 - `docs/WEBSITE_MARKETING_PRESENTATION.md`
 
-This marketing document is subordinate to Corporate Strategy, Commercial Matrix, Sales Playbook and this presentation-system document. It must not redefine products, verticals, statuses or brand identity.
+The Google Doc is canonical for marketing presentation. The GitHub file is an implementation contract and must not evolve into a separate strategy. Neither document may redefine products, verticals, statuses or brand identity.
 
 ---
 
