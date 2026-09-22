@@ -53,6 +53,22 @@ GitHub UX implementation summary:
 
 The Google Docs are canonical for marketing and UX presentation. GitHub files are implementation contracts and must not evolve into separate strategies. None of these documents may redefine products, verticals, statuses or brand identity.
 
+## Decision governance
+
+Canonical change-control is governed by:
+
+- **VIIVERSION — Website Decision & Execution Protocol**
+- Document ID: `1N3buptlE0FvjdtwMe79u747ZOq_DgzdAMs3kqODnoOY`
+- GitHub implementation contract: `docs/WEBSITE_DECISION_EXECUTION_PROTOCOL.md`
+
+Operational website decisions live in Commercial Matrix → `Website_Decisions`.
+
+Rules:
+- DRAFT / REVIEW do not change canonical strategy, UX rules or production code.
+- APPROVED decisions are synced into the appropriate canonical sources before implementation.
+- APPROVED decisions are locked; conflicting changes require an explicit change request.
+- If canonical sources conflict, record and resolve the conflict instead of silently choosing one.
+
 ---
 
 ## 2. What the website is for
