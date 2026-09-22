@@ -20,15 +20,33 @@ Binding website rules:
 - `docs/WEBSITE_MARKETING_PRESENTATION.md` — GitHub implementation summary of that Google Doc
 - Google Doc `VIIVERSION — Website UX & Design System` (`1nWOpqPFpTYG1N8OCPcc0GLwvN5ed3gl5NmeIqECRcNE`) — canonical UX/UI, layout, responsive, accessibility and performance rules
 - `docs/WEBSITE_UX_DESIGN_SYSTEM.md` — GitHub implementation summary of the UX/Design System
+- Google Doc `VIIVERSION — Website Decision & Execution Protocol` (`1N3buptlE0FvjdtwMe79u747ZOq_DgzdAMs3kqODnoOY`) — approval, change-control and implementation governance
+- `docs/WEBSITE_DECISION_EXECUTION_PROTOCOL.md` — GitHub implementation contract for website governance
 
 Source-of-truth priority:
 
 1. **VIIVERSION — Corporate Strategy & Positioning** — company identity and product-architecture principles.
 2. **VIIVERSION Commercial Matrix** — current Products, Offers, Assets, Verticals, status, commercial relationships and price hypotheses.
 3. **VIIVERSION Sales Playbook v1** — buyer language, messaging, proof, CTA, partner and governance rules.
-4. GitHub website code — implementation/presentation layer only.
+4. **VIIVERSION — Website Marketing & Communication Strategy** — canonical website marketing narrative.
+5. **VIIVERSION — Website UX & Design System** — canonical UX/UI rules.
+6. **VIIVERSION — Website Decision & Execution Protocol** — decision approval/change-control.
+7. GitHub website code — implementation/presentation layer only.
 
 Google Drive source IDs are recorded in `docs/WEBSITE_PRESENTATION_SYSTEM.md`.
+
+### Website change gate
+
+Marketing/UX/information-architecture changes follow:
+
+`SOURCE CHECK → DRAFT → REVIEW → APPROVED → CANONICAL SYNC → IMPLEMENTATION_READY → IMPLEMENTATION → QA → IMPLEMENTED`
+
+Operational state is tracked in Commercial Matrix:
+- `Website_Decisions`
+- `Homepage_Blocks`
+- `UX_Rules`
+
+DRAFT / REVIEW decisions must not drive production changes or rewrite canonical strategy/UX documents.
 
 ### Presentation principle
 
