@@ -20,7 +20,7 @@ This GitHub file is **not** an independent marketing strategy. It is the impleme
 
 The homepage must preserve this sequence:
 
-1. **Clarity** — what VIIVERSION can build and the range from one concrete solution to a custom system.
+1. **Clarity** — one job only: make it immediately clear what VIIVERSION creates. Scale belongs to Block 3, not the hero.
 2. **Immediate proof** — real Assets/demos with honest maturity labels.
 3. **Scale fit** — one task → connected processes → custom company system.
 4. **Buyer jobs** — navigation by recognisable business task, not internal taxonomy.
