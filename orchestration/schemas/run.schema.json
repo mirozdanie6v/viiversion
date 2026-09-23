@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VIIVERSION Orchestration Run",
+  "type": "object",
+  "required": ["run_id", "workflow_id", "status", "current_step", "created_at"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "workflow_id": {"enum": ["sales", "website"]},
+    "status": {"enum": ["queued", "running", "waiting_approval", "waiting_event", "completed", "failed", "cancelled"]},
+    "current_step": {"type": "string"},
+    "source_entity_id": {"type": ["string", "null"]},
+    "projection_id": {"type": ["string", "null"]},
+    "lead_id": {"type": ["string", "null"]},
+    "decision_id": {"type": ["string", "null"]},
+    "input": {"type": "object"},
+    "state": {"type": "object"},
+    "outputs": {"type": "object"},
+    "errors": {"type": "array", "items": {"type": "object"}},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "additionalProperties": false
+}
