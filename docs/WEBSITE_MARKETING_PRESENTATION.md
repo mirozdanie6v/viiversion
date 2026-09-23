@@ -1,22 +1,23 @@
-# VIIVERSION Website Marketing — Implementation Rules
+# VIIVERSION Website Projection — Implementation Rules
 
-**Canonical marketing Source of Truth:**  
-Google Doc: **VIIVERSION — Website Marketing & Communication Strategy**  
+**Canonical L4 Website Projection Source of Truth:**  
+Google Doc: **VIIVERSION — Website Channel Strategy & Projection**  
 Document ID: `1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI`  
 https://docs.google.com/document/d/1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI/edit
 
-This GitHub file is **not** an independent marketing strategy. It is the implementation contract for the website. If wording or marketing logic here conflicts with the Google Doc, the Google Doc wins.
+This GitHub file is **not** an independent marketing strategy. It is an L5 implementation contract for the website. L3 is governed by `VIIVERSION — Global Brand & Market Strategy`; the Website Channel Strategy & Projection governs L4. If this file conflicts with those sources, the higher source wins.
 
 ## Source hierarchy
 
-1. Corporate Strategy & Positioning — brand/business identity.
-2. Commercial Matrix — current Products, Offers, Verticals, Assets, status and commercial facts.
-3. Sales Playbook — sales/messaging governance.
-4. Website Marketing & Communication Strategy — canonical website marketing narrative and conversion logic.
-5. Website UX & Design System — canonical UX/UI rules.
-6. Website Decision & Execution Protocol — approval/change-control for website decisions.
-7. Website Presentation System — system-to-site mapping.
-8. Website code/content — implementation.
+1. Corporate Strategy & Positioning — L1 identity and ontology.
+2. Commercial Matrix / Entity_Registry / Assets — structured L1, L2 commercial state and proof.
+3. Global Brand & Market Strategy — L3 positioning, market, messaging, distribution and Projection Engine.
+4. Sales Playbook — sales execution.
+5. Website Channel Strategy & Projection — L4 website adaptation and conversion logic.
+6. Website UX & Design System — L5 UX/UI rules.
+7. Website Decision & Execution Protocol — website-specific approval/change control.
+8. Website Presentation System — system-to-site mapping contract.
+9. Website code/content — L5 implementation.
 
 ## Decision governance
 
