@@ -1,3 +1,8 @@
+# Mirror for Sales Engine routing; NOT the canonical entity registry.
+# Canonical identity/hierarchy: Commercial Matrix -> Entity_Registry.
+# L1 semantic authority: Corporate Strategy & Positioning.
+# Stable Pxx IDs remain immutable.
+
 version: 1
 products:
   - {id: P01, key: landing_conversion, name: "Landing / conversion page", layer: web}
@@ -9,7 +14,7 @@ products:
   - {id: P07, key: booking_engine, name: "Booking engine", layer: commerce_ops}
   - {id: P08, key: availability_schedule, name: "Availability / schedule module", layer: commerce_ops}
   - {id: P09, key: catalog_pricing, name: "Catalog + pricing configurator", layer: commerce}
-  - {id: P10, key: crm_pipeline, name: "CRM / lead pipeline", layer: crm}
+  - {id: P10, key: crm_pipeline, name: "CRM setup & integration / lead pipeline", layer: crm}
   - {id: P11, key: backoffice_portal, name: "Admin / back-office portal", layer: operations}
   - {id: P12, key: customer_account, name: "Customer account / profile", layer: client_service}
   - {id: P13, key: owner_dashboard, name: "Owner / partner dashboard", layer: analytics_ops}
