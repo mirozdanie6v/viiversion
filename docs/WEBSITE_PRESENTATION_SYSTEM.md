@@ -8,7 +8,7 @@
 
 ## 1. Source of Truth
 
-The website is a **public projection** of the VIIVERSION system. It is not a separate source of product truth and it is not a literal mirror of internal tables.
+The website is an **L4 public projection** of the VIIVERSION system. It is not a separate source of canonical truth, global positioning or commercial state, and it is not a literal mirror of internal tables.
 
 Priority:
 
@@ -20,12 +20,20 @@ Priority:
    Google Sheet ID: `14i9E4WGazfwwsGl2mP_0TtZa9URBI-zeKj-qromAl-4`  
    Defines current Products, Offers, Assets, Verticals, statuses, prices/hypotheses, distribution and commercial relationships.
 
-3. **VIIVERSION Sales Playbook v1**  
-   Google Doc ID: `1itFsDhoPZqyH1NN1emca9u1HFeqYouPu4gcuuzm9BL4`  
-   Defines buyer language, messaging, proof, CTA, partner selling and commercial governance.
+3. **VIIVERSION — Global Brand & Market Strategy**  
+   Google Doc ID: `1Mhl1tJqaE8xyviEO9FQGKxA26c-_Mo6UE3J1ZCugKPI`  
+   Defines L3 global positioning rules, markets, audiences, messaging principles, distribution and Projection Engine.
 
-4. **GitHub website data/code**  
-   Implements a presentation layer. GitHub may cache or map the current public view, but it must not redefine the product system.
+4. **VIIVERSION Sales Playbook v1**  
+   Google Doc ID: `1itFsDhoPZqyH1NN1emca9u1HFeqYouPu4gcuuzm9BL4`  
+   Defines sales execution.
+
+5. **VIIVERSION — Website Channel Strategy & Projection**  
+   Google Doc ID: `1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI`  
+   Defines the L4 website projection.
+
+6. **GitHub website data/code**  
+   Implements L5. GitHub may cache or map the current public view, but it must not redefine L1–L4.
 
 When sources conflict semantically, Corporate Strategy wins for identity/architecture. Commercial Matrix wins for current operational facts such as product status, asset status and current price hypotheses.
 
@@ -35,7 +43,7 @@ When sources conflict semantically, Corporate Strategy wins for identity/archite
 
 Canonical marketing sequence, homepage narrative, buyer-language hierarchy, proof placement and CTA logic are governed by the Google Doc:
 
-- **VIIVERSION — Website Marketing & Communication Strategy**
+- **VIIVERSION — Website Channel Strategy & Projection**
 - Document ID: `1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI`
 
 GitHub implementation summary:
@@ -51,7 +59,7 @@ GitHub UX implementation summary:
 
 - `docs/WEBSITE_UX_DESIGN_SYSTEM.md`
 
-The Google Docs are canonical for marketing and UX presentation. GitHub files are implementation contracts and must not evolve into separate strategies. None of these documents may redefine products, verticals, statuses or brand identity.
+Global Brand & Market Strategy is canonical for L3. Website Channel Strategy & Projection is canonical only for L4 website adaptation. UX and GitHub files are downstream contracts and must not evolve into separate brand/product strategies. None may redefine L1 entities or L2 commercial facts.
 
 ## Decision governance
 
@@ -592,7 +600,7 @@ The current website implementation predates these rules in several places.
 
 Therefore:
 
-- `scripts/product_catalog.py` is a **site presentation cache/model**, not the corporate Source of Truth;
+- `scripts/product_catalog.py` is a **site presentation cache/model**, not the corporate Source of Truth; its six website families map to canonical ENG-A–ENG-F but do not own those entities;
 - the README must not describe the local Python catalogue as the canonical company catalogue;
 - the current `FAMILIES → SELLABLE_PRODUCTS → PACKAGES...` model may remain an implementation mechanism, but it cannot redefine the Google Drive product architecture;
 - the current four-contour system diagram may remain as an explanatory architecture visual, but it is not the top-level commercial taxonomy;
