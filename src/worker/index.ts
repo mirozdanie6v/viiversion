@@ -5,6 +5,7 @@ import {
   clean,
   constantTimeEqual,
   optionalNumber,
+  normalizeDeviceFilter,
   projectName,
   safeOccurredAt,
   safePageUrl,
@@ -237,13 +238,36 @@ async function collect(request: Request, env: Env) {
   return json({ ok: true }, 202, corsHeaders(source.origin));
 }
 
-function filterSql(project: string) {
-  return project && project !== 'all' ? ' AND project=? ' : ' ';
+const DEVICE_FAMILY_SQL = `CASE
+  WHEN lower(COALESCE(device,''))='android'
+    OR lower(COALESCE(sec_ch_ua_platform,'')) LIKE '%android%'
+    OR lower(COALESCE(browser_platform,'')) LIKE '%android%'
+    OR lower(COALESCE(user_agent,'')) LIKE '%android%' THEN 'android'
+  WHEN lower(COALESCE(device,'')) IN ('ios','iphone','ipad','ipod')
+    OR lower(COALESCE(sec_ch_ua_platform,'')) LIKE '%ios%'
+    OR lower(COALESCE(browser_platform,'')) LIKE '%ios%'
+    OR lower(COALESCE(browser_platform,'')) LIKE '%iphone%'
+    OR lower(COALESCE(browser_platform,'')) LIKE '%ipad%'
+    OR lower(COALESCE(browser_platform,'')) LIKE '%ipod%'
+    OR lower(COALESCE(user_agent,'')) LIKE '%iphone%'
+    OR lower(COALESCE(user_agent,'')) LIKE '%ipad%'
+    OR lower(COALESCE(user_agent,'')) LIKE '%ipod%'
+    OR (COALESCE(max_touch_points,0)>1
+        AND (lower(COALESCE(browser_platform,'')) LIKE '%mac%' OR lower(COALESCE(sec_ch_ua_platform,'')) LIKE '%mac%')
+        AND lower(COALESCE(user_agent,'')) LIKE '%mobile%') THEN 'ios'
+  ELSE 'desktop'
+END`;
+
+function filterSql(project: string, device: string) {
+  let filter = project && project !== 'all' ? ' AND project=? ' : ' ';
+  if (device && device !== 'all') filter += ` AND ${DEVICE_FAMILY_SQL}=? `;
+  return filter;
 }
 
-function queryArgs(days: number, project: string) {
+function queryArgs(days: number, project: string, device: string) {
   const args: (string | number)[] = [`-${days} days`];
   if (project && project !== 'all') args.push(project);
+  if (device && device !== 'all') args.push(device);
   return args;
 }
 
@@ -290,11 +314,15 @@ async function summary(request: Request, env: Env) {
   const url = new URL(request.url);
   const days = clampDays(url.searchParams.get('days'));
   const project = clean(url.searchParams.get('project'), 80) || 'all';
-  const filter = filterSql(project);
-  const args = queryArgs(days, project);
+  const device = normalizeDeviceFilter(url.searchParams.get('device'));
+  const filter = filterSql(project, device);
+  const args = queryArgs(days, project, device);
   const where = `received_at >= datetime('now', ?) ${filter}`;
+  const baseFilter = filterSql(project, 'all');
+  const baseArgs = queryArgs(days, project, 'all');
+  const baseWhere = `received_at >= datetime('now', ?) ${baseFilter}`;
 
-  const [metrics, engagement, projects, daily, campaigns, sources, pages, recent, geography, networks, ipStats, telegramMetrics, telegramUsers, retention, lastCleanup] = await Promise.all([
+  const [metrics, engagement, projects, daily, campaigns, sources, pages, recent, geography, networks, ipStats, telegramMetrics, telegramUsers, devices, retention, lastCleanup] = await Promise.all([
     env.DB.prepare(`SELECT COUNT(*) AS pageviews, COUNT(DISTINCT visitor_id) AS visitors, COUNT(DISTINCT session_id) AS sessions, COUNT(DISTINCT CASE WHEN ip_address<>'' THEN ip_address END) AS unique_ips FROM analytics_events WHERE ${where} AND event_type='pageview'`).bind(...args).first<any>(),
     env.DB.prepare(`SELECT COALESCE(AVG(total_ms),0) AS avg_session_ms FROM (SELECT session_id, SUM(duration_ms) AS total_ms FROM analytics_events WHERE ${where} AND event_type='engagement' GROUP BY session_id)`).bind(...args).first<any>(),
     env.DB.prepare(`SELECT project,hostname,COUNT(*) AS pageviews,COUNT(DISTINCT visitor_id) AS visitors,COUNT(DISTINCT session_id) AS sessions,COUNT(DISTINCT CASE WHEN ip_address<>'' THEN ip_address END) AS unique_ips,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' GROUP BY project,hostname ORDER BY pageviews DESC`).bind(...args).all<any>(),
@@ -308,6 +336,7 @@ async function summary(request: Request, env: Env) {
     env.DB.prepare(`SELECT ip_address,country,region,city,as_organization,COUNT(*) AS pageviews,COUNT(DISTINCT session_id) AS sessions,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' AND ip_address<>'' GROUP BY ip_address,country,region,city,as_organization ORDER BY last_visit DESC LIMIT 100`).bind(...args).all<any>(),
     env.DB.prepare(`SELECT COUNT(*) AS pageviews,COUNT(DISTINCT telegram_user_id) AS users,COUNT(DISTINCT CASE WHEN telegram_verified=1 THEN telegram_user_id END) AS verified_users FROM analytics_events WHERE ${where} AND event_type='pageview' AND telegram_user_id<>''`).bind(...args).first<any>(),
     env.DB.prepare(`SELECT telegram_user_id,MAX(telegram_username) AS telegram_username,MAX(telegram_first_name) AS telegram_first_name,MAX(telegram_last_name) AS telegram_last_name,MAX(telegram_language_code) AS telegram_language_code,MAX(COALESCE(telegram_is_premium,0)) AS telegram_is_premium,MAX(telegram_photo_url) AS telegram_photo_url,MAX(telegram_start_param) AS telegram_start_param,MAX(telegram_verified) AS telegram_verified,COUNT(*) AS pageviews,COUNT(DISTINCT session_id) AS sessions,COUNT(DISTINCT project) AS projects,MIN(received_at) AS first_visit,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' AND telegram_user_id<>'' GROUP BY telegram_user_id ORDER BY last_visit DESC LIMIT 100`).bind(...args).all<any>(),
+    env.DB.prepare(`SELECT ${DEVICE_FAMILY_SQL} AS device,COUNT(*) AS pageviews,COUNT(DISTINCT visitor_id) AS visitors,COUNT(DISTINCT session_id) AS sessions FROM analytics_events WHERE ${baseWhere} AND event_type='pageview' GROUP BY 1`).bind(...baseArgs).all<any>(),
     env.DB.prepare(`SELECT COUNT(*) AS total_events,COUNT(DISTINCT session_id) AS total_sessions,COUNT(DISTINCT visitor_id) AS total_visitors,MIN(received_at) AS oldest_event,MAX(received_at) AS newest_event FROM analytics_events`).first<any>(),
     env.DB.prepare(`SELECT action,triggered_by,retention_days,cutoff_at,deleted_rows,occurred_at FROM analytics_maintenance_log ORDER BY occurred_at DESC LIMIT 1`).first<any>(),
   ]);
@@ -321,6 +350,7 @@ async function summary(request: Request, env: Env) {
     generatedAt: new Date().toISOString(),
     days,
     project,
+    device,
     retentionDays: RETENTION_DAYS,
     metrics: {
       pageviews: Number(metrics?.pageviews ?? 0),
@@ -342,6 +372,7 @@ async function summary(request: Request, env: Env) {
     networks: networks.results ?? [],
     ipStats: ipStats.results ?? [],
     telegramUsers: telegramUsers.results ?? [],
+    devices: devices.results ?? [],
     storage: {
       totalEvents: Number(retention?.total_events ?? 0),
       totalSessions: Number(retention?.total_sessions ?? 0),

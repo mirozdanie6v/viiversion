@@ -5,6 +5,7 @@ import {
   clean,
   constantTimeEqual,
   optionalNumber,
+  normalizeDeviceFilter,
   projectName,
   safePageUrl,
   safePath,
@@ -30,6 +31,14 @@ describe('analytics helpers', () => {
     expect(safePath('/tour?id=1#x')).toBe('/tour');
     expect(optionalNumber('999', 0, 100)).toBe(100);
     expect(optionalNumber('bad', 0, 100)).toBeNull();
+  });
+
+  it('normalizes device filters and rejects unknown values', () => {
+    expect(normalizeDeviceFilter('ios')).toBe('ios');
+    expect(normalizeDeviceFilter('Android')).toBe('android');
+    expect(normalizeDeviceFilter('desktop')).toBe('desktop');
+    expect(normalizeDeviceFilter('tablet')).toBe('all');
+    expect(normalizeDeviceFilter(null)).toBe('all');
   });
 
   it('redacts secret-like URL parameters but preserves campaign analytics', () => {

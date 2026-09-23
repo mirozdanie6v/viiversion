@@ -32,6 +32,11 @@ export function clampDays(raw: string | null) {
   return Math.max(1, Math.min(365, Math.round(value)));
 }
 
+export function normalizeDeviceFilter(raw: string | null) {
+  const value = clean(raw, 20).toLowerCase();
+  return value === 'ios' || value === 'android' || value === 'desktop' ? value : 'all';
+}
+
 export function allowedViiversionHost(hostname: string) {
   const host = hostname.toLowerCase();
   return host === 'viiversion.com' || host.endsWith('.viiversion.com') || ALLOWED_EXTERNAL_HOSTS.has(host);

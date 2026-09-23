@@ -92,6 +92,7 @@ type Summary = {
   generatedAt: string;
   days: number;
   project: string;
+  device: string;
   retentionDays: number;
   metrics: { pageviews: number; visitors: number; sessions: number; uniqueIps: number; avgSessionMs: number; telegramUsers: number; telegramPageviews: number; verifiedTelegramUsers: number };
   projects: Array<{ project: string; hostname: string; pageviews: number; visitors: number; sessions: number; unique_ips: number; last_visit: string }>;
@@ -104,6 +105,7 @@ type Summary = {
   networks: Array<{ asn: number | null; as_organization: string; colo: string; pageviews: number; visitors: number }>;
   ipStats: Array<{ ip_address: string; country: string; region: string; city: string; as_organization: string; pageviews: number; sessions: number; last_visit: string }>;
   telegramUsers: Array<{ telegram_user_id: string; telegram_username: string; telegram_first_name: string; telegram_last_name: string; telegram_language_code: string; telegram_is_premium: number | null; telegram_photo_url: string; telegram_start_param: string; telegram_verified: number; pageviews: number; sessions: number; projects: number; first_visit: string; last_visit: string }>;
+  devices: Array<{ device: string; pageviews: number; visitors: number; sessions: number }>;
   storage: {
     totalEvents: number;
     totalSessions: number;
@@ -116,6 +118,12 @@ type Summary = {
 };
 
 const ranges = [1, 7, 30, 90];
+const deviceOptions = [
+  { value: 'all', label: 'Все устройства' },
+  { value: 'ios', label: 'iOS' },
+  { value: 'android', label: 'Android' },
+  { value: 'desktop', label: 'Десктоп' },
+];
 
 function dateValue(value: string) {
   if (!value) return null;
@@ -147,8 +155,8 @@ function valueOrDash(value: unknown) {
   return value === null || value === undefined || value === '' ? '—' : String(value);
 }
 
-async function loadSummary(token: string, days: number, project: string) {
-  const qs = new URLSearchParams({ days: String(days), project });
+async function loadSummary(token: string, days: number, project: string, device: string) {
+  const qs = new URLSearchParams({ days: String(days), project, device });
   const response = await fetch(`/api/summary?${qs}`, { headers: { authorization: `Bearer ${token}` }, cache: 'no-store' });
   if (response.status === 401) throw new Error('Неверный пароль');
   if (!response.ok) throw new Error(`Ошибка API: ${response.status}`);
@@ -172,6 +180,7 @@ function App() {
   const [password, setPassword] = useState('');
   const [days, setDays] = useState(7);
   const [project, setProject] = useState('all');
+  const [device, setDevice] = useState('all');
   const [data, setData] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -179,11 +188,11 @@ function App() {
   const [campaignProject, setCampaignProject] = useState('');
   const [campaign, setCampaign] = useState('');
 
-  const refresh = async (auth = token, nextDays = days, nextProject = project) => {
+  const refresh = async (auth = token, nextDays = days, nextProject = project, nextDevice = device) => {
     if (!auth) return;
     setLoading(true); setError('');
     try {
-      const result = await loadSummary(auth, nextDays, nextProject);
+      const result = await loadSummary(auth, nextDays, nextProject, nextDevice);
       setData(result);
       sessionStorage.setItem('vv_dashboard_token', auth);
       setToken(auth);
@@ -197,17 +206,18 @@ function App() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { if (token) void refresh(token, days, project); }, []);
+  useEffect(() => { if (token) void refresh(token, days, project, device); }, []);
   useEffect(() => {
     if (!token) return;
     const timer = window.setInterval(() => void refresh(), 30000);
     return () => window.clearInterval(timer);
-  }, [token, days, project]);
+  }, [token, days, project, device]);
 
-  const login = (e: React.FormEvent) => { e.preventDefault(); if (password.trim()) void refresh(password.trim(), days, project); };
+  const login = (e: React.FormEvent) => { e.preventDefault(); if (password.trim()) void refresh(password.trim(), days, project, device); };
   const logout = () => { sessionStorage.removeItem('vv_dashboard_token'); setToken(''); setData(null); setPassword(''); };
-  const changeDays = (value: number) => { setDays(value); if (token) void refresh(token, value, project); };
-  const changeProject = (value: string) => { setProject(value); if (token) void refresh(token, days, value); };
+  const changeDays = (value: number) => { setDays(value); if (token) void refresh(token, value, project, device); };
+  const changeProject = (value: string) => { setProject(value); if (token) void refresh(token, days, value, device); };
+  const changeDevice = (value: string) => { setDevice(value); if (token) void refresh(token, days, project, value); };
 
   const cleanup = async (mode: 'retention' | 'all') => {
     if (mode === 'all' && !window.confirm('Удалить ВСЮ историю посещений без возможности восстановления?')) return;
@@ -255,7 +265,10 @@ function App() {
 
     <section className="filters">
       <div className="range-switch">{ranges.map((value) => <button key={value} className={days === value ? 'active' : ''} onClick={() => changeDays(value)}>{value === 1 ? 'Сегодня' : `${value} дней`}</button>)}</div>
-      <select value={project} onChange={(e) => changeProject(e.target.value)}><option value="all">Все проекты</option>{Array.from(new Set(data.knownProjects.map((x) => x.name))).map((name) => <option key={name}>{name}</option>)}</select>
+      <div className="filter-selects">
+        <select value={project} onChange={(e) => changeProject(e.target.value)}><option value="all">Все проекты</option>{Array.from(new Set(data.knownProjects.map((x) => x.name))).map((name) => <option key={name}>{name}</option>)}</select>
+        <select value={device} onChange={(e) => changeDevice(e.target.value)}>{deviceOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
+      </div>
     </section>
 
     <section className="metrics six">
@@ -278,6 +291,17 @@ function App() {
           <td>{row.pageviews}</td><td>{row.sessions}</td><td>{row.projects}</td><td>{fmtTime(row.last_visit)}</td>
         </tr>;
       })}</tbody></table>{!data.telegramUsers.length && <Empty text="Telegram Mini App пользователи ещё не зафиксированы" />}</div>
+    </section>
+
+    <section className="panel device-panel"><PanelTitle kicker="УСТРОЙСТВА" title="iOS, Android и десктоп" />
+      <div className="device-grid">{deviceOptions.filter((item) => item.value !== 'all').map((item) => {
+        const row = data.devices.find((entry) => entry.device === item.value);
+        return <button type="button" key={item.value} className={device === item.value ? 'device-card active' : 'device-card'} onClick={() => changeDevice(device === item.value ? 'all' : item.value)}>
+          <span>{item.label}</span>
+          <strong>{Number(row?.pageviews || 0).toLocaleString('ru-RU')}</strong>
+          <small>{Number(row?.visitors || 0).toLocaleString('ru-RU')} посет. · {Number(row?.sessions || 0).toLocaleString('ru-RU')} сесс.</small>
+        </button>;
+      })}</div>
     </section>
 
     <section className="grid two">
