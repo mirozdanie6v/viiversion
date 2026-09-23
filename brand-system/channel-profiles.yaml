@@ -1,0 +1,53 @@
+version: "1.0"
+status: mirror
+source:
+  spreadsheet_id: "14i9E4WGazfwwsGl2mP_0TtZa9URBI-zeKj-qromAl-4"
+  sheet: Channel_Profiles
+  strategy_doc_id: "1Mhl1tJqaE8xyviEO9FQGKxA26c-_Mo6UE3J1ZCugKPI"
+
+channels:
+  CH-WEB:
+    name: Website
+    type: owned_surface
+    goals: [awareness, credibility, lead_generation, solution_discovery]
+    rule: "Parent brand understanding, proof, solution discovery and conversion."
+  CH-LINKEDIN:
+    name: LinkedIn
+    type: professional_network
+    goals: [awareness, credibility, partnership, lead_generation]
+    rule: "Corporate authority, founder credibility, engineering proof and B2B discovery."
+  CH-PH:
+    name: Product Hunt
+    type: launch_discovery
+    goals: [launch, awareness, adoption]
+    rule: "One externally usable Software product per launch; not an Engineering Solutions catalogue."
+  CH-MKT:
+    name: Software / Plugin Marketplaces
+    type: marketplace
+    goals: [distribution, adoption, recurring_revenue]
+    rule: "Only products that match the platform install/use model."
+  CH-PARTNER:
+    name: Partners / Integrators
+    type: b2b2b
+    goals: [partnership, co_delivery, repeat_sales]
+    rule: "Show relevant engineering gap, capability and proof; never dump the full internal catalogue."
+  CH-OUT:
+    name: Outbound
+    type: direct_acquisition
+    goals: [qualified_conversation, demo, paid_entry]
+    rule: "One evidence-backed signal → one entity/offer → one proof → one low-friction CTA."
+  CH-FREELANCE:
+    name: Freelance Marketplaces
+    type: project_marketplace
+    goals: [paid_entry, platform_proof, reviews]
+    rule: "Project fit and delivery proof; platform presence does not define the parent brand."
+  CH-ENT:
+    name: Enterprise / Vendor
+    type: enterprise
+    goals: [technical_discovery, paid_diagnostic, project, retainer]
+    rule: "Buyer problem → architecture → risk → proof → engagement model."
+
+projection_key:
+  dimensions: [entity, market, audience, channel, language, goal]
+
+authority_rule: "This file mirrors Channel_Profiles. The Google Sheet is authoritative for active channel-profile records."
