@@ -1,0 +1,74 @@
+version: "1.0"
+effective_date: "2026-09-24"
+status: mirror
+canonical_sources:
+  corporate_strategy_doc_id: "1nfRAgnSiEv13XUOcqgRostFYdUlbFo83eOLRLQNLnN4"
+  commercial_matrix_id: "14i9E4WGazfwwsGl2mP_0TtZa9URBI-zeKj-qromAl-4"
+  entity_registry_sheet: "Entity_Registry"
+
+brand:
+  id: BRAND-VIIVERSION
+  name: VIIVERSION
+  directions:
+    - id: DIR-ENG
+      name: Engineering Solutions
+    - id: DIR-SW
+      name: Software
+
+engineering_categories:
+  - id: ENG-A
+    name: Online Sales
+    ru: Онлайн-продажи
+    definition: Customer-facing interfaces, catalogues and actions before enquiry or purchase.
+  - id: ENG-B
+    name: Booking
+    ru: Бронирование
+    definition: Service, date, parameter selection and booking confirmation.
+  - id: ENG-C
+    name: Operations
+    ru: Работа с заявками и заказами
+    definition: CRM connection, status, team queue and operational control.
+  - id: ENG-D
+    name: AI
+    ru: AI
+    definition: Consultation, recommendation and AI-assisted workflow using approved business information and real business processes.
+  - id: ENG-E
+    name: Payments
+    ru: Оплата
+    definition: Connection of payment to an order, verified payment status and related transaction workflows.
+  - id: ENG-F
+    name: Integrations
+    ru: Интеграции
+    definition: Reliable data exchange between existing systems, APIs, data stores and internal services.
+
+entity_types:
+  - Brand
+  - Direction
+  - Category
+  - Capability
+  - Solution
+  - Module
+  - Software Product
+  - Platform
+  - Service
+  - Custom System
+  - Managed Service
+  - Adjacency
+
+relationship_types:
+  - belongs_to
+  - parent_of
+  - composed_of
+  - composes
+  - extends
+  - depends_on
+  - supports
+  - proves
+  - distributed_via
+  - packaged_as
+
+id_policy:
+  immutable: true
+  reuse: forbidden
+  hierarchy_encoded_in_id: false
+  existing_product_ids: "P01-P36 remain stable"
