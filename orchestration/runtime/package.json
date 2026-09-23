@@ -1,0 +1,16 @@
+{
+  "name": "@viiversion/orchestration-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "wrangler": "^4.0.0",
+    "@cloudflare/workers-types": "^4.20260901.0"
+  }
+}
