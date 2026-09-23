@@ -1,0 +1,61 @@
+version: "1.0"
+status: binding_machine_contract
+source_doc_id: "1Mhl1tJqaE8xyviEO9FQGKxA26c-_Mo6UE3J1ZCugKPI"
+
+formula:
+  dimensions:
+    - entity
+    - market
+    - audience
+    - channel
+    - language
+    - goal
+
+required_projection_fields:
+  - projection_id
+  - source_entity_id
+  - market
+  - audience
+  - channel_id
+  - language
+  - goal
+  - display_name
+  - headline
+  - short_description
+  - proof_selection
+  - technical_depth
+  - cta
+  - status
+  - source_rule
+
+precedence:
+  - canonical_truth
+  - commercial_state
+  - proof_and_claim_limits
+  - market_constraints
+  - audience_needs
+  - channel_rules
+  - language_adaptation
+  - goal
+  - creative_execution
+
+protected_canonical_fields:
+  - canonical_name
+  - canonical_definition
+  - entity_type
+  - direction_id
+  - parent_id
+
+feedback_flow:
+  - observation
+  - pattern
+  - validated_learning
+  - change_request
+  - strategic_review
+  - canonical_or_marketing_change
+
+rules:
+  - "Projection fields never overwrite canonical fields."
+  - "A channel grouping is not automatically a canonical category."
+  - "Prototype must not be presented as production."
+  - "A case or proof asset must not become the product name."
