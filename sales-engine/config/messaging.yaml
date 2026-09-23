@@ -2,8 +2,10 @@ version: "1.2"
 name: "VIIVERSION Messaging System"
 
 source_of_truth:
-  corporate_positioning: "https://docs.google.com/document/d/1nfRAgnSiEv13XUOcqgRostFYdUlbFo83eOLRLQNLnN4/edit"
-  rule: "All client-facing identity, product naming and market framing must be consistent with VIIVERSION Corporate Strategy & Positioning."
+  corporate_canon: "https://docs.google.com/document/d/1nfRAgnSiEv13XUOcqgRostFYdUlbFo83eOLRLQNLnN4/edit"
+  global_brand_market_strategy: "https://docs.google.com/document/d/1Mhl1tJqaE8xyviEO9FQGKxA26c-_Mo6UE3J1ZCugKPI/edit"
+  commercial_matrix: "https://docs.google.com/spreadsheets/d/14i9E4WGazfwwsGl2mP_0TtZa9URBI-zeKj-qromAl-4/edit"
+  rule: "Identity and canonical naming come from L1; market framing and messaging principles come from L3; current commercial/proof facts come from L2/Assets. This file is Sales Execution configuration, not an independent strategy."
 
 brand_identity:
   canonical: "VIIVERSION is an engineering product company that builds digital systems for businesses and develops its own software products."
