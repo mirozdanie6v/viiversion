@@ -11,12 +11,13 @@ Cloudflare Worker: `landing`
 
 ## Brand, product system and website rules
 
-The public website is a **buyer-facing projection** of the VIIVERSION product/commercial system. It is not the canonical product database.
+The public website is an **L4 buyer-facing projection** of the VIIVERSION canonical/commercial/market system. It is not the canonical product database, corporate ontology or global marketing strategy.
 
 Binding website rules:
 
 - `docs/WEBSITE_PRESENTATION_SYSTEM.md` — product/system-to-site mapping rules
-- Google Doc `VIIVERSION — Website Marketing & Communication Strategy` (`1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI`) — canonical marketing narrative and conversion logic
+- Google Doc `VIIVERSION — Global Brand & Market Strategy` (`1Mhl1tJqaE8xyviEO9FQGKxA26c-_Mo6UE3J1ZCugKPI`) — L3 global positioning, market, messaging, distribution and Projection Engine rules
+- Google Doc `VIIVERSION — Website Channel Strategy & Projection` (`1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI`) — canonical L4 website narrative and conversion logic
 - `docs/WEBSITE_MARKETING_PRESENTATION.md` — GitHub implementation summary of that Google Doc
 - Google Doc `VIIVERSION — Website UX & Design System` (`1nWOpqPFpTYG1N8OCPcc0GLwvN5ed3gl5NmeIqECRcNE`) — canonical UX/UI, layout, responsive, accessibility and performance rules
 - `docs/WEBSITE_UX_DESIGN_SYSTEM.md` — GitHub implementation summary of the UX/Design System
@@ -25,13 +26,14 @@ Binding website rules:
 
 Source-of-truth priority:
 
-1. **VIIVERSION — Corporate Strategy & Positioning** — company identity and product-architecture principles.
-2. **VIIVERSION Commercial Matrix** — current Products, Offers, Assets, Verticals, status, commercial relationships and price hypotheses.
-3. **VIIVERSION Sales Playbook v1** — buyer language, messaging, proof, CTA, partner and governance rules.
-4. **VIIVERSION — Website Marketing & Communication Strategy** — canonical website marketing narrative.
-5. **VIIVERSION — Website UX & Design System** — canonical UX/UI rules.
-6. **VIIVERSION — Website Decision & Execution Protocol** — decision approval/change-control.
-7. GitHub website code — implementation/presentation layer only.
+1. **VIIVERSION — Corporate Strategy & Positioning** — L1 identity, directions and canonical ontology.
+2. **VIIVERSION Commercial Matrix → Entity_Registry / Products / Assets** — structured L1 + L2 commercial/proof state.
+3. **VIIVERSION — Global Brand & Market Strategy** — L3 global positioning, market strategy, messaging, distribution and projection rules.
+4. **VIIVERSION Sales Playbook v1** — sales execution.
+5. **VIIVERSION — Website Channel Strategy & Projection** — L4 website projection.
+6. **VIIVERSION — Website UX & Design System** — L5 website UX/UI contract.
+7. **VIIVERSION — Website Decision & Execution Protocol** — website-specific change control.
+8. GitHub website code — L5 implementation only.
 
 Google Drive source IDs are recorded in `docs/WEBSITE_PRESENTATION_SYSTEM.md`.
 
@@ -228,6 +230,6 @@ Every push to `viiversion` verifies:
 
 ## Rule for future product changes
 
-Add/update the source entity in the Commercial Matrix first, then classify its role and readiness.
+Add/update the canonical entity in `Entity_Registry` when identity changes; update the relevant L2 Commercial Matrix record when commercial state changes. Then create or update the appropriate website projection.
 
 A new Product/Offer/Vertical/Asset does **not** automatically create a new public navigation category or page. Map it through `docs/WEBSITE_PRESENTATION_SYSTEM.md` and create the public route only when the buyer job, outcome, proof/status and CTA are clear.
