@@ -1,3 +1,7 @@
+# Operational vertical packaging mirror for Sales Engine.
+# Verticals package canonical entities for a market context; they do not define L1 product ontology.
+# Source of operational truth: Commercial Matrix -> Verticals.
+
 version: 1
 verticals:
   - {id: TOUR_AGENCY, name: "Tour agencies / excursions"}
