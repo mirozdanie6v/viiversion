@@ -1,0 +1,75 @@
+version: "1.0"
+effective_date: "2026-09-24"
+
+ownership:
+  L1:
+    owns:
+      - company_identity
+      - principal_directions
+      - canonical_entity_names
+      - canonical_definitions
+      - entity_types
+      - structural_relationships
+  L2:
+    owns:
+      - lifecycle
+      - sellability
+      - readiness
+      - offers
+      - price_hypotheses
+      - live_channel_fit
+      - operational_status
+  proof_registry:
+    sheet: Assets
+    owns:
+      - proof_maturity
+      - verification
+      - allowed_claims
+  L3:
+    owns:
+      - global_positioning_rules
+      - market_strategy
+      - audience_strategy
+      - messaging_principles
+      - distribution_strategy
+      - projection_rules
+      - channel_profile_standards
+  L4:
+    owns:
+      - display_name
+      - headline
+      - channel_description
+      - cta
+      - proof_selection
+      - market_language_goal_adaptation
+  L5:
+    owns:
+      - layout
+      - code
+      - publishing
+      - deployment
+      - platform_execution
+
+decision_log:
+  sheet: Decision_Log
+  required_for:
+    - principal_direction_change
+    - upper_category_change
+    - canonical_name_or_definition_change
+    - strategic_parent_change
+    - global_positioning_change
+    - global_messaging_rule_change
+    - global_distribution_rule_change
+    - projection_precedence_change
+
+market_signals:
+  sheet: Market_Signals
+  rule: "Signals may propose changes but never rewrite canon automatically."
+
+new_entity_flow:
+  - experiment
+  - repeated_solution
+  - pattern
+  - candidate_entity
+  - canonical_review
+  - approved_entity
