@@ -1,5 +1,8 @@
 # VIIVERSION Website Decision & Execution Protocol
 
+
+> Architecture: L1 Corporate Canon → L2 Commercial Matrix / Entity_Registry / Assets → L3 Global Brand & Market Strategy → L4 Website Channel Strategy & Projection → this L5 contract.
+
 **Canonical governance Source of Truth:**  
 Google Doc: **VIIVERSION — Website Decision & Execution Protocol**  
 Document ID: `1N3buptlE0FvjdtwMe79u747ZOq_DgzdAMs3kqODnoOY`  
