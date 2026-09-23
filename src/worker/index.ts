@@ -245,6 +245,7 @@ const DEVICE_FAMILY_SQL = `CASE
     OR lower(COALESCE(user_agent,'')) LIKE '%android%' THEN 'android'
   WHEN lower(COALESCE(device,'')) IN ('ios','iphone','ipad','ipod')
     OR lower(COALESCE(sec_ch_ua_platform,'')) LIKE '%ios%'
+    OR lower(COALESCE(browser_platform,'')) LIKE '%ios%'
     OR lower(COALESCE(browser_platform,'')) LIKE '%iphone%'
     OR lower(COALESCE(browser_platform,'')) LIKE '%ipad%'
     OR lower(COALESCE(browser_platform,'')) LIKE '%ipod%'
@@ -335,7 +336,7 @@ async function summary(request: Request, env: Env) {
     env.DB.prepare(`SELECT ip_address,country,region,city,as_organization,COUNT(*) AS pageviews,COUNT(DISTINCT session_id) AS sessions,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' AND ip_address<>'' GROUP BY ip_address,country,region,city,as_organization ORDER BY last_visit DESC LIMIT 100`).bind(...args).all<any>(),
     env.DB.prepare(`SELECT COUNT(*) AS pageviews,COUNT(DISTINCT telegram_user_id) AS users,COUNT(DISTINCT CASE WHEN telegram_verified=1 THEN telegram_user_id END) AS verified_users FROM analytics_events WHERE ${where} AND event_type='pageview' AND telegram_user_id<>''`).bind(...args).first<any>(),
     env.DB.prepare(`SELECT telegram_user_id,MAX(telegram_username) AS telegram_username,MAX(telegram_first_name) AS telegram_first_name,MAX(telegram_last_name) AS telegram_last_name,MAX(telegram_language_code) AS telegram_language_code,MAX(COALESCE(telegram_is_premium,0)) AS telegram_is_premium,MAX(telegram_photo_url) AS telegram_photo_url,MAX(telegram_start_param) AS telegram_start_param,MAX(telegram_verified) AS telegram_verified,COUNT(*) AS pageviews,COUNT(DISTINCT session_id) AS sessions,COUNT(DISTINCT project) AS projects,MIN(received_at) AS first_visit,MAX(received_at) AS last_visit FROM analytics_events WHERE ${where} AND event_type='pageview' AND telegram_user_id<>'' GROUP BY telegram_user_id ORDER BY last_visit DESC LIMIT 100`).bind(...args).all<any>(),
-    env.DB.prepare(`SELECT ${DEVICE_FAMILY_SQL} AS device,COUNT(*) AS pageviews,COUNT(DISTINCT visitor_id) AS visitors,COUNT(DISTINCT session_id) AS sessions FROM analytics_events WHERE ${baseWhere} AND event_type='pageview' GROUP BY device ORDER BY CASE device WHEN 'ios' THEN 1 WHEN 'android' THEN 2 ELSE 3 END`).bind(...baseArgs).all<any>(),
+    env.DB.prepare(`SELECT ${DEVICE_FAMILY_SQL} AS device,COUNT(*) AS pageviews,COUNT(DISTINCT visitor_id) AS visitors,COUNT(DISTINCT session_id) AS sessions FROM analytics_events WHERE ${baseWhere} AND event_type='pageview' GROUP BY 1`).bind(...baseArgs).all<any>(),
     env.DB.prepare(`SELECT COUNT(*) AS total_events,COUNT(DISTINCT session_id) AS total_sessions,COUNT(DISTINCT visitor_id) AS total_visitors,MIN(received_at) AS oldest_event,MAX(received_at) AS newest_event FROM analytics_events`).first<any>(),
     env.DB.prepare(`SELECT action,triggered_by,retention_days,cutoff_at,deleted_rows,occurred_at FROM analytics_maintenance_log ORDER BY occurred_at DESC LIMIT 1`).first<any>(),
   ]);
