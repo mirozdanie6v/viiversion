@@ -1,0 +1,46 @@
+version: "1.0"
+id: website
+status: draft_runtime_contract
+purpose: "Turn canonical/commercial/market truth into approved website implementation without allowing website code to redefine the brand."
+
+steps:
+  - id: source_check
+    agent: source_resolver
+    reads: [Corporate_Canon, Entity_Registry, Commercial_Matrix, Assets, Global_Brand_Market_Strategy]
+    writes: [source_snapshot]
+  - id: projection
+    agent: projection
+    requires: [source_check]
+    formula: "Entity × Market × Audience × Channel × Language × Goal"
+    writes: [projection_record]
+  - id: website_strategy
+    agent: website_strategy
+    requires: [projection]
+    reads: [Website_Channel_Strategy_Projection]
+    writes: [website_spec]
+  - id: copy_and_ia
+    agent: website_copy_ia
+    requires: [website_strategy]
+    writes: [copy_spec, ia_spec]
+  - id: governance_gate
+    type: gate
+    reads: [Website_Decisions]
+    rule: "Only APPROVED / IMPLEMENTATION_READY decisions can proceed to implementation."
+  - id: implementation
+    agent: website_implementation
+    requires: [governance_gate]
+    writes: [git_change_ref]
+  - id: qa
+    agent: website_qa
+    requires: [implementation]
+    writes: [qa_result]
+  - id: decision_update
+    agent: website_recorder
+    requires: [qa]
+    writes: [Website_Decisions]
+
+guards:
+  - canon_guard
+  - projection_guard
+  - proof_guard
+  - website_governance_guard
