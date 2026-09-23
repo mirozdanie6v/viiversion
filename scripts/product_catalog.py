@@ -1,7 +1,13 @@
-# Canonical VIIVERSION commercial product catalogue.
-# This is the single source of truth for sellable products, starter packages,
-# add-ons, industry configurations, software products and partner offers.
-# Rendering and marketing pages must reference this data instead of duplicating it.
+# VIIVERSION website presentation catalogue / cache.
+# NOT a corporate or commercial Source of Truth.
+# Canonical identity/ontology: Corporate Strategy + Commercial Matrix/Entity_Registry.
+# Commercial state/proof: Commercial Matrix.
+# Global market/brand rules: Global Brand & Market Strategy.
+# This file is an L5 website implementation adapter and must remain traceable upstream.
+#
+# FAMILIES map to canonical Engineering Solutions categories:
+# online-sales -> ENG-A; booking -> ENG-B; operations -> ENG-C;
+# ai -> ENG-D; payments -> ENG-E; integrations -> ENG-F.
 
 FAMILIES = {
     "online-sales": {
