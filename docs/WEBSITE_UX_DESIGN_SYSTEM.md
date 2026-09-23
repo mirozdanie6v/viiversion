@@ -1,5 +1,8 @@
 # VIIVERSION Website UX & Design — Implementation Rules
 
+
+> Architecture: L1 Corporate Canon → L2 Commercial Matrix / Entity_Registry / Assets → L3 Global Brand & Market Strategy → L4 Website Channel Strategy & Projection → this L5 contract.
+
 **Canonical UX/UI Source of Truth:**  
 Google Doc: **VIIVERSION — Website UX & Design System**  
 Document ID: `1nWOpqPFpTYG1N8OCPcc0GLwvN5ed3gl5NmeIqECRcNE`  
