@@ -13,7 +13,12 @@ export const KNOWN_PROJECTS: Record<string, { name: string; url: string }> = {
   'truesurf-app.viiversion.com': { name: 'TRUE SURF App', url: 'https://truesurf-app.viiversion.com/' },
   'truesurf.viiversion.com': { name: 'TRUE SURF', url: 'https://truesurf.viiversion.com/' },
   'pet-nika.viiversion.com': { name: 'PET NIKA', url: 'https://pet-nika.viiversion.com/' },
+  'gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev': { name: 'G-Beauty Production', url: 'https://gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev/' },
 };
+
+const ALLOWED_EXTERNAL_HOSTS = new Set([
+  'gbeauty-vien-trieu-prototype.mirozdanie6v.workers.dev',
+]);
 
 const SENSITIVE_QUERY_KEY = /(token|access[_-]?token|authorization|auth|password|passwd|pass|secret|session|jwt|code|initdata|tgwebappdata)/i;
 
@@ -29,7 +34,7 @@ export function clampDays(raw: string | null) {
 
 export function allowedViiversionHost(hostname: string) {
   const host = hostname.toLowerCase();
-  return host === 'viiversion.com' || host.endsWith('.viiversion.com');
+  return host === 'viiversion.com' || host.endsWith('.viiversion.com') || ALLOWED_EXTERNAL_HOSTS.has(host);
 }
 
 export function projectName(hostname: string, requested?: unknown) {
