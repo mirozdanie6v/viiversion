@@ -1,4 +1,5 @@
-import { firstStep, isApprovalStep, nextStep, type WorkflowId } from "./workflows";
+import { resolveCommand } from "./commands";
+import { firstStep, isApprovalStep, isWorkflowId, nextStep, type WorkflowId } from "./workflows";
 
 interface Env {
   ORCHESTRATION_DB: D1Database;
@@ -7,6 +8,10 @@ interface Env {
 interface CreateRunBody {
   workflow_id: WorkflowId;
   input?: Record<string, unknown>;
+}
+
+interface CommandBody {
+  text: string;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -35,40 +40,62 @@ async function recordEvent(
   ).bind(runId, eventType, stepId, JSON.stringify(payload), now()).run();
 }
 
+async function createRun(env: Env, workflowId: WorkflowId, input: Record<string, unknown>) {
+  const runId = crypto.randomUUID();
+  const step = firstStep(workflowId);
+  const timestamp = now();
+
+  await env.ORCHESTRATION_DB.prepare(
+    `INSERT INTO orchestration_runs
+    (run_id, workflow_id, status, current_step, input_json, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    runId,
+    workflowId,
+    "queued",
+    step,
+    JSON.stringify(input),
+    timestamp,
+    timestamp
+  ).run();
+
+  await recordEvent(env, runId, "run_created", step, { workflow_id: workflowId });
+  return { run_id: runId, workflow_id: workflowId, status: "queued", current_step: step };
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/health") {
-      return json({ ok: true, service: "viiversion-orchestrator", version: "0.1.0" });
+      return json({ ok: true, service: "viiversion-orchestrator", version: "0.2.0" });
+    }
+
+    if (request.method === "POST" && url.pathname === "/commands/resolve") {
+      const body = (await request.json()) as CommandBody;
+      const resolved = resolveCommand(body.text ?? "");
+      return resolved ? json(resolved) : json({ error: "no command trigger matched" }, 404);
+    }
+
+    if (request.method === "POST" && url.pathname === "/commands/run") {
+      const body = (await request.json()) as CommandBody;
+      const resolved = resolveCommand(body.text ?? "");
+      if (!resolved) return json({ error: "no command trigger matched" }, 404);
+
+      const run = await createRun(env, resolved.workflow_id, {
+        command_id: resolved.command_id,
+        matched_trigger: resolved.matched_trigger,
+        task_payload: resolved.payload
+      });
+      return json({ ...run, command_id: resolved.command_id, task_payload: resolved.payload }, 201);
     }
 
     if (request.method === "POST" && url.pathname === "/runs") {
       const body = (await request.json()) as CreateRunBody;
-      if (body.workflow_id !== "sales" && body.workflow_id !== "website") {
-        return json({ error: "workflow_id must be sales or website" }, 400);
+      if (!isWorkflowId(body.workflow_id)) {
+        return json({ error: "unknown workflow_id" }, 400);
       }
-
-      const runId = crypto.randomUUID();
-      const step = firstStep(body.workflow_id);
-      const timestamp = now();
-
-      await env.ORCHESTRATION_DB.prepare(
-        `INSERT INTO orchestration_runs
-        (run_id, workflow_id, status, current_step, input_json, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        runId,
-        body.workflow_id,
-        "queued",
-        step,
-        JSON.stringify(body.input ?? {}),
-        timestamp,
-        timestamp
-      ).run();
-
-      await recordEvent(env, runId, "run_created", step, { workflow_id: body.workflow_id });
-      return json({ run_id: runId, workflow_id: body.workflow_id, status: "queued", current_step: step }, 201);
+      return json(await createRun(env, body.workflow_id, body.input ?? {}), 201);
     }
 
     const runMatch = url.pathname.match(/^\/runs\/([^/]+)$/);
@@ -87,21 +114,16 @@ export default {
       const currentStep = String(run.current_step);
 
       if (isApprovalStep(workflowId, currentStep)) {
-        return json({
-          error: "approval required",
-          run_id: runId,
-          current_step: currentStep
-        }, 409);
+        return json({ error: "approval required", run_id: runId, current_step: currentStep }, 409);
       }
 
       const next = nextStep(workflowId, currentStep);
       const status = next ? "running" : "completed";
       const nextCurrent = next ?? currentStep;
-      const timestamp = now();
 
       await env.ORCHESTRATION_DB.prepare(
         "UPDATE orchestration_runs SET status = ?, current_step = ?, updated_at = ? WHERE run_id = ?"
-      ).bind(status, nextCurrent, timestamp, runId).run();
+      ).bind(status, nextCurrent, now(), runId).run();
 
       await recordEvent(env, runId, next ? "step_advanced" : "run_completed", nextCurrent, {
         previous_step: currentStep
