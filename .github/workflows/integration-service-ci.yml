@@ -1,0 +1,28 @@
+name: Integration Service CI
+
+on:
+  pull_request:
+    paths:
+      - 'integration-service/**'
+      - '.github/workflows/integration-service-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'integration-service/**'
+      - '.github/workflows/integration-service-ci.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integration-service
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install --no-fund --no-audit
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx wrangler deploy --dry-run
