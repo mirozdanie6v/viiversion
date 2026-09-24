@@ -7,9 +7,10 @@ Initial Cloudflare Worker runtime for VIIVERSION Orchestration.
 Implemented:
 - D1 run state;
 - D1 audit events;
-- sales and website workflow step maps;
-- run creation;
-- run inspection;
+- four workflow step maps: sales, website, proposal, brand governance;
+- exact-prefix command resolver for САЙТ / ПРОДАЖИ / КП / БРЕНД and approved aliases;
+- command-to-run routing;
+- run creation and inspection;
 - deterministic step advancement;
 - explicit approval gates.
 
@@ -22,15 +23,21 @@ Not implemented yet:
 - Cloudflare Workflows / Durable Objects;
 - automatic retries.
 
-The runtime intentionally cannot send messages or deploy website changes yet.
+The runtime intentionally cannot send messages, publish proposals, mutate canon, or deploy website changes by itself yet.
 
 ## Endpoints
 
 - `GET /health`
+- `POST /commands/resolve`
+- `POST /commands/run`
 - `POST /runs`
 - `GET /runs/:id`
 - `POST /runs/:id/advance`
 - `POST /runs/:id/approve`
+
+## Command rule
+
+Only the first non-empty token is evaluated. This avoids accidental activation when words such as "сайт" or "продажи" appear later in ordinary prose.
 
 ## Deployment guard
 
