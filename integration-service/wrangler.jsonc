@@ -1,0 +1,37 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "viiversion-integration",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-24",
+  "vars": {
+    "BOKUN_ALLOWED_VENDOR_IDS": "137689",
+    "BOKUN_DEFAULT_VENDOR_ID": "137689",
+    "BOKUN_DEFAULT_PRODUCT_ID": "1287578",
+    "BOKUN_DEFAULT_PRODUCT_CODE": "5690738P8",
+    "BOKUN_REDIRECT_URI": "https://integration.viiversion.com/bokun/callback",
+    "BOKUN_SCOPES": "LEGACY_API",
+    "BOKUN_VENDOR_HOST_SUFFIX": "bokun.is",
+    "BOKUN_REST_BASE_URL": "https://api.bokun.io",
+    "ALLOWED_ORIGIN_SUFFIX": ".viiversion.com"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "STORE",
+        "class_name": "IntegrationStore"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["IntegrationStore"]
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "integration.viiversion.com",
+      "custom_domain": true
+    }
+  ]
+}
