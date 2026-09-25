@@ -2,6 +2,7 @@ import {
   type Env,
   getAvailability,
   getProduct,
+  getProducts,
   getStatus,
   handleCallback,
   handleInstall,
@@ -64,6 +65,8 @@ export default {
             vendorId: env.BOKUN_DEFAULT_VENDOR_ID ?? null,
             productId: env.BOKUN_DEFAULT_PRODUCT_ID ?? null,
             productCode: env.BOKUN_DEFAULT_PRODUCT_CODE ?? null,
+            productIds: (env.BOKUN_PRODUCT_IDS ?? env.BOKUN_DEFAULT_PRODUCT_ID ?? '').split(',').map(x => x.trim()).filter(Boolean),
+            productCodes: (env.BOKUN_PRODUCT_CODES ?? env.BOKUN_DEFAULT_PRODUCT_CODE ?? '').split(',').map(x => x.trim()).filter(Boolean),
           },
           time: new Date().toISOString(),
         });
@@ -75,6 +78,11 @@ export default {
       if (url.pathname === '/api/bokun/status' && request.method === 'GET') {
         const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
         return json(request, env, await getStatus(env, vendorId));
+      }
+
+      if (url.pathname === '/api/bokun/products' && request.method === 'GET') {
+        const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
+        return json(request, env, await getProducts(env, vendorId));
       }
 
       if (url.pathname === '/api/bokun/product' && request.method === 'GET') {
