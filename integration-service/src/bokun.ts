@@ -75,7 +75,7 @@ function allowedVendor(env: Env, vendorId: string) {
 }
 
 function host(env: Env, domain: string) {
-  const suffix = (env.BOKUN_VENDOR_HOST_SUFFIX?.trim() || 'bokun.is').replace(/^\./, '');
+  const suffix = (env.BOKUN_VENDOR_HOST_SUFFIX?.trim() || 'bokun.io').replace(/^\./, '');
   return `https://${domain}.${suffix}`;
 }
 
