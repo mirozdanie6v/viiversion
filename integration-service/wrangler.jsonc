@@ -10,7 +10,7 @@
     "BOKUN_DEFAULT_PRODUCT_CODE": "5690738P8",
     "BOKUN_REDIRECT_URI": "https://integration.viiversion.com/bokun/callback",
     "BOKUN_SCOPES": "LEGACY_API",
-    "BOKUN_VENDOR_HOST_SUFFIX": "bokun.is",
+    "BOKUN_VENDOR_HOST_SUFFIX": "bokun.io",
     "BOKUN_REST_BASE_URL": "https://api.bokun.io",
     "ALLOWED_ORIGIN_SUFFIX": ".viiversion.com"
   },
