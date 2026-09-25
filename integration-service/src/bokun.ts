@@ -160,6 +160,15 @@ export async function handleCallback(request: Request, env: Env) {
     installedAt: new Date().toISOString(),
   });
 
+  try {
+    await ensureRestCredentials(env, vendorId);
+  } catch (error) {
+    console.error(
+      'Bókun REST credential bootstrap after OAuth failed:',
+      error instanceof Response ? `HTTP ${error.status}` : error instanceof Error ? error.message : 'Unknown error',
+    );
+  }
+
   return new Response(
     '<!doctype html><meta charset="utf-8"><title>VIIVERSION Integration</title><body style="font-family:system-ui;max-width:680px;margin:64px auto;padding:24px"><h1>Integration authorized</h1><p>Bókun is now connected to VIIVERSION. You can close this tab.</p></body>',
     { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } },
@@ -184,9 +193,76 @@ export async function signRest(secret: string, date: string, accessKey: string, 
   return b64(signature);
 }
 
+type RestApiCredentialsPayload = {
+  accessKey?: string;
+  secretKey?: string;
+};
+
+async function fetchRestCredentialsFromGraphql(env: Env, installation: {
+  vendorId: string;
+  domain: string;
+  accessTokenEncrypted: string;
+}) {
+  const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
+  const accessToken = await decryptSecret(installation.accessTokenEncrypted, encryptionKey);
+  const endpoint = host(env, installation.domain) + '/api/graphql';
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      'X-Bokun-App-Access-Token': accessToken,
+    },
+    body: JSON.stringify({
+      query: 'query RestApiCredentials { restApiCredentials { accessKey secretKey } }',
+    }),
+  });
+
+  const payload = await response.json<{
+    data?: { restApiCredentials?: RestApiCredentialsPayload | null };
+    errors?: Array<{ message?: string }>;
+  }>().catch(() => null);
+
+  if (!response.ok) {
+    throw new Response('Bókun GraphQL request failed', { status: 502 });
+  }
+
+  if (payload?.errors?.length) {
+    console.error('Bókun GraphQL restApiCredentials error:', payload.errors.map(error => error.message ?? 'Unknown GraphQL error').join('; '));
+    throw new Response('Bókun GraphQL restApiCredentials query failed', { status: 502 });
+  }
+
+  const accessKey = payload?.data?.restApiCredentials?.accessKey?.trim() ?? '';
+  const secretKey = payload?.data?.restApiCredentials?.secretKey?.trim() ?? '';
+  if (!accessKey || !secretKey) {
+    throw new Response('Bókun REST credentials were not returned by GraphQL', { status: 503 });
+  }
+
+  return { accessKey, secretKey };
+}
+
+async function ensureRestCredentials(env: Env, vendorId: string) {
+  const existing = await getRestCredentials(env, vendorId);
+  if (existing) return existing;
+
+  const installation = await getInstallation(env, vendorId);
+  if (!installation) return null;
+
+  const credentials = await fetchRestCredentialsFromGraphql(env, installation);
+  const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
+  await saveRestCredentials(env, {
+    vendorId,
+    accessKeyEncrypted: await encryptSecret(credentials.accessKey, encryptionKey),
+    secretKeyEncrypted: await encryptSecret(credentials.secretKey, encryptionKey),
+    updatedAt: new Date().toISOString(),
+  });
+
+  return getRestCredentials(env, vendorId);
+}
+
 async function restRequest(env: Env, vendorId: string, path: string) {
   const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
-  const stored = await getRestCredentials(env, vendorId);
+  const stored = await ensureRestCredentials(env, vendorId);
   if (!stored) throw new Response('REST credentials are not configured for this vendor', { status: 503 });
   const accessKey = await decryptSecret(stored.accessKeyEncrypted, encryptionKey);
   const secretKey = await decryptSecret(stored.secretKeyEncrypted, encryptionKey);
@@ -222,12 +298,28 @@ function configuredProducts(env: Env) {
 
 export async function getStatus(env: Env, vendorId: string) {
   const installation = await getInstallation(env, vendorId);
-  const rest = await getRestCredentials(env, vendorId);
+  let rest = await getRestCredentials(env, vendorId);
+  let restCredentialSyncError: string | null = null;
+
+  if (!rest && installation) {
+    try {
+      rest = await ensureRestCredentials(env, vendorId);
+    } catch (error) {
+      restCredentialSyncError =
+        error instanceof Response
+          ? `HTTP ${error.status}: ${await error.clone().text().catch(() => 'credential sync failed')}`
+          : error instanceof Error
+            ? error.message
+            : 'Unknown credential sync error';
+    }
+  }
+
   return {
     ok: true,
     vendorId,
     oauthConnected: Boolean(installation),
     restCredentialsReady: Boolean(rest),
+    restCredentialSyncError,
     domain: installation?.domain ?? null,
     scopes: installation?.scopes?.split(',').map(x => x.trim()).filter(Boolean) ?? [],
     products: configuredProducts(env),
