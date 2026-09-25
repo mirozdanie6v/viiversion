@@ -18,6 +18,8 @@ export interface Env {
   BOKUN_DEFAULT_VENDOR_ID?: string;
   BOKUN_DEFAULT_PRODUCT_ID?: string;
   BOKUN_DEFAULT_PRODUCT_CODE?: string;
+  BOKUN_PRODUCT_IDS?: string;
+  BOKUN_PRODUCT_CODES?: string;
   BOKUN_REDIRECT_URI?: string;
   BOKUN_SCOPES?: string;
   BOKUN_VENDOR_HOST_SUFFIX?: string;
@@ -189,6 +191,17 @@ function numeric(value: string, name: string) {
   return value;
 }
 
+function configuredProducts(env: Env) {
+  const ids = (env.BOKUN_PRODUCT_IDS ?? env.BOKUN_DEFAULT_PRODUCT_ID ?? '')
+    .split(',')
+    .map(x => x.trim())
+    .filter(Boolean);
+  const codes = (env.BOKUN_PRODUCT_CODES ?? env.BOKUN_DEFAULT_PRODUCT_CODE ?? '')
+    .split(',')
+    .map(x => x.trim());
+  return ids.map((id, index) => ({ id, code: codes[index] || null }));
+}
+
 export async function getStatus(env: Env, vendorId: string) {
   const installation = await getInstallation(env, vendorId);
   const rest = await getRestCredentials(env, vendorId);
@@ -199,11 +212,22 @@ export async function getStatus(env: Env, vendorId: string) {
     restCredentialsReady: Boolean(rest),
     domain: installation?.domain ?? null,
     scopes: installation?.scopes?.split(',').map(x => x.trim()).filter(Boolean) ?? [],
+    products: configuredProducts(env),
     defaultProduct: {
       id: env.BOKUN_DEFAULT_PRODUCT_ID ?? null,
       code: env.BOKUN_DEFAULT_PRODUCT_CODE ?? null,
     },
   };
+}
+
+export async function getProducts(env: Env, vendorId: string) {
+  const products = configuredProducts(env);
+  if (products.length === 0) throw new Response('No Bókun products are configured', { status: 503 });
+  return Promise.all(products.map(async product => ({
+    id: product.id,
+    code: product.code,
+    data: await getProduct(env, vendorId, product.id),
+  })));
 }
 
 export async function getProduct(env: Env, vendorId: string, productId: string) {
