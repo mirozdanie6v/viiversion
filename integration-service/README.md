@@ -10,11 +10,11 @@ It is intentionally independent from MAX TOUR and can be consumed by separate de
 
 ## Current Bókun PoC
 
-Nha Trang Love Travel / Robinson Beach:
+Nha Trang Love Travel two-product PoC:
 
 - Vendor ID: `137689`
-- Product ID: `1287578`
-- Product code: `5690738P8`
+- Robinson Beach — Product ID: `1287578`, code: `5690738P8`
+- Hòn Mun Marine Park Snorkeling and Nha Trang Island Tour — Product ID: `1287580`, code: `5690738P7`
 
 ## Bókun Custom App URLs
 
@@ -28,6 +28,7 @@ Bókun creates legacy REST credentials after the vendor installs an app with the
 
 - `GET /health`
 - `GET /api/bokun/status`
+- `GET /api/bokun/products`
 - `GET /api/bokun/product`
 - `GET /api/bokun/availability?start=YYYY-MM-DD&end=YYYY-MM-DD&currency=USD`
 
