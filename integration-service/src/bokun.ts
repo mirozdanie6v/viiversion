@@ -68,12 +68,30 @@ function assertFresh(url: URL) {
   }
 }
 
+export function canonicalVendorId(value: string) {
+  const clean = value.trim();
+  if (/^\d+$/.test(clean)) return clean;
+
+  try {
+    const normalized = clean.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+    const decoded = atob(padded);
+    const numericId = decoded.match(/:(\d+)$/)?.[1];
+    if (numericId) return numericId;
+  } catch {
+    // Keep opaque vendor identifiers unchanged if they are not valid base64.
+  }
+
+  return clean;
+}
+
 function allowedVendor(env: Env, vendorId: string) {
+  const candidate = canonicalVendorId(vendorId);
   const allowed = (env.BOKUN_ALLOWED_VENDOR_IDS ?? '')
     .split(',')
-    .map(x => x.trim())
+    .map(x => canonicalVendorId(x))
     .filter(Boolean);
-  return allowed.length === 0 || allowed.includes(vendorId);
+  return allowed.length === 0 || allowed.includes(candidate);
 }
 
 function host(env: Env, domain: string) {
@@ -129,7 +147,7 @@ export async function handleCallback(request: Request, env: Env) {
   if (!tokenResponse.ok) return new Response('Bókun token exchange failed', { status: 502 });
 
   const token = await tokenResponse.json<{ access_token?: string; scope?: string; vendor_id?: string | number }>();
-  const vendorId = String(token.vendor_id ?? '').trim();
+  const vendorId = canonicalVendorId(String(token.vendor_id ?? ''));
   const accessToken = token.access_token?.trim() ?? '';
   if (!vendorId || !accessToken) return new Response('Incomplete Bókun token response', { status: 502 });
   if (!allowedVendor(env, vendorId)) return new Response('Vendor is not allowed for this integration', { status: 403 });
