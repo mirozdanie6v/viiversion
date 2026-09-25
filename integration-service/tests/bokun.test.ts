@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bokunRestDate, canonicalOAuthQuery, signRest } from '../src/bokun';
+import { bokunRestDate, canonicalOAuthQuery, canonicalVendorId, signRest } from '../src/bokun';
 
 describe('Bókun integration primitives', () => {
   it('canonicalizes OAuth query without hmac', () => {
@@ -9,6 +9,11 @@ describe('Bókun integration primitives', () => {
 
   it('formats Bókun REST date', () => {
     expect(bokunRestDate(new Date('2026-09-24T13:14:15.999Z'))).toBe('2026-09-24 13:14:15');
+  });
+
+  it('normalizes Bókun relay-style vendor IDs to the numeric vendor ID', () => {
+    expect(canonicalVendorId('137689')).toBe('137689');
+    expect(canonicalVendorId('QXBwVmVuZG9yVHIwZToxMzc2ODk')).toBe('137689');
   });
 
   it('matches Bókun published REST signature example', async () => {
