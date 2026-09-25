@@ -1,0 +1,44 @@
+version: "1.0"
+id: brand_governance
+status: draft_runtime_contract
+purpose: "Evaluate and implement controlled L1-L3 changes without allowing downstream channels to silently redefine VIIVERSION."
+
+steps:
+  - id: source_check
+    agent: source_resolver
+    reads: [Corporate_Canon, Entity_Registry, Commercial_Matrix, Assets, Global_Brand_Market_Strategy, Decision_Log, Market_Signals, brand_system]
+    writes: [source_snapshot]
+  - id: classify_change
+    agent: governance_classifier
+    requires: [source_check]
+    writes: [change_scope, affected_layer, affected_entities]
+  - id: evidence_review
+    agent: governance_evidence
+    requires: [classify_change]
+    writes: [supporting_signals, conflicts, alternatives]
+  - id: change_request
+    agent: governance_writer
+    requires: [evidence_review]
+    writes: [change_request]
+  - id: strategic_review
+    agent: governance_review
+    requires: [change_request]
+    writes: [review_result]
+  - id: approval_gate
+    type: gate
+    requires: [strategic_review]
+    rule: "The БРЕНД trigger is not approval. Canonical mutation requires explicit approval."
+  - id: canonical_update
+    agent: canonical_implementation
+    requires: [approval_gate]
+    writes: [approved_canonical_sources, Entity_Registry, brand_system]
+  - id: propagation_plan
+    agent: projection_impact
+    requires: [canonical_update]
+    writes: [affected_projections, downstream_change_list]
+  - id: decision_record
+    agent: governance_recorder
+    requires: [canonical_update]
+    writes: [Decision_Log]
+
+guards: [canon_guard, decision_guard, source_precedence_guard]
