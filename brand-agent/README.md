@@ -1,0 +1,82 @@
+# VIIVERSION Brand Architect
+
+ChatGPT-native brand and structure agent for VIIVERSION.
+
+This package is intentionally separated from the production website. It is the first working version of a reusable brand agent that can reason across website structures, product pages, partner materials, profiles, launches, pitches, messaging, and other VIIVERSION surfaces without requiring command triggers.
+
+## Core idea
+
+The agent does not mechanically reproduce Google Docs and does not treat GitHub implementation as brand truth.
+
+It works as:
+
+\`\`\`text
+user task
+  → semantic task classification
+  → compact Brand Kernel
+  → minimal live source refresh when required
+  → structure / messaging / mapping
+  → Brand QA
+  → requested artifact or implementation handoff
+\`\`\`
+
+## Source model
+
+Priority:
+
+1. Corporate Strategy & Positioning — L1 identity and ontology.
+2. Commercial Matrix / Entity_Registry / Products / Assets — structured identity, commercial state and proof.
+3. Global Brand & Market Strategy — L3 market, audience and messaging rules.
+4. Channel-specific strategy — only when the task targets that channel.
+5. GitHub / implementation — downstream implementation only.
+
+The compact kernel is a fast cache, not a replacement for live sources.
+
+## Current package
+
+- \`plugin.json\` — portable plugin manifest.
+- \`skills/viiversion-brand-architect/SKILL.md\` — main orchestration skill.
+- \`references/brand-kernel.yaml\` — compact brand context snapshot.
+- \`references/source-manifest.yaml\` — source ownership and refresh rules.
+- \`references/task-architecture.md\` — adaptive structure method and surface patterns.
+- \`references/qa-gates.md\` — brand and evidence validation.
+- \`evals/cases.json\` — regression cases.
+
+## Invocation
+
+The skill is designed for implicit invocation. No \`САЙТ\`, \`БРЕНД\`, \`КП\` or other command prefix is required.
+
+Examples:
+
+- «Сделай структуру главной VIIVERSION».
+- «Как нам показать Proposal Studio?»
+- «Собери партнёрскую страницу».
+- «Переделай позиционирование этого продукта под CTO».
+- «Проверь, не превращает ли этот текст нас в веб-студию».
+- «Сделай страницу Booking для сайта».
+- «Собери структуру презентации для партнёров».
+
+## Boundary
+
+The agent may freely create or improve presentation-layer structures when they remain compatible with canon.
+
+It must not silently:
+- redefine VIIVERSION;
+- create a new principal direction or canonical category;
+- invent a product, proof, readiness, price or deployment;
+- turn a prototype into a production claim;
+- present VIIVERSION as a proprietary CRM vendor;
+- change L1-L3 canon without explicit approval and governance.
+
+## Next technical layer
+
+A future VIIVERSION Brand MCP can expose live normalized tools such as:
+- \`get_brand_context\`
+- \`get_entities\`
+- \`get_commercial_state\`
+- \`get_proof\`
+- \`get_channel_rules\`
+- \`get_current_decisions\`
+- \`validate_brand_output\`
+
+The skill does not require that MCP for its first working version because Google Drive and GitHub are already connected in ChatGPT.
