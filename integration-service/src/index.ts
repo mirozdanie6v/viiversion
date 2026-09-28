@@ -3,6 +3,7 @@ import {
   getAvailability,
   getProduct,
   getProducts,
+  getPickupPlaces,
   getStatus,
   handleCallback,
   handleInstall,
@@ -204,6 +205,12 @@ export default {
         const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
         const productId = value(url, 'productId', env.BOKUN_DEFAULT_PRODUCT_ID);
         return json(request, env, await getAvailability(env, vendorId, productId, url));
+      }
+
+      if (url.pathname === '/api/bokun/pickup-places' && request.method === 'GET') {
+        const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
+        const productId = value(url, 'productId', env.BOKUN_DEFAULT_PRODUCT_ID);
+        return json(request, env, await getPickupPlaces(env, vendorId, productId));
       }
 
       if (url.pathname === '/admin/bokun/rest-credentials' && request.method === 'POST') {
