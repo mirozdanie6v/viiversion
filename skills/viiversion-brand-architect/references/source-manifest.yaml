@@ -1,0 +1,187 @@
+version: "0.1.0"
+snapshot_date: "2026-09-28"
+
+source_precedence:
+  - L1_corporate_canon
+  - structured_L1_registry
+  - L2_commercial_state
+  - proof_registry
+  - L3_brand_market
+  - sales_execution
+  - L4_channel_projection
+  - L5_implementation
+
+sources:
+  corporate:
+    level: L1_corporate_canon
+    title: "VIIVERSION — Corporate Strategy & Positioning"
+    drive_id: "1nfRAgnSiEv13XUOcqgRostFYdUlbFo83eOLRLQNLnN4"
+    owns:
+      - company_identity
+      - principal_directions
+      - canonical_categories
+      - entity_types
+      - ontology_rules
+      - source_of_truth_rules
+      - geography_identity
+    refresh_when:
+      - canonical_identity_question
+      - governance_change
+      - suspected_conflict
+
+  commercial_matrix:
+    level: L2_commercial_state
+    title: "VIIVERSION Commercial Matrix"
+    drive_id: "14i9E4WGazfwwsGl2mP_0TtZa9URBI-zeKj-qromAl-4"
+    tabs:
+      Entity_Registry:
+        owns: [canonical_entities, relationships, canonical_status]
+      Products:
+        owns: [sellability, readiness, price_hypotheses, commercial_treatment]
+      Assets:
+        owns: [proof_records, maturity, demo_urls, proof_strength, claim_limits]
+      Offers:
+        owns: [buyer_trigger_packaging, scoped_offers]
+      Verticals:
+        owns: [industry_packaging]
+      Channel_Profiles:
+        owns: [channel_rules]
+      Projection_Index:
+        owns: [approved_or_active_projections]
+      Decision_Log:
+        owns: [global_governance_changes]
+      Website_Decisions:
+        owns: [website_decision_state]
+      Homepage_Blocks:
+        owns: [homepage_operational_block_state]
+      UX_Rules:
+        owns: [website_ux_operational_rules]
+      Market_Signals:
+        owns: [observations_and_validated_learning]
+    refresh_when:
+      - price
+      - readiness
+      - sellability
+      - current_product_state
+      - proof_selection
+      - public_claim
+      - current_decision
+      - implementation
+
+  global_brand:
+    level: L3_brand_market
+    title: "VIIVERSION — Global Brand & Market Strategy"
+    drive_id: "1Mhl1tJqaE8xyviEO9FQGKxA26c-_Mo6UE3J1ZCugKPI"
+    owns:
+      - global_positioning_rules
+      - audience_strategy
+      - messaging_principles
+      - market_strategy
+      - distribution_strategy
+      - projection_engine
+    refresh_when:
+      - final_public_messaging
+      - new_market_or_audience
+      - channel_strategy
+      - positioning_audit
+
+  sales_playbook:
+    level: sales_execution
+    title: "VIIVERSION Sales Playbook v1"
+    drive_id: "1itFsDhoPZqyH1NN1emca9u1HFeqYouPu4gcuuzm9BL4"
+    owns:
+      - qualification
+      - outreach
+      - proof_use
+      - follow_up
+      - proposal_handoff
+      - sales_execution
+    refresh_when:
+      - outreach
+      - sales_message
+      - qualification
+      - proposal_entry
+
+  website_strategy:
+    level: L4_channel_projection
+    title: "VIIVERSION — Website Channel Strategy & Projection"
+    drive_id: "1WsVbntOo8tN9qN2Q-GW60MnY3eBhHFWOn6YO7PsUMlI"
+    owns:
+      - website_narrative
+      - homepage_sequence
+      - website_buyer_journey
+      - website_conversion_logic
+
+  website_ux:
+    level: L5_design_contract
+    title: "VIIVERSION — Website UX & Design System"
+    drive_id: "1nWOpqPFpTYG1N8OCPcc0GLwvN5ed3gl5NmeIqECRcNE"
+    owns:
+      - interaction_principles
+      - responsive_rules
+      - accessibility
+      - visual_construction_rules
+
+  homepage_architecture:
+    level: L4_page_architecture
+    title: "VIIVERSION — Homepage Architecture"
+    drive_id: "1xBxcPm41TJ_wMBSxPWx-Wol8SeyXhcFkh6sEa_2rSuo"
+    owns:
+      - homepage_block_functions
+      - block_boundaries
+      - approved_page_sequence
+
+  website_decision_protocol:
+    level: governance
+    title: "VIIVERSION — Website Decision & Execution Protocol"
+    drive_id: "1N3buptlE0FvjdtwMe79u747ZOq_DgzdAMs3kqODnoOY"
+    owns:
+      - website_approval_states
+      - implementation_gate
+      - website_change_control
+
+  command_layer:
+    level: operational_interface
+    title: "VIIVERSION — Command Layer & Workflow Invocation"
+    drive_id: "1aw7z8_u0rcGsFfJ6m7VhsbuoJXo4kgEsatWNrRXFlHA"
+    note: >
+      Separate operational invocation system. It is not required to invoke
+      VIIVERSION Brand Architect; this skill uses semantic implicit invocation.
+
+github:
+  website:
+    repository: "mirozdanie6v/viiversion"
+    production_branch: "viiversion"
+    authority: L5_implementation_only
+  proposal_studio:
+    repository: "mirozdanie6v/viiversion-proposal-studio"
+    role: owned_software_and_specialized_proposal_agent
+  zl_web_agent:
+    repository: "mirozdanie6v/zl-web-agent"
+    role: working_agent_and_mcp_proof
+
+refresh_policy:
+  fast_reasoning:
+    use_kernel: true
+    live_refresh: minimal
+  public_final:
+    refresh_commercial_and_proof: true
+    refresh_channel_rules: true
+  implementation:
+    refresh_decisions: true
+    refresh_referenced_entities: true
+    compare_against_current_code: true
+  pricing_or_readiness:
+    kernel_is_not_authoritative: true
+    commercial_matrix_required: true
+  canonical_change:
+    corporate_and_registry_required: true
+    explicit_approval_required_before_write: true
+
+conflict_policy:
+  identity_or_ontology: corporate_wins
+  current_commercial_fact: commercial_matrix_wins
+  proof_maturity_or_claim: assets_wins
+  global_marketing_rule: global_brand_wins
+  channel_presentation: channel_source_wins_within_canon
+  implementation_conflict: upstream_wins
