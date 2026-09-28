@@ -1,0 +1,21 @@
+name: Verify Bókun pickup places live
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.verify-bokun-pickup-live'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - shell: bash
+        run: |
+          set -euo pipefail
+          for id in 1287578 1287580; do
+            echo "=== $id ==="
+            curl -fsS "https://integration.viiversion.com/api/bokun/pickup-places?vendorId=137689&productId=$id" > "/tmp/pickup-$id.json"
+            jq '.' "/tmp/pickup-$id.json"
+          done
