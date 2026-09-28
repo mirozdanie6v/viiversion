@@ -367,6 +367,16 @@ export async function getAvailability(env: Env, vendorId: string, productId: str
   );
 }
 
+export function pickupPlacesPath(productId: string) {
+  numeric(productId, 'productId');
+  return '/activity.json/' + encodeURIComponent(productId) + '/pickup-places';
+}
+
+export async function getPickupPlaces(env: Env, vendorId: string, productId: string) {
+  numeric(vendorId, 'vendorId');
+  return restRequest(env, vendorId, pickupPlacesPath(productId));
+}
+
 export async function saveAdminRestCredentials(request: Request, env: Env) {
   const expected = required(env.INTEGRATION_ADMIN_TOKEN, 'INTEGRATION_ADMIN_TOKEN');
   if (request.headers.get('authorization') !== 'Bearer ' + expected) return new Response('Unauthorized', { status: 401 });
