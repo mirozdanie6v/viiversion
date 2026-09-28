@@ -1,0 +1,40 @@
+{
+  "name": "viiversion-brand-architect",
+  "version": "0.1.0",
+  "description": "Brand reasoning, structure architecture, product mapping, proof selection and QA for VIIVERSION.",
+  "author": {
+    "name": "Olga Nogtich",
+    "url": "https://viiversion.com"
+  },
+  "homepage": "https://viiversion.com",
+  "repository": "https://github.com/mirozdanie6v/viiversion",
+  "license": "Proprietary",
+  "keywords": [
+    "brand-agent",
+    "brand-architecture",
+    "product-architecture",
+    "website-architecture",
+    "positioning",
+    "orchestration"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "VIIVERSION Brand Architect",
+    "shortDescription": "VIIVERSION brand and structure agent",
+    "longDescription": "Understands the VIIVERSION corporate canon, commercial system, product architecture, proof registry and channel rules, then creates or audits buyer-facing structures, messaging and implementations without requiring manual workflow commands.",
+    "developerName": "Olga Nogtich",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://viiversion.com",
+    "defaultPrompt": [
+      "Build the best structure for this VIIVERSION surface.",
+      "Audit this material against the VIIVERSION brand and product system.",
+      "Turn this VIIVERSION product or capability into a buyer-facing page.",
+      "Choose the strongest proof and messaging for this audience."
+    ]
+  }
+}
