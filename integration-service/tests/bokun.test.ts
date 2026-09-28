@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bokunRestDate, canonicalOAuthQuery, canonicalVendorId, signRest } from '../src/bokun';
+import { bokunRestDate, canonicalOAuthQuery, canonicalVendorId, pickupPlacesPath, signRest } from '../src/bokun';
 
 describe('Bókun integration primitives', () => {
   it('canonicalizes OAuth query without hmac', () => {
@@ -14,6 +14,11 @@ describe('Bókun integration primitives', () => {
   it('normalizes Bókun relay-style vendor IDs to the numeric vendor ID', () => {
     expect(canonicalVendorId('137689')).toBe('137689');
     expect(canonicalVendorId('QXBwVmVuZG9yVHIwZToxMzc2ODk')).toBe('137689');
+  });
+
+  it('builds the documented pickup places path', () => {
+    expect(pickupPlacesPath('1287580')).toBe('/activity.json/1287580/pickup-places');
+    expect(() => pickupPlacesPath('abc')).toThrow();
   });
 
   it('matches Bókun published REST signature example', async () => {
