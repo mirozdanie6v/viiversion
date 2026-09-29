@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bokunRestDate, canonicalOAuthQuery, canonicalVendorId, pickupPlacesPath, signRest } from '../src/bokun';
+import { bokunRestDate, canonicalOAuthQuery, canonicalVendorId, pickupPlacesPath, productPath, signRest } from '../src/bokun';
 
 describe('Bókun integration primitives', () => {
   it('canonicalizes OAuth query without hmac', () => {
@@ -16,7 +16,11 @@ describe('Bókun integration primitives', () => {
     expect(canonicalVendorId('QXBwVmVuZG9yVHIwZToxMzc2ODk')).toBe('137689');
   });
 
-  it('builds the documented pickup places path', () => {
+  it('builds documented product and pickup paths, including lang', () => {
+    expect(productPath('1287580')).toBe('/activity.json/1287580');
+    expect(productPath('1287580', 'ko')).toBe('/activity.json/1287580?lang=KO');
+    expect(productPath('1287580', 'vi-VN')).toBe('/activity.json/1287580?lang=VI_VN');
+    expect(() => productPath('1287580', 'korean')).toThrow();
     expect(pickupPlacesPath('1287580')).toBe('/activity.json/1287580/pickup-places');
     expect(() => pickupPlacesPath('abc')).toThrow();
   });
