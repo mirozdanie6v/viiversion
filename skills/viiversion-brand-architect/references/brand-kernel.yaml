@@ -1,5 +1,5 @@
-version: "0.1.0"
-snapshot_date: "2026-09-28"
+version: "0.2.0"
+snapshot_date: "2026-09-30"
 authority: "fast context cache; live sources remain authoritative"
 
 company:
@@ -282,3 +282,53 @@ live_refresh_required_for:
   - public_claim
   - approved_decision
   - implementation
+
+
+market_gtm_snapshot:
+  model: "VIIVERSION Mycelium"
+  projection_formula: "Entity × Market × Audience × Channel × Language × Goal → Projection"
+  execution_loop: "Projection → GTM Motion → Action → Proof → CTA → Metric → Feedback"
+  feedback_loop: "Observation → Pattern → Validated Learning → Change Request → Strategic Review"
+  motions:
+    M01: {name: FAST_DIRECT, purpose: "qualified end-business acquisition"}
+    M02: {name: FOLLOW_UP, purpose: "advance active conversations"}
+    M03: {name: PARTNER_B2B2B, purpose: "repeat partner-sourced revenue"}
+    M04: {name: PLATFORM_DISTRIBUTION, purpose: "app/plugin/platform ecosystems"}
+    M05: {name: PRODUCT_LAUNCH, purpose: "global discovery and beta/adoption"}
+    M06: {name: FREELANCE_MARKETPLACE, purpose: "paid projects and platform proof"}
+    M07: {name: ENTERPRISE_VENDOR, purpose: "long-cycle enterprise/vendor pipeline"}
+    M08: {name: PRODUCTIZATION, purpose: "remove repeatable-sale/distribution blocker"}
+    M09: {name: LOCAL_REFERRAL, purpose: "warm local acquisition"}
+  channels:
+    CH-WEB: Website
+    CH-LINKEDIN: LinkedIn
+    CH-PH: Product_Hunt
+    CH-MKT: Software_Plugin_Marketplaces
+    CH-PARTNER: Partners_Integrators
+    CH-OUT: Outbound
+    CH-FREELANCE: Freelance_Marketplaces
+    CH-ENT: Enterprise_Vendor
+  launch_waves:
+    W1: "0–30d publish/sell now"
+    W2: "30–90d marketplace adapters after stable core contracts"
+    W3: "90–180d expansion based on evidence"
+    ENTERPRISE: "ongoing diagnostic/PoC/sprint/retainer"
+    BETA: "validate repeatability before broad distribution"
+  active_distribution_examples:
+    P28: ["ChatGPT app directory", "Product Hunt"]
+    P29: ["WordPress.org"]
+    P20: ["Clover", "Square"]
+    P07: ["generic product extraction before scalable distribution"]
+    P21: ["connector/API contract before adapter marketplaces"]
+    P27: ["agency/white-label packaging before scale"]
+  live_refresh_tabs:
+    - Distribution_Matrix
+    - Channel_Profiles
+    - GTM_Motions
+    - Launch_Waves
+    - Distribution_Pipeline
+    - Partner_Channels
+    - Daily_GTM
+    - Market_Signals
+    - Sales_Router
+    - Outreach_Queue
