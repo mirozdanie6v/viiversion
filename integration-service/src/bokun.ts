@@ -260,22 +260,36 @@ async function ensureRestCredentials(env: Env, vendorId: string) {
   return getRestCredentials(env, vendorId);
 }
 
-async function restRequest(env: Env, vendorId: string, path: string) {
+async function signedRestFetch(
+  env: Env,
+  vendorId: string,
+  path: string,
+  method: 'GET' | 'POST' = 'GET',
+  body?: unknown,
+) {
   const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
   const stored = await ensureRestCredentials(env, vendorId);
   if (!stored) throw new Response('REST credentials are not configured for this vendor', { status: 503 });
   const accessKey = await decryptSecret(stored.accessKeyEncrypted, encryptionKey);
   const secretKey = await decryptSecret(stored.secretKeyEncrypted, encryptionKey);
   const date = bokunRestDate();
-  const signature = await signRest(secretKey, date, accessKey, 'GET', path);
-  const response = await fetch((env.BOKUN_REST_BASE_URL?.trim() || 'https://api.bokun.io') + path, {
-    headers: {
-      accept: 'application/json',
-      'X-Bokun-Date': date,
-      'X-Bokun-AccessKey': accessKey,
-      'X-Bokun-Signature': signature,
-    },
+  const signature = await signRest(secretKey, date, accessKey, method, path);
+  const headers: Record<string, string> = {
+    accept: 'application/json',
+    'X-Bokun-Date': date,
+    'X-Bokun-AccessKey': accessKey,
+    'X-Bokun-Signature': signature,
+  };
+  if (body !== undefined) headers['content-type'] = 'application/json;charset=UTF-8';
+  return fetch((env.BOKUN_REST_BASE_URL?.trim() || 'https://api.bokun.io') + path, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
+}
+
+async function restRequest(env: Env, vendorId: string, path: string) {
+  const response = await signedRestFetch(env, vendorId, path);
   if (!response.ok) throw new Response('Bókun REST request failed', { status: 502 });
   return response.json<unknown>();
 }
@@ -375,6 +389,140 @@ export function pickupPlacesPath(productId: string) {
 export async function getPickupPlaces(env: Env, vendorId: string, productId: string) {
   numeric(vendorId, 'vendorId');
   return restRequest(env, vendorId, pickupPlacesPath(productId));
+}
+
+
+function addDaysIso(date: Date, days: number) {
+  const copy = new Date(date.getTime());
+  copy.setUTCDate(copy.getUTCDate() + days);
+  return copy.toISOString().slice(0, 10);
+}
+
+function arr(value: unknown): any[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function summarizeCheckoutProbe(status: number, payload: any) {
+  const options = arr(payload?.options ?? payload?.checkoutOptions);
+  const questions = payload?.questions ?? null;
+  return {
+    status,
+    ok: status >= 200 && status < 300,
+    topLevelKeys: payload && typeof payload === 'object' ? Object.keys(payload) : [],
+    optionCount: options.length,
+    options: options.map((option: any) => ({
+      type: option?.type ?? null,
+      currency: option?.currency ?? null,
+      amount: option?.amount ?? null,
+      allowedMethods: arr(option?.paymentMethods?.allowedMethods),
+    })),
+    questions,
+    error: status >= 200 && status < 300 ? null : payload,
+  };
+}
+
+export async function getBookingContractProbe(env: Env, vendorId: string, productId: string) {
+  numeric(vendorId, 'vendorId');
+  numeric(productId, 'productId');
+
+  const now = new Date();
+  const start = addDaysIso(now, 1);
+  const end = addDaysIso(now, 14);
+  const availabilityPath =
+    '/activity.json/' + encodeURIComponent(productId) +
+    '/availabilities?' + new URLSearchParams({ start, end, currency: 'USD' }).toString();
+
+  const [productRaw, availabilityRaw, pickupRaw] = await Promise.all([
+    getProduct(env, vendorId, productId),
+    restRequest(env, vendorId, availabilityPath),
+    getPickupPlaces(env, vendorId, productId),
+  ]);
+
+  const product = productRaw as any;
+  const availabilities = arr(availabilityRaw);
+  const slot = availabilities.find((item: any) => !item?.soldOut && !item?.unavailable && arr(item?.rates).length > 0)
+    ?? availabilities.find((item: any) => !item?.soldOut && !item?.unavailable);
+  if (!slot) throw new Response('No bookable availability available for contract probe', { status: 409 });
+
+  const rateId = Number(slot?.defaultRateId ?? arr(slot?.rates)[0]?.id);
+  const pricingCategoryId = Number(arr(product?.pricingCategories)[0]?.id);
+  if (!Number.isFinite(rateId) || !Number.isFinite(pricingCategoryId)) {
+    throw new Response('Unable to resolve rate/pricing category for contract probe', { status: 409 });
+  }
+
+  const pickupPlaces = arr((pickupRaw as any)?.pickupPlaces ?? pickupRaw);
+  const roomPickup = pickupPlaces.find((item: any) => item?.askForRoomNumber === true) ?? pickupPlaces[0] ?? null;
+
+  const activityBase: Record<string, unknown> = {
+    activityId: Number(productId),
+    rateId,
+    date: String(slot?.dateIso ?? slot?.localizedDate ?? '').match(/^\d{4}-\d{2}-\d{2}$/)
+      ? String(slot?.dateIso ?? slot?.localizedDate)
+      : String(slot?.id ?? '').match(/_(\d{4})(\d{2})(\d{2})$/)
+        ? String(slot.id).replace(/^.*_(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3')
+        : start,
+    startTimeId: Number(slot?.startTimeId),
+    pickup: Boolean(roomPickup),
+    dropoff: false,
+    checkedIn: false,
+    customized: false,
+    passengers: [{ pricingCategoryId }],
+  };
+  if (roomPickup?.id) activityBase.pickupPlaceId = Number(roomPickup.id);
+
+  const bookingBase: Record<string, unknown> = {
+    sendCustomerNotification: false,
+    activityBookings: [activityBase],
+  };
+
+  const variants: Array<{ name: string; body: Record<string, unknown> }> = [
+    { name: 'base', body: bookingBase },
+  ];
+  if (roomPickup?.id) {
+    for (const field of ['pickupPlaceRoomNumber', 'roomNumber', 'pickupRoomNumber']) {
+      variants.push({
+        name: field,
+        body: {
+          ...bookingBase,
+          activityBookings: [{ ...activityBase, [field]: '804' }],
+        },
+      });
+    }
+  }
+
+  const path = '/checkout.json/options/booking-request?currency=USD';
+  const results = [];
+  for (const variant of variants) {
+    const response = await signedRestFetch(env, vendorId, path, 'POST', variant.body);
+    const text = await response.text();
+    let payload: any = text;
+    try { payload = JSON.parse(text); } catch {}
+    results.push({ name: variant.name, ...summarizeCheckoutProbe(response.status, payload) });
+  }
+
+  return {
+    ok: true,
+    readOnly: true,
+    createsBooking: false,
+    vendorId,
+    productId,
+    oauth: {
+      installation: await getStatus(env, vendorId),
+    },
+    sample: {
+      date: activityBase.date,
+      startTimeId: activityBase.startTimeId,
+      rateId,
+      pricingCategoryId,
+      pickupPlace: roomPickup ? {
+        id: roomPickup.id ?? null,
+        title: roomPickup.title ?? roomPickup.name ?? null,
+        askForRoomNumber: roomPickup.askForRoomNumber ?? null,
+      } : null,
+    },
+    endpoint: path,
+    probes: results,
+  };
 }
 
 export async function saveAdminRestCredentials(request: Request, env: Env) {
