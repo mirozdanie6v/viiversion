@@ -1,0 +1,58 @@
+name: Deploy VIIVERSION Brand Agent
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: brand-agent-worker
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: f4935962036fd500d34335e0b174b227
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Require Cloudflare token
+        run: test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::Add repository secret CLOUDFLARE_API_TOKEN"; exit 1; }
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Validate
+        run: npm run check
+
+      - name: Deploy
+        run: npm run deploy
+
+      - name: Verify MCP
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://agent.viiversion.com/mcp"
+          tmp="$(mktemp)"
+          for i in $(seq 1 36); do
+            code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$tmp" -w '%{http_code}' -X POST "$URL"               -H 'content-type: application/json' -H 'accept: application/json, text/event-stream'               --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"deploy-smoke","version":"1"}}}' || true)"
+            if [[ "$code" == "200" ]] && grep -Fq '"name":"viiversion-brand-agent"' "$tmp"; then
+              echo "initialize PASS"
+              break
+            fi
+            if [[ "$i" == "36" ]]; then
+              cat "$tmp" >&2 || true
+              exit 1
+            fi
+            sleep 5
+          done
+          curl -fsS -X POST "$URL"             -H 'content-type: application/json'             --data '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'             | grep -F '"get_brand_context"'
+          echo "Brand MCP PASS"
