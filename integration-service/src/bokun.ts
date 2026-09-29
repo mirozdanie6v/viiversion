@@ -479,16 +479,47 @@ export async function getBookingContractProbe(env: Env, vendorId: string, produc
     { name: 'base', body: bookingBase },
   ];
   if (roomPickup?.id) {
-    for (const field of ['pickupPlaceRoomNumber', 'roomNumber', 'pickupRoomNumber']) {
-      variants.push({
-        name: field,
-        body: {
-          ...bookingBase,
-          activityBookings: [{ ...activityBase, [field]: '804' }],
-        },
-      });
-    }
+    variants.push({
+      name: 'pickupAnswers_roomNumber',
+      body: {
+        ...bookingBase,
+        activityBookings: [{
+          ...activityBase,
+          pickupAnswers: [{ questionId: 'roomNumber', values: ['804'] }],
+        }],
+      },
+    });
   }
+  variants.push({
+    name: 'externalReferenceAndEntity',
+    body: {
+      ...bookingBase,
+      externalBookingReference: 'VIIVERSION-CONTRACT-PROBE',
+      externalBookingEntityName: 'VIIVERSION',
+      externalBookingEntityCode: 'LOVE_TRAVEL',
+    },
+  });
+  variants.push({
+    name: 'fullDynamicAnswers',
+    body: {
+      ...bookingBase,
+      mainContactDetails: [
+        { questionId: 'firstName', values: ['VIIVERSION'] },
+        { questionId: 'lastName', values: ['CONTRACT PROBE'] },
+        { questionId: 'email', values: ['probe@viiversion.com'] },
+        { questionId: 'phoneNumber', values: ['+84000000000'] },
+      ],
+      activityBookings: [{
+        ...activityBase,
+        ...(roomPickup?.id ? {
+          pickupAnswers: [{ questionId: 'roomNumber', values: ['804'] }],
+        } : {}),
+      }],
+      externalBookingReference: 'VIIVERSION-CONTRACT-PROBE',
+      externalBookingEntityName: 'VIIVERSION',
+      externalBookingEntityCode: 'LOVE_TRAVEL',
+    },
+  });
 
   const path = '/checkout.json/options/booking-request?currency=USD';
   const results = [];
