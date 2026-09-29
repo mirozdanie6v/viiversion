@@ -1,0 +1,70 @@
+name: Package VIIVERSION Brand Architect
+
+on:
+  push:
+    branches:
+      - brand-agent-v1
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s plugin.json
+          test -s .codex-plugin/plugin.json
+          test -s skills/viiversion-brand-architect/SKILL.md
+          test -s skills/viiversion-brand-architect/agents/openai.yaml
+          test -s skills/viiversion-brand-architect/references/brand-kernel.yaml
+          test -s skills/viiversion-brand-architect/references/source-manifest.yaml
+          test -s skills/viiversion-brand-architect/references/task-architecture.md
+          test -s skills/viiversion-brand-architect/references/qa-gates.md
+          test -s evals/cases.json
+          python -m json.tool plugin.json >/dev/null
+          python -m json.tool .codex-plugin/plugin.json >/dev/null
+          python -m json.tool evals/cases.json >/dev/null
+          grep -Fq 'allow_implicit_invocation: true' skills/viiversion-brand-architect/agents/openai.yaml
+
+      - name: Build ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="dist/viiversion-brand-architect"
+          rm -rf dist
+          mkdir -p "$ROOT"
+          cp README.md plugin.json "$ROOT/"
+          cp -R .codex-plugin skills evals "$ROOT/"
+          (
+            cd dist
+            zip -r -9 viiversion-brand-architect-v0.1.0.zip viiversion-brand-architect
+          )
+          sha256sum dist/viiversion-brand-architect-v0.1.0.zip > dist/viiversion-brand-architect-v0.1.0.zip.sha256
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: viiversion-brand-architect-v0.1.0
+          path: |
+            dist/viiversion-brand-architect-v0.1.0.zip
+            dist/viiversion-brand-architect-v0.1.0.zip.sha256
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view brand-agent-v0.1.0 >/dev/null 2>&1; then
+            gh release upload brand-agent-v0.1.0               dist/viiversion-brand-architect-v0.1.0.zip               dist/viiversion-brand-architect-v0.1.0.zip.sha256               --clobber
+          else
+            gh release create brand-agent-v0.1.0               dist/viiversion-brand-architect-v0.1.0.zip               dist/viiversion-brand-architect-v0.1.0.zip.sha256               --target "$GITHUB_SHA"               --title "VIIVERSION Brand Architect v0.1.0"               --notes "First installable ChatGPT-native Brand Architect package. Semantic implicit invocation, Brand Kernel, source routing, Brand QA, and regression cases. No command trigger required."
+          fi
