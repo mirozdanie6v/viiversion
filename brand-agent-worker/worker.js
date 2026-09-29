@@ -1,10 +1,12 @@
+import { MARKET_TOOLS, executeMarketTool } from "./market.js";
+
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
   "cache-control": "no-store",
   "access-control-allow-origin": "*",
 };
 
-const SNAPSHOT_DATE = "2026-09-28";
+const SNAPSHOT_DATE = "2026-09-30";
 
 const BRAND = {
   company: {
@@ -64,7 +66,7 @@ const BRAND = {
   }
 };
 
-const TOOLS = [
+const BASE_TOOLS = [
   {
     name: "get_brand_context",
     title: "Get VIIVERSION brand context",
@@ -112,6 +114,8 @@ const TOOLS = [
   }
 ];
 
+const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS];
+
 function clean(value, max=5000) {
   return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
 }
@@ -134,6 +138,12 @@ function classifySurface(task, explicit) {
   if (/партнер|partner|agency|агентств/.test(lower)) return "partner";
   if (/enterprise|cto|coo|техничес/.test(lower)) return "enterprise";
   if (/linkedin|профил/.test(lower)) return "profile";
+  if (/feedback|market signal|рыночн.*сигнал|обратн.*связ/.test(lower)) return "feedback";
+  if (/productiz|продуктиз|упаков.*продукт|созда.*плагин|созда.*plugin|созда.*app/.test(lower)) return "productization";
+  if (/product hunt|marketplace|маркетплейс|app directory|wordpress\.org|odoo|shopify|clover|square/.test(lower)) return "platform";
+  if (/distribution|дистриб|канал.*продаж/.test(lower)) return "distribution";
+  if (/рассыл|outreach|campaign|кампан/.test(lower)) return "campaign";
+  if (/позиционир.*рын|market positioning|рынок|market/.test(lower)) return "market";
   if (/proposal|коммерческ|\bкп\b/.test(lower)) return "proposal";
   if (/product|продукт|booking|бронир/.test(lower)) return "product_page";
   if (/site|сайт|главн|homepage|лендинг/.test(lower)) return "website";
@@ -148,6 +158,12 @@ function taskPlan(args={}) {
     partner:["partner gap","VIIVERSION supply","delivery model","relevant modules/software","proof","commercial path","CTA"],
     enterprise:["engineering problem","constraints","architecture","data/integration/security","proof","risk","delivery model","technical discovery CTA"],
     profile:["identity","engineering focus","outcomes","proof","owned software","platform CTA"],
+    market:["entity","market","audience","channel","language","goal","proof","projection","metric"],
+    distribution:["entity","product form","channel fit","launch wave","pipeline stage","blocker","motion","milestone","KPI"],
+    campaign:["market","segment","signal","primary entity/offer","proof","channel","sequence","CTA","KPI","feedback"],
+    platform:["one product","user/problem","install/use path","proof","platform fit","compliance","launch/distribution milestone","KPI"],
+    productization:["entity/candidate","target user","repeatable workflow","generic contract","install/use path","proof","distribution","engineering handoff","release gate"],
+    feedback:["observation","repetition","pattern","measurable outcome","validated learning","change request"],
     proposal:["route to Proposal Studio when available","seller grounding","target evidence","diagnosis","solution","commercial model","review"],
     brand_surface:["goal","audience","buyer job","canonical entities","commercial state","proof","narrative","CTA"]
   };
@@ -157,6 +173,10 @@ function taskPlan(args={}) {
   if (args.implementation) liveRefresh.push("current approved decisions","current downstream implementation");
   if (/price|цена|стоим|readiness|готов|status|статус|demo|демо|proof|доказ/.test(lower)) liveRefresh.push("live Commercial Matrix");
   if (/сайт|site|homepage|hero|главн/.test(lower)) liveRefresh.push("Website Channel Strategy & Projection","Website_Decisions / Homepage_Blocks");
+  if (["market","distribution","campaign","platform","productization","feedback"].includes(surface)) liveRefresh.push("Global Brand & Market Strategy","Channel_Profiles");
+  if (["distribution","platform","productization"].includes(surface)) liveRefresh.push("Distribution_Matrix","Launch_Waves","Distribution_Pipeline");
+  if (surface==="campaign") liveRefresh.push("GTM_Motions","Sales Playbook","Sales_Router","Outreach_Queue");
+  if (surface==="feedback") liveRefresh.push("Market_Signals");
   return {
     surface,
     audience: clean(args.audience,120) || "infer from task",
@@ -191,7 +211,7 @@ async function handleMcp(request) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-agent",version:"0.1.0",mcp:"/mcp"});
+    return json({ok:true,service:"viiversion-brand-agent",version:"0.2.0",mcp:"/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -206,8 +226,8 @@ async function handleMcp(request) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-agent",version:"0.1.0"},
-      instructions:"Read-only VIIVERSION brand context server. Use this for brand grounding, structure planning, proof boundaries and deterministic Brand QA. Live Google Drive Source of Truth remains authoritative for final commercial/decision claims."
+      serverInfo:{name:"viiversion-brand-agent",version:"0.2.0"},
+      instructions:"Read-only VIIVERSION brand/product/market agent backend. Use it for brand grounding, market projection, GTM/distribution planning, productization, proof boundaries and deterministic Brand QA. Live Google Drive Source of Truth remains authoritative for final commercial, distribution and decision claims."
     });
   }
   if (method === "tools/list") return rpc(id,{tools:TOOLS});
@@ -238,6 +258,8 @@ async function handleMcp(request) {
     }
     if (name === "plan_brand_task") return rpc(id,toolPayload(taskPlan(args)));
     if (name === "validate_brand_output") return rpc(id,toolPayload(validateBrand(args.text,Boolean(args.finalPublic))));
+    const marketData = executeMarketTool(name,args);
+    if (marketData !== null) return rpc(id,toolPayload(marketData));
     return rpcError(id,-32602,"Unknown tool");
   }
   return rpcError(id,-32601,"Method not found");
@@ -247,7 +269,7 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
-      return json({ok:true,service:"viiversion-brand-agent",version:"0.1.0",mcp:"https://agent.viiversion.com/mcp"});
+      return json({ok:true,service:"viiversion-brand-agent",version:"0.2.0",mcp:"https://agent.viiversion.com/mcp"});
     }
     if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleMcp(request);
     return json({ok:false,error:"not_found"},404);
