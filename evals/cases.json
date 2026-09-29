@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "cases": [
     {
       "id": "E01-homepage-structure",
@@ -114,6 +114,90 @@
         "reject generic AI-agency framing",
         "tie AI to concrete workflows and approved data",
         "preserve engineering product company identity"
+      ]
+    },
+    {
+      "id": "E13-market-projection",
+      "input": "Как позиционировать Booking Engine для отелей в Европе через LinkedIn?",
+      "must": [
+        "use Entity × Market × Audience × Channel × Language × Goal projection",
+        "map Booking Engine to P07",
+        "use LinkedIn channel rules",
+        "preserve global VIIVERSION identity",
+        "refresh live channel/commercial state for final public copy"
+      ]
+    },
+    {
+      "id": "E14-plugin-productization",
+      "input": "Хотим сделать новый плагин VIIVERSION и вывести его в маркетплейс. Что должен сделать агент?",
+      "must": [
+        "determine existing entity vs candidate",
+        "define target user and repeatable workflow",
+        "define install/use and distribution path",
+        "create engineering handoff and release gates",
+        "not claim code is built before implementation"
+      ]
+    },
+    {
+      "id": "E15-platform-distribution",
+      "input": "Давай просто выложим все наши услуги в Product Hunt и все маркетплейсы.",
+      "must": [
+        "reject indiscriminate channel dumping",
+        "treat Product Hunt as one-product launch/discovery",
+        "use Distribution_Matrix and Channel_Profiles",
+        "match product form to platform"
+      ]
+    },
+    {
+      "id": "E16-outreach-campaign",
+      "input": "Сделай международную рассылку VIIVERSION по новым клиентам.",
+      "must": [
+        "define market and segment",
+        "choose one primary offer/entity per segment",
+        "use proof and low-friction CTA",
+        "define cadence KPI and stop rule",
+        "refresh Sales Playbook and operational queue before live sends"
+      ]
+    },
+    {
+      "id": "E17-partner-motion",
+      "input": "Нужно запустить продажи через агентства и интеграторов.",
+      "must": [
+        "select PARTNER_B2B2B motion",
+        "use Partner_Channels",
+        "lead with partner delivery gap",
+        "use relevant proof and partnership CTA",
+        "avoid full catalogue pitch"
+      ]
+    },
+    {
+      "id": "E18-launch-motion",
+      "input": "Запускаем Proposal Studio международно.",
+      "must": [
+        "map to P28 owned software",
+        "consider current Distribution_Pipeline",
+        "separate platform distribution from Product Hunt launch",
+        "define launch milestone proof KPI and blocker",
+        "refresh live status before claiming readiness"
+      ]
+    },
+    {
+      "id": "E19-market-feedback",
+      "input": "Один клиент сказал, что ему нужен новый тип продукта. Добавь его в стратегию как новое направление.",
+      "must": [
+        "classify as observation",
+        "not treat one reply as validated learning",
+        "not create canonical direction",
+        "route repeated evidence through Market_Signals and Change Request"
+      ]
+    },
+    {
+      "id": "E20-current-gtm-freshness",
+      "input": "Что нам сейчас сегодня делать по GTM?",
+      "must": [
+        "require live GTM_Motions Daily_GTM and Distribution_Pipeline refresh",
+        "prioritize current execution state",
+        "not answer only from kernel snapshot"
       ]
     }
   ]
