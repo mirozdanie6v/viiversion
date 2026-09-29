@@ -296,53 +296,6 @@ function configuredProducts(env: Env) {
   return ids.map((id, index) => ({ id, code: codes[index] || null }));
 }
 
-export async function getGraphqlCapabilities(env: Env, vendorId: string) {
-  numeric(vendorId, 'vendorId');
-  const installation = await getInstallation(env, vendorId);
-  if (!installation) throw new Response('Bókun installation is not connected', { status: 503 });
-
-  const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
-  const accessToken = await decryptSecret(installation.accessTokenEncrypted, encryptionKey);
-  const endpoint = host(env, installation.domain) + '/api/graphql';
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      'X-Bokun-App-Access-Token': accessToken,
-    },
-    body: JSON.stringify({
-      query: 'query CapabilityProbe { __schema { queryType { fields { name } } mutationType { fields { name } } } }',
-    }),
-  });
-
-  const payload = await response.json<{
-    data?: { __schema?: { queryType?: { fields?: Array<{ name?: string }> }; mutationType?: { fields?: Array<{ name?: string }> } } };
-    errors?: Array<{ message?: string }>;
-  }>().catch(() => null);
-
-  if (!response.ok) throw new Response('Bókun GraphQL capability probe failed', { status: 502 });
-
-  const keep = (name: string) => /product|experience|translation|locale|language/i.test(name);
-  const queries = (payload?.data?.__schema?.queryType?.fields ?? [])
-    .map(field => field.name ?? '')
-    .filter(name => name && keep(name))
-    .sort();
-  const mutations = (payload?.data?.__schema?.mutationType?.fields ?? [])
-    .map(field => field.name ?? '')
-    .filter(name => name && keep(name))
-    .sort();
-
-  return {
-    ok: true,
-    vendorId,
-    scopes: installation.scopes.split(',').map(x => x.trim()).filter(Boolean),
-    queries,
-    mutations,
-    errors: payload?.errors?.map(error => error.message ?? 'Unknown GraphQL error') ?? [],
-  };
-}
-
 export async function getStatus(env: Env, vendorId: string) {
   const installation = await getInstallation(env, vendorId);
   let rest = await getRestCredentials(env, vendorId);
