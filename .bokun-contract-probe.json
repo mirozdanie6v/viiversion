@@ -1,0 +1,845 @@
+{
+  "auditedAt": "2026-09-29T14:17:24Z",
+  "products": [
+    {
+      "ok": true,
+      "readOnly": true,
+      "createsBooking": false,
+      "vendorId": "137689",
+      "productId": "1287578",
+      "oauth": {
+        "installation": {
+          "ok": true,
+          "vendorId": "137689",
+          "oauthConnected": true,
+          "restCredentialsReady": true,
+          "restCredentialSyncError": null,
+          "domain": "nha-trang-love-travel",
+          "scopes": [
+            "LEGACY_API"
+          ],
+          "products": [
+            {
+              "id": "1287578",
+              "code": "5690738P8"
+            },
+            {
+              "id": "1287580",
+              "code": "5690738P7"
+            }
+          ],
+          "defaultProduct": {
+            "id": "1287578",
+            "code": "5690738P8"
+          }
+        }
+      },
+      "sample": {
+        "date": "2026-09-30",
+        "startTimeId": 5782388,
+        "rateId": 2581224,
+        "pricingCategoryId": 1250028,
+        "pickupPlace": {
+          "id": 15137113,
+          "title": "Starcity Hotel & Condotel Beachfront Nha Trang",
+          "askForRoomNumber": true
+        }
+      },
+      "endpoint": "/checkout.json/options/booking-request?currency=USD",
+      "probes": [
+        {
+          "name": "base",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 35.77,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287578,
+                "activityTitle": "Nha Trang Island Hopping Adventure in Robinson Beach",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "name": "pickupPlaceRoomNumber",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 35.77,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287578,
+                "activityTitle": "Nha Trang Island Hopping Adventure in Robinson Beach",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "name": "roomNumber",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 35.77,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287578,
+                "activityTitle": "Nha Trang Island Hopping Adventure in Robinson Beach",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "name": "pickupRoomNumber",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 35.77,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287578,
+                "activityTitle": "Nha Trang Island Hopping Adventure in Robinson Beach",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "readOnly": true,
+      "createsBooking": false,
+      "vendorId": "137689",
+      "productId": "1287580",
+      "oauth": {
+        "installation": {
+          "ok": true,
+          "vendorId": "137689",
+          "oauthConnected": true,
+          "restCredentialsReady": true,
+          "restCredentialSyncError": null,
+          "domain": "nha-trang-love-travel",
+          "scopes": [
+            "LEGACY_API"
+          ],
+          "products": [
+            {
+              "id": "1287578",
+              "code": "5690738P8"
+            },
+            {
+              "id": "1287580",
+              "code": "5690738P7"
+            }
+          ],
+          "defaultProduct": {
+            "id": "1287578",
+            "code": "5690738P8"
+          }
+        }
+      },
+      "sample": {
+        "date": "2026-09-30",
+        "startTimeId": 5782396,
+        "rateId": 2581227,
+        "pricingCategoryId": 1250028,
+        "pickupPlace": {
+          "id": 15136970,
+          "title": "Thien Anh Hotel",
+          "askForRoomNumber": true
+        }
+      },
+      "endpoint": "/checkout.json/options/booking-request?currency=USD",
+      "probes": [
+        {
+          "name": "base",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 49,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287580,
+                "activityTitle": " Hon Mun Marine Park Snorkeling and Nha Trang Island Tour",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "name": "pickupPlaceRoomNumber",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 49,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287580,
+                "activityTitle": " Hon Mun Marine Park Snorkeling and Nha Trang Island Tour",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "name": "roomNumber",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 49,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287580,
+                "activityTitle": " Hon Mun Marine Park Snorkeling and Nha Trang Island Tour",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        },
+        {
+          "name": "pickupRoomNumber",
+          "status": 200,
+          "ok": true,
+          "topLevelKeys": [
+            "options",
+            "questions"
+          ],
+          "optionCount": 1,
+          "options": [
+            {
+              "type": "CUSTOMER_FULL_PAYMENT",
+              "currency": "USD",
+              "amount": 49,
+              "allowedMethods": [
+                "ONLINE",
+                "CARD",
+                "RESERVE_FOR_EXTERNAL_PAYMENT"
+              ]
+            }
+          ],
+          "questions": {
+            "mainContactDetails": [
+              {
+                "questionId": "firstName",
+                "label": "First name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "lastName",
+                "label": "Last name",
+                "dataType": "SHORT_TEXT",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "email",
+                "label": "Your email address",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "EMAIL_ADDRESS",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              },
+              {
+                "questionId": "phoneNumber",
+                "label": "Phone number",
+                "dataType": "SHORT_TEXT",
+                "dataFormat": "PHONE_NUMBER",
+                "required": true,
+                "requiredBeforeDeparture": false,
+                "selectFromOptions": false,
+                "selectMultiple": false
+              }
+            ],
+            "activityBookings": [
+              {
+                "activityId": 1287580,
+                "activityTitle": " Hon Mun Marine Park Snorkeling and Nha Trang Island Tour",
+                "questions": [],
+                "passengers": [
+                  {
+                    "pricingCategoryId": 1250028,
+                    "pricingCategoryTitle": "Adult",
+                    "pricingCategoryType": "ADULT",
+                    "passengerDetails": [],
+                    "questions": [],
+                    "extras": []
+                  }
+                ],
+                "pickupQuestions": [
+                  {
+                    "questionId": "roomNumber",
+                    "label": "Room number",
+                    "dataType": "SHORT_TEXT",
+                    "required": false,
+                    "requiredBeforeDeparture": false,
+                    "selectFromOptions": false,
+                    "selectMultiple": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": null
+        }
+      ]
+    }
+  ]
+}
