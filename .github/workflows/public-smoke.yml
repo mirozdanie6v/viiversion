@@ -91,4 +91,26 @@ jobs:
           require_text "$uniq" "UNIQ" "UNIQ live"
 
           rm -f "$main" "$product" "$software" "$partners" "$cases" "$en" "$privacy" "$oldmodule" "$oldoffer" "$sitemap" "$api" "$shot" "$pet" "$uniq"
+          # VIIVERSION Brand MCP must answer a real legacy handshake, list tools and return brand context.
+          mcp="$(mktemp)"
+          code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$mcp" -w '%{http_code}' -X POST "$CUSTOM/mcp" \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"viiversion-smoke","version":"1"}}}' || true)"
+          [[ "$code" == "200" ]] || { echo "FAIL Brand MCP initialize HTTP $code" >&2; cat "$mcp"; exit 1; }
+          grep -Fq '"name":"viiversion-brand-agent"' "$mcp" || { echo "FAIL Brand MCP serverInfo" >&2; cat "$mcp"; exit 1; }
+
+          code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$mcp" -w '%{http_code}' -X POST "$CUSTOM/mcp" \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            --data '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' || true)"
+          [[ "$code" == "200" ]] || { echo "FAIL Brand MCP tools/list HTTP $code" >&2; cat "$mcp"; exit 1; }
+          grep -Fq '"get_brand_context"' "$mcp" || { echo "FAIL Brand MCP tool registry" >&2; cat "$mcp"; exit 1; }
+
+          code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$mcp" -w '%{http_code}' -X POST "$CUSTOM/mcp" \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            --data '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_brand_context","arguments":{"surface":"website","audience":"SME owner","goal":"clarity"}}}' || true)"
+          [[ "$code" == "200" ]] || { echo "FAIL Brand MCP tools/call HTTP $code" >&2; cat "$mcp"; exit 1; }
+          grep -Fq '"Engineering Solutions"' "$mcp" || { echo "FAIL Brand MCP context payload" >&2; cat "$mcp"; exit 1; }
+          rm -f "$mcp"
+          echo "VIIVERSION Brand MCP QA PASS"
+
           echo "PUBLIC SYSTEM-FIRST PRESENTATION QA PASS"
