@@ -125,6 +125,80 @@ Do not turn profile into a product catalogue.
 
 Parent-company Engineering Solutions catalogue stays secondary.
 
+
+## Market positioning / projection
+
+1. Source entity and verified commercial state.
+2. Market constraints.
+3. Primary audience and buyer job.
+4. Channel profile.
+5. Language.
+6. Goal.
+7. Proof selection.
+8. Projection: display name / headline / value proposition / CTA.
+9. Metric and feedback capture.
+
+Use `Entity × Market × Audience × Channel × Language × Goal → Projection`.
+A market-specific projection cannot redefine the parent brand.
+
+## GTM / distribution plan
+
+1. Entity and product form.
+2. Current sellability/readiness.
+3. Current distribution fit from Distribution_Matrix.
+4. Channel profile.
+5. Current Launch Wave.
+6. Current Distribution_Pipeline stage/blocker.
+7. Choose one primary GTM motion.
+8. Define next closed milestone.
+9. Define KPI/outcome metric.
+10. Define feedback destination.
+
+Do not confuse a channel list with a strategy.
+
+## Campaign / outreach sequence
+
+1. Market + segment.
+2. Buyer trigger/signal.
+3. One primary entity/offer.
+4. Proof.
+5. Channel + language.
+6. First-touch logic.
+7. Follow-up sequence and stop conditions.
+8. CTA.
+9. Quota/cadence.
+10. KPI.
+11. Capture replies/outcomes as market signals.
+
+For live execution refresh Sales Playbook, Sales_Router and Outreach_Queue.
+
+## Software / plugin productization
+
+1. Existing entity or candidate?
+2. Target user/problem.
+3. Repeatable workflow.
+4. Generic functional contract.
+5. Inputs/outputs and integration boundaries.
+6. Install/use path.
+7. Data/auth/privacy/support requirements.
+8. Proof plan.
+9. Distribution ecosystems.
+10. Release/readiness gates.
+11. Engineering implementation handoff.
+12. Return completed implementation to launch/distribution loop.
+
+Brand Architect owns productization and market contract, not fictional coding.
+
+## Market feedback
+
+1. Record observation.
+2. Check whether it repeats.
+3. Separate anecdote from pattern.
+4. Connect pattern to metric/commercial outcome where possible.
+5. Form validated learning only with sufficient evidence.
+6. Create change request if strategy should be reviewed.
+7. Never change L1-L3 automatically.
+
 ## Presentation / pitch
 
 Build narrative around the decision the audience must make, not around internal
