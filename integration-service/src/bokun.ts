@@ -330,20 +330,28 @@ export async function getStatus(env: Env, vendorId: string) {
   };
 }
 
-export async function getProducts(env: Env, vendorId: string) {
+export function productPath(productId: string, lang = '') {
+  numeric(productId, 'productId');
+  const path = '/activity.json/' + encodeURIComponent(productId);
+  const language = lang.trim().toUpperCase().replace('-', '_');
+  if (!language) return path;
+  if (!/^[A-Z]{2}(?:_[A-Z]{2})?$/.test(language)) throw new Response('Invalid lang', { status: 400 });
+  return path + '?lang=' + encodeURIComponent(language);
+}
+
+export async function getProducts(env: Env, vendorId: string, lang = '') {
   const products = configuredProducts(env);
   if (products.length === 0) throw new Response('No Bókun products are configured', { status: 503 });
   return Promise.all(products.map(async product => ({
     id: product.id,
     code: product.code,
-    data: await getProduct(env, vendorId, product.id),
+    data: await getProduct(env, vendorId, product.id, lang),
   })));
 }
 
-export async function getProduct(env: Env, vendorId: string, productId: string) {
+export async function getProduct(env: Env, vendorId: string, productId: string, lang = '') {
   numeric(vendorId, 'vendorId');
-  numeric(productId, 'productId');
-  return restRequest(env, vendorId, '/activity.json/' + encodeURIComponent(productId));
+  return restRequest(env, vendorId, productPath(productId, lang));
 }
 
 export async function getAvailability(env: Env, vendorId: string, productId: string, url: URL) {
