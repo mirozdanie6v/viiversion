@@ -1,0 +1,81 @@
+name: Deploy landing to Cloudflare
+
+on:
+  push:
+    branches:
+      - viiversion
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: viiversion-landing-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Require Cloudflare credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is missing"; exit 1; }
+
+      - name: Build current site and Worker
+        run: npm run build
+
+      - name: Validate Worker
+        run: |
+          node --check src/worker.js
+          npx wrangler deploy --dry-run --outdir /tmp/viiversion-worker
+
+      - name: Deploy Worker
+        run: npx wrangler deploy
+
+      - name: Verify Brand MCP
+        shell: bash
+        run: |
+          set -euo pipefail
+          MCP="https://landing.viiversion.workers.dev/mcp"
+          tmp="$(mktemp)"
+          for i in $(seq 1 30); do
+            code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$tmp" -w '%{http_code}' -X POST "$MCP"               -H 'content-type: application/json' -H 'accept: application/json, text/event-stream'               --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"deploy-smoke","version":"1"}}}' || true)"
+            if [[ "$code" == "200" ]] && grep -Fq '"name":"viiversion-brand-agent"' "$tmp"; then
+              echo "Brand MCP initialize OK"
+              break
+            fi
+            if [[ "$i" == "30" ]]; then
+              echo "FAIL Brand MCP initialize HTTP $code" >&2
+              cat "$tmp" >&2 || true
+              exit 1
+            fi
+            sleep 5
+          done
+
+          code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$tmp" -w '%{http_code}' -X POST "$MCP"             -H 'content-type: application/json' -H 'accept: application/json, text/event-stream'             --data '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' || true)"
+          [[ "$code" == "200" ]] && grep -Fq '"get_brand_context"' "$tmp"
+
+          code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$tmp" -w '%{http_code}' -X POST "$MCP"             -H 'content-type: application/json' -H 'accept: application/json, text/event-stream'             --data '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_brand_context","arguments":{"surface":"website","audience":"SME owner","goal":"clarity"}}}' || true)"
+          [[ "$code" == "200" ]] && grep -Fq '"Engineering Solutions"' "$tmp"
+          rm -f "$tmp"
+          echo "VIIVERSION Brand MCP DEPLOY QA PASS"
+
+      - name: Public site smoke
+        run: bash scripts/smoke-public.sh
