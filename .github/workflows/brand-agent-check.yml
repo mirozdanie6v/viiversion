@@ -26,7 +26,7 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - name: Syntax
-        run: node --check worker.js
+        run: node --check worker.js && node --check market.js
       - name: Wrangler dry run
         run: npx wrangler deploy --dry-run
       - name: Verify MCP contract
@@ -37,5 +37,11 @@ jobs:
           grep -Fq '"get_proof"' worker.js
           grep -Fq '"plan_brand_task"' worker.js
           grep -Fq '"validate_brand_output"' worker.js
+          grep -Fq '"evaluate_market_signal"' market.js
+          grep -Fq '"plan_productization"' market.js
+          grep -Fq '"plan_gtm_motion"' market.js
+          grep -Fq '"plan_market_projection"' market.js
+          grep -Fq '"get_distribution_routes"' market.js
+          grep -Fq '"get_market_context"' market.js
           grep -Fq '"pattern": "agent.viiversion.com"' wrangler.jsonc
           grep -Fq '"custom_domain": true' wrangler.jsonc
