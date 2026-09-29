@@ -14,8 +14,6 @@ jobs:
       - shell: bash
         run: |
           set -euo pipefail
-          echo "=== STATUS ==="
-          curl -fsS "https://integration.viiversion.com/api/bokun/status?vendorId=137689" | jq '.'
           for id in 1287578 1287580; do
             echo "=== $id ==="
             curl -fsS "https://integration.viiversion.com/api/bokun/pickup-places?vendorId=137689&productId=$id" > "/tmp/pickup-$id.json"
