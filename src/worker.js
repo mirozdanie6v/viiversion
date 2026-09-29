@@ -3,7 +3,8 @@ const JSON_HEADERS = {
   "cache-control": "no-store",
 };
 
-const MAX = { name:120, contact:240, company:300, interest:180, task:5000, context:4000, page:1000, source:200 };\n
+const MAX = { name:120, contact:240, company:300, interest:180, task:5000, context:4000, page:1000, source:200 };
+
 const BRAND_MCP = {
   serverInfo: { name: "viiversion-brand-agent", version: "0.1.0" },
   protocolModern: "2026-07-28",
@@ -365,6 +366,7 @@ export class LeadStore {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleBrandMcp(request);
     if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads", version:"canonical-v3" });
 
     if (url.pathname === "/api/leads" && request.method === "POST") {
