@@ -1,0 +1,12 @@
+{
+  "name": "viiversion-brand-agent-worker",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "check": "node --check worker.js && npx wrangler deploy --dry-run",
+    "deploy": "npx wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
