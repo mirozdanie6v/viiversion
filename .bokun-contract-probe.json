@@ -1,5 +1,5 @@
 {
-  "auditedAt": "2026-09-29T14:17:24Z",
+  "auditedAt": "2026-09-29T14:23:57Z",
   "products": [
     {
       "ok": true,
@@ -141,7 +141,7 @@
           "error": null
         },
         {
-          "name": "pickupPlaceRoomNumber",
+          "name": "pickupAnswers_roomNumber",
           "status": 200,
           "ok": true,
           "topLevelKeys": [
@@ -234,7 +234,7 @@
           "error": null
         },
         {
-          "name": "roomNumber",
+          "name": "externalReferenceAndEntity",
           "status": 200,
           "ok": true,
           "topLevelKeys": [
@@ -327,7 +327,7 @@
           "error": null
         },
         {
-          "name": "pickupRoomNumber",
+          "name": "fullDynamicAnswers",
           "status": 200,
           "ok": true,
           "topLevelKeys": [
@@ -561,7 +561,7 @@
           "error": null
         },
         {
-          "name": "pickupPlaceRoomNumber",
+          "name": "pickupAnswers_roomNumber",
           "status": 200,
           "ok": true,
           "topLevelKeys": [
@@ -654,7 +654,7 @@
           "error": null
         },
         {
-          "name": "roomNumber",
+          "name": "externalReferenceAndEntity",
           "status": 200,
           "ok": true,
           "topLevelKeys": [
@@ -747,7 +747,7 @@
           "error": null
         },
         {
-          "name": "pickupRoomNumber",
+          "name": "fullDynamicAnswers",
           "status": 200,
           "ok": true,
           "topLevelKeys": [
