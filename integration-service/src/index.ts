@@ -192,13 +192,15 @@ export default {
 
       if (url.pathname === '/api/bokun/products' && request.method === 'GET') {
         const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
-        return json(request, env, await getProducts(env, vendorId));
+        const lang = value(url, 'lang');
+        return json(request, env, await getProducts(env, vendorId, lang));
       }
 
       if (url.pathname === '/api/bokun/product' && request.method === 'GET') {
         const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
         const productId = value(url, 'productId', env.BOKUN_DEFAULT_PRODUCT_ID);
-        return json(request, env, await getProduct(env, vendorId, productId));
+        const lang = value(url, 'lang');
+        return json(request, env, await getProduct(env, vendorId, productId, lang));
       }
 
       if (url.pathname === '/api/bokun/availability' && request.method === 'GET') {
