@@ -2,7 +2,7 @@
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "viiversion-brand-agent",
   "main": "./worker.js",
-  "compatibility_date": "2026-09-30",
+  "compatibility_date": "2026-09-29",
   "account_id": "f4935962036fd500d34335e0b174b227",
   "workers_dev": true,
   "routes": [
