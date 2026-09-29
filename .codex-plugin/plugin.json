@@ -1,7 +1,7 @@
 {
   "name": "viiversion-brand-architect",
-  "version": "0.1.0",
-  "description": "Brand reasoning, structure architecture, product mapping, proof selection and QA for VIIVERSION.",
+  "version": "0.2.0",
+  "description": "VIIVERSION brand, product, market/GTM, distribution, productization, proof and QA agent.",
   "author": {
     "name": "Olga Nogtich",
     "url": "https://viiversion.com"
@@ -15,13 +15,18 @@
     "product-architecture",
     "website-architecture",
     "positioning",
-    "orchestration"
+    "orchestration",
+    "gtm",
+    "distribution",
+    "productization",
+    "market-positioning",
+    "outreach"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "VIIVERSION Brand Architect",
-    "shortDescription": "VIIVERSION brand and structure agent",
-    "longDescription": "Understands the VIIVERSION corporate canon, commercial system, product architecture, proof registry and channel rules, then creates or audits buyer-facing structures, messaging and implementations without requiring manual workflow commands.",
+    "shortDescription": "VIIVERSION brand, product and GTM agent",
+    "longDescription": "Understands the VIIVERSION corporate canon, commercial system, product architecture, market/GTM strategy, distribution system, proof registry and channel rules, then creates or audits positioning, campaigns, productization contracts, launches, buyer-facing structures and implementations without requiring manual workflow commands.",
     "developerName": "Olga Nogtich",
     "category": "Productivity",
     "capabilities": [
@@ -31,10 +36,10 @@
     ],
     "websiteURL": "https://viiversion.com",
     "defaultPrompt": [
-      "Build the best structure for this VIIVERSION surface.",
-      "Audit this material against the VIIVERSION brand and product system.",
-      "Turn this VIIVERSION product or capability into a buyer-facing page.",
-      "Choose the strongest proof and messaging for this audience."
+      "Build the best VIIVERSION structure or market projection for this task.",
+      "Choose the right GTM motion and distribution path for this VIIVERSION entity.",
+      "Turn this VIIVERSION software/plugin idea into a productization and launch contract.",
+      "Audit this material against VIIVERSION brand, proof, channel and distribution rules."
     ]
   }
 }
