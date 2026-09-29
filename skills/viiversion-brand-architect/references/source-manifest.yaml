@@ -1,5 +1,5 @@
-version: "0.1.0"
-snapshot_date: "2026-09-28"
+version: "0.2.0"
+snapshot_date: "2026-09-30"
 
 source_precedence:
   - L1_corporate_canon
@@ -57,7 +57,27 @@ sources:
       UX_Rules:
         owns: [website_ux_operational_rules]
       Market_Signals:
-        owns: [observations_and_validated_learning]
+        owns: [observations_patterns_validated_learning_change_requests]
+      Distribution_Matrix:
+        owns: [entity_channel_fit_distribution_priority_package_form_monetization_launch_wave]
+      Ecosystems:
+        owns: [platform_ecosystem_constraints_and_opportunities]
+      Launch_Waves:
+        owns: [productization_and_distribution_sequence]
+      Distribution_Dashboard:
+        owns: [distribution_operational_summary]
+      Partner_Channels:
+        owns: [partner_types_partner_fit_partner_cta_commercial_models]
+      GTM_Motions:
+        owns: [active_gtm_motion_definitions_cadence_quota_kpi_owner]
+      Distribution_Pipeline:
+        owns: [current_distribution_stage_blocker_next_action_due_date]
+      Daily_GTM:
+        owns: [operational_daily_gtm_plan_and_execution_state]
+      Sales_Router:
+        owns: [lead_routing_and_current_sales_stage]
+      Outreach_Queue:
+        owns: [outreach_message_state_due_followups_and_send_status]
     refresh_when:
       - price
       - readiness
@@ -67,6 +87,13 @@ sources:
       - public_claim
       - current_decision
       - implementation
+      - market_positioning
+      - distribution_route
+      - gtm_motion
+      - product_launch
+      - partner_motion
+      - outreach_or_followup
+      - market_feedback
 
   global_brand:
     level: L3_brand_market
@@ -79,6 +106,8 @@ sources:
       - market_strategy
       - distribution_strategy
       - projection_engine
+      - mycelium_distribution_model
+      - market_feedback_loop
     refresh_when:
       - final_public_messaging
       - new_market_or_audience
@@ -101,6 +130,8 @@ sources:
       - sales_message
       - qualification
       - proposal_entry
+      - campaign_execution
+      - follow_up_execution
 
   website_strategy:
     level: L4_channel_projection
@@ -174,6 +205,21 @@ refresh_policy:
   pricing_or_readiness:
     kernel_is_not_authoritative: true
     commercial_matrix_required: true
+  market_or_distribution:
+    refresh_global_brand: true
+    refresh_channel_profile: true
+    refresh_distribution_matrix: true
+    current_pipeline_required_for_active_execution: true
+  outreach_or_followup:
+    sales_playbook_required: true
+    sales_router_and_outreach_queue_required_for_live_action: true
+  productization_or_launch:
+    commercial_matrix_required: true
+    launch_wave_and_distribution_pipeline_required: true
+    proof_required_before_public_claim: true
+  feedback:
+    market_signals_required_for_recorded_learning: true
+    no_automatic_canonical_change: true
   canonical_change:
     corporate_and_registry_required: true
     explicit_approval_required_before_write: true
