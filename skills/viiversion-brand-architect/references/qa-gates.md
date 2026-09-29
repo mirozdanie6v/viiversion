@@ -119,3 +119,35 @@ Fail → simplify.
 PASS when every major block/category/diagram changes understanding or decision.
 
 Remove structure that exists only to display internal sophistication.
+
+
+## G13 — GTM coherence
+
+PASS when:
+- one primary motion owns the next action;
+- audience, channel, offer/entity, proof, CTA and KPI are mutually consistent;
+- a campaign is not just a list of messages or channels;
+- current execution state is refreshed before claiming a live next action.
+
+Fail → rebuild GTM plan.
+
+## G14 — Distribution truth
+
+PASS when:
+- marketplace/platform recommendation fits the actual product form;
+- current distribution stage/blocker comes from live Distribution_Pipeline when
+  the output is operational/final;
+- Product Hunt is treated as launch/discovery, not billing;
+- adapters are not built before core contracts/productization justify them.
+
+Critical fail → refresh distribution sources and revise.
+
+## G15 — Feedback governance
+
+PASS when:
+- one observation is not called a validated market truth;
+- repeated evidence is separated from anecdote;
+- market learning can change messaging/channel/package without silently changing canon;
+- canonical changes go through Change Request / Strategic Review / Decision_Log.
+
+Critical fail → downgrade the learning stage.
