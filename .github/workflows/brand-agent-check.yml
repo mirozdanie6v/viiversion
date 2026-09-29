@@ -1,0 +1,41 @@
+name: Brand Agent Worker QA
+
+on:
+  push:
+    branches: [viiversion]
+    paths:
+      - 'brand-agent-worker/**'
+      - '.github/workflows/brand-agent-check.yml'
+  pull_request:
+    branches: [viiversion]
+    paths:
+      - 'brand-agent-worker/**'
+      - '.github/workflows/brand-agent-check.yml'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: brand-agent-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Syntax
+        run: node --check worker.js
+      - name: Wrangler dry run
+        run: npx wrangler deploy --dry-run
+      - name: Verify MCP contract
+        run: |
+          set -euo pipefail
+          grep -Fq '"get_brand_context"' worker.js
+          grep -Fq '"get_priority_entities"' worker.js
+          grep -Fq '"get_proof"' worker.js
+          grep -Fq '"plan_brand_task"' worker.js
+          grep -Fq '"validate_brand_output"' worker.js
+          grep -Fq '"pattern": "agent.viiversion.com"' wrangler.jsonc
+          grep -Fq '"custom_domain": true' wrangler.jsonc
