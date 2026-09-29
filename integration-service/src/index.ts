@@ -1,6 +1,7 @@
 import {
   type Env,
   getAvailability,
+  getGraphqlCapabilities,
   getProduct,
   getProducts,
   getPickupPlaces,
@@ -188,6 +189,11 @@ export default {
       if (url.pathname === '/api/bokun/status' && request.method === 'GET') {
         const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
         return json(request, env, await getStatus(env, vendorId));
+      }
+
+      if (url.pathname === '/api/bokun/graphql-capabilities' && request.method === 'GET') {
+        const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
+        return json(request, env, await getGraphqlCapabilities(env, vendorId));
       }
 
       if (url.pathname === '/api/bokun/products' && request.method === 'GET') {
