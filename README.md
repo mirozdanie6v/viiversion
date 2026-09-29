@@ -80,3 +80,15 @@ A future VIIVERSION Brand MCP can expose live normalized tools such as:
 - \`validate_brand_output\`
 
 The skill does not require that MCP for its first working version because Google Drive and GitHub are already connected in ChatGPT.
+
+
+## Market / GTM / Distribution
+
+v0.2.0 extends Brand Architect beyond website/product presentation into the
+operational market layer: Projection Engine, GTM motion selection, partner and
+platform distribution, outreach campaign architecture, Software/plugin
+productization, launch planning and controlled market feedback.
+
+The agent remains one central VIIVERSION brand/product/market brain. Specialized
+engineering, proposal and sales executors can receive implementation handoffs
+without becoming independent sources of brand truth.
