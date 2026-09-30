@@ -11,11 +11,13 @@ import {
 } from './bokun';
 import {
   completeWhatsAppCoexistence,
+  completeWhatsAppMetaSetup,
   configureWhatsAppMeta,
   createWhatsAppOnboardingSession,
   getWhatsAppMetaAdminConfig,
   getWhatsAppMetaRuntimeConfig,
   whatsappConnectPage,
+  whatsappMetaSetupPage,
 } from './whatsapp-onboarding';
 import {
   receiveWhatsAppWebhook,
@@ -214,6 +216,14 @@ export default {
           },
           time: new Date().toISOString(),
         });
+      }
+
+      if (url.pathname === '/whatsapp/meta-setup' && request.method === 'GET') {
+        return whatsappMetaSetupPage(request, env);
+      }
+
+      if (url.pathname === '/whatsapp/meta-setup/complete' && request.method === 'POST') {
+        return completeWhatsAppMetaSetup(request, env);
       }
 
       if (url.pathname === '/admin/whatsapp/meta-config' && request.method === 'POST') {

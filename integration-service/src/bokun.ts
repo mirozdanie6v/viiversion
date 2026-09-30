@@ -32,6 +32,8 @@ export interface Env {
   META_GRAPH_VERSION?: string;
   META_APP_ID?: string;
   META_EMBEDDED_SIGNUP_CONFIG_ID?: string;
+  META_SETUP_TOKEN?: string;
+  META_SETUP_EXPIRES_AT?: string;
 }
 
 const encoder = new TextEncoder();
