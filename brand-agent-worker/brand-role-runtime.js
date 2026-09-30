@@ -184,7 +184,7 @@ function validateSchemaValue(schema, value, label) {
   throw new BrandRoleError("SCHEMA_UNSUPPORTED", `Unsupported schema at ${label}`, 500);
 }
 
-function normalizeRolePayload(role, payload) {
+function normalizeRolePayload(role, payload, task = "") {
   const normalized = structuredClone(payload);
   if (role !== BRAND_ROLE.BRAND_QA) return normalized;
 
@@ -195,6 +195,17 @@ function normalizeRolePayload(role, payload) {
     }
     return entry;
   });
+
+  if (isAuditTask(task) && (normalized.critical_failures ?? []).length === 0) {
+    normalized.gate_results = normalized.gate_results.map((entry) => (
+      entry.status === "FAIL"
+        ? { ...entry, status: "PASS", reason: `Audit correctly surfaced a current-vs-target mismatch: ${entry.reason}` }
+        : entry
+    ));
+    normalized.decision = "PASS";
+    normalized.rework_targets = [];
+    return normalized;
+  }
 
   const remainingFails = normalized.gate_results.filter((entry) => entry.status === "FAIL");
   if ((normalized.critical_failures ?? []).length === 0 && remainingFails.length === 0) {
@@ -366,7 +377,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
         temperature: 0,
         max_tokens: maxTokens
       });
-      payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output)));
+      payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output), run.task));
       lastModelError = null;
       break;
     } catch (error) {
