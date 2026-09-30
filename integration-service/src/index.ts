@@ -9,6 +9,16 @@ import {
   handleInstall,
   saveAdminRestCredentials,
 } from './bokun';
+import {
+  receiveWhatsAppWebhook,
+  sendWhatsAppText,
+  verifyWhatsAppWebhook,
+  whatsappChats,
+  whatsappMessages,
+  whatsappReview,
+  whatsappStatus,
+  whatsappUnread,
+} from './whatsapp';
 
 export { IntegrationStore } from './store';
 
@@ -178,8 +188,50 @@ export default {
             productIds: (env.BOKUN_PRODUCT_IDS ?? env.BOKUN_DEFAULT_PRODUCT_ID ?? '').split(',').map(x => x.trim()).filter(Boolean),
             productCodes: (env.BOKUN_PRODUCT_CODES ?? env.BOKUN_DEFAULT_PRODUCT_CODE ?? '').split(',').map(x => x.trim()).filter(Boolean),
           },
+          whatsapp: {
+            configured: Boolean(
+              env.META_WHATSAPP_ACCESS_TOKEN?.trim() &&
+              env.META_WHATSAPP_PHONE_NUMBER_ID?.trim() &&
+              env.META_WHATSAPP_VERIFY_TOKEN?.trim() &&
+              env.META_APP_SECRET?.trim()
+            ),
+            graphVersion: env.META_GRAPH_VERSION?.trim() || 'v26.0',
+          },
           time: new Date().toISOString(),
         });
+      }
+
+      if (url.pathname === '/webhooks/whatsapp' && request.method === 'GET') {
+        return verifyWhatsAppWebhook(request, env);
+      }
+
+      if (url.pathname === '/webhooks/whatsapp' && request.method === 'POST') {
+        return receiveWhatsAppWebhook(request, env);
+      }
+
+      if (url.pathname === '/api/whatsapp/status' && request.method === 'GET') {
+        return json(request, env, await whatsappStatus(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/chats' && request.method === 'GET') {
+        return json(request, env, await whatsappChats(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/messages' && request.method === 'GET') {
+        return json(request, env, await whatsappMessages(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/unread' && request.method === 'GET') {
+        return json(request, env, await whatsappUnread(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/review' && request.method === 'POST') {
+        return json(request, env, await whatsappReview(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/send' && request.method === 'POST') {
+        const result = await sendWhatsAppText(request, env);
+        return result instanceof Response ? result : json(request, env, result);
       }
 
       if (url.pathname === '/bokun/install' && request.method === 'GET') return handleInstall(request, env);
