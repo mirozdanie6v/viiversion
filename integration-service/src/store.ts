@@ -113,6 +113,33 @@ export type WhatsAppMessageQuery = {
   limit?: number;
 };
 
+export type WhatsAppBrowserAuthState = {
+  storageState: string;
+  updatedAt: string;
+};
+
+export type WhatsAppBrowserRuntime = {
+  sessionId: string;
+  phase: 'pairing' | 'ready';
+  updatedAt: string;
+};
+
+export type WhatsAppBrowserSendResult = {
+  ok: boolean;
+  to: string;
+  sentAt: string;
+  source: string;
+  requestId?: string;
+  [key: string]: unknown;
+};
+
+type WhatsAppBrowserAuthMeta = {
+  chunks: number;
+  updatedAt: string;
+};
+
+const WHATSAPP_BROWSER_AUTH_CHUNK_SIZE = 400_000;
+
 function messageStorageKey(message: WhatsAppMessage) {
   const time = Date.parse(message.timestamp);
   const safeTime = Number.isFinite(time) ? time : Date.now();
@@ -457,6 +484,89 @@ export class IntegrationStore {
       return json({ chats: result, count: result.length });
     }
 
+    if (url.pathname === '/whatsapp/browser/auth' && request.method === 'POST') {
+      const input = await request.json<WhatsAppBrowserAuthState>();
+      if (!input.storageState || !input.updatedAt) return json({ error: 'invalid_browser_auth' }, 400);
+
+      const chunks = Math.max(1, Math.ceil(input.storageState.length / WHATSAPP_BROWSER_AUTH_CHUNK_SIZE));
+      const previous = await this.state.storage.get<WhatsAppBrowserAuthMeta>('wa:browser:auth-meta');
+      const entries: Record<string, string | WhatsAppBrowserAuthMeta> = {
+        'wa:browser:auth-meta': { chunks, updatedAt: input.updatedAt },
+      };
+      for (let index = 0; index < chunks; index += 1) {
+        entries[`wa:browser:auth:${String(index).padStart(4, '0')}`] =
+          input.storageState.slice(index * WHATSAPP_BROWSER_AUTH_CHUNK_SIZE, (index + 1) * WHATSAPP_BROWSER_AUTH_CHUNK_SIZE);
+      }
+      await this.state.storage.put(entries);
+      if (previous && previous.chunks > chunks) {
+        const stale = Array.from({ length: previous.chunks - chunks }, (_, offset) =>
+          `wa:browser:auth:${String(chunks + offset).padStart(4, '0')}`
+        );
+        await this.state.storage.delete(stale);
+      }
+      return json({ ok: true, chunks });
+    }
+
+    if (url.pathname === '/whatsapp/browser/auth' && request.method === 'GET') {
+      const meta = await this.state.storage.get<WhatsAppBrowserAuthMeta>('wa:browser:auth-meta');
+      if (!meta?.chunks) return json({ value: null });
+      const keys = Array.from({ length: meta.chunks }, (_, index) =>
+        `wa:browser:auth:${String(index).padStart(4, '0')}`
+      );
+      const values = await this.state.storage.get<string>(keys);
+      const storageState = keys.map(key => values.get(key) ?? '').join('');
+      if (!storageState) return json({ value: null });
+      return json({ value: { storageState, updatedAt: meta.updatedAt } satisfies WhatsAppBrowserAuthState });
+    }
+
+    if (url.pathname === '/whatsapp/browser/auth' && request.method === 'DELETE') {
+      const meta = await this.state.storage.get<WhatsAppBrowserAuthMeta>('wa:browser:auth-meta');
+      const keys = ['wa:browser:auth-meta'];
+      if (meta?.chunks) {
+        keys.push(...Array.from({ length: meta.chunks }, (_, index) =>
+          `wa:browser:auth:${String(index).padStart(4, '0')}`
+        ));
+      }
+      await this.state.storage.delete(keys);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/browser/runtime' && request.method === 'POST') {
+      const input = await request.json<WhatsAppBrowserRuntime>();
+      if (!input.sessionId || !input.updatedAt || !['pairing', 'ready'].includes(input.phase)) {
+        return json({ error: 'invalid_browser_runtime' }, 400);
+      }
+      await this.state.storage.put('wa:browser:runtime', input);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/browser/runtime' && request.method === 'GET') {
+      const value = await this.state.storage.get<WhatsAppBrowserRuntime>('wa:browser:runtime');
+      return json({ value: value ?? null });
+    }
+
+    if (url.pathname === '/whatsapp/browser/runtime' && request.method === 'DELETE') {
+      await this.state.storage.delete('wa:browser:runtime');
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/browser/send-result' && request.method === 'POST') {
+      const input = await request.json<{ requestId?: string; result?: WhatsAppBrowserSendResult }>();
+      const requestId = input.requestId?.trim() ?? '';
+      if (!/^[A-Za-z0-9._:-]{1,128}$/.test(requestId) || !input.result) {
+        return json({ error: 'invalid_browser_send_result' }, 400);
+      }
+      await this.state.storage.put(`wa:browser:send:${requestId}`, input.result);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/browser/send-result' && request.method === 'GET') {
+      const requestId = (url.searchParams.get('requestId') ?? '').trim();
+      if (!/^[A-Za-z0-9._:-]{1,128}$/.test(requestId)) return json({ value: null });
+      const value = await this.state.storage.get<WhatsAppBrowserSendResult>(`wa:browser:send:${requestId}`);
+      return json({ value: value ?? null });
+    }
+
     return json({ error: 'not_found' }, 404);
   }
 }
@@ -657,4 +767,58 @@ export async function reviewWhatsAppMessages(env: StoreEnv, ids: string[], revie
     body: JSON.stringify({ ids, reviewedAt }),
   });
   return result.reviewed;
+}
+
+export async function saveWhatsAppBrowserAuthState(env: StoreEnv, value: WhatsAppBrowserAuthState) {
+  await call(env, '/whatsapp/browser/auth', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function getWhatsAppBrowserAuthState(env: StoreEnv) {
+  const result = await call<{ value: WhatsAppBrowserAuthState | null }>(env, '/whatsapp/browser/auth');
+  return result.value;
+}
+
+export async function clearWhatsAppBrowserAuthState(env: StoreEnv) {
+  await call(env, '/whatsapp/browser/auth', { method: 'DELETE' });
+}
+
+export async function saveWhatsAppBrowserRuntime(env: StoreEnv, value: WhatsAppBrowserRuntime) {
+  await call(env, '/whatsapp/browser/runtime', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function getWhatsAppBrowserRuntime(env: StoreEnv) {
+  const result = await call<{ value: WhatsAppBrowserRuntime | null }>(env, '/whatsapp/browser/runtime');
+  return result.value;
+}
+
+export async function clearWhatsAppBrowserRuntime(env: StoreEnv) {
+  await call(env, '/whatsapp/browser/runtime', { method: 'DELETE' });
+}
+
+export async function saveWhatsAppBrowserSendResult(
+  env: StoreEnv,
+  requestId: string,
+  result: WhatsAppBrowserSendResult,
+) {
+  await call(env, '/whatsapp/browser/send-result', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ requestId, result }),
+  });
+}
+
+export async function getWhatsAppBrowserSendResult(env: StoreEnv, requestId: string) {
+  const result = await call<{ value: WhatsAppBrowserSendResult | null }>(
+    env,
+    '/whatsapp/browser/send-result?requestId=' + encodeURIComponent(requestId),
+  );
+  return result.value;
 }
