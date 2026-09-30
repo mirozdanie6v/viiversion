@@ -1,4 +1,4 @@
-# Release notes — 0.8.0
+# Release notes — 0.8.1
 
 Initial OpenAI Plugin submission for VIIVERSION Brand Architect.
 
@@ -10,3 +10,5 @@ Initial OpenAI Plugin submission for VIIVERSION Brand Architect.
 - Adds public privacy, terms and support pages.
 - Adds a domain-verification challenge endpoint.
 - Adds automatic deletion scheduling for persistent run state after 30 days.
+
+- Hardens structured-output parsing and retry behavior for Workers AI specialist calls.
