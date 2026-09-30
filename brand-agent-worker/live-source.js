@@ -92,6 +92,7 @@ function classify(task,surface){
     website:/website|site|сайт|homepage|главн|hero|ux|ui/.test(s),
     outreach:/outreach|рассыл|follow.?up|фоллоу|whatsapp|telegram|email|lead|лид/.test(s),
     market:/market|рынок|positioning|позиционир|audience|аудитор|channel|канал/.test(s),
+    gtm:/\bgtm\b|go.?to.?market|выход.*рынок|вывод.*рынок/.test(s),
     distribution:/distribution|дистриб|marketplace|маркетплейс|product hunt|plugin|плагин|app directory|wordpress|odoo|shopify|clover|square|partner|партнер|integrator|интегратор/.test(s),
     product:/product|продукт|software|booking|бронир|price|цена|readiness|готов|status|статус/.test(s),
     proof:/proof|доказ|case|кейс|demo|демо|maturity|внедрен|production|prototype|прототип/.test(s),
@@ -105,7 +106,7 @@ export function buildLiveSourcePlan(args={}){
   const tabs=new Set();
 
   docs.add("corporate");
-  if(flags.market||flags.distribution||flags.outreach||args.final_public) docs.add("globalBrand");
+  if(flags.market||flags.gtm||flags.distribution||flags.outreach||args.final_public) docs.add("globalBrand");
   if(flags.outreach) docs.add("salesPlaybook");
   if(flags.website) {
     docs.add("websiteStrategy");
@@ -113,20 +114,23 @@ export function buildLiveSourcePlan(args={}){
     docs.add("homepageArchitecture");
   }
 
-  if(flags.product||flags.proof||flags.market||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
+  if(flags.product||flags.proof||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
     tabs.add("Entity_Registry");
   }
-  if(flags.product||flags.market||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
+  if(flags.product||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
     for(const x of TAB_GROUPS.commercial) tabs.add(x);
   }
-  if(flags.proof||flags.market||flags.distribution||flags.outreach||flags.website||args.final_public){
+  if(flags.proof||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public){
     tabs.add("Assets");
   }
   if(flags.website){
     for(const x of TAB_GROUPS.website) tabs.add(x);
   }
-  if(flags.market){
+  if(flags.market||flags.gtm){
     for(const x of TAB_GROUPS.market) tabs.add(x);
+  }
+  if(flags.gtm){
+    for(const x of ["Distribution_Matrix","Launch_Waves","GTM_Motions","Distribution_Pipeline","Daily_GTM"]) tabs.add(x);
   }
   if(flags.distribution){
     for(const x of TAB_GROUPS.distribution) tabs.add(x);
@@ -153,7 +157,7 @@ export function buildLiveSourcePlan(args={}){
   if(tabs.size) requiredClasses.push("L2_commercial_matrix");
   if(tabs.has("Assets")) requiredClasses.push("proof_registry");
   if(flags.website) requiredClasses.push("website_projection");
-  if(flags.distribution) requiredClasses.push("distribution_state");
+  if(flags.distribution||flags.gtm) requiredClasses.push("distribution_state");
   if(flags.outreach) requiredClasses.push("sales_pipeline_state");
 
   return {
