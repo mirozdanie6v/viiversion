@@ -1,0 +1,40 @@
+{
+  "name": "viiversion-brand-architect",
+  "version": "0.8.0",
+  "description": "VIIVERSION Brand Architect for evidence-bounded brand, product, website, proof, GTM and productization workflows.",
+  "author": {
+    "name": "Olga Nogtich",
+    "url": "https://viiversion.com"
+  },
+  "homepage": "https://viiversion.com",
+  "repository": "https://github.com/mirozdanie6v/viiversion",
+  "license": "Proprietary",
+  "keywords": [
+    "brand-architecture",
+    "product-strategy",
+    "website-audit",
+    "proof",
+    "gtm",
+    "productization"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "VIIVERSION Brand Architect",
+    "shortDescription": "Brand, product & GTM copilot",
+    "longDescription": "VIIVERSION Brand Architect helps structure and audit brand, product, website, proof, GTM and productization work using explicit evidence boundaries and governance. It separates observed current state from canonical targets, preserves proof maturity, and returns missing-evidence requirements instead of inventing current facts.",
+    "developerName": "Olga Nogtich",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://viiversion.com",
+    "defaultPrompt": [
+      "Audit this VIIVERSION brand or website material against the approved brand and proof rules.",
+      "Plan a VIIVERSION product or GTM direction without inventing current commercial facts.",
+      "Check whether this public VIIVERSION claim is supported by the available proof.",
+      "Structure this VIIVERSION brand or product task and identify the safest next step."
+    ]
+  }
+}
