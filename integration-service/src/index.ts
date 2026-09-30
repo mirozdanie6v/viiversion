@@ -182,7 +182,7 @@ export default {
         headers: {
           'access-control-allow-origin': origin,
           'access-control-allow-methods': 'GET,POST,OPTIONS',
-          'access-control-allow-headers': 'content-type,authorization',
+          'access-control-allow-headers': 'content-type,authorization,x-viiversion-booking-intent,x-viiversion-booking-test-token',
           'access-control-max-age': '600',
         },
       });
