@@ -34,7 +34,7 @@ description: >
 1. [brand-kernel.yaml](references/brand-kernel.yaml)
 2. [source-manifest.yaml](references/source-manifest.yaml)
 
-Затем классифицируй задачу по четырём координатам:
+Затем классифицируй задачу по пяти координатам:
 
 - **surface** — website / product page / software page / industry / partner /
   enterprise / profile / market / distribution / campaign / platform / launch /
@@ -43,7 +43,15 @@ description: >
   other explicit audience;
 - **goal** — clarity / credibility / discovery / conversion / partnership /
   adoption / implementation / governance;
+- **task mode** — audit / redesign / synthesis / final-copy / implementation /
+  governance. Это обязательная классификация: audit и redesign нельзя смешивать;
 - **freshness risk** — low / medium / high.
+
+Если пользователь явно говорит, что существующая подача, структура, copy или
+архитектура его не устраивает и просит сделать заново, классифицируй задачу как
+**redesign**, даже если одновременно нужен audit причин. В redesign текущая
+страница и старый website-copy являются наблюдаемым материалом для диагностики,
+а не ответом, который нужно восстановить.
 
 Не показывай эту внутреннюю классификацию пользователю, если она не нужна для
 ответа.
@@ -120,6 +128,28 @@ evidence bundle конкретного run.
 
 GitHub implementation может быть устаревшим. Если он конфликтует с upstream,
 зафиксируй drift и проектируй исправление от upstream.
+
+### Redesign precedence
+
+L1 identity/ontology, L2 commercial truth, Proof Registry и L3 market/brand rules
+остаются жёсткими ограничениями. Но channel projection, Homepage Architecture,
+старый approved copy и текущая реализация **не являются неизменяемым creative
+target**, когда пользователь явно просит redesign или отвергает существующую
+подачу.
+
+В режиме redesign:
+- используй L4/L5 как источник требований, ограничений, известных ошибок,
+  доступного proof и истории решений;
+- не возвращай старый H1/lead/структуру только потому, что они APPROVED;
+- отделяй hard constraint от legacy presentation decision;
+- создавай новую candidate projection внутри L1-L3 и фактической L2/Proof базы;
+- если новая projection меняет только presentation layer, она не требует
+  canonical L1-L3 change;
+- если пользователь просит сразу внедрить новую projection, проведи обычный
+  website approval/change-control перед production implementation.
+
+Явное недовольство пользователя существующей presentation считается сильным
+сигналом, что восстановление старого presentation decision не решает задачу.
 
 ## 6. Что агент имеет право изобретать
 
@@ -206,12 +236,15 @@ Orchestrator единолично владеет:
 4. **MARKET_GTM — Стратег рынка, GTM и дистрибуции.** Выбирает market projection,
    GTM motion, distribution path, milestone, KPI и feedback loop. Не выполняет
    отправку/разработку сам.
-5. **CHANNEL_ARCHITECT — Архитектор проекции и коммуникации.** Строит конкретную
-   channel/surface projection, narrative architecture, message hierarchy и CTA,
-   не переписывая upstream canon.
-6. **PROOF_ANALYST — Аналитик доказательств.** Сопоставляет claim ↔ proof,
+5. **PRESENTATION_SYNTHESIS — Директор синтеза presentation.** Для redesign и
+   новой структуры создаёт новую концепцию из цели, аудитории, buyer jobs,
+   канонических сущностей и proof. Не восстанавливает legacy copy по умолчанию.
+6. **CHANNEL_ARCHITECT — Архитектор проекции и коммуникации.** Превращает
+   выбранную synthesis-концепцию в конкретную channel/surface projection,
+   narrative architecture, message hierarchy и CTA, не переписывая upstream canon.
+7. **PROOF_ANALYST — Аналитик доказательств.** Сопоставляет claim ↔ proof,
    контролирует maturity и ослабляет неподтверждённые claims.
-7. **BRAND_QA — Независимый ревьюер бренда и governance.** Выполняет G1–G15,
+8. **BRAND_QA — Независимый ревьюер бренда и governance.** Выполняет G1–G15,
    выдаёт PASS/FAIL и точный rework target. Не исправляет собственное заключение
    скрытым изменением фактов.
 
@@ -272,6 +305,13 @@ Proof не является декором.
 
 Для website-задач не используй старую кодовую страницу как первичный brief.
 
+Сначала определи mode:
+
+- **audit** — сравнить observed current с действующими правилами и решениями;
+- **redesign** — понять, почему current presentation не решает задачу, затем
+  создать новую candidate projection;
+- **implementation** — внедрить уже выбранное/одобренное projection-решение.
+
 Перед финальной публичной структурой или implementation refresh:
 - Website Channel Strategy & Projection;
 - Website UX & Design System;
@@ -279,8 +319,15 @@ Proof не является декором.
 - relevant Homepage_Blocks / Website_Decisions;
 - Products / Assets, которые используются в блоке.
 
+В redesign Website Strategy / Homepage Architecture задают ограничения и known
+lessons, но не заставляют повторять существующий Hero, порядок блоков или copy.
+Если пользователь отверг текущую подачу, старая presentation используется как
+OBSERVED_CURRENT, а новая конструкция выводится заново из L1-L3 + buyer goal +
+актуальной L2/Proof базы.
+
 Если решение имеет статус DRAFT/REVIEW, не выдавай его за утверждённый production
-contract.
+contract. Если старое решение APPROVED, это означает его текущий governance
+status, а не вечный запрет предложить новую candidate presentation.
 
 ## 14. Proposal
 
