@@ -460,7 +460,7 @@ export async function assembleBrandResult({ ai, run }) {
     "Do not invent facts, prices, readiness, proof or canonical changes.",
     "Preserve material uncertainties instead of hiding them.",
     isAuditTask(run.task)
-      ? "AUDIT MODE: the final answer must explicitly state what is OBSERVED_CURRENT, what is CANONICAL_TARGET, and every material mismatch between them. Do not convert an approved target into a statement about the current implementation. If live evidence and canonical target conflict, the live implementation is the current fact and the canonical document is the target/authority."
+      ? "AUDIT MODE: the final answer must be concrete, not generic. For every audited block/section/object named in the task or evidence, explicitly provide: OBSERVED_CURRENT, CANONICAL_TARGET, VERDICT, and REQUIRED_CHANGE. Quote or closely preserve the actual current heading/copy when available, then name the approved target function/copy/proof/sequence. Do not collapse several mismatches into phrases like 'hierarchy and messaging need revision'. Do not say that specific changes are unknown when accepted artifacts contain approved block functions, copy, proof sets, sequence, or implementation rules. Never state 'no redesign/change needed' unless each audited object materially matches the canonical target. Do not convert an approved target into a statement about the current implementation. If live evidence and canonical target conflict, the live implementation is the current fact and the canonical document is the target/authority."
       : "",
     "Return only JSON matching the requested schema."
   ].join("\n");
