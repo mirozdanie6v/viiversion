@@ -19,9 +19,11 @@ import {
   sendWhatsAppText,
   verifyWhatsAppWebhook,
   whatsappChats,
+  whatsappContacts,
   whatsappMessages,
   whatsappReview,
   whatsappStatus,
+  whatsappSyncStatus,
   whatsappUnread,
 } from './whatsapp';
 
@@ -235,6 +237,14 @@ export default {
 
       if (url.pathname === '/api/whatsapp/chats' && request.method === 'GET') {
         return json(request, env, await whatsappChats(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/contacts' && request.method === 'GET') {
+        return json(request, env, await whatsappContacts(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/sync-status' && request.method === 'GET') {
+        return json(request, env, await whatsappSyncStatus(request, env));
       }
 
       if (url.pathname === '/api/whatsapp/messages' && request.method === 'GET') {

@@ -37,6 +37,32 @@ paths:
       responses:
         '200':
           description: Recent conversations
+  /api/whatsapp/contacts:
+    get:
+      operationId: whatsappListContacts
+      summary: List or search contacts synchronized from WhatsApp Business
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 200
+      responses:
+        '200':
+          description: Synchronized contacts
+  /api/whatsapp/sync-status:
+    get:
+      operationId: whatsappSyncStatus
+      summary: Get WhatsApp Coexistence history/contact synchronization state
+      responses:
+        '200':
+          description: Synchronization progress and last echo state
   /api/whatsapp/messages:
     get:
       operationId: whatsappGetMessages

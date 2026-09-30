@@ -20,6 +20,7 @@ export type RestCredentials = {
 };
 
 export type WhatsAppMessageDirection = 'inbound' | 'outbound';
+export type WhatsAppMessageSource = 'cloud_api' | 'business_app' | 'history' | 'api';
 
 export type WhatsAppMessage = {
   id: string;
@@ -38,6 +39,32 @@ export type WhatsAppMessage = {
   status?: string;
   statusUpdatedAt?: string;
   reviewedAt?: string;
+  source?: WhatsAppMessageSource;
+  historyPhase?: number;
+};
+
+export type WhatsAppContact = {
+  peer: string;
+  fullName?: string;
+  firstName?: string;
+  username?: string;
+  userId?: string;
+  updatedAt: string;
+};
+
+export type WhatsAppSyncState = {
+  history?: {
+    phase?: number;
+    progress?: number;
+    chunkOrder?: number;
+    updatedAt: string;
+    error?: string;
+  };
+  contacts?: {
+    updatedAt: string;
+    count?: number;
+  };
+  lastEchoAt?: string;
 };
 
 export type WhatsAppStatus = {
@@ -191,6 +218,60 @@ export class IntegrationStore {
       return json({ value: value ?? null });
     }
 
+    if (url.pathname === '/whatsapp/contact' && request.method === 'POST') {
+      const input = await request.json<{ action?: string; contact?: WhatsAppContact }>();
+      const contact = input.contact;
+      if (!contact?.peer) return json({ error: 'invalid_contact' }, 400);
+      const key = `wa:contact:${contact.peer}`;
+      if (input.action === 'remove') {
+        await this.state.storage.delete(key);
+        return json({ ok: true, removed: true });
+      }
+      await this.state.storage.put(key, contact);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/contacts' && request.method === 'GET') {
+      const limit = normalizedLimit(Number(url.searchParams.get('limit') ?? '200'), 200, 1000);
+      const query = (url.searchParams.get('q') ?? '').trim().toLocaleLowerCase();
+      const values = await this.state.storage.list<WhatsAppContact>({
+        prefix: 'wa:contact:',
+        limit: 5000,
+      });
+      const contacts: WhatsAppContact[] = [];
+      for (const contact of values.values()) {
+        if (
+          query &&
+          ![contact.peer, contact.fullName ?? '', contact.firstName ?? '', contact.username ?? '', contact.userId ?? '']
+            .join('\n')
+            .toLocaleLowerCase()
+            .includes(query)
+        ) continue;
+        contacts.push(contact);
+        if (contacts.length >= limit) break;
+      }
+      contacts.sort((a, b) => (a.fullName ?? a.peer).localeCompare(b.fullName ?? b.peer));
+      return json({ contacts, count: contacts.length });
+    }
+
+    if (url.pathname === '/whatsapp/sync-state' && request.method === 'POST') {
+      const patch = await request.json<WhatsAppSyncState>();
+      const current = (await this.state.storage.get<WhatsAppSyncState>('wa:sync-state')) ?? {};
+      const next: WhatsAppSyncState = {
+        ...current,
+        ...patch,
+        history: patch.history ? { ...current.history, ...patch.history } : current.history,
+        contacts: patch.contacts ? { ...current.contacts, ...patch.contacts } : current.contacts,
+      };
+      await this.state.storage.put('wa:sync-state', next);
+      return json({ ok: true, value: next });
+    }
+
+    if (url.pathname === '/whatsapp/sync-state' && request.method === 'GET') {
+      const value = await this.state.storage.get<WhatsAppSyncState>('wa:sync-state');
+      return json({ value: value ?? {} });
+    }
+
     if (url.pathname === '/whatsapp/message' && request.method === 'POST') {
       const input = await request.json<WhatsAppMessage>();
       if (!input.id || !input.peer || !input.timestamp) return json({ error: 'invalid_message' }, 400);
@@ -199,14 +280,19 @@ export class IntegrationStore {
       await this.state.storage.transaction(async txn => {
         const existingKey = await txn.get<string>(idKey);
         const pendingStatus = await txn.get<WhatsAppStatus>(`wa:status:${input.id}`);
+        const contact = await txn.get<WhatsAppContact>(`wa:contact:${input.peer}`);
+        const enriched: WhatsAppMessage = {
+          ...input,
+          profileName: input.profileName ?? contact?.fullName ?? contact?.firstName,
+        };
         if (existingKey) {
           const existing = await txn.get<WhatsAppMessage>(existingKey);
           const merged: WhatsAppMessage = {
-            ...(existing ?? input),
-            ...input,
-            reviewedAt: existing?.reviewedAt ?? input.reviewedAt,
-            status: pendingStatus?.status ?? input.status ?? existing?.status,
-            statusUpdatedAt: pendingStatus?.timestamp ?? input.statusUpdatedAt ?? existing?.statusUpdatedAt,
+            ...(existing ?? enriched),
+            ...enriched,
+            reviewedAt: existing?.reviewedAt ?? enriched.reviewedAt,
+            status: pendingStatus?.status ?? enriched.status ?? existing?.status,
+            statusUpdatedAt: pendingStatus?.timestamp ?? enriched.statusUpdatedAt ?? existing?.statusUpdatedAt,
           };
           await txn.put(existingKey, merged);
           return;
@@ -214,9 +300,9 @@ export class IntegrationStore {
 
         const key = messageStorageKey(input);
         const value: WhatsAppMessage = {
-          ...input,
-          status: pendingStatus?.status ?? input.status,
-          statusUpdatedAt: pendingStatus?.timestamp ?? input.statusUpdatedAt,
+          ...enriched,
+          status: pendingStatus?.status ?? enriched.status,
+          statusUpdatedAt: pendingStatus?.timestamp ?? enriched.statusUpdatedAt,
         };
         await txn.put(key, value);
         await txn.put(idKey, key);
@@ -339,6 +425,13 @@ export class IntegrationStore {
       const result = [...chats.values()]
         .sort((a, b) => Date.parse(b.lastMessageAt) - Date.parse(a.lastMessageAt))
         .slice(0, limit);
+
+      for (const chat of result) {
+        if (chat.profileName) continue;
+        const contact = await this.state.storage.get<WhatsAppContact>(`wa:contact:${chat.peer}`);
+        if (contact?.fullName || contact?.firstName) chat.profileName = contact.fullName ?? contact.firstName;
+      }
+
       return json({ chats: result, count: result.length });
     }
 
@@ -446,6 +539,38 @@ export async function saveWhatsAppWebhookConfig(env: StoreEnv, value: WhatsAppWe
 
 export async function getWhatsAppWebhookConfig(env: StoreEnv) {
   const result = await call<{ value: WhatsAppWebhookConfig | null }>(env, '/whatsapp/webhook-config');
+  return result.value;
+}
+
+export async function saveWhatsAppContact(
+  env: StoreEnv,
+  value: WhatsAppContact,
+  action: 'upsert' | 'remove' = 'upsert',
+) {
+  await call(env, '/whatsapp/contact', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action, contact: value }),
+  });
+}
+
+export async function listWhatsAppContacts(env: StoreEnv, query = '', limit = 200) {
+  const params = new URLSearchParams({ limit: String(normalizedLimit(limit, 200, 1000)) });
+  if (query) params.set('q', query);
+  return call<{ contacts: WhatsAppContact[]; count: number }>(env, '/whatsapp/contacts?' + params.toString());
+}
+
+export async function saveWhatsAppSyncState(env: StoreEnv, value: WhatsAppSyncState) {
+  const result = await call<{ ok: boolean; value: WhatsAppSyncState }>(env, '/whatsapp/sync-state', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+  return result.value;
+}
+
+export async function getWhatsAppSyncState(env: StoreEnv) {
+  const result = await call<{ value: WhatsAppSyncState }>(env, '/whatsapp/sync-state');
   return result.value;
 }
 
