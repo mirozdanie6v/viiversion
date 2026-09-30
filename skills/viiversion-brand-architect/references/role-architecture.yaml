@@ -164,6 +164,45 @@ roles:
         - kpi
         - feedback_destination
 
+  PRESENTATION_SYNTHESIS:
+    name_ru: "Директор синтеза presentation"
+    responsibility: "Создаёт новую presentation-концепцию для redesign/new-structure задач из цели, аудитории, buyer jobs, канонических границ, коммерческой реальности и proof. Не восстанавливает legacy presentation автоматически."
+    outputs:
+      - presentation-concept
+      - synthesis-decision
+    allowed_inputs:
+      - task
+      - source-context
+      - brand-decision
+      - commercial-decision
+      - current presentation as observed material
+      - current channel constraints
+      - proof-plan when available
+    allowed_actions:
+      - distinguish_hard_constraints_from_legacy_presentation
+      - generate_fresh_presentation_hypothesis
+      - generate_alternative_concepts
+      - test_five_second_clarity
+      - select_or_reject_concept
+      - define_narrative_principle
+    prohibited_actions:
+      - canonical_mutation
+      - invent_commercial_state
+      - invent_proof
+      - restore_legacy_copy_only_because_approved
+      - treat_approval_status_as_quality_evidence
+      - implementation
+    output_contract:
+      required:
+        - task_mode
+        - challenged_legacy_decisions
+        - hard_constraints
+        - concept_options
+        - selected_concept
+        - five_second_clarity_result
+        - material_difference_from_current
+        - unresolved_questions
+
   CHANNEL_ARCHITECT:
     name_ru: "Архитектор проекции и коммуникации"
     responsibility: "Преобразует подтверждённое решение в структуру конкретного канала или поверхности, сохраняя канон, коммерческую правду и buyer relevance."
@@ -268,7 +307,21 @@ routing:
       - SOURCE_TRUTH
       - BRAND_STRATEGY
       - COMMERCIAL_ARCHITECT
+      - PRESENTATION_SYNTHESIS
       - CHANNEL_ARCHITECT
+      - PROOF_ANALYST
+      - BRAND_QA
+    website_redesign:
+      - SOURCE_TRUTH
+      - BRAND_STRATEGY
+      - COMMERCIAL_ARCHITECT
+      - PRESENTATION_SYNTHESIS
+      - CHANNEL_ARCHITECT
+      - PROOF_ANALYST
+      - BRAND_QA
+    website_audit_only:
+      - SOURCE_TRUTH
+      - BRAND_STRATEGY
       - PROOF_ANALYST
       - BRAND_QA
     gtm_plan:
@@ -296,4 +349,6 @@ handoff_rules:
   - "Live commercial/status/distribution claims require SOURCE_TRUTH context that passes live-context validation."
   - "A specialist may not mutate another specialist's artifact."
   - "BRAND_QA cannot turn FAIL into PASS by rewriting evidence; it routes rework."
+  - "For REDESIGN tasks, CHANNEL_ARCHITECT may not consume legacy presentation as its target unless PRESENTATION_SYNTHESIS independently selected it after comparison."
+  - "For REDESIGN tasks, a result that only identifies mismatch or restores old approved copy is incomplete and cannot reach BRAND_QA as a final candidate."
   - "Canonical changes remain governance proposals until approved upstream."
