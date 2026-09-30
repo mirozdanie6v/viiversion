@@ -19,6 +19,56 @@ export type RestCredentials = {
   updatedAt: string;
 };
 
+export type WhatsAppMessageDirection = 'inbound' | 'outbound';
+
+export type WhatsAppMessage = {
+  id: string;
+  peer: string;
+  from: string;
+  to: string;
+  direction: WhatsAppMessageDirection;
+  timestamp: string;
+  type: string;
+  text: string;
+  profileName?: string;
+  phoneNumberId?: string;
+  contextMessageId?: string;
+  mediaId?: string;
+  mimeType?: string;
+  status?: string;
+  statusUpdatedAt?: string;
+  reviewedAt?: string;
+};
+
+export type WhatsAppStatus = {
+  id: string;
+  status: string;
+  timestamp: string;
+  recipientId?: string;
+  conversationId?: string;
+  pricingCategory?: string;
+  billable?: boolean;
+};
+
+export type WhatsAppMessageQuery = {
+  peer?: string;
+  query?: string;
+  direction?: WhatsAppMessageDirection;
+  unreadOnly?: boolean;
+  limit?: number;
+};
+
+function messageStorageKey(message: WhatsAppMessage) {
+  const time = Date.parse(message.timestamp);
+  const safeTime = Number.isFinite(time) ? time : Date.now();
+  return `wa:message:${String(safeTime).padStart(13, '0')}:${message.id}`;
+}
+
+function normalizedLimit(value: number | undefined, fallback: number, max: number) {
+  if (!Number.isInteger(value)) return fallback;
+  return Math.min(Math.max(value as number, 1), max);
+}
+
 export class IntegrationStore {
   constructor(private readonly state: DurableObjectState) {}
 
@@ -67,6 +117,157 @@ export class IntegrationStore {
       const vendorId = url.searchParams.get('vendorId') ?? '';
       const value = await this.state.storage.get<RestCredentials>(`rest:${vendorId}`);
       return json({ value: value ?? null });
+    }
+
+    if (url.pathname === '/whatsapp/message' && request.method === 'POST') {
+      const input = await request.json<WhatsAppMessage>();
+      if (!input.id || !input.peer || !input.timestamp) return json({ error: 'invalid_message' }, 400);
+
+      const idKey = `wa:message-id:${input.id}`;
+      await this.state.storage.transaction(async txn => {
+        const existingKey = await txn.get<string>(idKey);
+        const pendingStatus = await txn.get<WhatsAppStatus>(`wa:status:${input.id}`);
+        if (existingKey) {
+          const existing = await txn.get<WhatsAppMessage>(existingKey);
+          const merged: WhatsAppMessage = {
+            ...(existing ?? input),
+            ...input,
+            reviewedAt: existing?.reviewedAt ?? input.reviewedAt,
+            status: pendingStatus?.status ?? input.status ?? existing?.status,
+            statusUpdatedAt: pendingStatus?.timestamp ?? input.statusUpdatedAt ?? existing?.statusUpdatedAt,
+          };
+          await txn.put(existingKey, merged);
+          return;
+        }
+
+        const key = messageStorageKey(input);
+        const value: WhatsAppMessage = {
+          ...input,
+          status: pendingStatus?.status ?? input.status,
+          statusUpdatedAt: pendingStatus?.timestamp ?? input.statusUpdatedAt,
+        };
+        await txn.put(key, value);
+        await txn.put(idKey, key);
+      });
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/status' && request.method === 'POST') {
+      const input = await request.json<WhatsAppStatus>();
+      if (!input.id || !input.status || !input.timestamp) return json({ error: 'invalid_status' }, 400);
+
+      const statusKey = `wa:status:${input.id}`;
+      await this.state.storage.transaction(async txn => {
+        await txn.put(statusKey, input);
+        const messageKey = await txn.get<string>(`wa:message-id:${input.id}`);
+        if (!messageKey) return;
+        const message = await txn.get<WhatsAppMessage>(messageKey);
+        if (!message) return;
+        await txn.put(messageKey, {
+          ...message,
+          status: input.status,
+          statusUpdatedAt: input.timestamp,
+        } satisfies WhatsAppMessage);
+      });
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/review' && request.method === 'POST') {
+      const input = await request.json<{ ids: string[]; reviewedAt: string }>();
+      const ids = [...new Set(input.ids ?? [])].filter(Boolean).slice(0, 100);
+      let reviewed = 0;
+
+      for (const id of ids) {
+        const messageKey = await this.state.storage.get<string>(`wa:message-id:${id}`);
+        if (!messageKey) continue;
+        const message = await this.state.storage.get<WhatsAppMessage>(messageKey);
+        if (!message) continue;
+        await this.state.storage.put(messageKey, { ...message, reviewedAt: input.reviewedAt } satisfies WhatsAppMessage);
+        reviewed += 1;
+      }
+      return json({ ok: true, reviewed });
+    }
+
+    if (url.pathname === '/whatsapp/messages' && request.method === 'GET') {
+      const limit = normalizedLimit(Number(url.searchParams.get('limit') ?? '100'), 100, 200);
+      const peer = (url.searchParams.get('peer') ?? '').trim();
+      const query = (url.searchParams.get('q') ?? '').trim().toLocaleLowerCase();
+      const directionRaw = (url.searchParams.get('direction') ?? '').trim();
+      const direction: WhatsAppMessageDirection | undefined =
+        directionRaw === 'inbound' || directionRaw === 'outbound' ? directionRaw : undefined;
+      const unreadOnly = url.searchParams.get('unread') === '1';
+      const scanLimit = Math.min(Math.max(limit * 20, 500), 5000);
+      const values = await this.state.storage.list<WhatsAppMessage>({
+        prefix: 'wa:message:',
+        reverse: true,
+        limit: scanLimit,
+      });
+
+      const messages: WhatsAppMessage[] = [];
+      for (const message of values.values()) {
+        if (peer && message.peer !== peer) continue;
+        if (direction && message.direction !== direction) continue;
+        if (unreadOnly && (message.direction !== 'inbound' || Boolean(message.reviewedAt))) continue;
+        if (
+          query &&
+          ![message.text, message.peer, message.profileName ?? '', message.type]
+            .join('\n')
+            .toLocaleLowerCase()
+            .includes(query)
+        ) {
+          continue;
+        }
+        messages.push(message);
+        if (messages.length >= limit) break;
+      }
+
+      return json({ messages, count: messages.length });
+    }
+
+    if (url.pathname === '/whatsapp/chats' && request.method === 'GET') {
+      const limit = normalizedLimit(Number(url.searchParams.get('limit') ?? '50'), 50, 100);
+      const values = await this.state.storage.list<WhatsAppMessage>({
+        prefix: 'wa:message:',
+        reverse: true,
+        limit: 5000,
+      });
+
+      const chats = new Map<
+        string,
+        {
+          peer: string;
+          profileName?: string;
+          lastMessageAt: string;
+          lastText: string;
+          lastDirection: WhatsAppMessageDirection;
+          lastType: string;
+          unreadCount: number;
+        }
+      >();
+
+      for (const message of values.values()) {
+        const existing = chats.get(message.peer);
+        if (!existing) {
+          chats.set(message.peer, {
+            peer: message.peer,
+            profileName: message.profileName,
+            lastMessageAt: message.timestamp,
+            lastText: message.text,
+            lastDirection: message.direction,
+            lastType: message.type,
+            unreadCount: message.direction === 'inbound' && !message.reviewedAt ? 1 : 0,
+          });
+          continue;
+        }
+
+        if (!existing.profileName && message.profileName) existing.profileName = message.profileName;
+        if (message.direction === 'inbound' && !message.reviewedAt) existing.unreadCount += 1;
+      }
+
+      const result = [...chats.values()]
+        .sort((a, b) => Date.parse(b.lastMessageAt) - Date.parse(a.lastMessageAt))
+        .slice(0, limit);
+      return json({ chats: result, count: result.length });
     }
 
     return json({ error: 'not_found' }, 404);
@@ -125,4 +326,54 @@ export async function saveRestCredentials(env: StoreEnv, value: RestCredentials)
 export async function getRestCredentials(env: StoreEnv, vendorId: string) {
   const result = await call<{ value: RestCredentials | null }>(env, '/rest?vendorId=' + encodeURIComponent(vendorId));
   return result.value;
+}
+
+export async function saveWhatsAppMessage(env: StoreEnv, value: WhatsAppMessage) {
+  await call(env, '/whatsapp/message', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function saveWhatsAppStatus(env: StoreEnv, value: WhatsAppStatus) {
+  await call(env, '/whatsapp/status', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function listWhatsAppMessages(env: StoreEnv, query: WhatsAppMessageQuery = {}) {
+  const params = new URLSearchParams();
+  if (query.peer) params.set('peer', query.peer);
+  if (query.query) params.set('q', query.query);
+  if (query.direction) params.set('direction', query.direction);
+  if (query.unreadOnly) params.set('unread', '1');
+  params.set('limit', String(normalizedLimit(query.limit, 100, 200)));
+  return call<{ messages: WhatsAppMessage[]; count: number }>(env, '/whatsapp/messages?' + params.toString());
+}
+
+export async function listWhatsAppChats(env: StoreEnv, limit = 50) {
+  return call<{
+    chats: Array<{
+      peer: string;
+      profileName?: string;
+      lastMessageAt: string;
+      lastText: string;
+      lastDirection: WhatsAppMessageDirection;
+      lastType: string;
+      unreadCount: number;
+    }>;
+    count: number;
+  }>(env, '/whatsapp/chats?limit=' + encodeURIComponent(String(normalizedLimit(limit, 50, 100))));
+}
+
+export async function reviewWhatsAppMessages(env: StoreEnv, ids: string[], reviewedAt: string) {
+  const result = await call<{ ok: boolean; reviewed: number }>(env, '/whatsapp/review', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ids, reviewedAt }),
+  });
+  return result.reviewed;
 }
