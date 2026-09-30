@@ -1,6 +1,8 @@
 import { MARKET_TOOLS, executeMarketTool } from "./market.js";
 import { LIVE_SOURCE_TOOLS, buildLiveSourcePlan, validateLiveContext } from "./live-source.js";
 import { ROLE_TOOL, buildRolePlan } from "./roles.js";
+import { AGENT_RUNTIME_TOOLS, executeAgentRuntimeTool } from "./brand-run.js";
+export { BrandRunCoordinator } from "./brand-run.js";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -116,7 +118,7 @@ const BASE_TOOLS = [
   }
 ];
 
-const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS, ...LIVE_SOURCE_TOOLS, ROLE_TOOL];
+const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS, ...LIVE_SOURCE_TOOLS, ROLE_TOOL, ...AGENT_RUNTIME_TOOLS];
 
 function clean(value, max=5000) {
   return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
@@ -204,7 +206,7 @@ function validateBrand(text, finalPublic) {
   return { pass:!findings.some(f=>f.severity==="critical"), findings, sourceSnapshotDate:SNAPSHOT_DATE };
 }
 
-async function handleMcp(request) {
+async function handleMcp(request, env) {
   if (request.method === "OPTIONS") {
     return new Response(null,{status:204,headers:{
       "access-control-allow-origin":"*",
@@ -213,7 +215,7 @@ async function handleMcp(request) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-agent",version:"0.4.0",mcp:"/mcp"});
+    return json({ok:true,service:"viiversion-brand-agent",version:"0.5.0",mcp:"/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -228,7 +230,7 @@ async function handleMcp(request) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-agent",version:"0.4.0"},
+      serverInfo:{name:"viiversion-brand-agent",version:"0.5.0"},
       instructions:"Read-only VIIVERSION brand/product/market agent backend. Use it for brand grounding, market projection, GTM/distribution planning, productization, proof boundaries and deterministic Brand QA. Live Google Drive Source of Truth remains authoritative for final commercial, distribution and decision claims."
     });
   }
@@ -263,6 +265,14 @@ async function handleMcp(request) {
     if (name === "get_live_source_plan") return rpc(id,toolPayload(buildLiveSourcePlan(args)));
     if (name === "validate_live_context") return rpc(id,toolPayload(validateLiveContext(args)));
     if (name === "plan_agent_roles") return rpc(id,toolPayload(buildRolePlan(args)));
+    if (AGENT_RUNTIME_TOOLS.some((tool) => tool.name === name)) {
+      try {
+        const runtimeData = await executeAgentRuntimeTool(env, name, args);
+        return rpc(id, toolPayload(runtimeData));
+      } catch (error) {
+        return rpcError(id, -32000, `${error?.code ?? "AGENT_RUNTIME_ERROR"}: ${error?.message ?? error}`);
+      }
+    }
     const marketData = executeMarketTool(name,args);
     if (marketData !== null) return rpc(id,toolPayload(marketData));
     return rpcError(id,-32602,"Unknown tool");
@@ -271,12 +281,12 @@ async function handleMcp(request) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
-      return json({ok:true,service:"viiversion-brand-agent",version:"0.4.0",mcp:"https://agent.viiversion.com/mcp"});
+      return json({ok:true,service:"viiversion-brand-agent",version:"0.5.0",mcp:"https://agent.viiversion.com/mcp"});
     }
-    if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleMcp(request);
+    if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleMcp(request, env);
     return json({ok:false,error:"not_found"},404);
   }
 };
