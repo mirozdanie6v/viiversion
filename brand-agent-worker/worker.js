@@ -231,7 +231,7 @@ async function handleMcp(request, env) {
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
       serverInfo:{name:"viiversion-brand-agent",version:"0.5.0"},
-      instructions:"Read-only VIIVERSION brand/product/market agent backend. Use it for brand grounding, market projection, GTM/distribution planning, productization, proof boundaries and deterministic Brand QA. Live Google Drive Source of Truth remains authoritative for final commercial, distribution and decision claims."
+      instructions:"VIIVERSION Brand Architect backend with persistent Durable Object runs, isolated Workers AI specialist-role execution, artifact acceptance/rejection handoffs, brand/product/market planning and Brand QA. Live Google Drive Source of Truth remains authoritative for final commercial, distribution and decision claims; source-truth execution must receive brokered evidence."
     });
   }
   if (method === "tools/list") return rpc(id,{tools:TOOLS});
