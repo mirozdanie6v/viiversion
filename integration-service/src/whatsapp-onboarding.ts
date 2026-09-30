@@ -1,11 +1,38 @@
 import { decryptSecret, encryptSecret } from './crypto';
 import type { Env } from './bokun';
-import { getWhatsAppConnection, saveWhatsAppConnection } from './store';
+import {
+  consumeWhatsAppOnboardingSession,
+  getWhatsAppConnection,
+  getWhatsAppOnboardingSession,
+  saveWhatsAppConnection,
+  saveWhatsAppOnboardingSession,
+} from './store';
 
 function required(value: string | undefined, name: string) {
   const clean = value?.trim();
   if (!clean) throw new Response(`Missing ${name}`, { status: 503 });
   return clean;
+}
+
+function assertAdmin(request: Request, env: Env) {
+  const expected = required(env.INTEGRATION_ADMIN_TOKEN, 'INTEGRATION_ADMIN_TOKEN');
+  const authorization = request.headers.get('authorization') ?? '';
+  const gatewayKey = request.headers.get('x-viiversion-integration-key') ?? '';
+  if (authorization !== 'Bearer ' + expected && gatewayKey !== expected) {
+    throw new Response('Unauthorized', { status: 401 });
+  }
+}
+
+export async function createWhatsAppOnboardingSession(request: Request, env: Env) {
+  assertAdmin(request, env);
+  const id = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+  const expiresAt = Date.now() + 15 * 60 * 1000;
+  await saveWhatsAppOnboardingSession(env, { id, expiresAt });
+  return {
+    ok: true,
+    expiresAt: new Date(expiresAt).toISOString(),
+    url: 'https://integration.viiversion.com/whatsapp/connect?session=' + encodeURIComponent(id),
+  };
 }
 
 function graphVersion(env: Env) {
@@ -28,13 +55,19 @@ function html(body: string, status = 200) {
   });
 }
 
-export function whatsappConnectPage(env: Env) {
+export async function whatsappConnectPage(request: Request, env: Env) {
+  const sessionId = new URL(request.url).searchParams.get('session')?.trim() ?? '';
+  const session = sessionId ? await getWhatsAppOnboardingSession(env, sessionId) : { valid: false, value: null };
+  if (!session.valid) {
+    return html('<!doctype html><meta charset="utf-8"><title>VIIVERSION WhatsApp</title><body style="font-family:system-ui;background:#07101d;color:#fff;max-width:680px;margin:64px auto;padding:24px"><h1>Invalid or expired connection link</h1><p>Create a new one-time WhatsApp onboarding link from the VIIVERSION admin bridge.</p></body>', 403);
+  }
   const appId = env.META_APP_ID?.trim() ?? '';
   const configId = env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim() ?? '';
   const ready = Boolean(appId && configId && env.META_APP_SECRET?.trim() && env.DATA_ENCRYPTION_KEY?.trim());
 
   const safeAppId = JSON.stringify(appId);
   const safeConfigId = JSON.stringify(configId);
+  const safeSessionId = JSON.stringify(sessionId);
 
   return html(`<!doctype html>
 <html lang="en">
@@ -71,6 +104,7 @@ export function whatsappConnectPage(env: Env) {
 <script>
   const APP_ID = ${safeAppId};
   const CONFIG_ID = ${safeConfigId};
+  const ONBOARDING_SESSION = ${safeSessionId};
   const statusEl = document.getElementById('status');
   const button = document.getElementById('connect');
   let session = {};
@@ -115,7 +149,7 @@ export function whatsappConnectPage(env: Env) {
     const response = await fetch('/whatsapp/onboarding/complete', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code, ...session })
+      body: JSON.stringify({ code, onboardingSession: ONBOARDING_SESSION, ...session })
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload?.error?.message || payload?.error || 'Server onboarding failed');
@@ -220,13 +254,19 @@ async function phoneNumbers(env: Env, wabaId: string, token: string) {
 }
 
 export async function completeWhatsAppCoexistence(request: Request, env: Env) {
-  const input = await request.json<{ code?: string; wabaId?: string; phoneNumberId?: string }>();
+  const input = await request.json<{ code?: string; wabaId?: string; phoneNumberId?: string; onboardingSession?: string }>();
   const code = input.code?.trim() ?? '';
   const wabaId = input.wabaId?.trim() ?? '';
   const requestedPhoneNumberId = input.phoneNumberId?.trim() ?? '';
+  const onboardingSession = input.onboardingSession?.trim() ?? '';
 
-  if (!code || !/^\d+$/.test(wabaId)) {
-    return Response.json({ error: { message: 'Meta authorization code and WABA ID are required' } }, { status: 400 });
+  if (!code || !/^\d+$/.test(wabaId) || !onboardingSession) {
+    return Response.json({ error: { message: 'Meta authorization code, WABA ID, and onboarding session are required' } }, { status: 400 });
+  }
+
+  const session = await consumeWhatsAppOnboardingSession(env, onboardingSession);
+  if (!session.valid) {
+    return Response.json({ error: { message: 'Onboarding session is invalid or expired' } }, { status: 401 });
   }
 
   const token = await exchangeCode(env, code);
