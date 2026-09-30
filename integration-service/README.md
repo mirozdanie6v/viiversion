@@ -115,3 +115,21 @@ The phone-number access token and phone-number ID do not need to be copied into 
 ### Meta-side prerequisites
 
 The Meta app must be configured for WhatsApp Embedded Signup / Tech Provider onboarding and released with the permissions required by Meta for customer onboarding. Coexistence must be launched through the WhatsApp Business App onboarding feature rather than normal Cloud API number migration.
+
+
+## Stored Meta configuration
+
+Meta application configuration can be provisioned through the private integration API instead of GitHub or Cloudflare secrets:
+
+- `POST /admin/whatsapp/meta-config` with `appId`, `appSecret`, and `embeddedSignupConfigId`.
+- `GET /admin/whatsapp/meta-config` returns only safe setup values.
+
+The Meta App Secret is encrypted at rest with the existing `DATA_ENCRYPTION_KEY` and is never returned by the API. The service generates and retains a high-entropy webhook verify token automatically.
+
+The safe GET response provides the exact values needed in Meta:
+- callback URL: `https://integration.viiversion.com/webhooks/whatsapp`
+- generated verify token
+- App ID
+- Embedded Signup configuration ID
+
+Environment variables remain supported only as a compatibility fallback.

@@ -8,6 +8,36 @@ servers:
 security:
   - bearerAuth: []
 paths:
+  /admin/whatsapp/meta-config:
+    get:
+      operationId: whatsappGetMetaConfig
+      summary: Get safe Meta configuration values for WhatsApp setup
+      responses:
+        '200':
+          description: Safe configuration status, webhook callback URL, and verify token. App Secret is never returned.
+    post:
+      operationId: whatsappSetMetaConfig
+      summary: Store Meta App configuration securely for WhatsApp Coexistence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [appId, appSecret, embeddedSignupConfigId]
+              properties:
+                appId:
+                  type: string
+                  description: Meta Developer App ID.
+                appSecret:
+                  type: string
+                  description: Meta Developer App Secret. Stored encrypted and never returned.
+                embeddedSignupConfigId:
+                  type: string
+                  description: Meta WhatsApp Embedded Signup configuration ID.
+      responses:
+        '200':
+          description: Configuration stored; returns webhook callback URL and generated verify token.
   /admin/whatsapp/onboarding-session:
     post:
       operationId: whatsappCreateOnboardingLink

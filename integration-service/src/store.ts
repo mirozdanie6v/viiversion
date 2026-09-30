@@ -92,6 +92,14 @@ export type WhatsAppWebhookConfig = {
   createdAt: string;
 };
 
+export type WhatsAppMetaConfig = {
+  appId: string;
+  appSecretEncrypted: string;
+  embeddedSignupConfigId: string;
+  verifyToken: string;
+  updatedAt: string;
+};
+
 export type WhatsAppOnboardingSession = {
   id: string;
   expiresAt: number;
@@ -203,6 +211,20 @@ export class IntegrationStore {
 
     if (url.pathname === '/whatsapp/connection' && request.method === 'GET') {
       const value = await this.state.storage.get<WhatsAppConnection>('wa:connection');
+      return json({ value: value ?? null });
+    }
+
+    if (url.pathname === '/whatsapp/meta-config' && request.method === 'POST') {
+      const input = await request.json<WhatsAppMetaConfig>();
+      if (!input.appId || !input.appSecretEncrypted || !input.embeddedSignupConfigId || !input.verifyToken) {
+        return json({ error: 'invalid_meta_config' }, 400);
+      }
+      await this.state.storage.put('wa:meta-config', input);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/meta-config' && request.method === 'GET') {
+      const value = await this.state.storage.get<WhatsAppMetaConfig>('wa:meta-config');
       return json({ value: value ?? null });
     }
 
@@ -526,6 +548,19 @@ export async function saveWhatsAppConnection(env: StoreEnv, value: WhatsAppConne
 
 export async function getWhatsAppConnection(env: StoreEnv) {
   const result = await call<{ value: WhatsAppConnection | null }>(env, '/whatsapp/connection');
+  return result.value;
+}
+
+export async function saveWhatsAppMetaConfig(env: StoreEnv, value: WhatsAppMetaConfig) {
+  await call(env, '/whatsapp/meta-config', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function getWhatsAppMetaConfig(env: StoreEnv) {
+  const result = await call<{ value: WhatsAppMetaConfig | null }>(env, '/whatsapp/meta-config');
   return result.value;
 }
 

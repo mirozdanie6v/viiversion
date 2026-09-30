@@ -1,5 +1,5 @@
 import type { Env } from './bokun';
-import { getConnectedWhatsAppCredentials } from './whatsapp-onboarding';
+import { getConnectedWhatsAppCredentials, getWhatsAppMetaRuntimeConfig } from './whatsapp-onboarding';
 import {
   getWhatsAppSyncState,
   listWhatsAppChats,
@@ -191,12 +191,13 @@ function graphVersion(env: Env) {
   return version;
 }
 
-export function verifyWhatsAppWebhook(request: Request, env: Env) {
+export async function verifyWhatsAppWebhook(request: Request, env: Env) {
   const url = new URL(request.url);
   const mode = url.searchParams.get('hub.mode') ?? '';
   const challenge = url.searchParams.get('hub.challenge') ?? '';
   const token = url.searchParams.get('hub.verify_token') ?? '';
-  const expected = required(env.META_WHATSAPP_VERIFY_TOKEN, 'META_WHATSAPP_VERIFY_TOKEN');
+  const meta = await getWhatsAppMetaRuntimeConfig(env);
+  const expected = required(meta?.verifyToken, 'Meta WhatsApp verify token');
 
   if (mode === 'subscribe' && token === expected && challenge) {
     return new Response(challenge, {
@@ -208,7 +209,8 @@ export function verifyWhatsAppWebhook(request: Request, env: Env) {
 }
 
 export async function receiveWhatsAppWebhook(request: Request, env: Env) {
-  const appSecret = required(env.META_APP_SECRET, 'META_APP_SECRET');
+  const meta = await getWhatsAppMetaRuntimeConfig(env);
+  const appSecret = required(meta?.appSecret, 'Meta App Secret');
   const rawBody = await request.text();
   const valid = await verifyMetaWebhookSignature(rawBody, request.headers.get('x-hub-signature-256'), appSecret);
   if (!valid) return new Response('Invalid webhook signature', { status: 401 });
@@ -419,16 +421,15 @@ export async function whatsappStatus(request: Request, env: Env) {
   assertAdmin(request, env);
   const credentials = await getConnectedWhatsAppCredentials(env);
   const syncState = await getWhatsAppSyncState(env);
+  const meta = await getWhatsAppMetaRuntimeConfig(env);
+  const metaReady = Boolean(meta?.appId && meta.appSecret && meta.embeddedSignupConfigId && meta.verifyToken);
   return {
     ok: true,
-    configured: Boolean(credentials && env.META_APP_SECRET?.trim() && env.META_WHATSAPP_VERIFY_TOKEN?.trim()),
+    configured: Boolean(credentials && metaReady),
     transportReady: Boolean(credentials),
-    webhookReady: Boolean(env.META_APP_SECRET?.trim() && env.META_WHATSAPP_VERIFY_TOKEN?.trim()),
-    embeddedSignupReady: Boolean(
-      env.META_APP_ID?.trim() &&
-      env.META_APP_SECRET?.trim() &&
-      env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim()
-    ),
+    webhookReady: Boolean(meta?.appSecret && meta?.verifyToken),
+    embeddedSignupReady: Boolean(meta?.appId && meta?.appSecret && meta?.embeddedSignupConfigId),
+    metaConfigSource: meta?.source ?? null,
     graphVersion: graphVersion(env),
     phoneNumberId: credentials?.phoneNumberId ?? null,
     mode: credentials?.connection?.mode ?? (credentials ? 'cloud_api' : null),
