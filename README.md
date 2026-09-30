@@ -68,23 +68,29 @@ It must not silently:
 - present VIIVERSION as a proprietary CRM vendor;
 - change L1-L3 canon without explicit approval and governance.
 
-## Next technical layer
+## Runtime
 
-A future VIIVERSION Brand MCP can expose live normalized tools such as:
-- \`get_brand_context\`
-- \`get_entities\`
-- \`get_commercial_state\`
-- \`get_proof\`
-- \`get_channel_rules\`
-- \`get_current_decisions\`
-- \`validate_brand_output\`
+v0.6.0 includes the production Brand Agent runtime at `agent.viiversion.com`.
 
-The skill does not require that MCP for its first working version because Google Drive and GitHub are already connected in ChatGPT.
+Runtime responsibilities:
+- persistent per-run state in Cloudflare Durable Objects;
+- seven isolated specialist roles;
+- Workers AI JSON-schema execution;
+- PENDING → ACCEPT/REJECT artifact handoff;
+- automatic route progression;
+- independent G1–G15 Brand QA;
+- bounded rework to the earliest responsible routed role;
+- final result assembly;
+- audit trail and transient Durable Object retry handling.
 
+For current/final work, ChatGPT remains the credential boundary for Google Drive.
+It reads only the sources selected by `get_live_source_plan`, validates source
+classes/tabs, and sends only the minimal evidence bundle to Cloudflare. Google
+credentials are never copied into the Worker.
 
 ## Market / GTM / Distribution
 
-v0.3.0 extends Brand Architect beyond website/product presentation into the
+v0.6.0 includes Brand Architect beyond website/product presentation into the
 operational market layer: Projection Engine, GTM motion selection, partner and
 platform distribution, outreach campaign architecture, Software/plugin
 productization, launch planning and controlled market feedback.
@@ -96,7 +102,7 @@ without becoming independent sources of brand truth.
 
 ## Live Source of Truth
 
-v0.3.0 declares Google Drive as the user-authorized live Source of Truth app.
+v0.6.0 keeps Google Drive as the user-authorized live Source of Truth app.
 For current/final/implementation tasks the agent asks Brand MCP which Drive
 sources are required, reads only those sources through Google Drive, then
 validates the observed source classes/tabs before making current claims.
