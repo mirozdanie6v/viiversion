@@ -113,6 +113,8 @@ sources:
       - new_market_or_audience
       - channel_strategy
       - positioning_audit
+      - presentation_redesign
+      - homepage_redesign
 
   sales_playbook:
     level: sales_execution
@@ -198,6 +200,7 @@ refresh_policy:
   public_final:
     refresh_commercial_and_proof: true
     refresh_channel_rules: true
+    refresh_global_brand_for_redesign: true
   implementation:
     refresh_decisions: true
     refresh_referenced_entities: true
