@@ -133,3 +133,12 @@ The safe GET response provides the exact values needed in Meta:
 - Embedded Signup configuration ID
 
 Environment variables remain supported only as a compatibility fallback.
+
+
+### Current Meta version pins (September 2026)
+
+- Graph API: `v26.0` (current latest version).
+- Embedded Signup: `v4`.
+- Coexistence selector: `extras.featureType = "whatsapp_business_app_onboarding"`.
+- The v4 launcher does not depend on the legacy `sessionInfoVersion` override.
+- The completion event can omit `phone_number_id`; VIIVERSION already discovers it server-side from the WABA.
