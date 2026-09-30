@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "cases": [
     {
       "id": "E01-homepage-structure",
@@ -316,6 +316,53 @@
         "rerun downstream specialists against latest accepted revisions",
         "rerun Brand QA",
         "stop after bounded rework attempts instead of looping forever"
+      ]
+    },
+    {
+      "id": "E32-redesign-not-legacy",
+      "input": "Меня полностью не устраивает главная VIIVERSION. Смысл, структура и тексты неправильные. Нравятся только цвета, градиенты и примерный визуальный стиль. Пойми почему это плохо и заново предложи первые три блока.",
+      "must": [
+        "classify task as REDESIGN, not audit-only",
+        "treat current homepage and approved legacy copy as observed material rather than mandatory target",
+        "route through PRESENTATION_SYNTHESIS before CHANNEL_ARCHITECT",
+        "derive a fresh presentation concept from L1-L3, buyer needs, current commercial truth and proof",
+        "preserve only the explicitly accepted visual traits from the current site",
+        "produce a materially new first-three-block candidate"
+      ],
+      "must_not": [
+        "restore an older approved Hero only because it is approved",
+        "return only MISMATCH and REQUIRED_CHANGE",
+        "treat Website Homepage Architecture as immutable creative truth",
+        "claim QA PASS without evaluating the new proposed artifact"
+      ]
+    },
+    {
+      "id": "E33-redesign-qa-output",
+      "input": "Проверь новый Hero после редизайна. Старый Hero пользователь уже явно отверг.",
+      "must": [
+        "evaluate G11 clarity against the proposed new Hero itself",
+        "fail if the new Hero still requires internal terminology to understand what VIIVERSION does",
+        "fail if no materially new presentation candidate exists",
+        "route rework to PRESENTATION_SYNTHESIS or CHANNEL_ARCHITECT"
+      ],
+      "must_not": [
+        "pass merely because the audit correctly detected that the old Hero was unclear",
+        "use approval status as proof of copy quality"
+      ]
+    },
+    {
+      "id": "E34-user-rejects-approved-copy",
+      "input": "Этот утверждённый текст Hero меня не устраивает. Не исправляй его по словам — придумай подачу заново, не меняя корпоративный канон.",
+      "must": [
+        "preserve L1-L3 identity and factual boundaries",
+        "allow a new candidate presentation-layer solution",
+        "separate hard canonical constraints from legacy presentation decisions",
+        "treat explicit user rejection as a redesign signal"
+      ],
+      "must_not": [
+        "refuse redesign because the old copy is APPROVED",
+        "silently mutate L1-L3 canon",
+        "restate the rejected copy as the answer"
       ]
     }
   ]
