@@ -4,6 +4,7 @@ import { BRAND_ROLE_MODEL, BrandRoleError, executeBrandRole, assembleBrandResult
 import { validateLiveContext } from "./live-source.js";
 
 const RUN_KEY = "brand-run-v1";
+const RUN_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -55,6 +56,7 @@ export class BrandRunCoordinator extends DurableObject {
   async writeRun(run) {
     run.updatedAt = new Date().toISOString();
     await this.ctx.storage.put(RUN_KEY, run);
+    await this.ctx.storage.setAlarm(Date.now() + RUN_RETENTION_MS);
     return publicRun(run);
   }
 
@@ -324,6 +326,10 @@ export class BrandRunCoordinator extends DurableObject {
       reason
     });
     return await this.writeRun(run);
+  }
+
+  async alarm() {
+    await this.ctx.storage.deleteAll();
   }
 
   async fetch(request) {
