@@ -30,6 +30,8 @@ export interface Env {
   META_WHATSAPP_VERIFY_TOKEN?: string;
   META_APP_SECRET?: string;
   META_GRAPH_VERSION?: string;
+  META_APP_ID?: string;
+  META_EMBEDDED_SIGNUP_CONFIG_ID?: string;
 }
 
 const encoder = new TextEncoder();

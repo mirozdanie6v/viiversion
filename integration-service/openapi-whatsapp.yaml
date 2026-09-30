@@ -8,6 +8,13 @@ servers:
 security:
   - bearerAuth: []
 paths:
+  /admin/whatsapp/onboarding-session:
+    post:
+      operationId: whatsappCreateOnboardingLink
+      summary: Create a one-time WhatsApp Business Coexistence connection link
+      responses:
+        '200':
+          description: A 15-minute Meta Embedded Signup link
   /api/whatsapp/status:
     get:
       operationId: whatsappStatus

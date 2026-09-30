@@ -50,6 +50,26 @@ export type WhatsAppStatus = {
   billable?: boolean;
 };
 
+export type WhatsAppConnection = {
+  mode: 'coexistence' | 'cloud_api';
+  wabaId: string;
+  phoneNumberId: string;
+  displayPhoneNumber?: string;
+  verifiedName?: string;
+  accessTokenEncrypted: string;
+  connectedAt: string;
+};
+
+export type WhatsAppWebhookConfig = {
+  verifyToken: string;
+  createdAt: string;
+};
+
+export type WhatsAppOnboardingSession = {
+  id: string;
+  expiresAt: number;
+};
+
 export type WhatsAppMessageQuery = {
   peer?: string;
   query?: string;
@@ -116,6 +136,58 @@ export class IntegrationStore {
     if (url.pathname === '/rest' && request.method === 'GET') {
       const vendorId = url.searchParams.get('vendorId') ?? '';
       const value = await this.state.storage.get<RestCredentials>(`rest:${vendorId}`);
+      return json({ value: value ?? null });
+    }
+
+    if (url.pathname === '/whatsapp/onboarding-session' && request.method === 'POST') {
+      const input = await request.json<WhatsAppOnboardingSession>();
+      if (!input.id || !Number.isFinite(input.expiresAt)) return json({ error: 'invalid_onboarding_session' }, 400);
+      await this.state.storage.put(`wa:onboarding:${input.id}`, input);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/onboarding-session' && request.method === 'GET') {
+      const id = url.searchParams.get('id') ?? '';
+      const value = await this.state.storage.get<WhatsAppOnboardingSession>(`wa:onboarding:${id}`);
+      const valid = Boolean(value && value.expiresAt > Date.now());
+      return json({ valid, value: valid ? value : null });
+    }
+
+    if (url.pathname === '/whatsapp/onboarding-session/consume' && request.method === 'POST') {
+      const input = await request.json<{ id: string }>();
+      const key = `wa:onboarding:${input.id}`;
+      const valid = await this.state.storage.transaction(async txn => {
+        const value = await txn.get<WhatsAppOnboardingSession>(key);
+        if (!value || value.expiresAt <= Date.now()) return false;
+        await txn.delete(key);
+        return true;
+      });
+      return json({ valid });
+    }
+
+    if (url.pathname === '/whatsapp/connection' && request.method === 'POST') {
+      const input = await request.json<WhatsAppConnection>();
+      if (!input.wabaId || !input.phoneNumberId || !input.accessTokenEncrypted) {
+        return json({ error: 'invalid_whatsapp_connection' }, 400);
+      }
+      await this.state.storage.put('wa:connection', input);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/connection' && request.method === 'GET') {
+      const value = await this.state.storage.get<WhatsAppConnection>('wa:connection');
+      return json({ value: value ?? null });
+    }
+
+    if (url.pathname === '/whatsapp/webhook-config' && request.method === 'POST') {
+      const input = await request.json<WhatsAppWebhookConfig>();
+      if (!input.verifyToken) return json({ error: 'invalid_webhook_config' }, 400);
+      await this.state.storage.put('wa:webhook-config', input);
+      return json({ ok: true });
+    }
+
+    if (url.pathname === '/whatsapp/webhook-config' && request.method === 'GET') {
+      const value = await this.state.storage.get<WhatsAppWebhookConfig>('wa:webhook-config');
       return json({ value: value ?? null });
     }
 
@@ -325,6 +397,55 @@ export async function saveRestCredentials(env: StoreEnv, value: RestCredentials)
 
 export async function getRestCredentials(env: StoreEnv, vendorId: string) {
   const result = await call<{ value: RestCredentials | null }>(env, '/rest?vendorId=' + encodeURIComponent(vendorId));
+  return result.value;
+}
+
+export async function saveWhatsAppOnboardingSession(env: StoreEnv, value: WhatsAppOnboardingSession) {
+  await call(env, '/whatsapp/onboarding-session', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function getWhatsAppOnboardingSession(env: StoreEnv, id: string) {
+  return call<{ valid: boolean; value: WhatsAppOnboardingSession | null }>(
+    env,
+    '/whatsapp/onboarding-session?id=' + encodeURIComponent(id),
+  );
+}
+
+export async function consumeWhatsAppOnboardingSession(env: StoreEnv, id: string) {
+  return call<{ valid: boolean }>(env, '/whatsapp/onboarding-session/consume', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+}
+
+export async function saveWhatsAppConnection(env: StoreEnv, value: WhatsAppConnection) {
+  await call(env, '/whatsapp/connection', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function getWhatsAppConnection(env: StoreEnv) {
+  const result = await call<{ value: WhatsAppConnection | null }>(env, '/whatsapp/connection');
+  return result.value;
+}
+
+export async function saveWhatsAppWebhookConfig(env: StoreEnv, value: WhatsAppWebhookConfig) {
+  await call(env, '/whatsapp/webhook-config', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+}
+
+export async function getWhatsAppWebhookConfig(env: StoreEnv) {
+  const result = await call<{ value: WhatsAppWebhookConfig | null }>(env, '/whatsapp/webhook-config');
   return result.value;
 }
 
