@@ -584,8 +584,8 @@ export async function assembleBrandResult({ ai, run }) {
     return structuredClone(payload);
   }
 
-  const sourceContext = latest.get("source-context")?.payload;
-  const pairs = sourceContext?.audit_pairs ?? [];
+  const finalSourceContext = latest.get("source-context")?.payload;
+  const pairs = finalSourceContext?.audit_pairs ?? [];
   if (!pairs.length) throw new BrandRoleError("AUDIT_FRAME_REQUIRED", "Final audit assembly requires deterministic audit pairs", 422);
 
   const generatedBySubject = new Map((payload.audit_items ?? []).map((item) => [item.subject, item]));
