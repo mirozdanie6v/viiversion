@@ -90,6 +90,7 @@ function classify(task,surface){
   const s=(task+" "+(surface||"")).toLowerCase();
   return {
     website:/website|site|сайт|homepage|главн|hero|ux|ui/.test(s),
+    redesign:/redesign|rebuild|редизайн|пересоб|заново|с нуля|не устраива|отверга.*(?:текст|hero|хиро|структур)|сохран.*только.*(?:цвет|градиент|стил)|preserve only.*(?:visual|color|gradient|style)|not an audit|не аудит/.test(s),
     outreach:/outreach|рассыл|follow.?up|фоллоу|whatsapp|telegram|email|lead|лид/.test(s),
     market:/market|рынок|positioning|позиционир|audience|аудитор|channel|канал/.test(s),
     gtm:/\bgtm\b|go.?to.?market|выход.*рынок|вывод.*рынок/.test(s),
@@ -106,7 +107,7 @@ export function buildLiveSourcePlan(args={}){
   const tabs=new Set();
 
   docs.add("corporate");
-  if(flags.market||flags.gtm||flags.distribution||flags.outreach||args.final_public) docs.add("globalBrand");
+  if(flags.market||flags.gtm||flags.distribution||flags.outreach||flags.redesign||args.final_public) docs.add("globalBrand");
   if(flags.outreach) docs.add("salesPlaybook");
   if(flags.website) {
     docs.add("websiteStrategy");
@@ -162,7 +163,7 @@ export function buildLiveSourcePlan(args={}){
 
   return {
     task:String(args.task||"").trim(),
-    liveRequired:Boolean(args.final_public||args.current_state||args.implementation||flags.product||flags.proof||flags.market||flags.distribution||flags.outreach),
+    liveRequired:Boolean(args.final_public||args.current_state||args.implementation||flags.redesign||flags.product||flags.proof||flags.market||flags.distribution||flags.outreach),
     documents:[...docs].map(key=>({key,...LIVE_SOURCE_REGISTRY[key]})),
     commercialMatrix:{
       driveId:LIVE_SOURCE_REGISTRY.commercialMatrix.driveId,
