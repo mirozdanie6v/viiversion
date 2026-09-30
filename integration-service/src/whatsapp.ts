@@ -1,4 +1,5 @@
 import type { Env } from './bokun';
+import { getConnectedWhatsAppCredentials } from './whatsapp-onboarding';
 import {
   listWhatsAppChats,
   listWhatsAppMessages,
@@ -259,16 +260,23 @@ export async function receiveWhatsAppWebhook(request: Request, env: Env) {
 
 export async function whatsappStatus(request: Request, env: Env) {
   assertAdmin(request, env);
+  const credentials = await getConnectedWhatsAppCredentials(env);
   return {
     ok: true,
-    configured: Boolean(
-      env.META_WHATSAPP_ACCESS_TOKEN?.trim() &&
-      env.META_WHATSAPP_PHONE_NUMBER_ID?.trim() &&
-      env.META_WHATSAPP_VERIFY_TOKEN?.trim() &&
-      env.META_APP_SECRET?.trim()
+    configured: Boolean(credentials && env.META_APP_SECRET?.trim() && env.META_WHATSAPP_VERIFY_TOKEN?.trim()),
+    transportReady: Boolean(credentials),
+    webhookReady: Boolean(env.META_APP_SECRET?.trim() && env.META_WHATSAPP_VERIFY_TOKEN?.trim()),
+    embeddedSignupReady: Boolean(
+      env.META_APP_ID?.trim() &&
+      env.META_APP_SECRET?.trim() &&
+      env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim()
     ),
     graphVersion: graphVersion(env),
-    phoneNumberId: env.META_WHATSAPP_PHONE_NUMBER_ID?.trim() || null,
+    phoneNumberId: credentials?.phoneNumberId ?? null,
+    mode: credentials?.connection?.mode ?? (credentials ? 'cloud_api' : null),
+    wabaId: credentials?.connection?.wabaId ?? null,
+    displayPhoneNumber: credentials?.connection?.displayPhoneNumber ?? null,
+    verifiedName: credentials?.connection?.verifiedName ?? null,
   };
 }
 
@@ -322,9 +330,11 @@ export async function sendWhatsAppText(request: Request, env: Env) {
   const text = input.text?.trim() ?? '';
   if (!text || text.length > 4096) throw new Response('text must contain 1-4096 characters', { status: 400 });
 
-  const phoneNumberId = required(env.META_WHATSAPP_PHONE_NUMBER_ID, 'META_WHATSAPP_PHONE_NUMBER_ID');
-  if (!/^\d+$/.test(phoneNumberId)) throw new Response('Invalid META_WHATSAPP_PHONE_NUMBER_ID', { status: 503 });
-  const accessToken = required(env.META_WHATSAPP_ACCESS_TOKEN, 'META_WHATSAPP_ACCESS_TOKEN');
+  const credentials = await getConnectedWhatsAppCredentials(env);
+  if (!credentials) throw new Response('WhatsApp is not connected', { status: 503 });
+  const phoneNumberId = credentials.phoneNumberId;
+  if (!/^\d+$/.test(phoneNumberId)) throw new Response('Invalid WhatsApp phone number ID', { status: 503 });
+  const accessToken = credentials.token;
   const endpoint = `https://graph.facebook.com/${graphVersion(env)}/${encodeURIComponent(phoneNumberId)}/messages`;
 
   const body: {
