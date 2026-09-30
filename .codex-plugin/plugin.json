@@ -1,7 +1,7 @@
 {
   "name": "viiversion-brand-architect",
-  "version": "0.6.0",
-  "description": "VIIVERSION autonomous brand, product, market/GTM, distribution, proof and governance agent.",
+  "version": "0.7.2",
+  "description": "VIIVERSION Brand Architect for brand, product, website, proof, GTM and governance workflows.",
   "author": {
     "name": "Olga Nogtich",
     "url": "https://viiversion.com"
@@ -25,8 +25,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "VIIVERSION Brand Architect",
-    "shortDescription": "Autonomous VIIVERSION brand, product and GTM agent",
-    "longDescription": "Uses the VIIVERSION corporate canon and live Source of Truth, then routes tasks through isolated specialist roles, Workers AI execution, proof controls and independent Brand QA with bounded rework and final result assembly.",
+    "shortDescription": "Brand, product & GTM copilot",
+    "longDescription": "VIIVERSION Brand Architect helps structure and audit brand, product, website, proof, GTM and distribution work using explicit governance and evidence boundaries. It separates current implementation from canonical targets, preserves proof maturity, and routes complex tasks through specialist analysis and QA.",
     "developerName": "Olga Nogtich",
     "category": "Productivity",
     "capabilities": [
@@ -36,10 +36,10 @@
     ],
     "websiteURL": "https://viiversion.com",
     "defaultPrompt": [
-      "Build the best VIIVERSION structure or market projection for this task.",
-      "Choose the right GTM motion and distribution path for this VIIVERSION entity.",
-      "Turn this VIIVERSION software/plugin idea into a productization and launch contract.",
-      "Audit this material against VIIVERSION brand, proof, channel and distribution rules."
+      "Audit this brand or website material against VIIVERSION brand and proof rules.",
+      "Plan a product or GTM direction without inventing current commercial facts.",
+      "Check whether this public claim is supported by the available proof.",
+      "Structure this VIIVERSION brand or product task and identify the safest next step."
     ]
   },
   "apps": "./.app.json"
