@@ -253,6 +253,7 @@ function normalizeRolePayload(role, payload, task = "", evidence = []) {
   if (role === BRAND_ROLE.SOURCE_TRUTH) {
     const audit = isAuditTask(task);
     const frame = audit ? buildAuditFrame(evidence) : { observed: [], targets: [], auditPairs: [] };
+    normalized.sources_read = [...new Set((evidence ?? []).map((entry) => entry.source).filter(Boolean))];
     normalized.audit_mode = audit;
     normalized.observed_current = frame.observed;
     normalized.canonical_target = frame.targets;
