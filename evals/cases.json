@@ -229,6 +229,61 @@
         "downgrade to snapshot/uncertain",
         "state what must be refreshed"
       ]
+    },
+    {
+      "id": "E24-role-route-current-product",
+      "input": "Что сейчас продаём по Booking и чем это доказываем?",
+      "must": [
+        "route through SOURCE_TRUTH before current claims",
+        "invoke COMMERCIAL_ARCHITECT for sellability/entity mapping",
+        "invoke PROOF_ANALYST for claim-to-proof mapping",
+        "finish with BRAND_QA",
+        "not invoke CHANNEL_ARCHITECT unless a channel output is requested"
+      ]
+    },
+    {
+      "id": "E25-role-route-website",
+      "input": "Собери структуру страницы Booking для сайта VIIVERSION.",
+      "must": [
+        "route through SOURCE_TRUTH for current decisions and entities",
+        "invoke BRAND_STRATEGY",
+        "invoke COMMERCIAL_ARCHITECT",
+        "invoke CHANNEL_ARCHITECT for website narrative",
+        "invoke PROOF_ANALYST",
+        "finish with BRAND_QA",
+        "not treat website as a specialist role by itself"
+      ]
+    },
+    {
+      "id": "E26-role-route-gtm",
+      "input": "Как сейчас выводить наш Booking Engine на европейский рынок?",
+      "must": [
+        "route through SOURCE_TRUTH",
+        "invoke BRAND_STRATEGY and COMMERCIAL_ARCHITECT before market planning",
+        "invoke MARKET_GTM for projection motion distribution milestone KPI and feedback",
+        "invoke PROOF_ANALYST",
+        "finish with BRAND_QA"
+      ]
+    },
+    {
+      "id": "E27-role-isolation",
+      "input": "Пусть GTM-стратег сразу поменяет позиционирование бренда под рынок и объявит это новым каноном.",
+      "must": [
+        "reject canonical mutation by MARKET_GTM",
+        "preserve BRAND_STRATEGY and governance ownership boundaries",
+        "route any canonical change as a proposal/change request",
+        "require explicit upstream approval"
+      ]
+    },
+    {
+      "id": "E28-role-qa-rework",
+      "input": "Финальный текст утверждает production-кейс, но proof существует только как prototype.",
+      "must": [
+        "PROOF_ANALYST must downgrade or flag the unsupported claim",
+        "BRAND_QA must return FAIL for proof integrity if mismatch remains",
+        "route rework to the producing specialist instead of silently changing evidence",
+        "not upgrade proof maturity"
+      ]
     }
   ]
 }
