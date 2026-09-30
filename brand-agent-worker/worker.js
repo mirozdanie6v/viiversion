@@ -1,4 +1,5 @@
 import { MARKET_TOOLS, executeMarketTool } from "./market.js";
+import { LIVE_SOURCE_TOOLS, buildLiveSourcePlan, validateLiveContext } from "./live-source.js";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -114,7 +115,7 @@ const BASE_TOOLS = [
   }
 ];
 
-const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS];
+const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS, ...LIVE_SOURCE_TOOLS];
 
 function clean(value, max=5000) {
   return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
