@@ -9,7 +9,11 @@ import {
   handleInstall,
   saveAdminRestCredentials,
 } from './bokun';
-import { completeWhatsAppCoexistence, whatsappConnectPage } from './whatsapp-onboarding';
+import {
+  completeWhatsAppCoexistence,
+  createWhatsAppOnboardingSession,
+  whatsappConnectPage,
+} from './whatsapp-onboarding';
 import {
   receiveWhatsAppWebhook,
   sendWhatsAppText,
@@ -205,8 +209,12 @@ export default {
         });
       }
 
+      if (url.pathname === '/admin/whatsapp/onboarding-session' && request.method === 'POST') {
+        return json(request, env, await createWhatsAppOnboardingSession(request, env));
+      }
+
       if (url.pathname === '/whatsapp/connect' && request.method === 'GET') {
-        return whatsappConnectPage(env);
+        return whatsappConnectPage(request, env);
       }
 
       if (url.pathname === '/whatsapp/onboarding/complete' && request.method === 'POST') {
