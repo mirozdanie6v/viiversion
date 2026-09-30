@@ -63,14 +63,13 @@ export async function getWhatsAppMetaRuntimeConfig(env: Env) {
   };
 }
 
-export async function configureWhatsAppMeta(request: Request, env: Env) {
-  assertAdmin(request, env);
-  const input = await request.json<{
-    appId?: string;
-    appSecret?: string;
-    embeddedSignupConfigId?: string;
-  }>();
+type WhatsAppMetaConfigInput = {
+  appId?: string;
+  appSecret?: string;
+  embeddedSignupConfigId?: string;
+};
 
+async function persistWhatsAppMetaConfig(env: Env, input: WhatsAppMetaConfigInput) {
   const appId = input.appId?.trim() ?? '';
   const appSecret = input.appSecret?.trim() ?? '';
   const embeddedSignupConfigId = input.embeddedSignupConfigId?.trim() ?? '';
@@ -105,6 +104,129 @@ export async function configureWhatsAppMeta(request: Request, env: Env) {
     verifyToken,
     updatedAt,
   };
+}
+
+export async function configureWhatsAppMeta(request: Request, env: Env) {
+  assertAdmin(request, env);
+  return persistWhatsAppMetaConfig(env, await request.json<WhatsAppMetaConfigInput>());
+}
+
+function validMetaSetupToken(token: string, env: Env) {
+  const expected = env.META_SETUP_TOKEN?.trim() ?? '';
+  const expiresAt = Number(env.META_SETUP_EXPIRES_AT ?? '0');
+  return Boolean(
+    expected &&
+    token &&
+    token === expected &&
+    Number.isFinite(expiresAt) &&
+    Math.floor(Date.now() / 1000) <= expiresAt
+  );
+}
+
+export function whatsappMetaSetupPage(request: Request, env: Env) {
+  const url = new URL(request.url);
+  const token = url.searchParams.get('token')?.trim() ?? '';
+  if (!validMetaSetupToken(token, env)) {
+    return html('<!doctype html><meta charset="utf-8"><title>VIIVERSION Meta Setup</title><body style="font-family:system-ui;background:#07101d;color:#fff;max-width:680px;margin:64px auto;padding:24px"><h1>Setup link expired</h1><p>Generate a fresh VIIVERSION Meta setup link.</p></body>', 403);
+  }
+
+  const safeToken = JSON.stringify(token);
+  return html(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VIIVERSION · Meta WhatsApp Setup</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#10223a 0,#07101d 48%,#04070c 100%);color:#f7fbff}
+    main{width:min(760px,calc(100% - 32px));margin:0 auto;padding:56px 0 80px}
+    .brand{font-size:13px;font-weight:800;letter-spacing:.14em;color:#69dcff}
+    h1{font-size:clamp(36px,7vw,64px);line-height:1;letter-spacing:-.04em;margin:18px 0}
+    p{color:#b9c8dc;line-height:1.6}
+    form,.result{margin-top:28px;padding:24px;border:1px solid #1e3854;border-radius:22px;background:rgba(9,19,33,.86)}
+    label{display:block;margin:15px 0 7px;color:#dbe8f7;font-weight:700}
+    input{width:100%;border:1px solid #28445f;border-radius:12px;background:#07101d;color:#fff;padding:13px 14px;font-size:16px}
+    button{width:100%;margin-top:20px;border:0;border-radius:14px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#55e1ff,#5a73ff);color:#03111e}
+    pre{white-space:pre-wrap;word-break:break-word;color:#bde8ff}
+    .bad{color:#ff9d9d}.ok{color:#7df6be}.muted{font-size:13px;color:#8093aa}
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand">VIIVERSION · META SETUP</div>
+  <h1>Configure WhatsApp Coexistence.</h1>
+  <p>Values are sent directly to VIIVERSION. The Meta App Secret is encrypted immediately and is never returned.</p>
+  <form id="form">
+    <label for="appId">Meta App ID</label>
+    <input id="appId" inputmode="numeric" autocomplete="off" required>
+    <label for="appSecret">Meta App Secret</label>
+    <input id="appSecret" type="password" autocomplete="new-password" required>
+    <label for="configId">Embedded Signup v4 Configuration ID</label>
+    <input id="configId" inputmode="numeric" autocomplete="off" required>
+    <button type="submit">Save Meta configuration</button>
+    <p class="muted">This temporary setup link expires automatically.</p>
+  </form>
+  <div id="result" class="result" hidden></div>
+</main>
+<script>
+  const SETUP_TOKEN = ${safeToken};
+  history.replaceState(null, '', '/whatsapp/meta-setup');
+  const form = document.getElementById('form');
+  const result = document.getElementById('result');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = form.querySelector('button');
+    button.disabled = true;
+    button.textContent = 'Saving…';
+    result.hidden = true;
+    try {
+      const response = await fetch('/whatsapp/meta-setup/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          token: SETUP_TOKEN,
+          appId: document.getElementById('appId').value,
+          appSecret: document.getElementById('appSecret').value,
+          embeddedSignupConfigId: document.getElementById('configId').value
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error?.message || payload?.error || 'Setup failed');
+      document.getElementById('appSecret').value = '';
+      form.hidden = true;
+      result.hidden = false;
+      result.className = 'result ok';
+      result.innerHTML =
+        '<strong>Saved securely.</strong><pre>' +
+        'Webhook callback: ' + payload.webhookCallbackUrl + '\n' +
+        'Verify token: ' + payload.verifyToken + '\n' +
+        'App ID: ' + payload.appId + '\n' +
+        'Embedded Signup Configuration ID: ' + payload.embeddedSignupConfigId +
+        '</pre><p>Use the callback and verify token in Meta → WhatsApp → Configuration. Then VIIVERSION is ready to create the Coexistence connection link.</p>';
+    } catch (error) {
+      result.hidden = false;
+      result.className = 'result bad';
+      result.textContent = error instanceof Error ? error.message : 'Setup failed';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Save Meta configuration';
+    }
+  });
+</script>
+</body>
+</html>`);
+}
+
+export async function completeWhatsAppMetaSetup(request: Request, env: Env) {
+  const input = await request.json<WhatsAppMetaConfigInput & { token?: string }>();
+  const token = input.token?.trim() ?? '';
+  if (!validMetaSetupToken(token, env)) {
+    return Response.json({ error: { message: 'Setup link is invalid or expired' } }, { status: 401 });
+  }
+  return Response.json(await persistWhatsAppMetaConfig(env, input));
 }
 
 export async function getWhatsAppMetaAdminConfig(request: Request, env: Env) {
