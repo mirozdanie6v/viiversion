@@ -33,6 +33,19 @@ import {
   whatsappSyncStatus,
   whatsappUnread,
 } from './whatsapp';
+import {
+  whatsappBrowserChat,
+  whatsappBrowserChats,
+  whatsappBrowserPairReset,
+  whatsappBrowserPairStart,
+  whatsappBrowserPairState,
+  whatsappBrowserSend,
+  whatsappBrowserSendMany,
+  whatsappBrowserSetupPage,
+  whatsappBrowserStatus,
+  whatsappBrowserToday,
+  whatsappBrowserTodayFromClients,
+} from './whatsapp-browser';
 
 export { IntegrationStore } from './store';
 
@@ -215,9 +228,58 @@ export default {
             ),
             configSource: whatsappMeta?.source ?? null,
             graphVersion: env.META_GRAPH_VERSION?.trim() || 'v26.0',
+            browserRunConfigured: Boolean(env.BROWSER),
+            browserSetupConfigured: Boolean(
+              env.WHATSAPP_BROWSER_SETUP_TOKEN?.trim() &&
+              env.WHATSAPP_BROWSER_SETUP_EXPIRES_AT?.trim()
+            ),
           },
           time: new Date().toISOString(),
         });
+      }
+
+      if (url.pathname === '/whatsapp/browser/connect' && request.method === 'GET') {
+        return whatsappBrowserSetupPage(request, env);
+      }
+
+      if (url.pathname === '/whatsapp/browser/connect/start' && request.method === 'POST') {
+        return json(request, env, await whatsappBrowserPairStart(request, env));
+      }
+
+      if (url.pathname === '/whatsapp/browser/connect/state' && request.method === 'GET') {
+        return json(request, env, await whatsappBrowserPairState(request, env));
+      }
+
+      if (url.pathname === '/whatsapp/browser/connect/reset' && request.method === 'POST') {
+        return json(request, env, await whatsappBrowserPairReset(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/live/status' && request.method === 'GET') {
+        return json(request, env, await whatsappBrowserStatus(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/live/chats' && request.method === 'GET') {
+        return json(request, env, await whatsappBrowserChats(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/live/chat' && request.method === 'GET') {
+        return json(request, env, await whatsappBrowserChat(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/live/today' && request.method === 'GET') {
+        return json(request, env, await whatsappBrowserToday(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/live/today-from-clients' && request.method === 'POST') {
+        return json(request, env, await whatsappBrowserTodayFromClients(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/live/send' && request.method === 'POST') {
+        return json(request, env, await whatsappBrowserSend(request, env));
+      }
+
+      if (url.pathname === '/api/whatsapp/live/send-many' && request.method === 'POST') {
+        return json(request, env, await whatsappBrowserSendMany(request, env));
       }
 
       if (url.pathname === '/whatsapp/meta-setup' && request.method === 'GET') {
