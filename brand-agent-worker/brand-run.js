@@ -535,8 +535,14 @@ export async function executeAgentRuntimeTool(env, name, args = {}) {
         implementation: Boolean(args.implementation)
       }
     });
+    const evidence = [...(args.source_evidence ?? [])];
+    evidence.push({
+      evidenceId: "runtime-live-context-gate",
+      source: "validate_live_context",
+      content: liveGate
+    });
     return await callStub(env, runId, "/auto", "POST", {
-      evidence: args.source_evidence ?? [],
+      evidence,
       maxReworkCycles: args.max_rework_cycles ?? 2
     });
   }
