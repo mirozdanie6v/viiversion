@@ -1,5 +1,6 @@
 import { MARKET_TOOLS, executeMarketTool } from "./market.js";
 import { LIVE_SOURCE_TOOLS, buildLiveSourcePlan, validateLiveContext } from "./live-source.js";
+import { ROLE_TOOL, buildRolePlan } from "./roles.js";
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -115,7 +116,7 @@ const BASE_TOOLS = [
   }
 ];
 
-const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS, ...LIVE_SOURCE_TOOLS];
+const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS, ...LIVE_SOURCE_TOOLS, ROLE_TOOL];
 
 function clean(value, max=5000) {
   return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
@@ -212,7 +213,7 @@ async function handleMcp(request) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-agent",version:"0.3.0",mcp:"/mcp"});
+    return json({ok:true,service:"viiversion-brand-agent",version:"0.4.0",mcp:"/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -227,7 +228,7 @@ async function handleMcp(request) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-agent",version:"0.3.0"},
+      serverInfo:{name:"viiversion-brand-agent",version:"0.4.0"},
       instructions:"Read-only VIIVERSION brand/product/market agent backend. Use it for brand grounding, market projection, GTM/distribution planning, productization, proof boundaries and deterministic Brand QA. Live Google Drive Source of Truth remains authoritative for final commercial, distribution and decision claims."
     });
   }
@@ -261,6 +262,7 @@ async function handleMcp(request) {
     if (name === "validate_brand_output") return rpc(id,toolPayload(validateBrand(args.text,Boolean(args.finalPublic))));
     if (name === "get_live_source_plan") return rpc(id,toolPayload(buildLiveSourcePlan(args)));
     if (name === "validate_live_context") return rpc(id,toolPayload(validateLiveContext(args)));
+    if (name === "plan_agent_roles") return rpc(id,toolPayload(buildRolePlan(args)));
     const marketData = executeMarketTool(name,args);
     if (marketData !== null) return rpc(id,toolPayload(marketData));
     return rpcError(id,-32602,"Unknown tool");
@@ -272,7 +274,7 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
-      return json({ok:true,service:"viiversion-brand-agent",version:"0.3.0",mcp:"https://agent.viiversion.com/mcp"});
+      return json({ok:true,service:"viiversion-brand-agent",version:"0.4.0",mcp:"https://agent.viiversion.com/mcp"});
     }
     if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleMcp(request);
     return json({ok:false,error:"not_found"},404);
