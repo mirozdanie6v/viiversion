@@ -41,5 +41,6 @@
       "Turn this VIIVERSION software/plugin idea into a productization and launch contract.",
       "Audit this material against VIIVERSION brand, proof, channel and distribution rules."
     ]
-  }
+  },
+  "apps": "./.app.json"
 }
