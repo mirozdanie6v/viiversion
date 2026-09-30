@@ -25,6 +25,11 @@ export interface Env {
   BOKUN_VENDOR_HOST_SUFFIX?: string;
   BOKUN_REST_BASE_URL?: string;
   ALLOWED_ORIGIN_SUFFIX?: string;
+  META_WHATSAPP_ACCESS_TOKEN?: string;
+  META_WHATSAPP_PHONE_NUMBER_ID?: string;
+  META_WHATSAPP_VERIFY_TOKEN?: string;
+  META_APP_SECRET?: string;
+  META_GRAPH_VERSION?: string;
 }
 
 const encoder = new TextEncoder();
