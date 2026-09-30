@@ -34,10 +34,15 @@ The custom domain is declared in `wrangler.jsonc`; Cloudflare creates/manages th
 - `plan_gtm_motion`
 - `plan_productization`
 - `evaluate_market_signal`
+- `get_live_source_plan`
+- `validate_live_context`
 
 The Worker contains a compact Brand Kernel snapshot. Live Google Drive Source of Truth remains authoritative for final public status, readiness, price, proof maturity and approved decisions.
 
 
-v0.2.0 adds the Market/GTM/Distribution branch: market projection, channel and
+v0.3.0 adds the Market/GTM/Distribution branch: market projection, channel and
 motion selection, partner/platform distribution, software/plugin productization
 and controlled market-feedback evaluation.
+
+
+v0.3.0 adds live Source of Truth orchestration via the connected Google Drive app. The MCP plans required reads and validates that final/current claims are grounded in live sources rather than snapshots.
