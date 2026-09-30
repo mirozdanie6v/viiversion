@@ -271,7 +271,7 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
     `Prohibited actions: ${(definition.prohibited ?? []).join(", ")}.`,
     "Preserve the language of the user's task unless a channel requirement says otherwise.",
     role === BRAND_ROLE.BRAND_QA
-      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance."
+      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change."
       : ""
   ].filter(Boolean).join("\n");
 
