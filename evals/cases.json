@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "cases": [
     {
       "id": "E01-homepage-structure",
@@ -198,6 +198,36 @@
         "require live GTM_Motions Daily_GTM and Distribution_Pipeline refresh",
         "prioritize current execution state",
         "not answer only from kernel snapshot"
+      ]
+    },
+    {
+      "id": "E21-live-source-current",
+      "input": "Что сейчас продаём по Booking и какие proof использовать?",
+      "must": [
+        "call get_live_source_plan",
+        "read live Commercial Matrix Products and Assets through Google Drive",
+        "validate live context before current claims",
+        "not rely on kernel snapshot as current state"
+      ]
+    },
+    {
+      "id": "E22-live-source-implementation",
+      "input": "Внеси утверждённые изменения в главную VIIVERSION.",
+      "must": [
+        "plan live Source of Truth reads",
+        "read current Website_Decisions and relevant website sources",
+        "validate live context",
+        "only then modify downstream implementation"
+      ]
+    },
+    {
+      "id": "E23-live-source-missing",
+      "input": "Дай текущий GTM план, но Google Drive недоступен.",
+      "must": [
+        "not invent current GTM state",
+        "identify missing live source",
+        "downgrade to snapshot/uncertain",
+        "state what must be refreshed"
       ]
     }
   ]
