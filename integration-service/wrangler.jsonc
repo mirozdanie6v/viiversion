@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "viiversion-integration",
   "main": "src/index.ts",
-  "compatibility_date": "2026-09-24",
+  "compatibility_date": "2026-09-30",
   "vars": {
     "BOKUN_ALLOWED_VENDOR_IDS": "137689",
     "BOKUN_DEFAULT_VENDOR_ID": "137689",
@@ -29,7 +29,9 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["IntegrationStore"]
+      "new_sqlite_classes": [
+        "IntegrationStore"
+      ]
     }
   ],
   "routes": [
@@ -37,5 +39,11 @@
       "pattern": "integration.viiversion.com",
       "custom_domain": true
     }
-  ]
+  ],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "browser": {
+    "binding": "BROWSER"
+  }
 }
