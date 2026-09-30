@@ -212,7 +212,7 @@ async function handleMcp(request) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-agent",version:"0.2.0",mcp:"/mcp"});
+    return json({ok:true,service:"viiversion-brand-agent",version:"0.3.0",mcp:"/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -227,7 +227,7 @@ async function handleMcp(request) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-agent",version:"0.2.0"},
+      serverInfo:{name:"viiversion-brand-agent",version:"0.3.0"},
       instructions:"Read-only VIIVERSION brand/product/market agent backend. Use it for brand grounding, market projection, GTM/distribution planning, productization, proof boundaries and deterministic Brand QA. Live Google Drive Source of Truth remains authoritative for final commercial, distribution and decision claims."
     });
   }
@@ -272,7 +272,7 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
-      return json({ok:true,service:"viiversion-brand-agent",version:"0.2.0",mcp:"https://agent.viiversion.com/mcp"});
+      return json({ok:true,service:"viiversion-brand-agent",version:"0.3.0",mcp:"https://agent.viiversion.com/mcp"});
     }
     if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleMcp(request);
     return json({ok:false,error:"not_found"},404);
