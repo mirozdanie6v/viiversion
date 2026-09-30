@@ -1,4 +1,4 @@
-import { BRAND_ROLE, BRAND_ROLE_DEFINITIONS } from "./roles.js";
+import { BRAND_ROLE, BRAND_ROLE_DEFINITIONS, inferTaskMode } from "./roles.js";
 
 export const BRAND_ROLE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
@@ -48,9 +48,27 @@ const REWORK_ROLES = Object.freeze([
   BRAND_ROLE.BRAND_STRATEGY,
   BRAND_ROLE.COMMERCIAL_ARCHITECT,
   BRAND_ROLE.MARKET_GTM,
+  BRAND_ROLE.PRESENTATION_SYNTHESIS,
   BRAND_ROLE.CHANNEL_ARCHITECT,
   BRAND_ROLE.PROOF_ANALYST
 ]);
+const presentationOption = objectSchema({
+  name: string,
+  principle: string,
+  first_screen_understanding: string,
+  block_sequence: stringArray,
+  why_materially_different: string,
+  risks: stringArray
+});
+const selectedPresentation = objectSchema({
+  name: string,
+  principle: string,
+  first_screen_understanding: string,
+  block_sequence: stringArray,
+  hero_direction: string,
+  visual_direction: string,
+  why_selected: string
+});
 const qaGate = objectSchema({
   gate: { type: "string", enum: QA_GATES },
   status: { type: "string", enum: ["PASS", "FAIL", "NOT_APPLICABLE"] },
@@ -62,6 +80,7 @@ export const ROLE_ARTIFACT_TYPE = Object.freeze({
   [BRAND_ROLE.BRAND_STRATEGY]: "brand-decision",
   [BRAND_ROLE.COMMERCIAL_ARCHITECT]: "commercial-decision",
   [BRAND_ROLE.MARKET_GTM]: "market-plan",
+  [BRAND_ROLE.PRESENTATION_SYNTHESIS]: "presentation-concept",
   [BRAND_ROLE.CHANNEL_ARCHITECT]: "channel-projection",
   [BRAND_ROLE.PROOF_ANALYST]: "proof-plan",
   [BRAND_ROLE.BRAND_QA]: "qa-report"
@@ -76,6 +95,7 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
     verified_facts: stringArray,
     uncertainties: stringArray,
     missing_requirements: stringArray,
+    task_mode: { type: "string", enum: ["AUDIT","REDESIGN","SYNTHESIS","FINAL_COPY","IMPLEMENTATION","GOVERNANCE"] },
     audit_mode: { type: "boolean" },
     observed_current: { type: "array", items: auditSnapshot },
     canonical_target: { type: "array", items: auditSnapshot },
@@ -108,6 +128,16 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
     kpi: string,
     feedback_destination: string
   }),
+  "presentation-concept": objectSchema({
+    task_mode: { type: "string", enum: ["REDESIGN","SYNTHESIS"] },
+    challenged_legacy_decisions: stringArray,
+    hard_constraints: stringArray,
+    concept_options: { type: "array", minItems: 2, items: presentationOption },
+    selected_concept: selectedPresentation,
+    five_second_clarity_result: string,
+    material_difference_from_current: string,
+    unresolved_questions: stringArray
+  }),
   "channel-projection": objectSchema({
     surface: string,
     audience_state: string,
@@ -137,9 +167,10 @@ export const ROLE_CONTEXT_TYPES = Object.freeze({
   [BRAND_ROLE.BRAND_STRATEGY]: ["source-context"],
   [BRAND_ROLE.COMMERCIAL_ARCHITECT]: ["source-context", "brand-decision"],
   [BRAND_ROLE.MARKET_GTM]: ["source-context", "brand-decision", "commercial-decision"],
-  [BRAND_ROLE.CHANNEL_ARCHITECT]: ["source-context", "brand-decision", "commercial-decision", "market-plan"],
-  [BRAND_ROLE.PROOF_ANALYST]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "channel-projection"],
-  [BRAND_ROLE.BRAND_QA]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "channel-projection", "proof-plan"]
+  [BRAND_ROLE.PRESENTATION_SYNTHESIS]: ["source-context", "brand-decision", "commercial-decision", "market-plan"],
+  [BRAND_ROLE.CHANNEL_ARCHITECT]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "presentation-concept"],
+  [BRAND_ROLE.PROOF_ANALYST]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "presentation-concept", "channel-projection"],
+  [BRAND_ROLE.BRAND_QA]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "presentation-concept", "channel-projection", "proof-plan"]
 });
 
 export class BrandRoleError extends Error {
@@ -251,9 +282,11 @@ function normalizeRolePayload(role, payload, task = "", evidence = []) {
   const normalized = structuredClone(payload);
 
   if (role === BRAND_ROLE.SOURCE_TRUTH) {
-    const audit = isAuditTask(task);
+    const taskMode = inferTaskMode(task);
+    const audit = taskMode === "AUDIT";
     const frame = audit ? buildAuditFrame(evidence) : { observed: [], targets: [], auditPairs: [] };
     normalized.sources_read = [...new Set((evidence ?? []).map((entry) => entry.source).filter(Boolean))];
+    normalized.task_mode = taskMode;
     normalized.audit_mode = audit;
     normalized.observed_current = frame.observed;
     normalized.canonical_target = frame.targets;
@@ -284,7 +317,22 @@ function normalizeRolePayload(role, payload, task = "", evidence = []) {
 
   let remainingFails = normalized.gate_results.filter((entry) => entry.status === "FAIL");
 
-  if ((normalized.critical_failures ?? []).length === 0 && remainingFails.length > 0) {
+  if (isRedesignTask(task) && remainingFails.length > 0) {
+    const designFails = remainingFails.filter((entry) => ["G6","G11","G12"].includes(entry.gate));
+    if (designFails.length) {
+      normalized.critical_failures = [
+        ...(normalized.critical_failures ?? []),
+        ...designFails.map((entry) => `Redesign quality failure (${entry.gate}): ${entry.reason}`)
+      ];
+      const allowedTargets = [BRAND_ROLE.PRESENTATION_SYNTHESIS, BRAND_ROLE.CHANNEL_ARCHITECT]
+        .filter((target) => !normalized.rework_targets?.includes(target));
+      normalized.rework_targets = [...(normalized.rework_targets ?? []), ...allowedTargets];
+      normalized.decision = "FAIL";
+      return normalized;
+    }
+  }
+
+  if (!isRedesignTask(task) && (normalized.critical_failures ?? []).length === 0 && remainingFails.length > 0) {
     normalized.residual_uncertainty = [
       ...(normalized.residual_uncertainty ?? []),
       ...remainingFails.map((entry) => `Non-critical QA concern (${entry.gate}): ${entry.reason}`)
@@ -395,7 +443,10 @@ function contextForRole(run, role) {
 }
 
 function isAuditTask(task) {
-  return /audit|аудит|compare|сравн|review|проверь|проверить|посмотри|разбер|current .*page|текущ.*(?:сайт|страниц|блок)/i.test(String(task ?? ""));
+  return inferTaskMode(task) === "AUDIT";
+}
+function isRedesignTask(task) {
+  return inferTaskMode(task) === "REDESIGN";
 }
 
 function promptFor({ run, role, contextArtifacts, evidence }) {
@@ -411,14 +462,24 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
     "If evidence is insufficient, record uncertainty or missing requirements instead of fabricating facts.",
     `Prohibited actions: ${(definition.prohibited ?? []).join(", ")}.`,
     "Preserve the language of the user's task unless a channel requirement says otherwise.",
+    `TASK MODE: ${run.taskMode ?? inferTaskMode(run.task)}.`,
     isAuditTask(run.task)
       ? "AUDIT MODE: distinguish OBSERVED_CURRENT implementation from CANONICAL_TARGET/approved strategy. Never describe an approved target, draft, desired sequence, or canonical architecture as if it were already implemented. Explicitly compare current observed evidence against the approved target and carry every material mismatch forward. If current implementation differs from canonical target, say so plainly."
+      : "",
+    isRedesignTask(run.task)
+      ? "REDESIGN MODE: the user has rejected the current/legacy presentation. L1 identity, live L2 commercial truth, Proof and L3 brand rules are hard constraints; old L4/L5 copy, block order and approved presentation decisions are observed inputs unless they encode a still-valid hard channel/UX constraint. Do not restore old Hero/copy solely because it is APPROVED. The run must create a materially new candidate presentation and explain why it changes first-screen understanding."
+      : "",
+    role === BRAND_ROLE.PRESENTATION_SYNTHESIS
+      ? "SYNTHESIS DUTY: generate at least two genuinely different presentation concepts, test them for five-second clarity, select one, and state exactly which legacy presentation principle it replaces. Do not use internal taxonomy as the first-screen explanation. concept_options and selected_concept must be concrete enough for CHANNEL_ARCHITECT to turn into blocks and copy."
+      : "",
+    role === BRAND_ROLE.CHANNEL_ARCHITECT && isRedesignTask(run.task)
+      ? "CHANNEL REDESIGN DUTY: consume the accepted presentation-concept as the creative target. Do not substitute legacy approved website copy for the selected concept. message_hierarchy and narrative_sequence must make the new first-three-block solution concrete."
       : "",
     role === BRAND_ROLE.SOURCE_TRUTH
       ? "Use only brokered evidence to describe source coverage. If evidence includes a validate_live_context result with pass=true, do not invent additional source requirements such as competitor research, market analysis, language research, or channel research unless the requested task or validated source plan explicitly requires them. Distinguish missing required Source of Truth from optional analytical uncertainty."
       : "",
     role === BRAND_ROLE.BRAND_QA
-      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance. Use FAIL only for a concrete critical contradiction, unsupported factual/commercial/proof claim, stale required decision, or governance violation that requires a new specialist revision. Missing optional detail that is honestly bounded belongs in residual_uncertainty and does not by itself force FAIL. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change. In AUDIT MODE, PASS means the produced audit is evidence-faithful and identifies material current-vs-target mismatches; it does NOT mean the audited page itself conforms."
+      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance. Use FAIL only for a concrete critical contradiction, unsupported factual/commercial/proof claim, stale required decision, or governance violation that requires a new specialist revision. Missing optional detail that is honestly bounded belongs in residual_uncertainty and does not by itself force FAIL. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change. In AUDIT MODE, PASS means the produced audit is evidence-faithful and identifies material current-vs-target mismatches; it does NOT mean the audited page itself conforms. In REDESIGN MODE, grade the proposed new presentation itself, not the diagnosis. G11 must FAIL if the proposed artifact does not let a non-insider understand what VIIVERSION is/does and what can be obtained; G12 must FAIL if the result merely restores old approved copy, swaps synonyms, or lacks a materially new communication principle. A redesign cannot PASS if no accepted presentation-concept exists."
       : ""
   ].filter(Boolean).join("\n");
 
@@ -465,8 +526,8 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
   const prompt = promptFor({ run, role, contextArtifacts, evidence: acceptedEvidence });
   let payload;
   let lastModelError;
-  const maxTokens = role === BRAND_ROLE.BRAND_QA ? 4096 : role === BRAND_ROLE.MARKET_GTM ? 3072 : 2560;
-  const maxAttempts = role === BRAND_ROLE.MARKET_GTM ? 5 : 4;
+  const maxTokens = role === BRAND_ROLE.BRAND_QA || role === BRAND_ROLE.PRESENTATION_SYNTHESIS ? 4096 : role === BRAND_ROLE.MARKET_GTM ? 3072 : 2560;
+  const maxAttempts = role === BRAND_ROLE.MARKET_GTM || role === BRAND_ROLE.PRESENTATION_SYNTHESIS ? 5 : 4;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const repairInstruction = attempt === 1
@@ -478,7 +539,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
           { role: "user", content: prompt.user }
         ],
         response_format: { type: "json_schema", json_schema: structuredClone(ROLE_OUTPUT_SCHEMAS[artifactType]) },
-        temperature: 0,
+        temperature: role === BRAND_ROLE.PRESENTATION_SYNTHESIS ? 0.35 : role === BRAND_ROLE.CHANNEL_ARCHITECT ? 0.15 : 0,
         max_tokens: maxTokens
       });
       payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output), run.task, acceptedEvidence));
@@ -556,6 +617,9 @@ export async function assembleBrandResult({ ai, run }) {
   }
   const qa = latest.get("qa-report");
   if (!qa || qa.payload?.decision !== "PASS") throw new BrandRoleError("FINAL_QA_REQUIRED", "Final result can only be assembled after Brand QA PASS", 409);
+  if (isRedesignTask(run.task) && !latest.get("presentation-concept")) {
+    throw new BrandRoleError("REDESIGN_SYNTHESIS_REQUIRED", "Redesign final assembly requires an accepted presentation-concept", 409);
+  }
 
   const system = [
     "You are the final assembler for VIIVERSION Brand Architect.",
@@ -564,6 +628,9 @@ export async function assembleBrandResult({ ai, run }) {
     "Do not expose internal role mechanics unless the task asks for them.",
     "Do not invent facts, prices, readiness, proof or canonical changes.",
     "Preserve material uncertainties instead of hiding them.",
+    isRedesignTask(run.task)
+      ? "REDESIGN MODE: deliver the fresh selected presentation candidate, not an audit table and not the old approved target. Start with the diagnosed communication failure, then present the new principle and concrete first-three-block candidate. Make the material difference from the rejected presentation explicit. Preserve only visual traits the user explicitly accepted. Do not say that the old approved Hero is the answer merely because it remains governed."
+      : "",
     isAuditTask(run.task)
       ? "AUDIT MODE: the final answer must be concrete, not generic. For every audited block/section/object named in the task or evidence, explicitly provide: OBSERVED_CURRENT, CANONICAL_TARGET, VERDICT, and REQUIRED_CHANGE. Quote or closely preserve the actual current heading/copy when available, then name the approved target function/copy/proof/sequence. Do not collapse several mismatches into phrases like 'hierarchy and messaging need revision'. Do not say that specific changes are unknown when accepted artifacts contain approved block functions, copy, proof sets, sequence, or implementation rules. Never state 'no redesign/change needed' unless each audited object materially matches the canonical target. Do not convert an approved target into a statement about the current implementation. If live evidence and canonical target conflict, the live implementation is the current fact and the canonical document is the target/authority."
       : "",
