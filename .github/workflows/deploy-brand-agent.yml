@@ -2,11 +2,6 @@ name: Deploy VIIVERSION Brand Agent
 
 on:
   workflow_dispatch:
-  push:
-    branches: [viiversion]
-    paths:
-      - 'brand-agent-worker/**'
-      - '.github/workflows/deploy-brand-agent.yml'
 
 permissions:
   contents: read
