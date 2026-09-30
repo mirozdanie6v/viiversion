@@ -418,6 +418,7 @@ export async function receiveWhatsAppWebhook(request: Request, env: Env) {
 export async function whatsappStatus(request: Request, env: Env) {
   assertAdmin(request, env);
   const credentials = await getConnectedWhatsAppCredentials(env);
+  const syncState = await getWhatsAppSyncState(env);
   return {
     ok: true,
     configured: Boolean(credentials && env.META_APP_SECRET?.trim() && env.META_WHATSAPP_VERIFY_TOKEN?.trim()),
@@ -434,6 +435,7 @@ export async function whatsappStatus(request: Request, env: Env) {
     wabaId: credentials?.connection?.wabaId ?? null,
     displayPhoneNumber: credentials?.connection?.displayPhoneNumber ?? null,
     verifiedName: credentials?.connection?.verifiedName ?? null,
+    sync: syncState,
   };
 }
 
@@ -460,6 +462,20 @@ export async function whatsappChats(request: Request, env: Env) {
   const rawLimit = Number(url.searchParams.get('limit') ?? '50');
   const limit = Number.isInteger(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50;
   return listWhatsAppChats(env, limit);
+}
+
+export async function whatsappContacts(request: Request, env: Env) {
+  assertAdmin(request, env);
+  const url = new URL(request.url);
+  const query = (url.searchParams.get('q') ?? '').trim().slice(0, 200);
+  const rawLimit = Number(url.searchParams.get('limit') ?? '200');
+  const limit = Number.isInteger(rawLimit) ? Math.min(Math.max(rawLimit, 1), 1000) : 200;
+  return listWhatsAppContacts(env, query, limit);
+}
+
+export async function whatsappSyncStatus(request: Request, env: Env) {
+  assertAdmin(request, env);
+  return { ok: true, sync: await getWhatsAppSyncState(env) };
 }
 
 export async function whatsappUnread(request: Request, env: Env) {
@@ -556,6 +572,7 @@ export async function sendWhatsAppText(request: Request, env: Env) {
     phoneNumberId,
     contextMessageId: replyTo || undefined,
     status: 'accepted',
+    source: 'api',
   });
 
   return {
