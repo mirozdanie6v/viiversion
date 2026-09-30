@@ -259,6 +259,8 @@ async function handleMcp(request) {
     }
     if (name === "plan_brand_task") return rpc(id,toolPayload(taskPlan(args)));
     if (name === "validate_brand_output") return rpc(id,toolPayload(validateBrand(args.text,Boolean(args.finalPublic))));
+    if (name === "get_live_source_plan") return rpc(id,toolPayload(buildLiveSourcePlan(args)));
+    if (name === "validate_live_context") return rpc(id,toolPayload(validateLiveContext(args)));
     const marketData = executeMarketTool(name,args);
     if (marketData !== null) return rpc(id,toolPayload(marketData));
     return rpcError(id,-32602,"Unknown tool");
