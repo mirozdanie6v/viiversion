@@ -12,6 +12,7 @@
     "@cloudflare/workers-types": "latest",
     "typescript": "latest",
     "vitest": "latest",
-    "wrangler": "latest"
+    "wrangler": "latest",
+    "@cloudflare/playwright": "latest"
   }
 }
