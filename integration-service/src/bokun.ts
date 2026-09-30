@@ -24,6 +24,7 @@ export interface Env {
   BOKUN_SCOPES?: string;
   BOKUN_VENDOR_HOST_SUFFIX?: string;
   BOKUN_REST_BASE_URL?: string;
+  BOKUN_REAL_BOOKING_ENABLED?: string;
   ALLOWED_ORIGIN_SUFFIX?: string;
   META_WHATSAPP_ACCESS_TOKEN?: string;
   META_WHATSAPP_PHONE_NUMBER_ID?: string;
@@ -269,24 +270,44 @@ async function ensureRestCredentials(env: Env, vendorId: string) {
   return getRestCredentials(env, vendorId);
 }
 
-async function restRequest(env: Env, vendorId: string, path: string) {
+async function restRequest(
+  env: Env,
+  vendorId: string,
+  path: string,
+  init: { method?: 'GET' | 'POST'; body?: unknown } = {},
+) {
   const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
   const stored = await ensureRestCredentials(env, vendorId);
   if (!stored) throw new Response('REST credentials are not configured for this vendor', { status: 503 });
   const accessKey = await decryptSecret(stored.accessKeyEncrypted, encryptionKey);
   const secretKey = await decryptSecret(stored.secretKeyEncrypted, encryptionKey);
+  const method = init.method ?? 'GET';
   const date = bokunRestDate();
-  const signature = await signRest(secretKey, date, accessKey, 'GET', path);
-  const response = await fetch((env.BOKUN_REST_BASE_URL?.trim() || 'https://api.bokun.io') + path, {
-    headers: {
-      accept: 'application/json',
-      'X-Bokun-Date': date,
-      'X-Bokun-AccessKey': accessKey,
-      'X-Bokun-Signature': signature,
-    },
-  });
-  if (!response.ok) throw new Response('Bókun REST request failed', { status: 502 });
-  return response.json<unknown>();
+  const signature = await signRest(secretKey, date, accessKey, method, path);
+  const headers: Record<string, string> = {
+    accept: 'application/json',
+    'X-Bokun-Date': date,
+    'X-Bokun-AccessKey': accessKey,
+    'X-Bokun-Signature': signature,
+  };
+  const requestInit: RequestInit = { method, headers };
+  if (method === 'POST') {
+    headers['content-type'] = 'application/json; charset=utf-8';
+    requestInit.body = JSON.stringify(init.body ?? {});
+  }
+
+  const response = await fetch((env.BOKUN_REST_BASE_URL?.trim() || 'https://api.bokun.io') + path, requestInit);
+  const text = await response.text();
+  if (!response.ok) {
+    console.error('Bókun REST request failed', method, path, response.status, text.slice(0, 1000));
+    throw new Response('Bókun REST request failed', { status: 502 });
+  }
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Response('Bókun REST returned invalid JSON', { status: 502 });
+  }
 }
 
 function numeric(value: string, name: string) {
@@ -336,6 +357,8 @@ export async function getStatus(env: Env, vendorId: string) {
       id: env.BOKUN_DEFAULT_PRODUCT_ID ?? null,
       code: env.BOKUN_DEFAULT_PRODUCT_CODE ?? null,
     },
+    checkoutOptionsAvailable: Boolean(rest),
+    realBookingWriteEnabled: env.BOKUN_REAL_BOOKING_ENABLED?.trim().toLowerCase() === 'true',
   };
 }
 
@@ -392,6 +415,128 @@ export function pickupPlacesPath(productId: string) {
 export async function getPickupPlaces(env: Env, vendorId: string, productId: string) {
   numeric(vendorId, 'vendorId');
   return restRequest(env, vendorId, pickupPlacesPath(productId));
+}
+
+
+function currencyCode(value = 'USD') {
+  const currency = value.trim().toUpperCase() || 'USD';
+  if (!/^[A-Z]{3}$/.test(currency)) throw new Response('Invalid currency', { status: 400 });
+  return currency;
+}
+
+export function checkoutOptionsPath(currency = 'USD') {
+  return '/checkout.json/options/booking-request?' + new URLSearchParams({ currency: currencyCode(currency) }).toString();
+}
+
+export function checkoutSubmitPath(currency = 'USD') {
+  return '/checkout.json/submit?' + new URLSearchParams({ currency: currencyCode(currency) }).toString();
+}
+
+function configuredProductIds(env: Env) {
+  return new Set(configuredProducts(env).map(product => product.id));
+}
+
+function plainObject(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+export function validatePilotBookingRequest(env: Env, input: unknown) {
+  const booking = plainObject(input);
+  if (!booking) throw new Response('Invalid booking request', { status: 400 });
+  const activityBookings = Array.isArray(booking.activityBookings) ? booking.activityBookings : [];
+  if (activityBookings.length !== 1) throw new Response('Pilot requires exactly one activity booking', { status: 400 });
+
+  const activity = plainObject(activityBookings[0]);
+  const activityId = String(activity?.activityId ?? '').trim();
+  if (!/^\d+$/.test(activityId) || !configuredProductIds(env).has(activityId)) {
+    throw new Response('Unsupported Bókun product', { status: 400 });
+  }
+
+  const reference = String(booking.externalBookingReference ?? '').trim();
+  if (!reference.startsWith('LT-TEST-')) {
+    throw new Response('Pilot booking reference must start with LT-TEST-', { status: 400 });
+  }
+  if (booking.sendCustomerNotification === true) {
+    throw new Response('Customer notification must stay disabled for the pilot', { status: 400 });
+  }
+
+  const passengers = Array.isArray(activity?.passengers) ? activity.passengers : [];
+  if (passengers.length < 1) throw new Response('At least one passenger is required', { status: 400 });
+
+  return booking;
+}
+
+export function validatePilotCheckoutRequest(env: Env, input: unknown) {
+  const checkout = plainObject(input);
+  if (!checkout) throw new Response('Invalid checkout request', { status: 400 });
+  if (String(checkout.source ?? '') !== 'DIRECT_REQUEST') throw new Response('Only DIRECT_REQUEST is allowed', { status: 400 });
+  if (String(checkout.paymentMethod ?? '') !== 'RESERVE_FOR_EXTERNAL_PAYMENT') {
+    throw new Response('Only RESERVE_FOR_EXTERNAL_PAYMENT is allowed', { status: 400 });
+  }
+  if (!String(checkout.checkoutOption ?? '').trim()) throw new Response('checkoutOption is required', { status: 400 });
+  if (checkout.sendNotificationToMainContact === true || checkout.showPricesInNotification === true) {
+    throw new Response('Checkout notifications must stay disabled for the pilot', { status: 400 });
+  }
+  validatePilotBookingRequest(env, checkout.directBooking);
+  return checkout;
+}
+
+export async function getCheckoutOptions(env: Env, vendorId: string, bookingRequest: unknown, currency = 'USD') {
+  numeric(vendorId, 'vendorId');
+  validatePilotBookingRequest(env, bookingRequest);
+  return restRequest(env, vendorId, checkoutOptionsPath(currency), {
+    method: 'POST',
+    body: bookingRequest,
+  });
+}
+
+function checkoutOptionsList(contract: unknown) {
+  if (Array.isArray(contract)) return contract;
+  const object = plainObject(contract);
+  return Array.isArray(object?.options) ? object.options : [];
+}
+
+function reserveAllowed(contract: unknown, checkoutOption: string) {
+  return checkoutOptionsList(contract).some(value => {
+    const option = plainObject(value);
+    const methods = plainObject(option?.paymentMethods)?.allowedMethods;
+    return String(option?.type ?? '') === checkoutOption
+      && Array.isArray(methods)
+      && methods.map(String).includes('RESERVE_FOR_EXTERNAL_PAYMENT');
+  });
+}
+
+export async function submitReservedCheckout(
+  request: Request,
+  env: Env,
+  vendorId: string,
+  checkoutRequest: unknown,
+  currency = 'USD',
+) {
+  const expected = required(env.INTEGRATION_ADMIN_TOKEN, 'INTEGRATION_ADMIN_TOKEN');
+  if (request.headers.get('authorization') !== 'Bearer ' + expected) {
+    throw new Response('Unauthorized', { status: 401 });
+  }
+  if (env.BOKUN_REAL_BOOKING_ENABLED?.trim().toLowerCase() !== 'true') {
+    throw new Response('Real Bókun booking writes are disabled', { status: 423 });
+  }
+  if (request.headers.get('x-viiversion-booking-intent') !== 'RESERVE_REAL_BOKUN_BOOKING') {
+    throw new Response('Explicit real-booking intent header is required', { status: 412 });
+  }
+
+  numeric(vendorId, 'vendorId');
+  const checkout = validatePilotCheckoutRequest(env, checkoutRequest);
+  const booking = checkout.directBooking;
+  const optionType = String(checkout.checkoutOption ?? '');
+  const liveContract = await getCheckoutOptions(env, vendorId, booking, currency);
+  if (!reserveAllowed(liveContract, optionType)) {
+    throw new Response('Live Bókun checkout no longer allows reserve for this option', { status: 409 });
+  }
+
+  return restRequest(env, vendorId, checkoutSubmitPath(currency), {
+    method: 'POST',
+    body: checkout,
+  });
 }
 
 export async function saveAdminRestCredentials(request: Request, env: Env) {
