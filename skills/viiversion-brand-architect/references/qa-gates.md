@@ -63,7 +63,12 @@ Fail → downgrade claim or choose different proof.
 PASS when:
 - the structure matches the current channel and audience;
 - channel presentation does not overwrite canonical identity;
-- CTA matches the visitor state.
+- CTA matches the visitor state;
+- in REDESIGN mode, current/approved legacy copy is treated as a constraint or
+  observed state, not as the mandatory creative answer.
+
+Fail when a redesign simply restores old channel copy without independent
+synthesis proving that it is still the best presentation for the current goal.
 
 Fail → revise.
 
@@ -101,22 +106,51 @@ For website/public implementation:
 - do not implement a REVIEW/DRAFT as approved;
 - do not use stale GitHub copy against a newer upstream decision.
 
-Critical fail → refresh source before implementation.
+For REDESIGN:
+- APPROVED means "current governed presentation", not "best immutable copy";
+- an approved presentation may be challenged and superseded by a new candidate;
+- do not confuse governance status with creative quality;
+- do not force old approved copy back into the answer when the user explicitly
+  rejects that presentation.
+
+Critical fail → refresh source or correct the decision interpretation before
+implementation.
 
 ## G11 — Clarity
 
-PASS when a non-insider can answer:
+PASS only against the **proposed final artifact**, not against the audit report.
+
+A non-insider must be able to answer from the proposed output itself:
 - what is this;
 - what can I get;
 - why is it relevant;
 - what can I verify;
 - what should I do next.
 
-Fail → simplify.
+For REDESIGN, it is an automatic FAIL if:
+- the output only says that the current version is unclear;
+- the output only lists MISMATCH / REQUIRED_CHANGE;
+- the proposed replacement is materially the same abstraction the user rejected;
+- the answer depends on internal VIIVERSION terminology to explain the basic
+  offer;
+- no new presentation candidate was actually produced.
 
-## G12 — No ornamental complexity
+Finding a clarity problem is not evidence that the proposed solution is clear.
+
+Fail → return rework to PRESENTATION_SYNTHESIS / CHANNEL_ARCHITECT.
+
+## G12 — No ornamental complexity / material redesign
 
 PASS when every major block/category/diagram changes understanding or decision.
+
+For REDESIGN, also require material difference from the rejected/current
+presentation. A synonym swap, restoration of an older Hero, or rearrangement
+without a new communication logic is FAIL.
+
+The synthesis artifact must explicitly state:
+- what old presentation principle is being discarded;
+- what new presentation principle replaces it;
+- how the first-screen understanding changes.
 
 Remove structure that exists only to display internal sophistication.
 
