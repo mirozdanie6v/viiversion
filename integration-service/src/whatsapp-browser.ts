@@ -472,13 +472,13 @@ async function chatRows(page: any, limit = 50) {
   }
   if (!locator) return [];
 
-  const values = await locator.evaluateAll((nodes: Element[], max: number) => nodes.slice(0, max).map(node => {
-    const root = node as HTMLElement;
-    const lines = (root.innerText || '').split('\n').map(value => value.trim()).filter(Boolean);
-    const titled = Array.from(root.querySelectorAll('span[title]')) as HTMLElement[];
-    const title = titled.map(value => value.getAttribute('title') || value.innerText || '').find(Boolean) || lines[0] || '';
-    const timeText = lines.find(value => /^\d{1,2}:\d{2}(?:\s?[AP]M)?$/i.test(value)) || '';
-    const preview = lines.filter(value => value !== title && value !== timeText).slice(-1)[0] || '';
+  const values = await locator.evaluateAll((nodes: any[], max: number) => nodes.slice(0, max).map((node: any) => {
+    const root: any = node;
+    const lines = (root.innerText || '').split('\n').map((value: string) => value.trim()).filter(Boolean);
+    const titled = Array.from(root.querySelectorAll('span[title]')) as any[];
+    const title = titled.map((value: any) => value.getAttribute('title') || value.innerText || '').find(Boolean) || lines[0] || '';
+    const timeText = lines.find((value: string) => /^\d{1,2}:\d{2}(?:\s?[AP]M)?$/i.test(value)) || '';
+    const preview = lines.filter((value: string) => value !== title && value !== timeText).slice(-1)[0] || '';
     const outgoingPreview = Boolean(root.querySelector('[data-icon="msg-check"],[data-icon="msg-dblcheck"],[data-icon="msg-time"]'));
     return { title, timeText, preview, outgoingPreview };
   }), Math.min(Math.max(limit, 1), 100));
@@ -538,13 +538,13 @@ async function extractMessages(page: any, limit = 100): Promise<LiveMessage[]> {
   const count = await nodes.count();
   if (!count) return [];
 
-  const raw = await nodes.evaluateAll((items: Element[], max: number) => {
+  const raw = await nodes.evaluateAll((items: any[], max: number) => {
     const selected = items.slice(Math.max(0, items.length - max));
-    return selected.map(node => {
-      let parent: Element | null = node;
+    return selected.map((node: any) => {
+      let parent: any = node;
       let direction = 'unknown';
       for (let i = 0; i < 8 && parent; i += 1, parent = parent.parentElement) {
-        const className = String((parent as HTMLElement).className || '');
+        const className = String(parent.className || '');
         if (className.includes('message-in')) {
           direction = 'inbound';
           break;
@@ -557,7 +557,7 @@ async function extractMessages(page: any, limit = 100): Promise<LiveMessage[]> {
       return {
         direction,
         meta: node.getAttribute('data-pre-plain-text') || '',
-        text: ((node as HTMLElement).innerText || '').trim(),
+        text: (node.innerText || '').trim(),
       };
     });
   }, Math.min(Math.max(limit, 1), 300));
@@ -789,13 +789,14 @@ export async function whatsappBrowserSendMany(request: Request, env: Env) {
     messages?: Array<{ to?: string; text?: string; requestId?: string }>;
   }>().catch(() => null);
   if (!input || !Array.isArray(input.messages)) throw new Response('messages array is required', { status: 400 });
-  if (input.messages.length < 1 || input.messages.length > 15) {
+  const messages = input.messages;
+  if (messages.length < 1 || messages.length > 15) {
     throw new Response('Batch must contain between 1 and 15 messages', { status: 400 });
   }
 
   return withLivePage(env, async page => {
     const results: Array<Record<string, unknown>> = [];
-    for (const item of input.messages) {
+    for (const item of messages) {
       const to = item.to?.trim() ?? '';
       const text = item.text ?? '';
       const requestId = item.requestId?.trim() ?? '';
