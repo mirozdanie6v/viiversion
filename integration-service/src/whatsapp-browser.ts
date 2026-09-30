@@ -1,6 +1,7 @@
 import { acquire, connect } from '@cloudflare/playwright';
 import type { Env } from './bokun';
 import {
+  clearWhatsAppBrowserAuthState,
   clearWhatsAppBrowserRuntime,
   getWhatsAppBrowserAuthState,
   getWhatsAppBrowserRuntime,
@@ -416,6 +417,15 @@ export async function whatsappBrowserPairStart(request: Request, env: Env) {
   return { ok: true, paired, sessionId: live.sessionId };
 }
 
+export async function whatsappBrowserPairReset(request: Request, env: Env) {
+  if (!setupAuthorized(request, env)) throw new Response('Setup link is invalid or expired', { status: 401 });
+  const runtime = await getWhatsAppBrowserRuntime(env);
+  if (runtime?.sessionId) await closeRemoteSession(env, runtime.sessionId);
+  await clearWhatsAppBrowserRuntime(env);
+  await clearWhatsAppBrowserAuthState(env);
+  return { ok: true, reset: true };
+}
+
 export async function whatsappBrowserPairState(request: Request, env: Env) {
   if (!setupAuthorized(request, env)) throw new Response('Setup link is invalid or expired', { status: 401 });
   assertBrowserBindings(env);
@@ -658,11 +668,14 @@ export async function whatsappBrowserChats(request: Request, env: Env) {
   assertAdmin(request, env);
   const url = new URL(request.url);
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit') ?? '50') || 50, 1), 100);
-  return withLivePage(env, async page => ({
-    chats: await chatRows(page, limit),
-    count: Math.min(limit, (await chatRows(page, limit)).length),
-    source: 'whatsapp_web_live',
-  }));
+  return withLivePage(env, async page => {
+    const chats = await chatRows(page, limit);
+    return {
+      chats,
+      count: chats.length,
+      source: 'whatsapp_web_live',
+    };
+  });
 }
 
 export async function whatsappBrowserChat(request: Request, env: Env) {
