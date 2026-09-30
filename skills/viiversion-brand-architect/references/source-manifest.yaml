@@ -1,4 +1,4 @@
-version: "0.2.0"
+version: "0.3.0"
 snapshot_date: "2026-09-30"
 
 source_precedence:
@@ -231,3 +231,13 @@ conflict_policy:
   global_marketing_rule: global_brand_wins
   channel_presentation: channel_source_wins_within_canon
   implementation_conflict: upstream_wins
+
+
+live_app_dependency:
+  app: google-drive
+  connector_id: "plugin_connector_1p_ab21a553bfbc81919ea8fd1858e3ffa7"
+  role: "user-authorized live Source of Truth reader"
+  rule: >
+    Google authorization stays in ChatGPT/Workspace. Brand MCP must not persist
+    the user's Google credential. Use get_live_source_plan to choose minimal reads
+    and validate_live_context before final/current claims.
