@@ -89,7 +89,9 @@ Google OAuth и не получает постоянный доступ к Drive
    передай как `{evidenceId, source, content}`; не добавляй источник, который
    фактически не был прочитан;
 4. вызови `validate_live_context` с фактически прочитанными source classes/tabs;
-5. после PASS передай задачу и `source_evidence` в `run_brand_task`;
+5. после PASS передай в `run_brand_task` задачу, `source_evidence`, `observed_at`,
+   а также фактически подтверждённые `source_classes` и `tabs_read`; runtime
+   повторно проверяет live-context gate и не доверяет одному наличию evidence;
 6. `run_brand_task` сам выполняет specialist route, принимает schema-valid
    artifacts, запускает Brand QA, выполняет bounded rework и собирает final result;
 7. если live-context gate не проходит, сначала дочитай недостающие источники.
