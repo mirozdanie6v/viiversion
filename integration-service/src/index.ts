@@ -9,6 +9,7 @@ import {
   handleInstall,
   saveAdminRestCredentials,
 } from './bokun';
+import { completeWhatsAppCoexistence, whatsappConnectPage } from './whatsapp-onboarding';
 import {
   receiveWhatsAppWebhook,
   sendWhatsAppText,
@@ -189,9 +190,12 @@ export default {
             productCodes: (env.BOKUN_PRODUCT_CODES ?? env.BOKUN_DEFAULT_PRODUCT_CODE ?? '').split(',').map(x => x.trim()).filter(Boolean),
           },
           whatsapp: {
-            configured: Boolean(
-              env.META_WHATSAPP_ACCESS_TOKEN?.trim() &&
-              env.META_WHATSAPP_PHONE_NUMBER_ID?.trim() &&
+            embeddedSignupConfigured: Boolean(
+              env.META_APP_ID?.trim() &&
+              env.META_APP_SECRET?.trim() &&
+              env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim()
+            ),
+            webhookConfigured: Boolean(
               env.META_WHATSAPP_VERIFY_TOKEN?.trim() &&
               env.META_APP_SECRET?.trim()
             ),
@@ -199,6 +203,14 @@ export default {
           },
           time: new Date().toISOString(),
         });
+      }
+
+      if (url.pathname === '/whatsapp/connect' && request.method === 'GET') {
+        return whatsappConnectPage(env);
+      }
+
+      if (url.pathname === '/whatsapp/onboarding/complete' && request.method === 'POST') {
+        return completeWhatsAppCoexistence(request, env);
       }
 
       if (url.pathname === '/webhooks/whatsapp' && request.method === 'GET') {
