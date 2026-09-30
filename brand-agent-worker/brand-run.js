@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { buildRolePlan, BRAND_ROLE } from "./roles.js";
-import { BRAND_ROLE_MODEL, BrandRoleError, executeBrandRole } from "./brand-role-runtime.js";
+import { BRAND_ROLE_MODEL, BrandRoleError, executeBrandRole, assembleBrandResult } from "./brand-role-runtime.js";
 
 const RUN_KEY = "brand-run-v1";
 
@@ -38,6 +38,8 @@ function publicRun(run) {
     pendingArtifact: run.pendingArtifact,
     acceptedArtifacts: run.acceptedArtifacts,
     rejectedArtifacts: run.rejectedArtifacts,
+    finalResult: run.finalResult ?? null,
+    reworkCycle: run.reworkCycle ?? 0,
     audit: run.audit,
     createdAt: run.createdAt,
     updatedAt: run.updatedAt
@@ -90,6 +92,8 @@ export class BrandRunCoordinator extends DurableObject {
       acceptedArtifacts: [],
       rejectedArtifacts: [],
       invocationIds: [],
+      finalResult: null,
+      reworkCycle: 0,
       audit: [{ event: "RUN_CREATED", at: now, route: plan.route }],
       createdAt: now,
       updatedAt: now
@@ -187,6 +191,101 @@ export class BrandRunCoordinator extends DurableObject {
     return await this.writeRun(run);
   }
 
+  async prepareRework(maxReworkCycles = 2) {
+    const run = await this.readRun();
+    if (!run) throw new BrandRoleError("RUN_NOT_FOUND", "Brand run does not exist", 404);
+    if (run.status !== "REWORK_REQUIRED") return publicRun(run);
+
+    const qa = [...run.acceptedArtifacts].reverse().find((artifact) =>
+      artifact.type === "qa-report" && artifact.payload?.decision === "FAIL"
+    );
+    if (!qa) throw new BrandRoleError("QA_FAIL_ARTIFACT_REQUIRED", "REWORK_REQUIRED has no failed QA artifact", 409);
+
+    const nextCycle = Number(run.reworkCycle ?? 0) + 1;
+    if (nextCycle > maxReworkCycles) {
+      run.status = "BLOCKED";
+      run.audit.push({
+        event: "REWORK_LIMIT_REACHED",
+        at: new Date().toISOString(),
+        cycle: nextCycle - 1,
+        maxReworkCycles
+      });
+      return await this.writeRun(run);
+    }
+
+    const targets = Array.isArray(qa.payload?.rework_targets) ? qa.payload.rework_targets : [];
+    const targetIndexes = targets
+      .map((role) => run.route.indexOf(role))
+      .filter((index) => index >= 0 && run.route[index] !== BRAND_ROLE.BRAND_QA);
+    if (targetIndexes.length === 0) {
+      throw new BrandRoleError("QA_REWORK_ROUTE_INVALID", "Brand QA FAIL did not identify a routed specialist target", 502);
+    }
+
+    const targetIndex = Math.min(...targetIndexes);
+    run.reworkCycle = nextCycle;
+    run.nextRoleIndex = targetIndex;
+    run.status = "ACTIVE";
+    run.finalResult = null;
+    run.audit.push({
+      event: "REWORK_STARTED",
+      at: new Date().toISOString(),
+      cycle: nextCycle,
+      targetRole: run.route[targetIndex],
+      requestedTargets: targets
+    });
+    return await this.writeRun(run);
+  }
+
+  async runAutonomous(command) {
+    let run = await this.readRun();
+    if (!run) throw new BrandRoleError("RUN_NOT_FOUND", "Brand run does not exist", 404);
+    const maxReworkCycles = Math.max(0, Math.min(3, Number(command.maxReworkCycles ?? 2)));
+    const evidence = Array.isArray(command.evidence) ? command.evidence : [];
+    const maxSteps = Math.max(8, run.route.length * (maxReworkCycles + 2) + 4);
+    let steps = 0;
+
+    while (steps < maxSteps) {
+      run = await this.readRun();
+      if (!run) throw new BrandRoleError("RUN_NOT_FOUND", "Brand run disappeared", 500);
+
+      if (run.status === "REWORK_REQUIRED") {
+        await this.prepareRework(maxReworkCycles);
+        run = await this.readRun();
+        if (run.status === "BLOCKED") return publicRun(run);
+      }
+
+      if (run.status === "COMPLETED") {
+        if (!run.finalResult) {
+          run.finalResult = await assembleBrandResult({ ai: this.env.AI, run });
+          run.audit.push({ event: "FINAL_RESULT_ASSEMBLED", at: new Date().toISOString(), model: BRAND_ROLE_MODEL });
+          await this.writeRun(run);
+        }
+        return publicRun(await this.readRun());
+      }
+
+      if (run.status !== "ACTIVE") return publicRun(run);
+
+      const role = run.route[run.nextRoleIndex];
+      if (!role) throw new BrandRoleError("ROUTE_EXHAUSTED", "Active run has no next role", 500);
+      const invocationId = `auto-${run.reworkCycle ?? 0}-${run.nextRoleIndex}-${role}`;
+      const roleEvidence = role === BRAND_ROLE.SOURCE_TRUTH ? evidence : [];
+
+      const execution = await this.executeRole({
+        role,
+        invocationId,
+        evidence: roleEvidence
+      });
+      await this.acceptArtifact({ artifactId: execution.artifact.artifactId });
+      steps += 1;
+    }
+
+    run = await this.readRun();
+    run.status = "BLOCKED";
+    run.audit.push({ event: "AUTONOMOUS_STEP_LIMIT_REACHED", at: new Date().toISOString(), steps, maxSteps });
+    await this.writeRun(run);
+    return publicRun(run);
+  }
+
   async rejectArtifact(command) {
     const run = await this.readRun();
     if (!run) throw new BrandRoleError("RUN_NOT_FOUND", "Brand run does not exist", 404);
@@ -219,6 +318,7 @@ export class BrandRunCoordinator extends DurableObject {
       if (url.pathname === "/execute") return json(await this.executeRole(body));
       if (url.pathname === "/accept") return json(await this.acceptArtifact(body));
       if (url.pathname === "/reject") return json(await this.rejectArtifact(body));
+      if (url.pathname === "/auto") return json(await this.runAutonomous(body));
       return json({ error: "not_found" }, 404);
     } catch (error) {
       if (error instanceof BrandRoleError) return json({ error: error.code, message: error.message }, error.status);
@@ -228,6 +328,40 @@ export class BrandRunCoordinator extends DurableObject {
 }
 
 export const AGENT_RUNTIME_TOOLS = Object.freeze([
+  {
+    name: "run_brand_task",
+    title: "Run VIIVERSION Brand Architect autonomously",
+    description: "Run the complete routed Brand Architect workflow: specialist Workers AI executions, automatic artifact acceptance, Brand QA, bounded rework, and final result assembly. Live/current tasks must include brokered Source of Truth evidence gathered through the user's connected Google Drive app.",
+    inputSchema: {
+      type: "object",
+      required: ["task"],
+      properties: {
+        task: { type: "string", minLength: 1, maxLength: 5000 },
+        run_id: { type: "string" },
+        surface: { type: "string" },
+        current_state: { type: "boolean" },
+        final_public: { type: "boolean" },
+        implementation: { type: "boolean" },
+        max_rework_cycles: { type: "integer", minimum: 0, maximum: 3 },
+        source_evidence: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["evidenceId", "source", "content"],
+            properties: {
+              evidenceId: { type: "string" },
+              source: { type: "string" },
+              content: {}
+            },
+            additionalProperties: false
+          }
+        }
+      },
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+  },
+
   {
     name: "create_agent_run",
     title: "Create VIIVERSION Brand Architect run",
@@ -337,6 +471,23 @@ async function callStub(env, runId, path, method = "POST", body = null) {
 }
 
 export async function executeAgentRuntimeTool(env, name, args = {}) {
+  if (name === "run_brand_task") {
+    const runId = clean(args.run_id, 96) || `brand-${crypto.randomUUID()}`;
+    await callStub(env, runId, "/create", "POST", {
+      runId,
+      task: args.task,
+      surface: args.surface,
+      flags: {
+        current_state: Boolean(args.current_state),
+        final_public: Boolean(args.final_public),
+        implementation: Boolean(args.implementation)
+      }
+    });
+    return await callStub(env, runId, "/auto", "POST", {
+      evidence: args.source_evidence ?? [],
+      maxReworkCycles: args.max_rework_cycles ?? 2
+    });
+  }
   if (name === "create_agent_run") {
     const runId = clean(args.run_id, 96) || `brand-${crypto.randomUUID()}`;
     return await callStub(env, runId, "/create", "POST", {
