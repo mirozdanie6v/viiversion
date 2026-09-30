@@ -8,6 +8,10 @@
 
 The VIIVERSION backend is already implemented for WhatsApp Business App Coexistence. No OpenAI API or third-party browser agent is part of this path.
 
+## Embedded Signup version
+
+Use **Embedded Signup v4** in Meta's configuration builder. VIIVERSION launches v4 with `featureType=whatsapp_business_app_onboarding`; the legacy `sessionInfoVersion` launch override is intentionally omitted. The current Graph API pin remains `v26.0`.
+
 ## Meta-side prerequisites
 
 Create or use a Meta Business portfolio and a Meta Developer app intended for business/WhatsApp use.
