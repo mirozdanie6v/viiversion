@@ -294,8 +294,7 @@ export async function whatsappConnectPage(request: Request, env: Env) {
       override_default_response_type: true,
       extras: {
         setup: {},
-        featureType: 'whatsapp_business_app_onboarding',
-        sessionInfoVersion: '3'
+        featureType: 'whatsapp_business_app_onboarding'
       }
     });
   });
@@ -433,7 +432,7 @@ export async function completeWhatsAppCoexistence(request: Request, env: Env) {
     return Response.json({ error: { message: 'Meta authorization code, WABA ID, and onboarding session are required' } }, { status: 400 });
   }
 
-  const session = await consumeWhatsAppOnboardingSession(env, onboardingSession);
+  const session = await getWhatsAppOnboardingSession(env, onboardingSession);
   if (!session.valid) {
     return Response.json({ error: { message: 'Onboarding session is invalid or expired' } }, { status: 401 });
   }
@@ -477,6 +476,11 @@ export async function completeWhatsAppCoexistence(request: Request, env: Env) {
   const coexistence = await checkCoexistence(env, selected.id, token);
   const contactSync = await requestAppSync(env, selected.id, token, 'smb_app_state_sync');
   const historySync = await requestAppSync(env, selected.id, token, 'history');
+
+  const consumed = await consumeWhatsAppOnboardingSession(env, onboardingSession);
+  if (!consumed.valid) {
+    return Response.json({ error: { message: 'Onboarding session expired before completion' } }, { status: 409 });
+  }
 
   return Response.json({
     ok: true,
