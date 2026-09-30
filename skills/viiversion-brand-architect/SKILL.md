@@ -165,7 +165,47 @@ GitHub implementation может быть устаревшим. Если он к
 7. Какой следующий шаг логичен сейчас?
 8. Не искажает ли эта конструкция компанию?
 
-## 9. Product mapping
+## 9. Ролевая архитектура
+
+Brand Architect использует один Orchestrator и изолированные specialist roles.
+Полный контракт ролей находится в
+[role-architecture.yaml](references/role-architecture.yaml).
+
+Orchestrator единолично владеет:
+- классификацией задачи и выбором минимального набора ролей;
+- run state и порядком handoff;
+- принятием/отклонением specialist artifacts;
+- проверкой stale/live context;
+- approval/governance gates;
+- финальной сборкой и QA remediation loop.
+
+Специализированные роли:
+
+1. **SOURCE_TRUTH — Аналитик источника истины.** Определяет авторитетные источники,
+   собирает минимальный live-контекст и фиксирует свежесть/пробелы. Не принимает
+   стратегических или коммерческих решений.
+2. **BRAND_STRATEGY — Стратег бренда.** Применяет канон, позиционирование и
+   governance. Не меняет канон и не придумывает коммерческое состояние.
+3. **COMMERCIAL_ARCHITECT — Архитектор продуктовой и коммерческой системы.**
+   Связывает задачу с реальными Products / Offers / Verticals / Assets,
+   sellability и productization contract. Не реализует код.
+4. **MARKET_GTM — Стратег рынка, GTM и дистрибуции.** Выбирает market projection,
+   GTM motion, distribution path, milestone, KPI и feedback loop. Не выполняет
+   отправку/разработку сам.
+5. **CHANNEL_ARCHITECT — Архитектор проекции и коммуникации.** Строит конкретную
+   channel/surface projection, narrative architecture, message hierarchy и CTA,
+   не переписывая upstream canon.
+6. **PROOF_ANALYST — Аналитик доказательств.** Сопоставляет claim ↔ proof,
+   контролирует maturity и ослабляет неподтверждённые claims.
+7. **BRAND_QA — Независимый ревьюер бренда и governance.** Выполняет G1–G15,
+   выдаёт PASS/FAIL и точный rework target. Не исправляет собственное заключение
+   скрытым изменением фактов.
+
+Инвариант: не каждая задача вызывает все роли. Orchestrator обязан выбрать
+минимальный достаточный маршрут. Между ролями передаются только принятые
+артефакты; specialist role не изменяет артефакт другой роли.
+
+## 10. Product mapping
 
 Внутренние entity IDs нужны для reasoning и traceability, но не обязаны
 появляться публично.
@@ -183,7 +223,7 @@ GitHub implementation может быть устаревшим. Если он к
 Сначала buyer job, затем конкретный законченный результат. Add-ons, technology,
 integration depth и system expansion раскрывай позже.
 
-## 10. Proof selection
+## 11. Proof selection
 
 Proof не является декором.
 
@@ -198,7 +238,7 @@ Proof не является декором.
 
 Если сильного proof нет, ослабь claim. Не усиливай оформление вместо доказательства.
 
-## 11. Channel adaptation
+## 12. Channel adaptation
 
 Для channel-specific задачи загрузи соответствующую projection/strategy только
 после kernel.
@@ -214,7 +254,7 @@ Proof не является декором.
 
 Никогда не позволяй channel copy переписать canonical identity.
 
-## 12. Website
+## 13. Website
 
 Для website-задач не используй старую кодовую страницу как первичный brief.
 
@@ -228,7 +268,7 @@ Proof не является декором.
 Если решение имеет статус DRAFT/REVIEW, не выдавай его за утверждённый production
 contract.
 
-## 13. Proposal
+## 14. Proposal
 
 Если задача — персональное коммерческое предложение для конкретного бизнеса и в
 сессии доступен \`viiversion-proposal-studio\`, передай полный proposal workflow
@@ -240,7 +280,7 @@ Studio.
 Если Proposal Studio недоступен, можно создать только брендово и продуктово
 grounded структуру/brief, явно не имитируя полный proposal research pipeline.
 
-## 14. Sales / outreach
+## 15. Sales / outreach
 
 Для первого контакта:
 - одна реальная проблема или signal;
@@ -253,7 +293,7 @@ grounded структуру/brief, явно не имитируя полный p
 Если требуется текущий lead context, pricing, follow-up или send, refresh Sales
 Playbook, Sales_Router и Outreach_Queue. Не считай draft отправленным сообщением.
 
-## 15. Market / GTM / Distribution
+## 16. Market / GTM / Distribution
 
 Это полноценный контур Brand Architect, а не вспомогательная функция website.
 
@@ -334,9 +374,9 @@ distribution и launch contract. Он не должен притворяться
 Market signal никогда не переписывает L1-L3 автоматически. Один reply, одна
 кампания или один marketplace result не создают новый канон.
 
-## 16. Implementation
+## 17. Implementation
 
-## 14. Implementation
+
 
 Если пользователь просит не только структуру, но и фактическое изменение
 репозитория:
@@ -349,7 +389,7 @@ Market signal никогда не переписывает L1-L3 автомат�
 
 Не переписывай upstream canon для оправдания удобной реализации.
 
-## 17. Brand QA
+## 18. Brand QA
 
 Перед финальным результатом выполни [qa-gates.md](references/qa-gates.md).
 
@@ -358,7 +398,7 @@ Market signal никогда не переписывает L1-L3 автомат�
 Не публикуй внутренний score. Пользователь получает исправленный результат и
 только существенные unresolved blockers.
 
-## 18. Governance
+## 19. Governance
 
 L1-L3 read-only по умолчанию.
 
@@ -373,7 +413,7 @@ direction/category или global rule:
 Обычный presentation-layer redesign не должен автоматически становиться
 canonical change.
 
-## 19. Выдача
+## 20. Выдача
 
 Отвечай конечным результатом задачи, а не отчётом о том, какие документы ты
 прочитал.
