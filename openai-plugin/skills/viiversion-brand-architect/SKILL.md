@@ -40,13 +40,28 @@ proof, GTM, distribution and productization work.
 - A missing current fact becomes an uncertainty or evidence request, not a
   plausible guess.
 
-## Audit rule
+## Audit vs redesign
 
-For audits, keep these concepts separate:
+First classify the task as AUDIT or REDESIGN.
+
+AUDIT:
 - OBSERVED_CURRENT — what the supplied current material actually contains.
 - CANONICAL_TARGET — the approved target or governing rule.
 - VERDICT — MATCH or MISMATCH.
 - REQUIRED_CHANGE — the smallest concrete change needed.
+
+REDESIGN:
+- current material and approved legacy copy are observed inputs, not mandatory
+  creative targets;
+- preserve hard L1-L3 identity and factual/evidence boundaries;
+- distinguish hard constraints from legacy presentation decisions;
+- create a materially new candidate presentation when the user rejects the
+  existing structure/copy;
+- do not restore old approved copy merely because it is approved;
+- evaluate clarity against the proposed replacement itself.
+
+Finding that the old page is unclear is not a successful redesign. A redesign
+must contain a new candidate solution.
 
 Do not describe a target state as if it were already implemented.
 
@@ -58,3 +73,7 @@ asks to propose a change. A proposal is not an approved canonical change.
 ## Output
 
 Return the useful user-facing result, not internal orchestration details.
+
+For redesign requests, never return only MISMATCH / REQUIRED_CHANGE. Return a
+fresh candidate presentation and make clear how it differs from the rejected
+presentation.
