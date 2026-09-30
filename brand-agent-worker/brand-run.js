@@ -459,15 +459,29 @@ async function callStub(env, runId, path, method = "POST", body = null) {
   if (!env?.BRAND_RUNS) throw new BrandRoleError("RUN_BINDING_MISSING", "BRAND_RUNS Durable Object binding is required", 503);
   const safeRunId = safeId(runId, "run_id");
   const id = env.BRAND_RUNS.idFromName(safeRunId);
-  const stub = env.BRAND_RUNS.get(id);
-  const response = await stub.fetch(`https://brand-run.internal${path}`, {
+  const requestInit = {
     method,
     headers: { "content-type": "application/json" },
     body: body === null ? undefined : JSON.stringify(body)
-  });
-  const payload = await response.json();
-  if (!response.ok) throw new BrandRoleError(payload.error ?? "RUN_ERROR", payload.message ?? "Brand run operation failed", response.status);
-  return payload;
+  };
+
+  let lastError;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const stub = env.BRAND_RUNS.get(id);
+      const response = await stub.fetch(`https://brand-run.internal${path}`, requestInit);
+      const payload = await response.json();
+      if (!response.ok) throw new BrandRoleError(payload.error ?? "RUN_ERROR", payload.message ?? "Brand run operation failed", response.status);
+      return payload;
+    } catch (error) {
+      lastError = error;
+      const message = String(error?.message ?? error);
+      const transientReset = /Durable Object reset because its code was updated/i.test(message);
+      if (!transientReset || attempt === 4) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+    }
+  }
+  throw lastError;
 }
 
 export async function executeAgentRuntimeTool(env, name, args = {}) {
