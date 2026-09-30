@@ -3,6 +3,7 @@ export const BRAND_ROLE = Object.freeze({
   BRAND_STRATEGY: "brand-strategy",
   COMMERCIAL_ARCHITECT: "commercial-architect",
   MARKET_GTM: "market-gtm",
+  PRESENTATION_SYNTHESIS: "presentation-synthesis",
   CHANNEL_ARCHITECT: "channel-architect",
   PROOF_ANALYST: "proof-analyst",
   BRAND_QA: "brand-qa"
@@ -33,6 +34,12 @@ export const BRAND_ROLE_DEFINITIONS = Object.freeze({
     outputs: ["market-plan", "gtm-plan", "distribution-plan"],
     prohibited: ["canonical_mutation", "live_pipeline_claim_without_live_context", "implementation", "send_outreach"]
   }),
+  [BRAND_ROLE.PRESENTATION_SYNTHESIS]: Object.freeze({
+    title: "Директор синтеза presentation",
+    responsibility: "For redesign/new-structure tasks, create a materially new presentation concept from audience, buyer jobs, canonical constraints, current commercial truth and proof. Treat legacy approved presentation as observed input, not an automatic creative target.",
+    outputs: ["presentation-concept"],
+    prohibited: ["canonical_mutation", "invent_commercial_state", "invent_proof", "restore_legacy_copy_only_because_approved", "treat_approval_as_quality_evidence", "implementation"]
+  }),
   [BRAND_ROLE.CHANNEL_ARCHITECT]: Object.freeze({
     title: "Архитектор проекции и коммуникации",
     responsibility: "Project accepted decisions into a concrete channel/surface narrative, hierarchy, proof slots, depth and CTA.",
@@ -55,6 +62,20 @@ export const BRAND_ROLE_DEFINITIONS = Object.freeze({
 
 function clean(value, max=5000) {
   return String(value ?? "").replace(/\u0000/g, "").trim().slice(0,max);
+}
+
+export function inferTaskMode(task, explicit) {
+  const forced=String(explicit ?? "").trim().toUpperCase();
+  if (["AUDIT","REDESIGN","SYNTHESIS","FINAL_COPY","IMPLEMENTATION","GOVERNANCE"].includes(forced)) return forced;
+  const q=String(task ?? "").toLowerCase();
+  const redesign =
+    /redesign|rebuild|rework.*(?:page|homepage|hero)|редизайн|пересоб|заново|с нуля|передел.*(?:главн|сайт|hero|хиро)|не устраива|не нравится.*(?:структур|текст|смысл)|отверга.*(?:текст|hero|хиро|структур)|сохран.*только.*(?:цвет|градиент|стил)|preserve only.*(?:visual|color|gradient|style)|reject.*(?:current|approved|old)|not an audit|не аудит/.test(q);
+  if (redesign) return "REDESIGN";
+  if (/implement|deploy|реализ|внеси.*(?:код|сайт)|задепло/.test(q)) return "IMPLEMENTATION";
+  if (/governance|канон|change request|decision log|измен.*канон/.test(q)) return "GOVERNANCE";
+  if (/final copy|финальн.*текст|готов.*публикац/.test(q)) return "FINAL_COPY";
+  if (/audit|аудит|compare|сравн|review|проверь|проверить|проаудит/.test(q)) return "AUDIT";
+  return "SYNTHESIS";
 }
 
 function inferSurface(task, explicit) {
@@ -80,6 +101,7 @@ export function buildRolePlan(args={}) {
   if(!task) throw new TypeError("task is required");
   const surface=inferSurface(task,args.surface);
   const q=task.toLowerCase();
+  const taskMode=inferTaskMode(task,args.task_mode);
   const current=Boolean(args.current_state) || /сейчас|текущ|today|current|price|цена|readiness|готов|status|статус|sellab|прода/.test(q);
   const finalPublic=Boolean(args.final_public) || /финальн|public|публич|опубли/.test(q);
   const implementation=Boolean(args.implementation) || /внеси|измени|implement|deploy|реализ|код|репозитор/.test(q);
@@ -99,6 +121,10 @@ export function buildRolePlan(args={}) {
 
   if(["market","campaign"].includes(surface) || /gtm|distribution|дистриб|launch|запуск|marketplace|маркетплейс|product hunt|партнер|partner|outreach|рассыл/.test(q)) {
     add(route,BRAND_ROLE.MARKET_GTM,reasons,"task requires market/GTM/distribution decision");
+  }
+
+  if ((taskMode === "REDESIGN" || taskMode === "SYNTHESIS") && (surface === "website" || /presentation|презентац|hero|хиро|главн|структур|copy|текст/.test(q))) {
+    add(route,BRAND_ROLE.PRESENTATION_SYNTHESIS,reasons,"redesign/new presentation requires fresh synthesis before channel projection");
   }
 
   if(["website"].includes(surface) || /linkedin|presentation|презентац|headline|hero|copy|текст|сообщен|message|страниц|сайт/.test(q)) {
@@ -121,6 +147,7 @@ export function buildRolePlan(args={}) {
   return {
     task,
     surface,
+    taskMode,
     flags:{current_state:current,final_public:finalPublic,implementation},
     route,
     reasons,
@@ -131,7 +158,9 @@ export function buildRolePlan(args={}) {
       "Only accepted specialist artifacts may be consumed downstream.",
       "Current/final commercial or distribution claims require validated live source context.",
       "Specialists cannot mutate another role's artifact or silently change canon.",
-      "BRAND_QA routes rework; it cannot manufacture evidence to turn FAIL into PASS."
+      "BRAND_QA routes rework; it cannot manufacture evidence to turn FAIL into PASS.",
+      "REDESIGN is not AUDIT: legacy approved presentation is observed material, not the mandatory creative target.",
+      "A REDESIGN route must synthesize a materially new candidate before channel projection and QA."
     ]
   };
 }
@@ -148,7 +177,8 @@ export const ROLE_TOOL = Object.freeze({
       surface:{type:"string"},
       current_state:{type:"boolean"},
       final_public:{type:"boolean"},
-      implementation:{type:"boolean"}
+      implementation:{type:"boolean"},
+      task_mode:{type:"string",enum:["AUDIT","REDESIGN","SYNTHESIS","FINAL_COPY","IMPLEMENTATION","GOVERNANCE"]}
     },
     additionalProperties:false
   },
