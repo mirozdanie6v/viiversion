@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { buildRolePlan, BRAND_ROLE } from "./roles.js";
 import { BRAND_ROLE_MODEL, BrandRoleError, executeBrandRole, assembleBrandResult } from "./brand-role-runtime.js";
+import { validateLiveContext } from "./live-source.js";
 
 const RUN_KEY = "brand-run-v1";
 
@@ -360,6 +361,9 @@ export const AGENT_RUNTIME_TOOLS = Object.freeze([
         final_public: { type: "boolean" },
         implementation: { type: "boolean" },
         max_rework_cycles: { type: "integer", minimum: 0, maximum: 3 },
+        observed_at: { type: "string" },
+        source_classes: { type: "array", items: { type: "string" } },
+        tabs_read: { type: "array", items: { type: "string" } },
         source_evidence: {
           type: "array",
           items: {
@@ -503,6 +507,23 @@ async function callStub(env, runId, path, method = "POST", body = null) {
 
 export async function executeAgentRuntimeTool(env, name, args = {}) {
   if (name === "run_brand_task") {
+    const liveGate = validateLiveContext({
+      task: args.task,
+      surface: args.surface,
+      current_state: Boolean(args.current_state),
+      final_public: Boolean(args.final_public),
+      implementation: Boolean(args.implementation),
+      observed_at: args.observed_at,
+      source_classes: args.source_classes ?? [],
+      tabs_read: args.tabs_read ?? []
+    });
+    if (liveGate.strict && !liveGate.pass) {
+      throw new BrandRoleError(
+        "LIVE_CONTEXT_REQUIRED",
+        `Live Source of Truth gate failed; missing classes: ${liveGate.missingSourceClasses.join(", ") || "none"}; missing tabs: ${liveGate.missingTabs.join(", ") || "none"}`,
+        422
+      );
+    }
     const runId = clean(args.run_id, 96) || `brand-${crypto.randomUUID()}`;
     await callStub(env, runId, "/create", "POST", {
       runId,
