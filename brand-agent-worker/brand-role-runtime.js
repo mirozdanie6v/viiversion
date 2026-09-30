@@ -25,6 +25,23 @@ const proofClaim = objectSchema({
   maturity: string,
   supported: { type: "boolean" }
 });
+const auditSnapshot = objectSchema({
+  subject: string,
+  source: string,
+  content_json: string
+});
+const auditPair = objectSchema({
+  subject: string,
+  observed_current: string,
+  canonical_target: string
+});
+const auditFinalItem = objectSchema({
+  subject: string,
+  observed_current: string,
+  canonical_target: string,
+  verdict: { type: "string", enum: ["MATCH", "MISMATCH"] },
+  required_change: string
+});
 const QA_GATES = Object.freeze(Array.from({ length: 15 }, (_, index) => `G${index + 1}`));
 const REWORK_ROLES = Object.freeze([
   BRAND_ROLE.SOURCE_TRUTH,
@@ -58,7 +75,11 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
     observed_at: string,
     verified_facts: stringArray,
     uncertainties: stringArray,
-    missing_requirements: stringArray
+    missing_requirements: stringArray,
+    audit_mode: { type: "boolean" },
+    observed_current: { type: "array", items: auditSnapshot },
+    canonical_target: { type: "array", items: auditSnapshot },
+    audit_pairs: { type: "array", items: auditPair }
   }),
   "brand-decision": objectSchema({
     task_scope: string,
@@ -184,8 +205,61 @@ function validateSchemaValue(schema, value, label) {
   throw new BrandRoleError("SCHEMA_UNSUPPORTED", `Unsupported schema at ${label}`, 500);
 }
 
-function normalizeRolePayload(role, payload, task = "") {
+function auditEvidenceKind(entry) {
+  const marker = `${entry?.evidenceId ?? ""} ${entry?.source ?? ""}`.toLowerCase();
+  if (/live|capture|observed|current|production/.test(marker)) return "observed";
+  if (/homepage|website|canonical|strategy|decision|matrix|ux|architecture|target/.test(marker)) return "target";
+  return "context";
+}
+
+function buildAuditFrame(evidence) {
+  const observed = [];
+  const targets = [];
+  const observedBySubject = new Map();
+  const targetBySubject = new Map();
+
+  for (const entry of evidence ?? []) {
+    const kind = auditEvidenceKind(entry);
+    if (kind === "context") continue;
+    const content = entry?.content;
+    if (!content || typeof content !== "object" || Array.isArray(content)) continue;
+
+    const destination = kind === "observed" ? observed : targets;
+    const bySubject = kind === "observed" ? observedBySubject : targetBySubject;
+    for (const [subject, value] of Object.entries(content)) {
+      if (!/^block\d+$/i.test(subject)) continue;
+      const contentJson = canonicalJson(value);
+      const snapshot = { subject, source: entry.source, content_json: contentJson };
+      destination.push(snapshot);
+      if (!bySubject.has(subject)) bySubject.set(subject, contentJson);
+    }
+  }
+
+  const auditPairs = [...observedBySubject.keys()]
+    .filter((subject) => targetBySubject.has(subject))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .map((subject) => ({
+      subject,
+      observed_current: observedBySubject.get(subject),
+      canonical_target: targetBySubject.get(subject)
+    }));
+
+  return { observed, targets, auditPairs };
+}
+
+function normalizeRolePayload(role, payload, task = "", evidence = []) {
   const normalized = structuredClone(payload);
+
+  if (role === BRAND_ROLE.SOURCE_TRUTH) {
+    const audit = isAuditTask(task);
+    const frame = audit ? buildAuditFrame(evidence) : { observed: [], targets: [], auditPairs: [] };
+    normalized.audit_mode = audit;
+    normalized.observed_current = frame.observed;
+    normalized.canonical_target = frame.targets;
+    normalized.audit_pairs = frame.auditPairs;
+    return normalized;
+  }
+
   if (role !== BRAND_ROLE.BRAND_QA) return normalized;
 
   const uncertaintyPattern = /insufficient evidence|missing (?:optional )?|not fully established|uncertain|unavailable|not provided/i;
@@ -219,6 +293,9 @@ export function validateRolePayload(role, payload) {
   const artifactType = ROLE_ARTIFACT_TYPE[role];
   if (!artifactType) throw new BrandRoleError("UNKNOWN_ROLE", `Unknown Brand role: ${role}`, 404);
   validateSchemaValue(ROLE_OUTPUT_SCHEMAS[artifactType], payload, artifactType);
+  if (role === BRAND_ROLE.SOURCE_TRUTH && payload.audit_mode && payload.audit_pairs.length === 0) {
+    throw new BrandRoleError("AUDIT_FRAME_REQUIRED", "Audit mode requires at least one deterministic OBSERVED_CURRENT ↔ CANONICAL_TARGET pair", 422);
+  }
   if (role === BRAND_ROLE.BRAND_QA) {
     const gates = payload.gate_results.map((entry) => entry.gate);
     if (new Set(gates).size !== QA_GATES.length || QA_GATES.some((gate) => !gates.includes(gate))) {
@@ -377,7 +454,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
         temperature: 0,
         max_tokens: maxTokens
       });
-      payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output), run.task));
+      payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output), run.task, acceptedEvidence));
       lastModelError = null;
       break;
     } catch (error) {
@@ -385,7 +462,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
       const code = error?.code ?? "";
       const message = String(error?.message ?? error);
       const retryable =
-        ["MODEL_OUTPUT_INVALID", "SCHEMA_VALIDATION_FAILED", "QA_GATES_INCOMPLETE", "QA_CRITICAL_FAILURE_REQUIRED", "QA_REWORK_TARGET_REQUIRED", "QA_DECISION_INCONSISTENT"].includes(code) ||
+        ["MODEL_OUTPUT_INVALID", "SCHEMA_VALIDATION_FAILED", "AUDIT_FRAME_REQUIRED", "QA_GATES_INCOMPLETE", "QA_CRITICAL_FAILURE_REQUIRED", "QA_REWORK_TARGET_REQUIRED", "QA_DECISION_INCONSISTENT"].includes(code) ||
         /JSON Mode couldn't be met|invalid json|schema|structured/i.test(message);
       if (!retryable || attempt === 3) throw error;
     }
@@ -439,7 +516,8 @@ const FINAL_RESULT_SCHEMA = objectSchema({
   answer: string,
   key_decisions: stringArray,
   uncertainties: stringArray,
-  source_trace: stringArray
+  source_trace: stringArray,
+  audit_items: { type: "array", items: auditFinalItem }
 });
 
 export async function assembleBrandResult({ ai, run }) {
@@ -464,9 +542,15 @@ export async function assembleBrandResult({ ai, run }) {
       : "",
     "Return only JSON matching the requested schema."
   ].join("\n");
+  const sourceContext = latest.get("source-context")?.payload ?? null;
   const user = JSON.stringify({
     task: run.task,
     surface: run.surface,
+    audit_frame: isAuditTask(run.task) ? {
+      observed_current: sourceContext?.observed_current ?? [],
+      canonical_target: sourceContext?.canonical_target ?? [],
+      audit_pairs: sourceContext?.audit_pairs ?? []
+    } : null,
     accepted_artifacts: [...latest.values()].map(({ type, producer, revision, payload }) => ({ type, producer, revision, payload }))
   });
   let payload;
@@ -494,5 +578,40 @@ export async function assembleBrandResult({ ai, run }) {
     }
   }
   if (!payload) throw lastError ?? new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI did not produce a valid final result", 502);
+
+  if (!isAuditTask(run.task)) {
+    payload.audit_items = [];
+    return structuredClone(payload);
+  }
+
+  const sourceContext = latest.get("source-context")?.payload;
+  const pairs = sourceContext?.audit_pairs ?? [];
+  if (!pairs.length) throw new BrandRoleError("AUDIT_FRAME_REQUIRED", "Final audit assembly requires deterministic audit pairs", 422);
+
+  const generatedBySubject = new Map((payload.audit_items ?? []).map((item) => [item.subject, item]));
+  payload.audit_items = pairs.map((pair) => {
+    const generated = generatedBySubject.get(pair.subject) ?? {};
+    const verdict = pair.observed_current === pair.canonical_target ? "MATCH" : "MISMATCH";
+    let requiredChange = String(generated.required_change ?? "").trim();
+    if (verdict === "MATCH") requiredChange = "None";
+    if (verdict === "MISMATCH" && (!requiredChange || /^none$/i.test(requiredChange))) {
+      requiredChange = `Align ${pair.subject} with the canonical target shown in CANONICAL_TARGET.`;
+    }
+    return {
+      subject: pair.subject,
+      observed_current: pair.observed_current,
+      canonical_target: pair.canonical_target,
+      verdict,
+      required_change: requiredChange
+    };
+  });
+
+  payload.answer = payload.audit_items.map((item) => [
+    `${item.subject.toUpperCase()} — ${item.verdict}`,
+    `OBSERVED_CURRENT: ${item.observed_current}`,
+    `CANONICAL_TARGET: ${item.canonical_target}`,
+    `REQUIRED_CHANGE: ${item.required_change}`
+  ].join("\n")).join("\n\n");
+
   return structuredClone(payload);
 }
