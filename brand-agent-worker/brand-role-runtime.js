@@ -316,17 +316,37 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
   const contextArtifacts = contextForRole(run, role);
   const artifactType = ROLE_ARTIFACT_TYPE[role];
   const prompt = promptFor({ run, role, contextArtifacts, evidence: acceptedEvidence });
-  const output = await ai.run(BRAND_ROLE_MODEL, {
-    messages: [
-      { role: "system", content: prompt.system },
-      { role: "user", content: prompt.user }
-    ],
-    response_format: { type: "json_schema", json_schema: structuredClone(ROLE_OUTPUT_SCHEMAS[artifactType]) },
-    temperature: 0,
-    max_tokens: 2048
-  });
-
-  const payload = validateRolePayload(role, extractPayload(output));
+  let payload;
+  let lastModelError;
+  const maxTokens = role === BRAND_ROLE.BRAND_QA ? 4096 : 2560;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const repairInstruction = attempt === 1
+        ? ""
+        : "\nA previous generation failed structured-output validation. Return one COMPLETE JSON object only. Do not truncate, wrap in markdown, add commentary, or omit required fields.";
+      const output = await ai.run(BRAND_ROLE_MODEL, {
+        messages: [
+          { role: "system", content: prompt.system + repairInstruction },
+          { role: "user", content: prompt.user }
+        ],
+        response_format: { type: "json_schema", json_schema: structuredClone(ROLE_OUTPUT_SCHEMAS[artifactType]) },
+        temperature: 0,
+        max_tokens: maxTokens
+      });
+      payload = validateRolePayload(role, extractPayload(output));
+      lastModelError = null;
+      break;
+    } catch (error) {
+      lastModelError = error;
+      const code = error?.code ?? "";
+      const message = String(error?.message ?? error);
+      const retryable =
+        ["MODEL_OUTPUT_INVALID", "SCHEMA_VALIDATION_FAILED", "QA_GATES_INCOMPLETE", "QA_REWORK_TARGET_REQUIRED", "QA_DECISION_INCONSISTENT"].includes(code) ||
+        /JSON Mode couldn't be met|invalid json|schema|structured/i.test(message);
+      if (!retryable || attempt === 3) throw error;
+    }
+  }
+  if (!payload) throw lastModelError ?? new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI did not produce a valid role payload", 502);
   if (role === BRAND_ROLE.SOURCE_TRUTH) {
     const allowedSources = new Set(acceptedEvidence.flatMap(({ evidenceId, source }) => [evidenceId, source]));
     const invalidSources = payload.sources_read.filter((source) => !allowedSources.has(source));
@@ -392,13 +412,30 @@ export async function assembleBrandResult({ ai, run }) {
     surface: run.surface,
     accepted_artifacts: [...latest.values()].map(({ type, producer, revision, payload }) => ({ type, producer, revision, payload }))
   });
-  const output = await ai.run(BRAND_ROLE_MODEL, {
-    messages: [{ role: "system", content: system }, { role: "user", content: user }],
-    response_format: { type: "json_schema", json_schema: structuredClone(FINAL_RESULT_SCHEMA) },
-    temperature: 0,
-    max_tokens: 3072
-  });
-  const payload = extractPayload(output);
-  validateSchemaValue(FINAL_RESULT_SCHEMA, payload, "final-result");
+  let payload;
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const repairInstruction = attempt === 1 ? "" : "\nReturn one COMPLETE JSON object only; the previous attempt failed structured-output validation.";
+      const output = await ai.run(BRAND_ROLE_MODEL, {
+        messages: [{ role: "system", content: system + repairInstruction }, { role: "user", content: user }],
+        response_format: { type: "json_schema", json_schema: structuredClone(FINAL_RESULT_SCHEMA) },
+        temperature: 0,
+        max_tokens: 4096
+      });
+      payload = extractPayload(output);
+      validateSchemaValue(FINAL_RESULT_SCHEMA, payload, "final-result");
+      lastError = null;
+      break;
+    } catch (error) {
+      lastError = error;
+      const code = error?.code ?? "";
+      const message = String(error?.message ?? error);
+      const retryable = code === "MODEL_OUTPUT_INVALID" || code === "SCHEMA_VALIDATION_FAILED" ||
+        /JSON Mode couldn't be met|invalid json|schema|structured/i.test(message);
+      if (!retryable || attempt === 3) throw error;
+    }
+  }
+  if (!payload) throw lastError ?? new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI did not produce a valid final result", 502);
   return structuredClone(payload);
 }
