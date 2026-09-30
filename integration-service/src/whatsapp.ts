@@ -1,11 +1,15 @@
 import type { Env } from './bokun';
 import { getConnectedWhatsAppCredentials } from './whatsapp-onboarding';
 import {
+  getWhatsAppSyncState,
   listWhatsAppChats,
+  listWhatsAppContacts,
   listWhatsAppMessages,
   reviewWhatsAppMessages,
+  saveWhatsAppContact,
   saveWhatsAppMessage,
   saveWhatsAppStatus,
+  saveWhatsAppSyncState,
   type WhatsAppMessage,
 } from './store';
 
@@ -35,6 +39,9 @@ type MetaMessage = {
   button?: { payload?: string; text?: string };
   location?: { latitude?: number; longitude?: number; name?: string; address?: string };
   context?: { from?: string; id?: string; forwarded?: boolean; frequently_forwarded?: boolean };
+  to?: string;
+  history_context?: { status?: string };
+  original_message_id?: string;
 };
 
 type MetaStatus = {
@@ -52,6 +59,25 @@ type MetaValue = {
   contacts?: MetaContact[];
   messages?: MetaMessage[];
   statuses?: MetaStatus[];
+  message_echoes?: MetaMessage[];
+  history?: Array<{
+    metadata?: { phase?: number; chunk_order?: number; progress?: number };
+    threads?: Array<{ id?: string; messages?: MetaMessage[] }>;
+    errors?: Array<{ code?: number; title?: string; message?: string; error_data?: { details?: string } }>;
+  }>;
+  state_sync?: Array<{
+    type?: string;
+    action?: string;
+    contact?: {
+      full_name?: string;
+      first_name?: string;
+      phone_number?: string;
+      user_id?: string;
+      parent_user_id?: string;
+      username?: string;
+    };
+    metadata?: { timestamp?: string };
+  }>;
 };
 
 type MetaWebhook = {
@@ -105,8 +131,12 @@ function safeIsoFromUnixSeconds(value: string | undefined) {
   return new Date(seconds * 1000).toISOString();
 }
 
+function onlyDigits(value: string | undefined) {
+  return (value ?? '').replace(/[^0-9]/g, '');
+}
+
 function normalizeRecipient(value: string) {
-  const digits = value.replace(/[^0-9]/g, '');
+  const digits = onlyDigits(value);
   if (!/^\d{7,15}$/.test(digits)) throw new Response('Invalid WhatsApp recipient', { status: 400 });
   return digits;
 }
@@ -196,24 +226,143 @@ export async function receiveWhatsAppWebhook(request: Request, env: Env) {
 
   let savedMessages = 0;
   let savedStatuses = 0;
+  let savedContacts = 0;
+  let historyMessages = 0;
+  let echoedMessages = 0;
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
-      if (change.field !== 'messages') continue;
       const value = change.value;
       if (!value || value.messaging_product !== 'whatsapp') continue;
 
       const phoneNumberId = value.metadata?.phone_number_id?.trim() || undefined;
       const businessDisplayNumber = value.metadata?.display_phone_number?.trim() || undefined;
+      const businessDigits = onlyDigits(businessDisplayNumber);
       const names = new Map(
         (value.contacts ?? [])
           .filter(contact => Boolean(contact.wa_id))
           .map(contact => [contact.wa_id as string, contact.profile?.name?.trim() || undefined] as const),
       );
 
+      if (change.field === 'history') {
+        for (const chunk of value.history ?? []) {
+          const error = chunk.errors?.[0];
+          const phase = chunk.metadata?.phase;
+          const progress = chunk.metadata?.progress;
+          const chunkOrder = chunk.metadata?.chunk_order;
+
+          await saveWhatsAppSyncState(env, {
+            history: {
+              phase,
+              progress,
+              chunkOrder,
+              updatedAt: new Date().toISOString(),
+              error: error?.message || error?.title || error?.error_data?.details,
+            },
+          });
+
+          if (error) continue;
+
+          for (const thread of chunk.threads ?? []) {
+            const threadPeer = onlyDigits(thread.id);
+            for (const message of thread.messages ?? []) {
+              const id = message.id?.trim() ?? '';
+              const from = onlyDigits(message.from);
+              const to = onlyDigits(message.to);
+              if (!id || (!from && !to)) continue;
+
+              const outbound = Boolean(businessDigits && from === businessDigits);
+              const peer = threadPeer || (outbound ? to : from);
+              if (!peer) continue;
+
+              await saveWhatsAppMessage(env, {
+                id,
+                peer,
+                from: from || (outbound ? businessDigits : peer),
+                to: to || (outbound ? peer : businessDigits || 'business'),
+                direction: outbound ? 'outbound' : 'inbound',
+                timestamp: safeIsoFromUnixSeconds(message.timestamp),
+                type: message.type?.trim() || 'unknown',
+                text: messageText(message),
+                phoneNumberId,
+                contextMessageId: message.context?.id?.trim() || undefined,
+                mediaId: mediaFields(message).mediaId,
+                mimeType: mediaFields(message).mimeType,
+                status: message.history_context?.status?.trim() || undefined,
+                reviewedAt: new Date().toISOString(),
+                source: 'history',
+                historyPhase: phase,
+              });
+              savedMessages += 1;
+              historyMessages += 1;
+            }
+          }
+        }
+        continue;
+      }
+
+      if (change.field === 'smb_app_state_sync') {
+        let changed = 0;
+        for (const item of value.state_sync ?? []) {
+          if (item.type !== 'contact') continue;
+          const contact = item.contact;
+          const peer = onlyDigits(contact?.phone_number) || contact?.user_id?.trim() || contact?.username?.trim() || '';
+          if (!peer) continue;
+
+          await saveWhatsAppContact(
+            env,
+            {
+              peer,
+              fullName: contact?.full_name?.trim() || undefined,
+              firstName: contact?.first_name?.trim() || undefined,
+              username: contact?.username?.trim() || undefined,
+              userId: contact?.user_id?.trim() || undefined,
+              updatedAt: safeIsoFromUnixSeconds(item.metadata?.timestamp),
+            },
+            item.action === 'remove' ? 'remove' : 'upsert',
+          );
+          savedContacts += 1;
+          changed += 1;
+        }
+        await saveWhatsAppSyncState(env, {
+          contacts: { updatedAt: new Date().toISOString(), count: changed },
+        });
+        continue;
+      }
+
+      if (change.field === 'smb_message_echoes' || change.field === 'message_echoes') {
+        for (const message of value.message_echoes ?? []) {
+          const id = message.id?.trim() ?? '';
+          const to = onlyDigits(message.to);
+          if (!id || !to) continue;
+          const media = mediaFields(message);
+          await saveWhatsAppMessage(env, {
+            id,
+            peer: to,
+            from: onlyDigits(message.from) || businessDigits || 'business',
+            to,
+            direction: 'outbound',
+            timestamp: safeIsoFromUnixSeconds(message.timestamp),
+            type: message.type?.trim() || 'unknown',
+            text: messageText(message),
+            phoneNumberId,
+            contextMessageId: message.context?.id?.trim() || message.original_message_id?.trim() || undefined,
+            mediaId: media.mediaId,
+            mimeType: media.mimeType,
+            source: 'business_app',
+          });
+          savedMessages += 1;
+          echoedMessages += 1;
+          await saveWhatsAppSyncState(env, { lastEchoAt: safeIsoFromUnixSeconds(message.timestamp) });
+        }
+        continue;
+      }
+
+      if (change.field !== 'messages') continue;
+
       for (const message of value.messages ?? []) {
         const id = message.id?.trim() ?? '';
-        const from = message.from?.trim() ?? '';
+        const from = onlyDigits(message.from);
         if (!id || !from) continue;
         const type = message.type?.trim() || 'unknown';
         const media = mediaFields(message);
@@ -227,11 +376,12 @@ export async function receiveWhatsAppWebhook(request: Request, env: Env) {
           timestamp: safeIsoFromUnixSeconds(message.timestamp),
           type,
           text: messageText(message),
-          profileName: names.get(from),
+          profileName: names.get(message.from?.trim() ?? ''),
           phoneNumberId,
           contextMessageId: message.context?.id?.trim() || undefined,
           mediaId: media.mediaId,
           mimeType: media.mimeType,
+          source: 'cloud_api',
         };
         await saveWhatsAppMessage(env, normalized);
         savedMessages += 1;
@@ -255,7 +405,14 @@ export async function receiveWhatsAppWebhook(request: Request, env: Env) {
     }
   }
 
-  return Response.json({ received: true, messages: savedMessages, statuses: savedStatuses });
+  return Response.json({
+    received: true,
+    messages: savedMessages,
+    statuses: savedStatuses,
+    contacts: savedContacts,
+    historyMessages,
+    echoedMessages,
+  });
 }
 
 export async function whatsappStatus(request: Request, env: Env) {
