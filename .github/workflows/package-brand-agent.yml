@@ -21,6 +21,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s plugin.json
+          test -s .app.json
           test -s .codex-plugin/plugin.json
           test -s skills/viiversion-brand-architect/SKILL.md
           test -s skills/viiversion-brand-architect/agents/openai.yaml
@@ -42,21 +43,21 @@ jobs:
           ROOT="dist/viiversion-brand-architect"
           rm -rf dist
           mkdir -p "$ROOT"
-          cp README.md plugin.json "$ROOT/"
+          cp README.md plugin.json .app.json "$ROOT/"
           cp -R .codex-plugin skills evals "$ROOT/"
           (
             cd dist
-            zip -r -9 viiversion-brand-architect-v0.2.0.zip viiversion-brand-architect
+            zip -r -9 viiversion-brand-architect-v0.3.0.zip viiversion-brand-architect
           )
-          sha256sum dist/viiversion-brand-architect-v0.2.0.zip > dist/viiversion-brand-architect-v0.2.0.zip.sha256
+          sha256sum dist/viiversion-brand-architect-v0.3.0.zip > dist/viiversion-brand-architect-v0.3.0.zip.sha256
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: viiversion-brand-architect-v0.2.0
+          name: viiversion-brand-architect-v0.3.0
           path: |
-            dist/viiversion-brand-architect-v0.2.0.zip
-            dist/viiversion-brand-architect-v0.2.0.zip.sha256
+            dist/viiversion-brand-architect-v0.3.0.zip
+            dist/viiversion-brand-architect-v0.3.0.zip.sha256
 
       - name: Publish GitHub release
         env:
@@ -64,8 +65,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view brand-agent-v0.2.0 >/dev/null 2>&1; then
-            gh release upload brand-agent-v0.2.0               dist/viiversion-brand-architect-v0.2.0.zip               dist/viiversion-brand-architect-v0.2.0.zip.sha256               --clobber
+          if gh release view brand-agent-v0.3.0 >/dev/null 2>&1; then
+            gh release upload brand-agent-v0.3.0               dist/viiversion-brand-architect-v0.3.0.zip               dist/viiversion-brand-architect-v0.3.0.zip.sha256               --clobber
           else
-            gh release create brand-agent-v0.2.0               dist/viiversion-brand-architect-v0.2.0.zip               dist/viiversion-brand-architect-v0.2.0.zip.sha256               --target "$GITHUB_SHA"               --title "VIIVERSION Brand Architect v0.2.0"               --notes "v0.2.0 adds Market/GTM, distribution, productization, platform launch, outreach campaign architecture and market-feedback governance to the VIIVERSION Brand Architect."
+            gh release create brand-agent-v0.3.0               dist/viiversion-brand-architect-v0.3.0.zip               dist/viiversion-brand-architect-v0.3.0.zip.sha256               --target "$GITHUB_SHA"               --title "VIIVERSION Brand Architect v0.3.0"               --notes "v0.3.0 adds user-authorized live Google Drive Source of Truth orchestration and live-context validation to Brand Architect."
           fi
