@@ -284,6 +284,39 @@
         "route rework to the producing specialist instead of silently changing evidence",
         "not upgrade proof maturity"
       ]
+    },
+    {
+      "id": "E29-autonomous-source-broker",
+      "input": "Сделай текущую финальную страницу Booking для сайта VIIVERSION.",
+      "must": [
+        "call get_live_source_plan before current/final execution",
+        "read only required live Google Drive documents and Commercial Matrix tabs",
+        "validate live context",
+        "pass the actual reads as source_evidence to run_brand_task",
+        "not move Google OAuth credentials into Cloudflare"
+      ]
+    },
+    {
+      "id": "E30-autonomous-role-loop",
+      "input": "Выполни Brand Architect задачу полностью.",
+      "must": [
+        "use run_brand_task instead of manually asking the user to advance roles",
+        "execute the minimum routed specialist set",
+        "accept schema-valid specialist artifacts automatically",
+        "run independent Brand QA",
+        "return one final assembled result"
+      ]
+    },
+    {
+      "id": "E31-autonomous-rework",
+      "input": "Brand QA нашёл критическую ошибку proof maturity.",
+      "must": [
+        "return to the earliest routed specialist responsible for the failed output",
+        "create a new artifact revision",
+        "rerun downstream specialists against latest accepted revisions",
+        "rerun Brand QA",
+        "stop after bounded rework attempts instead of looping forever"
+      ]
     }
   ]
 }
