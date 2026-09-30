@@ -1,7 +1,7 @@
 {
   "name": "viiversion-brand-architect",
-  "version": "0.3.0",
-  "description": "VIIVERSION brand, product, market/GTM, distribution, productization, proof and QA agent.",
+  "version": "0.6.0",
+  "description": "VIIVERSION autonomous brand, product, market/GTM, distribution, proof and governance agent.",
   "author": {
     "name": "Olga Nogtich",
     "url": "https://viiversion.com"
@@ -25,8 +25,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "VIIVERSION Brand Architect",
-    "shortDescription": "VIIVERSION brand, product and GTM agent",
-    "longDescription": "Understands the VIIVERSION corporate canon, commercial system, product architecture, market/GTM strategy, distribution system, proof registry and channel rules, then creates or audits positioning, campaigns, productization contracts, launches, buyer-facing structures and implementations without requiring manual workflow commands.",
+    "shortDescription": "Autonomous VIIVERSION brand, product and GTM agent",
+    "longDescription": "Uses the VIIVERSION corporate canon and live Source of Truth, then routes tasks through isolated specialist roles, Workers AI execution, proof controls and independent Brand QA with bounded rework and final result assembly.",
     "developerName": "Olga Nogtich",
     "category": "Productivity",
     "capabilities": [
