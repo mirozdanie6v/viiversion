@@ -26,9 +26,33 @@ Typical logic:
 
 \`clarity → proof → relevance → scale → solutions → trust → depth → software → team → conversion\`
 
-Do not force this pattern if an approved channel architecture already exists.
+Do not force this pattern mechanically.
+
 For viiversion.com, live Website Strategy / Homepage Architecture and decisions
-control the page.
+control production constraints, current governance state, proof requirements and
+known channel rules. They do **not** automatically control the new presentation
+concept when the user explicitly asks for redesign or rejects the current
+structure/copy.
+
+### Homepage redesign mode
+
+When the user says the current homepage is wrong, unclear, obsolete or should be
+rebuilt while preserving only selected visual traits:
+
+1. classify the task as REDESIGN, not AUDIT;
+2. treat current homepage and legacy approved copy as OBSERVED_CURRENT;
+3. extract hard constraints from L1-L3, L2/Proof and still-valid channel rules;
+4. explicitly list which old presentation decisions are being challenged;
+5. generate a fresh presentation concept from audience + buyer job + company
+   truth, rather than restoring the previous Hero/sequence;
+6. stress-test the new concept for five-second clarity before mapping it back to
+   the website channel;
+7. only after a concept passes synthesis + QA should it become a candidate
+   Website Decision / Homepage Architecture change.
+
+An approved old presentation can be superseded by a new candidate presentation.
+Approval status is not a creative-quality score and must not be used as proof
+that old copy is the best answer.
 
 ## Product / solution page
 
@@ -237,14 +261,26 @@ Proposal Studio owns:
 When user gives existing material:
 
 1. Identify intended audience and goal from the material/context.
-2. Check identity drift.
-3. Check entity-level mixing.
-4. Check claim/proof mismatch.
-5. Check relevance and narrative order.
-6. Check CTA.
-7. Replace the broken structure, not just describe problems.
+2. Determine whether the user wants AUDIT or REDESIGN.
+3. Check identity drift.
+4. Check entity-level mixing.
+5. Check claim/proof mismatch.
+6. Check relevance and narrative order.
+7. Check CTA.
 
-The default audit output should contain:
-- critical findings;
-- corrected structure or copy;
+If mode is AUDIT, report findings and the smallest correction.
+
+If mode is REDESIGN:
+- do not use the old canonical target as the answer merely because it is
+  approved;
+- diagnose why the old/current presentation fails the user's goal;
+- produce a fresh presentation hypothesis;
+- compare that hypothesis against hard brand/commercial/proof constraints;
+- replace the broken structure rather than restoring an older one.
+
+The default redesign output should contain:
+- diagnosis of the current failure;
+- new presentation principle;
+- new structure/copy or concept;
+- why the new solution is materially different;
 - only unresolved blockers that truly require user input.
