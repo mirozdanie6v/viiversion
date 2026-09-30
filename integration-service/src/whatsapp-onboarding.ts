@@ -158,7 +158,10 @@ export async function whatsappConnectPage(request: Request, env: Env) {
       'Connected.\n' +
       (payload.displayPhoneNumber ? 'Number: ' + payload.displayPhoneNumber + '\n' : '') +
       (payload.verifiedName ? 'Name: ' + payload.verifiedName + '\n' : '') +
-      'Mode: Coexistence',
+      'Mode: Coexistence\n' +
+      (payload.coexistence?.verified ? 'Coexistence verified by Meta.\n' : '') +
+      (payload.sync?.history?.accepted ? 'History sync requested.\n' : '') +
+      (payload.sync?.contacts?.accepted ? 'Contact sync requested.' : ''),
       'ok'
     );
   }
@@ -226,15 +229,71 @@ async function exchangeCode(env: Env, code: string) {
 }
 
 async function subscribeWaba(env: Env, wabaId: string, token: string) {
+  const subscribedFields = [
+    'messages',
+    'history',
+    'smb_app_state_sync',
+    'smb_message_echoes',
+    'account_update',
+    'phone_number_quality_update',
+  ];
   const response = await fetch(
     `https://graph.facebook.com/${graphVersion(env)}/${encodeURIComponent(wabaId)}/subscribed_apps`,
-    { method: 'POST', headers: { authorization: 'Bearer ' + token } },
+    {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer ' + token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ subscribed_fields: subscribedFields }),
+    },
   );
   if (!response.ok) {
     const body = await response.text().catch(() => '');
     console.error('Meta WABA subscription failed', response.status, body.slice(0, 300));
-    throw new Response('Could not subscribe the VIIVERSION app to WhatsApp webhooks', { status: 502 });
+    throw new Response('Could not subscribe VIIVERSION to the Coexistence webhook fields', { status: 502 });
   }
+  return subscribedFields;
+}
+
+async function requestAppSync(env: Env, phoneNumberId: string, token: string, syncType: 'history' | 'smb_app_state_sync') {
+  const response = await fetch(
+    `https://graph.facebook.com/${graphVersion(env)}/${encodeURIComponent(phoneNumberId)}/smb_app_data`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer ' + token,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ messaging_product: 'whatsapp', sync_type: syncType }),
+    },
+  );
+  const payload = await response.json<{ request_id?: string; error?: { code?: number; message?: string } }>().catch(() => null);
+  if (!response.ok) {
+    console.warn('WhatsApp app sync request was not accepted', syncType, response.status, payload?.error?.code ?? 'unknown');
+  }
+  return {
+    accepted: response.ok,
+    requestId: payload?.request_id ?? null,
+    errorCode: payload?.error?.code ?? null,
+    error: payload?.error?.message ?? null,
+  };
+}
+
+async function checkCoexistence(env: Env, phoneNumberId: string, token: string) {
+  const url = new URL(
+    `https://graph.facebook.com/${graphVersion(env)}/${encodeURIComponent(phoneNumberId)}`,
+  );
+  url.searchParams.set('fields', 'is_on_biz_app,platform_type');
+  const response = await fetch(url.toString(), {
+    headers: { authorization: 'Bearer ' + token, accept: 'application/json' },
+  });
+  const payload = await response.json<{ is_on_biz_app?: boolean; platform_type?: string }>().catch(() => null);
+  return {
+    verified: Boolean(response.ok && payload?.is_on_biz_app === true && payload?.platform_type === 'CLOUD_API'),
+    isOnBizApp: payload?.is_on_biz_app ?? null,
+    platformType: payload?.platform_type ?? null,
+  };
 }
 
 async function phoneNumbers(env: Env, wabaId: string, token: string) {
@@ -270,7 +329,7 @@ export async function completeWhatsAppCoexistence(request: Request, env: Env) {
   }
 
   const token = await exchangeCode(env, code);
-  await subscribeWaba(env, wabaId, token);
+  const subscribedFields = await subscribeWaba(env, wabaId, token);
   const numbers = await phoneNumbers(env, wabaId, token);
 
   const selected = requestedPhoneNumberId
@@ -305,6 +364,10 @@ export async function completeWhatsAppCoexistence(request: Request, env: Env) {
     connectedAt: new Date().toISOString(),
   });
 
+  const coexistence = await checkCoexistence(env, selected.id, token);
+  const contactSync = await requestAppSync(env, selected.id, token, 'smb_app_state_sync');
+  const historySync = await requestAppSync(env, selected.id, token, 'history');
+
   return Response.json({
     ok: true,
     mode: 'coexistence',
@@ -312,6 +375,12 @@ export async function completeWhatsAppCoexistence(request: Request, env: Env) {
     phoneNumberId: selected.id,
     displayPhoneNumber: selected.display_phone_number ?? null,
     verifiedName: selected.verified_name ?? null,
+    coexistence,
+    subscribedFields,
+    sync: {
+      contacts: contactSync,
+      history: historySync,
+    },
   });
 }
 
