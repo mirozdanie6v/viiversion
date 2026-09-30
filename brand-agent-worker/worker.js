@@ -70,6 +70,48 @@ const BRAND = {
   }
 };
 
+const PRIVACY_PAGE = legalPage("Privacy Policy", `
+<p>VIIVERSION Brand Architect is operated by VIIVERSION. This policy explains the data processed when you use the Brand Architect service and its MCP tools.</p>
+<h2>Data we process</h2>
+<p>We process the task text and tool arguments you submit, source evidence you explicitly provide to a tool, derived specialist artifacts and final outputs, and limited technical run metadata needed to execute and troubleshoot a run.</p>
+<h2>Connected services</h2>
+<p>The production Brand Architect MCP does not receive or store your Google OAuth credentials. If ChatGPT or another host uses a separate connected service to obtain source material, only the selected evidence passed into a Brand Architect tool is processed by this service.</p>
+<h2>Infrastructure</h2>
+<p>Brand Architect runs on Cloudflare Workers, Durable Objects, and Workers AI. Data may be processed by infrastructure providers as necessary to deliver the service.</p>
+<h2>Retention</h2>
+<p>Persistent Brand Architect run state is automatically scheduled for deletion after 30 days from the latest run update. Operational logs may be retained for a limited period by infrastructure providers according to their platform policies.</p>
+<h2>Use of data</h2>
+<p>We use submitted data only to provide, secure, debug, and improve the requested Brand Architect workflow. We do not sell personal data and do not use plugin data for advertising.</p>
+<h2>Your choices</h2>
+<p>Do not submit secrets, passwords, access tokens, or unnecessary personal data. To request access, correction, or deletion relating to VIIVERSION-held data, contact <a href="mailto:olga.nogtich@viiversion.com">olga.nogtich@viiversion.com</a>.</p>
+`);
+
+const TERMS_PAGE = legalPage("Terms of Use", `
+<p>These terms govern use of VIIVERSION Brand Architect.</p>
+<h2>Purpose</h2>
+<p>Brand Architect provides brand, product, market, GTM, proof, website-architecture, and governance assistance. Outputs are generated from the information supplied to the service and should be reviewed before publication or implementation.</p>
+<h2>Your responsibilities</h2>
+<p>You must have the right to submit any content or source evidence you provide. Do not submit credentials, unlawful content, or information you are not authorized to process.</p>
+<h2>No professional advice</h2>
+<p>The service is not legal, tax, financial, medical, or other regulated professional advice.</p>
+<h2>Intellectual property</h2>
+<p>You retain rights in content you submit. VIIVERSION retains rights in the Brand Architect software, workflow design, documentation, and service infrastructure.</p>
+<h2>Availability</h2>
+<p>The service may change, be suspended, or be unavailable during maintenance or third-party platform outages. We do not guarantee uninterrupted operation or error-free outputs.</p>
+<h2>Limitation</h2>
+<p>To the extent permitted by applicable law, VIIVERSION is not liable for indirect or consequential losses arising from reliance on generated outputs without appropriate review.</p>
+<h2>Contact</h2>
+<p>Questions about these terms: <a href="mailto:olga.nogtich@viiversion.com">olga.nogtich@viiversion.com</a>.</p>
+`);
+
+const SUPPORT_PAGE = legalPage("Support", `
+<p>For VIIVERSION Brand Architect support, contact <a href="mailto:olga.nogtich@viiversion.com">olga.nogtich@viiversion.com</a>.</p>
+<h2>When contacting support</h2>
+<p>Include a short description of the task, the approximate time of the issue, and the user-visible error message. Do not send passwords, OAuth tokens, API keys, or other secrets.</p>
+<h2>Service endpoint</h2>
+<p>Production MCP: <code>https://agent.viiversion.com/mcp</code>.</p>
+`);
+
 const BASE_TOOLS = [
   {
     name: "get_brand_context",
@@ -125,6 +167,20 @@ function clean(value, max=5000) {
 }
 function json(data, status=200, headers={}) {
   return new Response(JSON.stringify(data), { status, headers:{...JSON_HEADERS,...headers} });
+}
+function html(body, status=200) {
+  return new Response(body, {
+    status,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=300",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin"
+    }
+  });
+}
+function legalPage(title, body) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — VIIVERSION Brand Architect</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:820px;margin:48px auto;padding:0 20px;line-height:1.6;color:#111827}h1,h2{line-height:1.2}a{color:#1d4ed8}small{color:#6b7280}</style></head><body><h1>${title}</h1>${body}<hr><small>VIIVERSION Brand Architect · Updated 30 September 2026 · <a href="https://viiversion.com">viiversion.com</a></small></body></html>`;
 }
 function rpc(id, result) {
   return json({ jsonrpc:"2.0", id, result }, 200, { "access-control-expose-headers":"MCP-Protocol-Version" });
@@ -285,6 +341,13 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
       return json({ok:true,service:"viiversion-brand-agent",version:"0.7.2",mcp:"https://agent.viiversion.com/mcp"});
+    }
+    if (request.method === "GET" && url.pathname === "/privacy") return html(PRIVACY_PAGE);
+    if (request.method === "GET" && url.pathname === "/terms") return html(TERMS_PAGE);
+    if (request.method === "GET" && url.pathname === "/support") return html(SUPPORT_PAGE);
+    if (request.method === "GET" && url.pathname === "/.well-known/openai-apps-challenge") {
+      const token = String(env.OPENAI_APPS_CHALLENGE ?? "").trim();
+      return token ? new Response(token, { status: 200, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } }) : new Response("not configured", { status: 404, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }
     if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleMcp(request, env);
     return json({ok:false,error:"not_found"},404);
