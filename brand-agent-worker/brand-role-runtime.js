@@ -358,18 +358,29 @@ export function validateEvidence(evidence) {
   return result;
 }
 
-function extractPayload(output) {
-  if (typeof output === "string") {
-    try { return JSON.parse(output); }
-    catch { throw new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI returned invalid JSON", 502); }
+function parseJsonText(text) {
+  const raw = String(text ?? "").trim();
+  const candidates = [raw];
+  const unfenced = raw.replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/i, "").trim();
+  if (unfenced !== raw) candidates.push(unfenced);
+  const first = unfenced.indexOf("{");
+  const last = unfenced.lastIndexOf("}");
+  if (first >= 0 && last > first) candidates.push(unfenced.slice(first, last + 1));
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try { return JSON.parse(candidate); } catch {}
   }
+  throw new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI returned invalid JSON", 502);
+}
+
+function extractPayload(output) {
+  if (typeof output === "string") return parseJsonText(output);
   if (!output || typeof output !== "object" || !("response" in output)) {
     throw new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI response is missing", 502);
   }
   if (output.response && typeof output.response === "object") return structuredClone(output.response);
   if (typeof output.response !== "string") throw new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI response is not JSON", 502);
-  try { return JSON.parse(output.response); }
-  catch { throw new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI returned invalid JSON", 502); }
+  return parseJsonText(output.response);
 }
 
 function contextForRole(run, role) {
@@ -454,8 +465,9 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
   const prompt = promptFor({ run, role, contextArtifacts, evidence: acceptedEvidence });
   let payload;
   let lastModelError;
-  const maxTokens = role === BRAND_ROLE.BRAND_QA ? 4096 : 2560;
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
+  const maxTokens = role === BRAND_ROLE.BRAND_QA ? 4096 : role === BRAND_ROLE.MARKET_GTM ? 3072 : 2560;
+  const maxAttempts = role === BRAND_ROLE.MARKET_GTM ? 5 : 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const repairInstruction = attempt === 1
         ? ""
@@ -479,7 +491,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
       const retryable =
         ["MODEL_OUTPUT_INVALID", "SCHEMA_VALIDATION_FAILED", "AUDIT_FRAME_REQUIRED", "QA_GATES_INCOMPLETE", "QA_CRITICAL_FAILURE_REQUIRED", "QA_REWORK_TARGET_REQUIRED", "QA_DECISION_INCONSISTENT"].includes(code) ||
         /JSON Mode couldn't be met|invalid json|schema|structured/i.test(message);
-      if (!retryable || attempt === 3) throw error;
+      if (!retryable || attempt === maxAttempts) throw error;
     }
   }
   if (!payload) throw lastModelError ?? new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI did not produce a valid role payload", 502);
