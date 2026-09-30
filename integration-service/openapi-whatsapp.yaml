@@ -1,0 +1,136 @@
+openapi: 3.1.0
+info:
+  title: VIIVERSION WhatsApp Actions
+  version: 0.1.0
+  description: Private VIIVERSION actions for reading and sending WhatsApp Business messages.
+servers:
+  - url: https://integration.viiversion.com
+security:
+  - bearerAuth: []
+paths:
+  /api/whatsapp/status:
+    get:
+      operationId: whatsappStatus
+      summary: Check WhatsApp integration status
+      responses:
+        '200':
+          description: Integration status
+  /api/whatsapp/chats:
+    get:
+      operationId: whatsappListChats
+      summary: List recent WhatsApp conversations
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Recent conversations
+  /api/whatsapp/messages:
+    get:
+      operationId: whatsappGetMessages
+      summary: Read or search WhatsApp messages
+      parameters:
+        - in: query
+          name: peer
+          schema:
+            type: string
+          description: WhatsApp phone number to filter by.
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Full-text substring search over message text, contact name, phone, and message type.
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum: [inbound, outbound]
+        - in: query
+          name: unread
+          schema:
+            type: integer
+            enum: [0, 1]
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+      responses:
+        '200':
+          description: Matching messages
+  /api/whatsapp/unread:
+    get:
+      operationId: whatsappGetUnread
+      summary: Get inbound messages not yet reviewed by VIIVERSION
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+      responses:
+        '200':
+          description: Unreviewed inbound messages
+  /api/whatsapp/review:
+    post:
+      operationId: whatsappMarkReviewed
+      summary: Mark messages reviewed in the VIIVERSION inbox
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Review state updated
+  /api/whatsapp/send:
+    post:
+      operationId: whatsappSendText
+      summary: Send a WhatsApp text message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to, text]
+              properties:
+                to:
+                  type: string
+                  description: Recipient phone number. Punctuation is accepted and normalized.
+                text:
+                  type: string
+                  minLength: 1
+                  maxLength: 4096
+                previewUrl:
+                  type: boolean
+                  default: false
+                replyTo:
+                  type: string
+                  description: Optional WhatsApp message ID to reply to.
+      responses:
+        '200':
+          description: Message accepted by WhatsApp Cloud API
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
