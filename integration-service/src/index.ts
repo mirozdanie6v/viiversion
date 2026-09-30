@@ -1,6 +1,7 @@
 import {
   type Env,
   getAvailability,
+  getCheckoutOptions,
   getProduct,
   getProducts,
   getPickupPlaces,
@@ -8,6 +9,7 @@ import {
   handleCallback,
   handleInstall,
   saveAdminRestCredentials,
+  submitReservedCheckout,
 } from './bokun';
 import {
   completeWhatsAppCoexistence,
@@ -318,6 +320,34 @@ export default {
         const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
         const productId = value(url, 'productId', env.BOKUN_DEFAULT_PRODUCT_ID);
         return json(request, env, await getPickupPlaces(env, vendorId, productId));
+      }
+
+      if (url.pathname === '/api/bokun/checkout/options' && request.method === 'POST') {
+        const declaredLength = Number(request.headers.get('content-length') ?? '0');
+        if (Number.isFinite(declaredLength) && declaredLength > 65536) {
+          return json(request, env, { error: { code: 'PAYLOAD_TOO_LARGE', message: 'Booking request is too large' } }, 413);
+        }
+        const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
+        const currency = value(url, 'currency', 'USD');
+        const bookingRequest = await request.json<unknown>().catch(() => null);
+        if (!bookingRequest) {
+          return json(request, env, { error: { code: 'INVALID_JSON', message: 'Booking request JSON is required' } }, 400);
+        }
+        return json(request, env, await getCheckoutOptions(env, vendorId, bookingRequest, currency));
+      }
+
+      if (url.pathname === '/admin/bokun/checkout/submit-reserve' && request.method === 'POST') {
+        const declaredLength = Number(request.headers.get('content-length') ?? '0');
+        if (Number.isFinite(declaredLength) && declaredLength > 65536) {
+          return json(request, env, { error: { code: 'PAYLOAD_TOO_LARGE', message: 'Checkout request is too large' } }, 413);
+        }
+        const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
+        const currency = value(url, 'currency', 'USD');
+        const checkoutRequest = await request.json<unknown>().catch(() => null);
+        if (!checkoutRequest) {
+          return json(request, env, { error: { code: 'INVALID_JSON', message: 'Checkout request JSON is required' } }, 400);
+        }
+        return json(request, env, await submitReservedCheckout(request, env, vendorId, checkoutRequest, currency));
       }
 
       if (url.pathname === '/admin/bokun/rest-credentials' && request.method === 'POST') {
