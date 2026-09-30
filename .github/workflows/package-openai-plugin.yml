@@ -50,7 +50,9 @@ jobs:
           set -euo pipefail
           rm -rf dist
           mkdir -p dist/viiversion-brand-architect-openai
-          cp -R openai-plugin/. dist/viiversion-brand-architect-openai/
+          cp openai-plugin/plugin.json dist/viiversion-brand-architect-openai/
+          cp -R openai-plugin/skills dist/viiversion-brand-architect-openai/
+          if [ -d openai-plugin/assets ]; then cp -R openai-plugin/assets dist/viiversion-brand-architect-openai/; fi
           (
             cd dist
             zip -r -9 viiversion-brand-architect-openai-v0.8.1.zip viiversion-brand-architect-openai
