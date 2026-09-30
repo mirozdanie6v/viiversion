@@ -242,8 +242,11 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
     "Do not silently mutate VIIVERSION canon.",
     "If evidence is insufficient, record uncertainty or missing requirements instead of fabricating facts.",
     `Prohibited actions: ${(definition.prohibited ?? []).join(", ")}.`,
-    "Preserve the language of the user's task unless a channel requirement says otherwise."
-  ].join("\n");
+    "Preserve the language of the user's task unless a channel requirement says otherwise.",
+    role === BRAND_ROLE.BRAND_QA
+      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance."
+      : ""
+  ].filter(Boolean).join("\n");
 
   const user = JSON.stringify({
     task: run.task,
@@ -255,8 +258,16 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
   return { system, user };
 }
 
+function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
 async function digest(value, length = 24) {
-  const text = JSON.stringify(value, Object.keys(value).sort());
+  const text = canonicalJson(value);
   const bytes = new TextEncoder().encode(text);
   const result = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
   return [...result].map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, length);
@@ -289,6 +300,13 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
   });
 
   const payload = validateRolePayload(role, extractPayload(output));
+  if (role === BRAND_ROLE.SOURCE_TRUTH) {
+    const allowedSources = new Set(acceptedEvidence.flatMap(({ evidenceId, source }) => [evidenceId, source]));
+    const invalidSources = payload.sources_read.filter((source) => !allowedSources.has(source));
+    if (invalidSources.length) {
+      throw new BrandRoleError("MODEL_OUTPUT_UNGROUNDED", `source-truth referenced unbrokered sources: ${invalidSources.join(", ")}`, 422);
+    }
+  }
   const contextManifest = contextArtifacts.map(({ artifactId, revision, type }) => ({ artifactId, revision, type }));
   const requestDigest = await digest({ runId: run.runId, role, invocationId, contextManifest, evidence: acceptedEvidence.map(({evidenceId,source}) => ({evidenceId,source})) });
   const priorRevision = (run.acceptedArtifacts ?? []).filter((artifact) => artifact.type === artifactType)
