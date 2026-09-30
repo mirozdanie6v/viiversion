@@ -36,6 +36,9 @@ export interface Env {
   META_EMBEDDED_SIGNUP_CONFIG_ID?: string;
   META_SETUP_TOKEN?: string;
   META_SETUP_EXPIRES_AT?: string;
+  BROWSER?: Fetcher;
+  WHATSAPP_BROWSER_SETUP_TOKEN?: string;
+  WHATSAPP_BROWSER_SETUP_EXPIRES_AT?: string;
 }
 
 const encoder = new TextEncoder();
