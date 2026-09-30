@@ -162,6 +162,85 @@ const BASE_TOOLS = [
 
 const TOOLS = [...BASE_TOOLS, ...MARKET_TOOLS, ...LIVE_SOURCE_TOOLS, ROLE_TOOL, ...AGENT_RUNTIME_TOOLS];
 
+const OPENAI_PUBLIC_TOOLS = Object.freeze([
+  {
+    name:"get_brand_context",
+    title:"Get VIIVERSION brand context",
+    description:"Get the stable VIIVERSION identity, directions, categories and brand guardrails for brand or product work.",
+    inputSchema:{type:"object",properties:{surface:{type:"string"},audience:{type:"string"},goal:{type:"string"}},additionalProperties:false},
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
+    name:"get_priority_entities",
+    title:"Get VIIVERSION priority entities",
+    description:"Get the dated VIIVERSION snapshot of priority Engineering Solutions and owned Software. Treat status fields as a snapshot, not guaranteed current state.",
+    inputSchema:{type:"object",properties:{direction:{type:"string",enum:["DIR-ENG","DIR-SW"]}},additionalProperties:false},
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
+    name:"get_proof",
+    title:"Get VIIVERSION proof records",
+    description:"Get dated VIIVERSION proof records with maturity and claim boundaries. Use them to avoid overstating demos, prototypes or integrations.",
+    inputSchema:{type:"object",properties:{capability:{type:"string"},ids:{type:"array",items:{type:"string"}}},additionalProperties:false},
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
+    name:"validate_brand_output",
+    title:"Validate VIIVERSION brand output",
+    description:"Check draft VIIVERSION copy or structure for identity drift, geography drift, CRM drift and known proof-maturity violations.",
+    inputSchema:{type:"object",required:["text"],properties:{text:{type:"string",minLength:1,maxLength:20000},final_public:{type:"boolean"}},additionalProperties:false},
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
+    name:"plan_productization",
+    title:"Plan VIIVERSION productization",
+    description:"Turn a software, plugin or agent concept into a productization and engineering-handoff contract without claiming implementation is complete.",
+    inputSchema:{type:"object",required:["concept"],properties:{concept:{type:"string",minLength:1,maxLength:5000},entity_id:{type:"string"},target_platforms:{type:"array",items:{type:"string"}},current_stage:{type:"string"}},additionalProperties:false},
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
+    name:"get_required_evidence",
+    title:"Get required evidence for a Brand Architect task",
+    description:"Return the evidence classes and structured data areas needed before making current, final or implementation claims. This tool does not access third-party accounts.",
+    inputSchema:{type:"object",required:["task"],properties:{task:{type:"string",minLength:1,maxLength:5000},surface:{type:"string"},current_state:{type:"boolean"},final_public:{type:"boolean"},implementation:{type:"boolean"}},additionalProperties:false},
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false}
+  },
+  {
+    name:"run_brand_task",
+    title:"Run VIIVERSION Brand Architect",
+    description:"Run the VIIVERSION Brand Architect workflow with specialist analysis and QA. For tasks requiring current or final facts, provide the required source evidence directly in this call; otherwise the tool returns the missing evidence requirements instead of inventing facts.",
+    inputSchema:{
+      type:"object",
+      required:["task"],
+      properties:{
+        task:{type:"string",minLength:1,maxLength:5000},
+        surface:{type:"string"},
+        current_state:{type:"boolean"},
+        final_public:{type:"boolean"},
+        implementation:{type:"boolean"},
+        max_rework_cycles:{type:"integer",minimum:0,maximum:3},
+        evidence:{
+          type:"array",
+          items:{
+            type:"object",
+            required:["evidenceId","source","source_class","content"],
+            properties:{
+              evidenceId:{type:"string",minLength:1,maxLength:120},
+              source:{type:"string",minLength:1,maxLength:300},
+              source_class:{type:"string",minLength:1,maxLength:80},
+              tabs:{type:"array",items:{type:"string"}},
+              content:{}
+            },
+            additionalProperties:false
+          }
+        }
+      },
+      additionalProperties:false
+    },
+    annotations:{readOnlyHint:false,destructiveHint:false,openWorldHint:false}
+  }
+]);
+
 function clean(value, max=5000) {
   return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
 }
@@ -262,6 +341,137 @@ function validateBrand(text, finalPublic) {
   return { pass:!findings.some(f=>f.severity==="critical"), findings, sourceSnapshotDate:SNAPSHOT_DATE };
 }
 
+
+function publicEvidenceRequirements(args={}) {
+  const plan=buildLiveSourcePlan(args);
+  return {
+    live_required:plan.liveRequired,
+    required_source_classes:plan.requiredSourceClasses,
+    required_tabs:plan.commercialMatrix?.tabs ?? [],
+    guidance:"Provide only the relevant source content needed for this task. Do not include passwords, OAuth tokens, API keys, cookies or unrelated personal data."
+  };
+}
+
+function collectPublicEvidence(args={}) {
+  const evidence=Array.isArray(args.evidence)?args.evidence:[];
+  const sourceClasses=[...new Set(evidence.map(item=>clean(item?.source_class,80)).filter(Boolean))];
+  const tabsRead=[...new Set(evidence.flatMap(item=>Array.isArray(item?.tabs)?item.tabs.map(tab=>clean(tab,120)).filter(Boolean):[]))];
+  const sourceEvidence=evidence.map(item=>({
+    evidenceId:clean(item?.evidenceId,120),
+    source:clean(item?.source,300),
+    content:item?.content
+  }));
+  return {sourceClasses,tabsRead,sourceEvidence};
+}
+
+async function handleOpenAiMcp(request, env) {
+  if (request.method === "OPTIONS") {
+    return new Response(null,{status:204,headers:{
+      "access-control-allow-origin":"*",
+      "access-control-allow-methods":"GET,POST,OPTIONS",
+      "access-control-allow-headers":"content-type,accept,mcp-protocol-version,mcp-session-id"
+    }});
+  }
+  if (request.method === "GET") {
+    return json({ok:true,service:"viiversion-brand-architect",version:"0.8.0",mcp:"/openai/mcp"});
+  }
+  if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
+
+  let body;
+  try { body=await request.json(); } catch { return rpcError(null,-32700,"Parse error",400); }
+  const id=body?.id;
+  const method=body?.method;
+  const params=body?.params||{};
+
+  if (method === "notifications/initialized") return new Response(null,{status:202,headers:JSON_HEADERS});
+  if (method === "initialize") {
+    return rpc(id,{
+      protocolVersion:"2025-11-25",
+      capabilities:{tools:{}},
+      serverInfo:{name:"viiversion-brand-architect",version:"0.8.0"},
+      instructions:"VIIVERSION Brand Architect provides evidence-bounded brand, product, website, proof, GTM and productization assistance. It does not access third-party accounts or credentials. When current/final facts require evidence that was not supplied, return the required evidence instead of inventing facts."
+    });
+  }
+  if (method === "tools/list") return rpc(id,{tools:OPENAI_PUBLIC_TOOLS});
+  if (method !== "tools/call") return rpcError(id,-32601,"Method not found");
+
+  const name=params.name;
+  const args=params.arguments||{};
+
+  if (name === "get_brand_context") {
+    return rpc(id,toolPayload({
+      company:BRAND.company,
+      surface:clean(args.surface,80)||null,
+      audience:clean(args.audience,120)||null,
+      goal:clean(args.goal,120)||null,
+      snapshot_date:SNAPSHOT_DATE
+    }));
+  }
+  if (name === "get_priority_entities") {
+    const direction=clean(args.direction,20);
+    const entities=direction==="DIR-ENG"?BRAND.priorityEntities:direction==="DIR-SW"?BRAND.software:{engineering:BRAND.priorityEntities,software:BRAND.software};
+    return rpc(id,toolPayload({direction:direction||"all",entities,snapshot_date:SNAPSHOT_DATE,status_is_snapshot:true}));
+  }
+  if (name === "get_proof") {
+    const ids=Array.isArray(args.ids)?new Set(args.ids.map(String)):null;
+    const capability=clean(args.capability,100).toLowerCase();
+    const proof=BRAND.proof.filter(p=>(!ids||ids.has(p.id))&&(!capability||p.proves.some(v=>v.toLowerCase().includes(capability))));
+    return rpc(id,toolPayload({proof,snapshot_date:SNAPSHOT_DATE,maturity_rule:"Never upgrade demo or prototype maturity in public claims."}));
+  }
+  if (name === "validate_brand_output") {
+    return rpc(id,toolPayload(validateBrand(args.text,Boolean(args.final_public))));
+  }
+  if (name === "plan_productization") {
+    return rpc(id,toolPayload(executeMarketTool("plan_productization",args)));
+  }
+  if (name === "get_required_evidence") {
+    return rpc(id,toolPayload(publicEvidenceRequirements(args)));
+  }
+  if (name === "run_brand_task") {
+    const requirements=publicEvidenceRequirements(args);
+    const supplied=collectPublicEvidence(args);
+    const missingClasses=requirements.required_source_classes.filter(v=>!supplied.sourceClasses.includes(v));
+    const missingTabs=requirements.required_tabs.filter(v=>!supplied.tabsRead.includes(v));
+    const route=buildRolePlan(args).route;
+    const sourceRoleNeeded=route.includes("source-truth");
+    const evidenceMissing=sourceRoleNeeded && supplied.sourceEvidence.length===0;
+    const strict=Boolean(args.current_state||args.final_public||args.implementation);
+    if (evidenceMissing || (strict && (missingClasses.length||missingTabs.length))) {
+      return rpc(id,toolPayload({
+        status:"needs_evidence",
+        missing_source_classes:missingClasses,
+        missing_tabs:strict?missingTabs:[],
+        required:requirements
+      }));
+    }
+    try {
+      const result=await executeAgentRuntimeTool(env,"run_brand_task",{
+        task:args.task,
+        run_id:`openai-${crypto.randomUUID()}`,
+        surface:args.surface,
+        current_state:Boolean(args.current_state),
+        final_public:Boolean(args.final_public),
+        implementation:Boolean(args.implementation),
+        max_rework_cycles:args.max_rework_cycles??2,
+        observed_at:new Date().toISOString(),
+        source_classes:supplied.sourceClasses,
+        tabs_read:supplied.tabsRead,
+        source_evidence:supplied.sourceEvidence
+      });
+      return rpc(id,toolPayload({
+        status:result.status,
+        answer:result.finalResult?.answer??null,
+        key_decisions:result.finalResult?.key_decisions??[],
+        uncertainties:result.finalResult?.uncertainties??[],
+        audit_items:result.finalResult?.audit_items??[]
+      }));
+    } catch(error) {
+      return rpcError(id,-32000,`${error?.code??"BRAND_TASK_ERROR"}: ${error?.message??error}`);
+    }
+  }
+  return rpcError(id,-32602,"Unknown tool");
+}
+
 async function handleMcp(request, env) {
   if (request.method === "OPTIONS") {
     return new Response(null,{status:204,headers:{
@@ -349,6 +559,7 @@ export default {
       const token = String(env.OPENAI_APPS_CHALLENGE ?? "").trim();
       return token ? new Response(token, { status: 200, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } }) : new Response("not configured", { status: 404, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }
+    if (url.pathname === "/openai/mcp" || url.pathname === "/openai/mcp/") return handleOpenAiMcp(request, env);
     if (url.pathname === "/mcp" || url.pathname === "/mcp/") return handleMcp(request, env);
     return json({ok:false,error:"not_found"},404);
   }
