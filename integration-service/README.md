@@ -34,6 +34,15 @@ Bókun creates legacy REST credentials after the vendor installs an app with the
 
 Optional query parameters `vendorId` and `productId` override the configured defaults.
 
+### Controlled Bókun checkout pilot
+
+- `POST /api/bokun/checkout/options?vendorId=137689&currency=USD` — sends an `LT-TEST-` BookingRequest to Bókun checkout options. This validates the live checkout contract and does **not** create a booking.
+- `POST /admin/bokun/checkout/submit-reserve?vendorId=137689&currency=USD` — protected real reserve submit. It accepts only `DIRECT_REQUEST` + `RESERVE_FOR_EXTERNAL_PAYMENT`, only configured LoveTravel products, and only `LT-TEST-` references.
+- Real reserve requires all three gates: valid `INTEGRATION_ADMIN_TOKEN`, header `X-VIIVERSION-BOOKING-INTENT: RESERVE_REAL_BOKUN_BOOKING`, and `BOKUN_REAL_BOOKING_ENABLED=true`.
+- Production default is `BOKUN_REAL_BOOKING_ENABLED=false`. The endpoint therefore remains incapable of creating a customer-visible booking until the approved live test.
+- Immediately before submit the service calls live Bókun checkout options again and refuses the write unless the chosen option still allows `RESERVE_FOR_EXTERNAL_PAYMENT`.
+- Customer/price notifications remain disabled during the pilot.
+
 ## Administration
 
 `POST /admin/bokun/rest-credentials` is protected by `INTEGRATION_ADMIN_TOKEN` and is used by VIIVERSION to store the legacy REST credentials generated for an installed Bókun vendor.
