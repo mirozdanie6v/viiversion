@@ -11,7 +11,10 @@ import {
 } from './bokun';
 import {
   completeWhatsAppCoexistence,
+  configureWhatsAppMeta,
   createWhatsAppOnboardingSession,
+  getWhatsAppMetaAdminConfig,
+  getWhatsAppMetaRuntimeConfig,
   whatsappConnectPage,
 } from './whatsapp-onboarding';
 import {
@@ -185,6 +188,7 @@ export default {
       if (url.pathname === '/terms' && request.method === 'GET') return termsPage();
 
       if (url.pathname === '/health' && request.method === 'GET') {
+        const whatsappMeta = await getWhatsAppMetaRuntimeConfig(env);
         return json(request, env, {
           ok: true,
           service: 'viiversion-integration',
@@ -197,18 +201,27 @@ export default {
           },
           whatsapp: {
             embeddedSignupConfigured: Boolean(
-              env.META_APP_ID?.trim() &&
-              env.META_APP_SECRET?.trim() &&
-              env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim()
+              whatsappMeta?.appId &&
+              whatsappMeta?.appSecret &&
+              whatsappMeta?.embeddedSignupConfigId
             ),
             webhookConfigured: Boolean(
-              env.META_WHATSAPP_VERIFY_TOKEN?.trim() &&
-              env.META_APP_SECRET?.trim()
+              whatsappMeta?.verifyToken &&
+              whatsappMeta?.appSecret
             ),
+            configSource: whatsappMeta?.source ?? null,
             graphVersion: env.META_GRAPH_VERSION?.trim() || 'v26.0',
           },
           time: new Date().toISOString(),
         });
+      }
+
+      if (url.pathname === '/admin/whatsapp/meta-config' && request.method === 'POST') {
+        return json(request, env, await configureWhatsAppMeta(request, env));
+      }
+
+      if (url.pathname === '/admin/whatsapp/meta-config' && request.method === 'GET') {
+        return json(request, env, await getWhatsAppMetaAdminConfig(request, env));
       }
 
       if (url.pathname === '/admin/whatsapp/onboarding-session' && request.method === 'POST') {
@@ -224,7 +237,7 @@ export default {
       }
 
       if (url.pathname === '/webhooks/whatsapp' && request.method === 'GET') {
-        return verifyWhatsAppWebhook(request, env);
+        return await verifyWhatsAppWebhook(request, env);
       }
 
       if (url.pathname === '/webhooks/whatsapp' && request.method === 'POST') {
