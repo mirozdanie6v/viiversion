@@ -80,20 +80,32 @@ Brand Kernel — компактный snapshot для быстрого reasoning
 Google Drive — обязательный live app для Source of Truth. Brand MCP не хранит
 Google OAuth и не получает постоянный доступ к Drive.
 
-Для задач с current/final/implementation state:
+Для задач с current/final/implementation state Source Broker работает автоматически:
 
 1. вызови Brand MCP `get_live_source_plan` для текущей задачи;
 2. прочитай только возвращённые Google Docs и Commercial Matrix tabs через
    подключённый Google Drive app;
-3. сохрани фактически прочитанные source classes и tabs;
-4. вызови `validate_live_context`;
-5. только после PASS используй current readiness/status/price/proof/channel/
-   distribution/decision claims как факты;
-6. если gate не проходит, прочитай недостающие источники или явно понизь ответ
-   до snapshot/uncertain.
+3. сформируй `source_evidence`: каждый фактически прочитанный документ/диапазон
+   передай как `{evidenceId, source, content}`; не добавляй источник, который
+   фактически не был прочитан;
+4. вызови `validate_live_context` с фактически прочитанными source classes/tabs;
+5. после PASS передай задачу и `source_evidence` в `run_brand_task`;
+6. `run_brand_task` сам выполняет specialist route, принимает schema-valid
+   artifacts, запускает Brand QA, выполняет bounded rework и собирает final result;
+7. если live-context gate не проходит, сначала дочитай недостающие источники.
+   Не запускай current/final autonomous run на неполном live context.
+
+Для задачи без live-refresh риска можно вызывать `run_brand_task` без
+`source_evidence`, если построенный route не содержит SOURCE_TRUTH.
+
+Пользователь не должен вручную вызывать отдельные роли или передавать результаты
+между ними. Ручные `create_agent_run / execute_agent_role /
+accept_agent_artifact / reject_agent_artifact` остаются debug/control API.
 
 Никогда не копируй Google credential в Cloudflare только ради этого workflow.
-Авторизация Drive остаётся на уровне пользователя/Workspace.
+Авторизация Drive остаётся на уровне пользователя/Workspace; ChatGPT выступает
+credential boundary и Source Broker, а Cloudflare получает только минимальный
+evidence bundle конкретного run.
 
 ## 5. Источник истины
 
