@@ -493,6 +493,41 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
   return { system, user };
 }
 
+function fallbackBrandDecision(run, contextArtifacts) {
+  const sourceContext = contextArtifacts.find((artifact) => artifact.type === "source-context")?.payload ?? {};
+  const redesign = isRedesignTask(run.task);
+  const verified = Array.isArray(sourceContext.verified_facts) ? sourceContext.verified_facts.slice(0, 4) : [];
+  return {
+    task_scope: String(run.task ?? "").slice(0, 1500),
+    canonical_constraints: [
+      "Preserve VIIVERSION L1 identity: engineering product company with Engineering Solutions and Software.",
+      "Do not silently change canonical entities, commercial truth, proof maturity or L3 market rules.",
+      ...(redesign ? ["Legacy L4/L5 presentation decisions are not immutable creative targets in REDESIGN mode."] : []),
+      ...verified.map((item) => String(item).slice(0, 700))
+    ].slice(0, 8),
+    positioning_decision: redesign
+      ? "Create a materially new presentation-layer solution from buyer understanding and current truth while preserving L1-L3; do not restore rejected legacy copy merely because it is approved."
+      : "Apply the canonical VIIVERSION identity and current evidence to the requested surface without redefining canon.",
+    allowed_adaptations: redesign
+      ? [
+          "Change presentation hierarchy, narrative, headings, copy and block composition.",
+          "Challenge or supersede legacy channel copy as a candidate presentation decision.",
+          "Preserve only explicitly accepted visual/channel constraints."
+        ]
+      : ["Adapt buyer-facing language, hierarchy and channel presentation within canonical boundaries."],
+    forbidden_drift: [
+      "web studio / generic digital agency framing",
+      "generic AI agency framing",
+      "invented product, price, readiness or proof",
+      "prototype presented as production",
+      "proprietary CRM claim without a canonical owned product"
+    ],
+    unresolved_governance_questions: Array.isArray(sourceContext.uncertainties)
+      ? sourceContext.uncertainties.slice(0, 6).map((item) => String(item).slice(0, 500))
+      : []
+  };
+}
+
 function canonicalJson(value) {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value && typeof value === "object") {
@@ -526,8 +561,10 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
   const prompt = promptFor({ run, role, contextArtifacts, evidence: acceptedEvidence });
   let payload;
   let lastModelError;
-  const maxTokens = role === BRAND_ROLE.BRAND_QA || role === BRAND_ROLE.PRESENTATION_SYNTHESIS ? 4096 : role === BRAND_ROLE.MARKET_GTM ? 3072 : 2560;
-  const maxAttempts = role === BRAND_ROLE.MARKET_GTM || role === BRAND_ROLE.PRESENTATION_SYNTHESIS ? 5 : 4;
+  const maxTokens = [BRAND_ROLE.BRAND_QA, BRAND_ROLE.PRESENTATION_SYNTHESIS, BRAND_ROLE.BRAND_STRATEGY].includes(role)
+    ? 4096
+    : role === BRAND_ROLE.MARKET_GTM ? 3072 : 2560;
+  const maxAttempts = [BRAND_ROLE.MARKET_GTM, BRAND_ROLE.PRESENTATION_SYNTHESIS, BRAND_ROLE.BRAND_STRATEGY].includes(role) ? 6 : 5;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const repairInstruction = attempt === 1
@@ -552,8 +589,13 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
       const retryable =
         ["MODEL_OUTPUT_INVALID", "SCHEMA_VALIDATION_FAILED", "AUDIT_FRAME_REQUIRED", "QA_GATES_INCOMPLETE", "QA_CRITICAL_FAILURE_REQUIRED", "QA_REWORK_TARGET_REQUIRED", "QA_DECISION_INCONSISTENT"].includes(code) ||
         /JSON Mode couldn't be met|invalid json|schema|structured/i.test(message);
-      if (!retryable || attempt === maxAttempts) throw error;
+      if (!retryable) throw error;
+      if (attempt === maxAttempts) break;
     }
+  }
+  if (!payload && role === BRAND_ROLE.BRAND_STRATEGY &&
+      ["MODEL_OUTPUT_INVALID","SCHEMA_VALIDATION_FAILED"].includes(lastModelError?.code ?? "")) {
+    payload = validateRolePayload(role, fallbackBrandDecision(run, contextArtifacts));
   }
   if (!payload) throw lastModelError ?? new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI did not produce a valid role payload", 502);
   if (role === BRAND_ROLE.SOURCE_TRUTH && isAuditTask(run.task)) {
