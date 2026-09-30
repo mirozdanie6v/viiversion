@@ -280,6 +280,10 @@ function contextForRole(run, role) {
   return [...latest.values()].map((artifact) => structuredClone(artifact));
 }
 
+function isAuditTask(task) {
+  return /audit|аудит|compare|сравн|review|проверь|проверить|посмотри|разбер|current .*page|текущ.*(?:сайт|страниц|блок)/i.test(String(task ?? ""));
+}
+
 function promptFor({ run, role, contextArtifacts, evidence }) {
   const definition = BRAND_ROLE_DEFINITIONS[role];
   const artifactType = ROLE_ARTIFACT_TYPE[role];
@@ -293,11 +297,14 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
     "If evidence is insufficient, record uncertainty or missing requirements instead of fabricating facts.",
     `Prohibited actions: ${(definition.prohibited ?? []).join(", ")}.`,
     "Preserve the language of the user's task unless a channel requirement says otherwise.",
+    isAuditTask(run.task)
+      ? "AUDIT MODE: distinguish OBSERVED_CURRENT implementation from CANONICAL_TARGET/approved strategy. Never describe an approved target, draft, desired sequence, or canonical architecture as if it were already implemented. Explicitly compare current observed evidence against the approved target and carry every material mismatch forward. If current implementation differs from canonical target, say so plainly."
+      : "",
     role === BRAND_ROLE.SOURCE_TRUTH
       ? "Use only brokered evidence to describe source coverage. If evidence includes a validate_live_context result with pass=true, do not invent additional source requirements such as competitor research, market analysis, language research, or channel research unless the requested task or validated source plan explicitly requires them. Distinguish missing required Source of Truth from optional analytical uncertainty."
       : "",
     role === BRAND_ROLE.BRAND_QA
-      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance. Use FAIL only for a concrete critical contradiction, unsupported factual/commercial/proof claim, stale required decision, or governance violation that requires a new specialist revision. Missing optional detail that is honestly bounded belongs in residual_uncertainty and does not by itself force FAIL. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change."
+      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance. Use FAIL only for a concrete critical contradiction, unsupported factual/commercial/proof claim, stale required decision, or governance violation that requires a new specialist revision. Missing optional detail that is honestly bounded belongs in residual_uncertainty and does not by itself force FAIL. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change. In AUDIT MODE, PASS means the produced audit is evidence-faithful and identifies material current-vs-target mismatches; it does NOT mean the audited page itself conforms."
       : ""
   ].filter(Boolean).join("\n");
 
@@ -373,6 +380,16 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
     }
   }
   if (!payload) throw lastModelError ?? new BrandRoleError("MODEL_OUTPUT_INVALID", "Workers AI did not produce a valid role payload", 502);
+  if (role === BRAND_ROLE.SOURCE_TRUTH && isAuditTask(run.task)) {
+    const liveEvidence = acceptedEvidence.filter(({ evidenceId, source }) =>
+      /live|capture|current|production|observed/i.test(`${evidenceId} ${source}`)
+    );
+    for (const entry of liveEvidence) {
+      const observed = `OBSERVED_CURRENT_SOURCE[${entry.source}] = ${canonicalJson(entry.content).slice(0, 6000)}`;
+      if (!payload.verified_facts.includes(observed)) payload.verified_facts.push(observed);
+    }
+  }
+
   if (role === BRAND_ROLE.SOURCE_TRUTH) {
     const allowedSources = new Set(acceptedEvidence.flatMap(({ evidenceId, source }) => [evidenceId, source]));
     const invalidSources = payload.sources_read.filter((source) => !allowedSources.has(source));
@@ -431,6 +448,9 @@ export async function assembleBrandResult({ ai, run }) {
     "Do not expose internal role mechanics unless the task asks for them.",
     "Do not invent facts, prices, readiness, proof or canonical changes.",
     "Preserve material uncertainties instead of hiding them.",
+    isAuditTask(run.task)
+      ? "AUDIT MODE: the final answer must explicitly state what is OBSERVED_CURRENT, what is CANONICAL_TARGET, and every material mismatch between them. Do not convert an approved target into a statement about the current implementation. If live evidence and canonical target conflict, the live implementation is the current fact and the canonical document is the target/authority."
+      : "",
     "Return only JSON matching the requested schema."
   ].join("\n");
   const user = JSON.stringify({
