@@ -10,5 +10,29 @@
       "pattern": "agent.viiversion.com",
       "custom_domain": true
     }
-  ]
+  ],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "exports": {
+    "BrandRunCoordinator": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BRAND_RUNS",
+        "class_name": "BrandRunCoordinator"
+      }
+    ]
+  },
+  "ai": {
+    "binding": "AI"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
 }
