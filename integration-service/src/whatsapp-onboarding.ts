@@ -3,8 +3,10 @@ import type { Env } from './bokun';
 import {
   consumeWhatsAppOnboardingSession,
   getWhatsAppConnection,
+  getWhatsAppMetaConfig,
   getWhatsAppOnboardingSession,
   saveWhatsAppConnection,
+  saveWhatsAppMetaConfig,
   saveWhatsAppOnboardingSession,
 } from './store';
 
@@ -23,8 +25,114 @@ function assertAdmin(request: Request, env: Env) {
   }
 }
 
+function randomVerifyToken() {
+  return (
+    crypto.randomUUID().replace(/-/g, '') +
+    crypto.randomUUID().replace(/-/g, '') +
+    crypto.randomUUID().replace(/-/g, '')
+  );
+}
+
+export async function getWhatsAppMetaRuntimeConfig(env: Env) {
+  const stored = await getWhatsAppMetaConfig(env);
+  if (stored) {
+    const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
+    return {
+      appId: stored.appId,
+      appSecret: await decryptSecret(stored.appSecretEncrypted, encryptionKey),
+      embeddedSignupConfigId: stored.embeddedSignupConfigId,
+      verifyToken: stored.verifyToken,
+      source: 'store' as const,
+      updatedAt: stored.updatedAt,
+    };
+  }
+
+  const appId = env.META_APP_ID?.trim() ?? '';
+  const appSecret = env.META_APP_SECRET?.trim() ?? '';
+  const embeddedSignupConfigId = env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim() ?? '';
+  const verifyToken = env.META_WHATSAPP_VERIFY_TOKEN?.trim() ?? '';
+  if (!appId && !appSecret && !embeddedSignupConfigId && !verifyToken) return null;
+
+  return {
+    appId,
+    appSecret,
+    embeddedSignupConfigId,
+    verifyToken,
+    source: 'environment' as const,
+    updatedAt: null,
+  };
+}
+
+export async function configureWhatsAppMeta(request: Request, env: Env) {
+  assertAdmin(request, env);
+  const input = await request.json<{
+    appId?: string;
+    appSecret?: string;
+    embeddedSignupConfigId?: string;
+  }>();
+
+  const appId = input.appId?.trim() ?? '';
+  const appSecret = input.appSecret?.trim() ?? '';
+  const embeddedSignupConfigId = input.embeddedSignupConfigId?.trim() ?? '';
+
+  if (!/^\d+$/.test(appId)) throw new Response('Invalid Meta App ID', { status: 400 });
+  if (!appSecret || appSecret.length < 16 || appSecret.length > 256) {
+    throw new Response('Invalid Meta App Secret', { status: 400 });
+  }
+  if (!/^\d+$/.test(embeddedSignupConfigId)) {
+    throw new Response('Invalid Meta Embedded Signup Configuration ID', { status: 400 });
+  }
+
+  const existing = await getWhatsAppMetaConfig(env);
+  const verifyToken = existing?.verifyToken || env.META_WHATSAPP_VERIFY_TOKEN?.trim() || randomVerifyToken();
+  const updatedAt = new Date().toISOString();
+  const encryptionKey = required(env.DATA_ENCRYPTION_KEY, 'DATA_ENCRYPTION_KEY');
+
+  await saveWhatsAppMetaConfig(env, {
+    appId,
+    appSecretEncrypted: await encryptSecret(appSecret, encryptionKey),
+    embeddedSignupConfigId,
+    verifyToken,
+    updatedAt,
+  });
+
+  return {
+    ok: true,
+    configured: true,
+    appId,
+    embeddedSignupConfigId,
+    webhookCallbackUrl: 'https://integration.viiversion.com/webhooks/whatsapp',
+    verifyToken,
+    updatedAt,
+  };
+}
+
+export async function getWhatsAppMetaAdminConfig(request: Request, env: Env) {
+  assertAdmin(request, env);
+  const config = await getWhatsAppMetaRuntimeConfig(env);
+  return {
+    ok: true,
+    configured: Boolean(
+      config?.appId &&
+      config?.appSecret &&
+      config?.embeddedSignupConfigId &&
+      config?.verifyToken
+    ),
+    appId: config?.appId || null,
+    embeddedSignupConfigId: config?.embeddedSignupConfigId || null,
+    webhookCallbackUrl: 'https://integration.viiversion.com/webhooks/whatsapp',
+    verifyToken: config?.verifyToken || null,
+    source: config?.source || null,
+    updatedAt: config?.updatedAt || null,
+  };
+}
+
 export async function createWhatsAppOnboardingSession(request: Request, env: Env) {
   assertAdmin(request, env);
+  const meta = await getWhatsAppMetaRuntimeConfig(env);
+  if (!meta?.appId || !meta.appSecret || !meta.embeddedSignupConfigId || !meta.verifyToken) {
+    throw new Response('WhatsApp Meta configuration is incomplete', { status: 503 });
+  }
   const id = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
   const expiresAt = Date.now() + 15 * 60 * 1000;
   await saveWhatsAppOnboardingSession(env, { id, expiresAt });
@@ -61,9 +169,10 @@ export async function whatsappConnectPage(request: Request, env: Env) {
   if (!session.valid) {
     return html('<!doctype html><meta charset="utf-8"><title>VIIVERSION WhatsApp</title><body style="font-family:system-ui;background:#07101d;color:#fff;max-width:680px;margin:64px auto;padding:24px"><h1>Invalid or expired connection link</h1><p>Create a new one-time WhatsApp onboarding link from the VIIVERSION admin bridge.</p></body>', 403);
   }
-  const appId = env.META_APP_ID?.trim() ?? '';
-  const configId = env.META_EMBEDDED_SIGNUP_CONFIG_ID?.trim() ?? '';
-  const ready = Boolean(appId && configId && env.META_APP_SECRET?.trim() && env.DATA_ENCRYPTION_KEY?.trim());
+  const meta = await getWhatsAppMetaRuntimeConfig(env);
+  const appId = meta?.appId ?? '';
+  const configId = meta?.embeddedSignupConfigId ?? '';
+  const ready = Boolean(appId && configId && meta?.appSecret && meta?.verifyToken && env.DATA_ENCRYPTION_KEY?.trim());
 
   const safeAppId = JSON.stringify(appId);
   const safeConfigId = JSON.stringify(configId);
@@ -211,8 +320,9 @@ type PhoneNumber = {
 };
 
 async function exchangeCode(env: Env, code: string) {
-  const appId = required(env.META_APP_ID, 'META_APP_ID');
-  const appSecret = required(env.META_APP_SECRET, 'META_APP_SECRET');
+  const meta = await getWhatsAppMetaRuntimeConfig(env);
+  const appId = required(meta?.appId, 'Meta App ID');
+  const appSecret = required(meta?.appSecret, 'Meta App Secret');
   const url = new URL(`https://graph.facebook.com/${graphVersion(env)}/oauth/access_token`);
   url.searchParams.set('client_id', appId);
   url.searchParams.set('client_secret', appSecret);
