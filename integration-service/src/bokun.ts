@@ -25,6 +25,7 @@ export interface Env {
   BOKUN_VENDOR_HOST_SUFFIX?: string;
   BOKUN_REST_BASE_URL?: string;
   BOKUN_REAL_BOOKING_ENABLED?: string;
+  BOKUN_BOOKING_TEST_TOKEN?: string;
   ALLOWED_ORIGIN_SUFFIX?: string;
   META_WHATSAPP_ACCESS_TOKEN?: string;
   META_WHATSAPP_PHONE_NUMBER_ID?: string;
@@ -359,6 +360,7 @@ export async function getStatus(env: Env, vendorId: string) {
     },
     checkoutOptionsAvailable: Boolean(rest),
     realBookingWriteEnabled: env.BOKUN_REAL_BOOKING_ENABLED?.trim().toLowerCase() === 'true',
+    oneTimeBookingTestArmed: Boolean(env.BOKUN_BOOKING_TEST_TOKEN?.trim()),
   };
 }
 
@@ -513,11 +515,16 @@ export async function submitReservedCheckout(
   checkoutRequest: unknown,
   currency = 'USD',
 ) {
-  const expected = required(env.INTEGRATION_ADMIN_TOKEN, 'INTEGRATION_ADMIN_TOKEN');
-  if (request.headers.get('authorization') !== 'Bearer ' + expected) {
+  const adminToken = env.INTEGRATION_ADMIN_TOKEN?.trim() ?? '';
+  const oneTimeToken = env.BOKUN_BOOKING_TEST_TOKEN?.trim() ?? '';
+  const adminAuthorized = Boolean(adminToken) && request.headers.get('authorization') === 'Bearer ' + adminToken;
+  const oneTimeAuthorized = Boolean(oneTimeToken)
+    && request.headers.get('x-viiversion-booking-test-token') === oneTimeToken;
+
+  if (!adminAuthorized && !oneTimeAuthorized) {
     throw new Response('Unauthorized', { status: 401 });
   }
-  if (env.BOKUN_REAL_BOOKING_ENABLED?.trim().toLowerCase() !== 'true') {
+  if (adminAuthorized && env.BOKUN_REAL_BOOKING_ENABLED?.trim().toLowerCase() !== 'true') {
     throw new Response('Real Bókun booking writes are disabled', { status: 423 });
   }
   if (request.headers.get('x-viiversion-booking-intent') !== 'RESERVE_REAL_BOKUN_BOOKING') {
