@@ -1,0 +1,79 @@
+name: Package VIIVERSION Brand Architect OpenAI Plugin
+
+on:
+  push:
+    branches:
+      - brand-agent-v1
+    paths:
+      - "openai-plugin/**"
+      - ".github/workflows/package-openai-plugin.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate OpenAI package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s openai-plugin/plugin.json
+          test -s openai-plugin/skills/viiversion-brand-architect/SKILL.md
+          test -s openai-plugin/submission/listing.json
+          test -s openai-plugin/submission/test-cases.json
+          test -s openai-plugin/submission/release-notes.md
+          test -s openai-plugin/submission/tool-annotations.md
+          test -s openai-plugin/submission/review-checklist.md
+          python -m json.tool openai-plugin/plugin.json >/dev/null
+          python -m json.tool openai-plugin/submission/listing.json >/dev/null
+          python -m json.tool openai-plugin/submission/test-cases.json >/dev/null
+          python - <<'PY'
+          import json
+          p=json.load(open("openai-plugin/plugin.json"))
+          assert p["version"]=="0.8.0"
+          assert len(p["interface"]["displayName"]) <= 30
+          assert len(p["interface"]["shortDescription"]) <= 30
+          tests=json.load(open("openai-plugin/submission/test-cases.json"))
+          assert len(tests["positive"]) == 5
+          assert len(tests["negative"]) == 3
+          PY
+
+      - name: Build ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist/viiversion-brand-architect-openai
+          cp -R openai-plugin/. dist/viiversion-brand-architect-openai/
+          (
+            cd dist
+            zip -r -9 viiversion-brand-architect-openai-v0.8.0.zip viiversion-brand-architect-openai
+          )
+          sha256sum dist/viiversion-brand-architect-openai-v0.8.0.zip > dist/viiversion-brand-architect-openai-v0.8.0.zip.sha256
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: viiversion-brand-architect-openai-v0.8.0
+          path: |
+            dist/viiversion-brand-architect-openai-v0.8.0.zip
+            dist/viiversion-brand-architect-openai-v0.8.0.zip.sha256
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="brand-architect-openai-v0.8.0"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag"               dist/viiversion-brand-architect-openai-v0.8.0.zip               dist/viiversion-brand-architect-openai-v0.8.0.zip.sha256               --clobber
+          else
+            gh release create "$tag"               dist/viiversion-brand-architect-openai-v0.8.0.zip               dist/viiversion-brand-architect-openai-v0.8.0.zip.sha256               --target "$GITHUB_SHA"               --title "VIIVERSION Brand Architect — OpenAI Plugin v0.8.0"               --notes "Submission-ready OpenAI Plugin package with a dedicated public MCP surface, public skill, review test cases, legal/support URLs and evidence-bounded Brand Architect workflow."
+          fi
