@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: VIIVERSION WhatsApp Actions
-  version: 0.1.0
-  description: Private VIIVERSION actions for reading and sending WhatsApp Business messages.
+  version: 0.2.0
+  description: Private VIIVERSION actions for live WhatsApp Web work plus the existing official WhatsApp Business integration.
 servers:
   - url: https://integration.viiversion.com
 security:
@@ -192,6 +192,160 @@ paths:
       responses:
         '200':
           description: Message accepted by WhatsApp Cloud API
+  /api/whatsapp/live/status:
+    get:
+      operationId: whatsappLiveStatus
+      summary: Check whether the private live WhatsApp Web session is connected
+      responses:
+        '200':
+          description: Live browser connection state
+  /api/whatsapp/live/chats:
+    get:
+      operationId: whatsappLiveListChats
+      summary: Read the current WhatsApp Web chat list live
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Current live WhatsApp chat rows
+  /api/whatsapp/live/chat:
+    get:
+      operationId: whatsappLiveReadChat
+      summary: Open a WhatsApp chat live and read its current messages
+      parameters:
+        - in: query
+          name: peer
+          required: true
+          description: WhatsApp phone number or visible chat/contact name.
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 300
+            default: 100
+      responses:
+        '200':
+          description: Current messages from the requested live chat
+  /api/whatsapp/live/today:
+    get:
+      operationId: whatsappLiveWhoWroteToday
+      summary: Check live WhatsApp and return chats with inbound messages from today
+      parameters:
+        - in: query
+          name: maxChats
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 40
+            default: 20
+          description: Maximum number of currently active chat rows to inspect.
+      responses:
+        '200':
+          description: Chats and inbound messages found today in live WhatsApp Web
+  /api/whatsapp/live/today-from-clients:
+    post:
+      operationId: whatsappLiveWhoWroteTodayFromClients
+      summary: Check which supplied VIIVERSION clients wrote today in live WhatsApp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [clients]
+              properties:
+                maxChats:
+                  type: integer
+                  minimum: 1
+                  maximum: 40
+                  default: 30
+                clients:
+                  type: array
+                  maxItems: 500
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      phone:
+                        type: string
+                      aliases:
+                        type: array
+                        items:
+                          type: string
+      responses:
+        '200':
+          description: Live WhatsApp chats matched to the supplied client records
+  /api/whatsapp/live/send:
+    post:
+      operationId: whatsappLiveSend
+      summary: Send one explicitly requested WhatsApp message through the live browser session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to, text]
+              properties:
+                to:
+                  type: string
+                  description: WhatsApp recipient phone number.
+                text:
+                  type: string
+                  minLength: 1
+                  maxLength: 4096
+                requestId:
+                  type: string
+                  maxLength: 128
+                  description: Optional idempotency key to prevent accidental duplicate sends.
+      responses:
+        '200':
+          description: Live WhatsApp send result
+  /api/whatsapp/live/send-many:
+    post:
+      operationId: whatsappLiveSendMany
+      summary: Send a small explicitly requested batch of WhatsApp messages through the live browser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages:
+                  type: array
+                  minItems: 1
+                  maxItems: 15
+                  items:
+                    type: object
+                    required: [to, text]
+                    properties:
+                      to:
+                        type: string
+                      text:
+                        type: string
+                        minLength: 1
+                        maxLength: 4096
+                      requestId:
+                        type: string
+                        maxLength: 128
+                        description: Optional per-message idempotency key.
+      responses:
+        '200':
+          description: Results for the explicitly requested small batch
 components:
   securitySchemes:
     bearerAuth:
