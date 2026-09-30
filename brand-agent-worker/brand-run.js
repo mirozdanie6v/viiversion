@@ -102,6 +102,7 @@ export class BrandRunCoordinator extends DurableObject {
       updatedAt: now
     };
     await this.ctx.storage.put(RUN_KEY, run);
+    await this.ctx.storage.setAlarm(Date.now() + RUN_RETENTION_MS);
     return publicRun(run);
   }
 
