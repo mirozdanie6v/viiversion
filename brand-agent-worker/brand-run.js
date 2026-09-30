@@ -120,13 +120,30 @@ export class BrandRunCoordinator extends DurableObject {
     }
     if (run.invocationIds.includes(invocationId)) throw new BrandRoleError("INVOCATION_CONFLICT", "invocationId was already used in this run", 409);
 
-    const result = await executeBrandRole({
-      ai: this.env.AI,
-      run,
-      role,
-      invocationId,
-      evidence: command.evidence ?? []
-    });
+    let result;
+    try {
+      result = await executeBrandRole({
+        ai: this.env.AI,
+        run,
+        role,
+        invocationId,
+        evidence: command.evidence ?? []
+      });
+    } catch (error) {
+      run.audit.push({
+        event: "ROLE_EXECUTION_FAILED",
+        at: new Date().toISOString(),
+        role,
+        invocationId,
+        code: error?.code ?? "ROLE_EXECUTION_ERROR",
+        message: String(error?.message ?? error).slice(0, 500)
+      });
+      await this.writeRun(run);
+      if (error instanceof BrandRoleError) {
+        throw new BrandRoleError(error.code, `${role}: ${error.message}`, error.status);
+      }
+      throw error;
+    }
 
     run.pendingArtifact = { ...result.artifact, status: "PENDING" };
     run.pendingExecution = {
