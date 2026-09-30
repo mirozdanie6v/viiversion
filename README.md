@@ -84,7 +84,7 @@ The skill does not require that MCP for its first working version because Google
 
 ## Market / GTM / Distribution
 
-v0.2.0 extends Brand Architect beyond website/product presentation into the
+v0.3.0 extends Brand Architect beyond website/product presentation into the
 operational market layer: Projection Engine, GTM motion selection, partner and
 platform distribution, outreach campaign architecture, Software/plugin
 productization, launch planning and controlled market feedback.
@@ -92,3 +92,13 @@ productization, launch planning and controlled market feedback.
 The agent remains one central VIIVERSION brand/product/market brain. Specialized
 engineering, proposal and sales executors can receive implementation handoffs
 without becoming independent sources of brand truth.
+
+
+## Live Source of Truth
+
+v0.3.0 declares Google Drive as the user-authorized live Source of Truth app.
+For current/final/implementation tasks the agent asks Brand MCP which Drive
+sources are required, reads only those sources through Google Drive, then
+validates the observed source classes/tabs before making current claims.
+
+Google credentials are not stored in the Cloudflare Worker.
