@@ -3,7 +3,7 @@ import {
   matchBrowserClient,
   normalizeBrowserRecipient,
   parseWhatsAppPrePlainText,
-} from '../src/whatsapp-browser';
+} from '../src/whatsapp-browser-utils';
 
 describe('WhatsApp Web bridge primitives', () => {
   it('normalizes WhatsApp recipients', () => {
