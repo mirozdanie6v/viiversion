@@ -184,6 +184,26 @@ function validateSchemaValue(schema, value, label) {
   throw new BrandRoleError("SCHEMA_UNSUPPORTED", `Unsupported schema at ${label}`, 500);
 }
 
+function normalizeRolePayload(role, payload) {
+  const normalized = structuredClone(payload);
+  if (role !== BRAND_ROLE.BRAND_QA) return normalized;
+
+  const uncertaintyPattern = /insufficient evidence|missing (?:optional )?|not fully established|uncertain|unavailable|not provided/i;
+  normalized.gate_results = (normalized.gate_results ?? []).map((entry) => {
+    if (entry.status === "FAIL" && uncertaintyPattern.test(String(entry.reason ?? ""))) {
+      return { ...entry, status: "NOT_APPLICABLE" };
+    }
+    return entry;
+  });
+
+  const remainingFails = normalized.gate_results.filter((entry) => entry.status === "FAIL");
+  if ((normalized.critical_failures ?? []).length === 0 && remainingFails.length === 0) {
+    normalized.decision = "PASS";
+    normalized.rework_targets = [];
+  }
+  return normalized;
+}
+
 export function validateRolePayload(role, payload) {
   const artifactType = ROLE_ARTIFACT_TYPE[role];
   if (!artifactType) throw new BrandRoleError("UNKNOWN_ROLE", `Unknown Brand role: ${role}`, 404);
@@ -192,6 +212,9 @@ export function validateRolePayload(role, payload) {
     const gates = payload.gate_results.map((entry) => entry.gate);
     if (new Set(gates).size !== QA_GATES.length || QA_GATES.some((gate) => !gates.includes(gate))) {
       throw new BrandRoleError("QA_GATES_INCOMPLETE", "Brand QA must evaluate G1-G15 exactly once", 502);
+    }
+    if (payload.decision === "FAIL" && payload.critical_failures.length === 0) {
+      throw new BrandRoleError("QA_CRITICAL_FAILURE_REQUIRED", "Brand QA FAIL requires at least one concrete critical failure; uncertainty alone belongs in residual_uncertainty", 502);
     }
     if (payload.decision === "FAIL" && payload.rework_targets.length === 0) {
       throw new BrandRoleError("QA_REWORK_TARGET_REQUIRED", "Brand QA FAIL requires at least one specialist rework target", 502);
@@ -270,6 +293,9 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
     "If evidence is insufficient, record uncertainty or missing requirements instead of fabricating facts.",
     `Prohibited actions: ${(definition.prohibited ?? []).join(", ")}.`,
     "Preserve the language of the user's task unless a channel requirement says otherwise.",
+    role === BRAND_ROLE.SOURCE_TRUTH
+      ? "Use only brokered evidence to describe source coverage. If evidence includes a validate_live_context result with pass=true, do not invent additional source requirements such as competitor research, market analysis, language research, or channel research unless the requested task or validated source plan explicitly requires them. Distinguish missing required Source of Truth from optional analytical uncertainty."
+      : "",
     role === BRAND_ROLE.BRAND_QA
       ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance. Use FAIL only for a concrete critical contradiction, unsupported factual/commercial/proof claim, stale required decision, or governance violation that requires a new specialist revision. Missing optional detail that is honestly bounded belongs in residual_uncertainty and does not by itself force FAIL. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change."
       : ""
@@ -333,7 +359,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
         temperature: 0,
         max_tokens: maxTokens
       });
-      payload = validateRolePayload(role, extractPayload(output));
+      payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output)));
       lastModelError = null;
       break;
     } catch (error) {
@@ -341,7 +367,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
       const code = error?.code ?? "";
       const message = String(error?.message ?? error);
       const retryable =
-        ["MODEL_OUTPUT_INVALID", "SCHEMA_VALIDATION_FAILED", "QA_GATES_INCOMPLETE", "QA_REWORK_TARGET_REQUIRED", "QA_DECISION_INCONSISTENT"].includes(code) ||
+        ["MODEL_OUTPUT_INVALID", "SCHEMA_VALIDATION_FAILED", "QA_GATES_INCOMPLETE", "QA_CRITICAL_FAILURE_REQUIRED", "QA_REWORK_TARGET_REQUIRED", "QA_DECISION_INCONSISTENT"].includes(code) ||
         /JSON Mode couldn't be met|invalid json|schema|structured/i.test(message);
       if (!retryable || attempt === 3) throw error;
     }
