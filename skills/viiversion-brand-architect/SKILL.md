@@ -75,7 +75,27 @@ Brand Kernel — компактный snapshot для быстрого reasoning
 Читайте только минимально нужные live sources по правилам из
 [source-manifest.yaml](references/source-manifest.yaml).
 
-## 4. Источник истины
+## 4. Live Source of Truth orchestration
+
+Google Drive — обязательный live app для Source of Truth. Brand MCP не хранит
+Google OAuth и не получает постоянный доступ к Drive.
+
+Для задач с current/final/implementation state:
+
+1. вызови Brand MCP `get_live_source_plan` для текущей задачи;
+2. прочитай только возвращённые Google Docs и Commercial Matrix tabs через
+   подключённый Google Drive app;
+3. сохрани фактически прочитанные source classes и tabs;
+4. вызови `validate_live_context`;
+5. только после PASS используй current readiness/status/price/proof/channel/
+   distribution/decision claims как факты;
+6. если gate не проходит, прочитай недостающие источники или явно понизь ответ
+   до snapshot/uncertain.
+
+Никогда не копируй Google credential в Cloudflare только ради этого workflow.
+Авторизация Drive остаётся на уровне пользователя/Workspace.
+
+## 5. Источник истины
 
 При конфликте применяй:
 
@@ -87,7 +107,7 @@ Brand Kernel — компактный snapshot для быстрого reasoning
 GitHub implementation может быть устаревшим. Если он конфликтует с upstream,
 зафиксируй drift и проектируй исправление от upstream.
 
-## 5. Что агент имеет право изобретать
+## 6. Что агент имеет право изобретать
 
 Свободно создавай presentation-layer решения:
 
@@ -110,7 +130,7 @@ GitHub implementation может быть устаревшим. Если он к
 лучшей структуры. Сначала соблюдай canon и факты, затем оптимизируй presentation
 под конкретную цель.
 
-## 6. Что запрещено изобретать
+## 7. Что запрещено изобретать
 
 Не придумывай:
 
@@ -126,7 +146,7 @@ GitHub implementation может быть устаревшим. Если он к
 Если идея стратегически сильная, но ещё не каноническая, пометь её как
 \`candidate / proposed presentation / change request\`, а не как существующий факт.
 
-## 7. Основной reasoning loop
+## 8. Основной reasoning loop
 
 Для любой структуры:
 
@@ -145,7 +165,7 @@ GitHub implementation может быть устаревшим. Если он к
 7. Какой следующий шаг логичен сейчас?
 8. Не искажает ли эта конструкция компанию?
 
-## 8. Product mapping
+## 9. Product mapping
 
 Внутренние entity IDs нужны для reasoning и traceability, но не обязаны
 появляться публично.
@@ -163,7 +183,7 @@ GitHub implementation может быть устаревшим. Если он к
 Сначала buyer job, затем конкретный законченный результат. Add-ons, technology,
 integration depth и system expansion раскрывай позже.
 
-## 9. Proof selection
+## 10. Proof selection
 
 Proof не является декором.
 
@@ -178,7 +198,7 @@ Proof не является декором.
 
 Если сильного proof нет, ослабь claim. Не усиливай оформление вместо доказательства.
 
-## 10. Channel adaptation
+## 11. Channel adaptation
 
 Для channel-specific задачи загрузи соответствующую projection/strategy только
 после kernel.
@@ -194,7 +214,7 @@ Proof не является декором.
 
 Никогда не позволяй channel copy переписать canonical identity.
 
-## 11. Website
+## 12. Website
 
 Для website-задач не используй старую кодовую страницу как первичный brief.
 
@@ -208,7 +228,7 @@ Proof не является декором.
 Если решение имеет статус DRAFT/REVIEW, не выдавай его за утверждённый production
 contract.
 
-## 12. Proposal
+## 13. Proposal
 
 Если задача — персональное коммерческое предложение для конкретного бизнеса и в
 сессии доступен \`viiversion-proposal-studio\`, передай полный proposal workflow
@@ -220,7 +240,7 @@ Studio.
 Если Proposal Studio недоступен, можно создать только брендово и продуктово
 grounded структуру/brief, явно не имитируя полный proposal research pipeline.
 
-## 13. Sales / outreach
+## 14. Sales / outreach
 
 Для первого контакта:
 - одна реальная проблема или signal;
@@ -233,7 +253,7 @@ grounded структуру/brief, явно не имитируя полный p
 Если требуется текущий lead context, pricing, follow-up или send, refresh Sales
 Playbook, Sales_Router и Outreach_Queue. Не считай draft отправленным сообщением.
 
-## 14. Market / GTM / Distribution
+## 15. Market / GTM / Distribution
 
 Это полноценный контур Brand Architect, а не вспомогательная функция website.
 
@@ -314,7 +334,7 @@ distribution и launch contract. Он не должен притворяться
 Market signal никогда не переписывает L1-L3 автоматически. Один reply, одна
 кампания или один marketplace result не создают новый канон.
 
-## 15. Implementation
+## 16. Implementation
 
 ## 14. Implementation
 
@@ -329,7 +349,7 @@ Market signal никогда не переписывает L1-L3 автомат�
 
 Не переписывай upstream canon для оправдания удобной реализации.
 
-## 16. Brand QA
+## 17. Brand QA
 
 Перед финальным результатом выполни [qa-gates.md](references/qa-gates.md).
 
@@ -338,7 +358,7 @@ Market signal никогда не переписывает L1-L3 автомат�
 Не публикуй внутренний score. Пользователь получает исправленный результат и
 только существенные unresolved blockers.
 
-## 17. Governance
+## 18. Governance
 
 L1-L3 read-only по умолчанию.
 
@@ -353,7 +373,7 @@ direction/category или global rule:
 Обычный presentation-layer redesign не должен автоматически становиться
 canonical change.
 
-## 18. Выдача
+## 19. Выдача
 
 Отвечай конечным результатом задачи, а не отчётом о том, какие документы ты
 прочитал.
