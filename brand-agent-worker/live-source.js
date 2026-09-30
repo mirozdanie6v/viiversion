@@ -96,7 +96,7 @@ function classify(task,surface){
     distribution:/distribution|дистриб|marketplace|маркетплейс|product hunt|plugin|плагин|app directory|wordpress|odoo|shopify|clover|square|partner|партнер|integrator|интегратор/.test(s),
     product:/product|продукт|software|booking|бронир|price|цена|readiness|готов|status|статус/.test(s),
     proof:/proof|доказ|case|кейс|demo|демо|maturity|внедрен|production|prototype|прототип/.test(s),
-    governance:/canon|канон|strategy|стратег|direction|направлен|category|категор|decision|решени/.test(s)
+    governance:/canon|канон|canonical|корпоративн.*стратег|brand.*strategy|стратег.*бренд|principal.*direction|business.*direction|основн.*направлен|направлен.*бренд|canonical.*category|канонич.*категор|governance|decision log|change request/.test(s)
   };
 }
 
