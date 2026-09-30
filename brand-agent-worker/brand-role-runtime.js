@@ -25,8 +25,17 @@ const proofClaim = objectSchema({
   maturity: string,
   supported: { type: "boolean" }
 });
+const QA_GATES = Object.freeze(Array.from({ length: 15 }, (_, index) => `G${index + 1}`));
+const REWORK_ROLES = Object.freeze([
+  BRAND_ROLE.SOURCE_TRUTH,
+  BRAND_ROLE.BRAND_STRATEGY,
+  BRAND_ROLE.COMMERCIAL_ARCHITECT,
+  BRAND_ROLE.MARKET_GTM,
+  BRAND_ROLE.CHANNEL_ARCHITECT,
+  BRAND_ROLE.PROOF_ANALYST
+]);
 const qaGate = objectSchema({
-  gate: string,
+  gate: { type: "string", enum: QA_GATES },
   status: { type: "string", enum: ["PASS", "FAIL", "NOT_APPLICABLE"] },
   reason: string
 });
@@ -95,9 +104,9 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
   }),
   "qa-report": objectSchema({
     decision: { type: "string", enum: ["PASS", "FAIL"] },
-    gate_results: { type: "array", minItems: 1, items: qaGate },
+    gate_results: { type: "array", minItems: 15, maxItems: 15, items: qaGate },
     critical_failures: stringArray,
-    rework_targets: stringArray,
+    rework_targets: { type: "array", items: { type: "string", enum: REWORK_ROLES } },
     residual_uncertainty: stringArray
   })
 });
@@ -179,6 +188,18 @@ export function validateRolePayload(role, payload) {
   const artifactType = ROLE_ARTIFACT_TYPE[role];
   if (!artifactType) throw new BrandRoleError("UNKNOWN_ROLE", `Unknown Brand role: ${role}`, 404);
   validateSchemaValue(ROLE_OUTPUT_SCHEMAS[artifactType], payload, artifactType);
+  if (role === BRAND_ROLE.BRAND_QA) {
+    const gates = payload.gate_results.map((entry) => entry.gate);
+    if (new Set(gates).size !== QA_GATES.length || QA_GATES.some((gate) => !gates.includes(gate))) {
+      throw new BrandRoleError("QA_GATES_INCOMPLETE", "Brand QA must evaluate G1-G15 exactly once", 502);
+    }
+    if (payload.decision === "FAIL" && payload.rework_targets.length === 0) {
+      throw new BrandRoleError("QA_REWORK_TARGET_REQUIRED", "Brand QA FAIL requires at least one specialist rework target", 502);
+    }
+    if (payload.decision === "PASS" && payload.gate_results.some((entry) => entry.status === "FAIL")) {
+      throw new BrandRoleError("QA_DECISION_INCONSISTENT", "Brand QA cannot PASS with a failed gate", 502);
+    }
+  }
   return structuredClone(payload);
 }
 
@@ -227,7 +248,13 @@ function extractPayload(output) {
 
 function contextForRole(run, role) {
   const allowed = new Set(ROLE_CONTEXT_TYPES[role] ?? []);
-  return (run.acceptedArtifacts ?? []).filter((artifact) => allowed.has(artifact.type)).map((artifact) => structuredClone(artifact));
+  const latest = new Map();
+  for (const artifact of run.acceptedArtifacts ?? []) {
+    if (!allowed.has(artifact.type)) continue;
+    const prior = latest.get(artifact.type);
+    if (!prior || Number(artifact.revision) >= Number(prior.revision)) latest.set(artifact.type, artifact);
+  }
+  return [...latest.values()].map((artifact) => structuredClone(artifact));
 }
 
 function promptFor({ run, role, contextArtifacts, evidence }) {
@@ -331,4 +358,47 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
       validation: { status: "PASS" }
     }
   };
+}
+
+
+const FINAL_RESULT_SCHEMA = objectSchema({
+  answer: string,
+  key_decisions: stringArray,
+  uncertainties: stringArray,
+  source_trace: stringArray
+});
+
+export async function assembleBrandResult({ ai, run }) {
+  if (!ai || typeof ai.run !== "function") throw new BrandRoleError("AI_BINDING_MISSING", "Workers AI binding is required", 503);
+  const latest = new Map();
+  for (const artifact of run.acceptedArtifacts ?? []) {
+    const prior = latest.get(artifact.type);
+    if (!prior || Number(artifact.revision) >= Number(prior.revision)) latest.set(artifact.type, artifact);
+  }
+  const qa = latest.get("qa-report");
+  if (!qa || qa.payload?.decision !== "PASS") throw new BrandRoleError("FINAL_QA_REQUIRED", "Final result can only be assembled after Brand QA PASS", 409);
+
+  const system = [
+    "You are the final assembler for VIIVERSION Brand Architect.",
+    "Use only the accepted specialist artifacts supplied below.",
+    "Return one final user-facing answer that directly satisfies the original task.",
+    "Do not expose internal role mechanics unless the task asks for them.",
+    "Do not invent facts, prices, readiness, proof or canonical changes.",
+    "Preserve material uncertainties instead of hiding them.",
+    "Return only JSON matching the requested schema."
+  ].join("\n");
+  const user = JSON.stringify({
+    task: run.task,
+    surface: run.surface,
+    accepted_artifacts: [...latest.values()].map(({ type, producer, revision, payload }) => ({ type, producer, revision, payload }))
+  });
+  const output = await ai.run(BRAND_ROLE_MODEL, {
+    messages: [{ role: "system", content: system }, { role: "user", content: user }],
+    response_format: { type: "json_schema", json_schema: structuredClone(FINAL_RESULT_SCHEMA) },
+    temperature: 0,
+    max_tokens: 3072
+  });
+  const payload = extractPayload(output);
+  validateSchemaValue(FINAL_RESULT_SCHEMA, payload, "final-result");
+  return structuredClone(payload);
 }
