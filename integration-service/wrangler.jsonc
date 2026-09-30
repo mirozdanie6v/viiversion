@@ -14,6 +14,7 @@
     "BOKUN_SCOPES": "LEGACY_API",
     "BOKUN_VENDOR_HOST_SUFFIX": "bokun.io",
     "BOKUN_REST_BASE_URL": "https://api.bokun.io",
+    "BOKUN_REAL_BOOKING_ENABLED": "false",
     "ALLOWED_ORIGIN_SUFFIX": ".viiversion.com",
     "META_GRAPH_VERSION": "v26.0"
   },
