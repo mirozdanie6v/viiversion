@@ -1,4 +1,5 @@
 import { acquire, connect } from '@cloudflare/playwright';
+import QRCode from 'qrcode';
 import type { Env } from './bokun';
 import {
   matchBrowserClient,
@@ -148,6 +149,24 @@ async function findQrLocator(page: any, timeout = 12000) {
   return null;
 }
 
+
+async function cleanQrFromPage(page: any) {
+  const ref = await page.locator('div[data-ref]').first().getAttribute('data-ref').catch(() => null);
+  if (!ref?.trim()) return null;
+
+  const dataUrl = await QRCode.toDataURL(ref, {
+    type: 'image/png',
+    errorCorrectionLevel: 'M',
+    margin: 4,
+    width: 640,
+    color: { dark: '#000000', light: '#ffffff' },
+  });
+
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ref));
+  const key = [...new Uint8Array(digest)].slice(0, 8).map(value => value.toString(16).padStart(2, '0')).join('');
+  return { dataUrl, key };
+}
+
 async function waitForLoggedIn(page: any, timeout = 30000) {
   try {
     await page.locator('#pane-side').waitFor({ state: 'visible', timeout });
@@ -285,7 +304,7 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
     h1 { font-size:clamp(30px,6vw,52px); margin:12px 0 10px; line-height:1.02; }
     p { color:#b8c6df; line-height:1.6; }
     .card { margin-top:28px; background:#0d1626; border:1px solid #243650; border-radius:18px; padding:20px; }
-    img { display:block; width:100%; max-width:760px; margin:16px auto 0; border-radius:12px; background:white; }
+    img { display:block; width:min(320px,100%); height:auto; margin:18px auto 0; border-radius:8px; background:white; image-rendering:pixelated; image-rendering:crisp-edges; }
     .status { font-weight:700; }
     .ok { color:#70e6a5; }
     .err { color:#ff8b8b; }
@@ -306,6 +325,7 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
   history.replaceState(null, '', '/whatsapp/browser/connect');
   const status = document.getElementById('status');
   const shot = document.getElementById('shot');
+  let currentQrKey = '';
 
   async function poll() {
     try {
@@ -321,11 +341,12 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
       status.textContent = data.qrDetected
         ? 'Scan this QR code with WhatsApp.'
         : 'WhatsApp Web is loading the QR code…';
-      if (data.screenshotDataUrl) {
+      if (data.screenshotDataUrl && (!data.qrKey || data.qrKey !== currentQrKey)) {
         shot.src = data.screenshotDataUrl;
         shot.hidden = false;
+        currentQrKey = data.qrKey || '';
       }
-      setTimeout(poll, data.qrDetected ? 3500 : 1800);
+      setTimeout(poll, data.qrDetected ? 2000 : 1200);
     } catch (error) {
       status.textContent = error.message || String(error);
       status.className = 'status err';
@@ -409,14 +430,23 @@ export async function whatsappBrowserPairState(request: Request, env: Env) {
     }
 
     const qr = await findQrLocator(live.page, 12000);
-    const screenshot = qr
-      ? await qr.screenshot({ type: 'png' })
-      : await live.page.screenshot({ type: 'png', fullPage: false });
+    const cleanQr = qr ? await cleanQrFromPage(live.page) : null;
 
+    if (cleanQr) {
+      return {
+        ok: true,
+        paired: false,
+        qrDetected: true,
+        qrKey: cleanQr.key,
+        screenshotDataUrl: cleanQr.dataUrl,
+      };
+    }
+
+    const screenshot = await live.page.screenshot({ type: 'png', fullPage: false });
     return {
       ok: true,
       paired: false,
-      qrDetected: Boolean(qr),
+      qrDetected: false,
       screenshotDataUrl: 'data:image/png;base64,' + bytesToBase64(new Uint8Array(screenshot)),
     };
   } finally {
