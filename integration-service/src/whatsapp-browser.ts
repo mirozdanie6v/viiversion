@@ -103,7 +103,7 @@ async function closeRemoteSession(env: Env, sessionId: string) {
 
 async function acquireRemoteBrowser(env: Env) {
   assertBrowserBindings(env);
-  const result = await acquire(env.BROWSER as any, { keepAlive: 600000 });
+  const result = await acquire(env.BROWSER as any, { keep_alive: 600000 });
   const sessionId = result.sessionId;
   const browser = await connect(env.BROWSER as any, sessionId);
   return { sessionId, browser };
