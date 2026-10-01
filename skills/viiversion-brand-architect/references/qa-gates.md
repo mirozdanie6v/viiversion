@@ -185,3 +185,49 @@ PASS when:
 - canonical changes go through Change Request / Strategic Review / Decision_Log.
 
 Critical fail → downgrade the learning stage.
+
+
+## G16 — Commercial economics integrity
+
+PASS when:
+- profitability, margin, delivery effort, support cost, CAC and LTV claims come
+  from `Commercial_Economics` or an explicitly labelled measurement/assumption;
+- missing economics stay unknown;
+- sellability is not treated as proof of profitability;
+- repeatability and customization are considered when judging scalability.
+
+Critical fail when the output invents a cost, margin, CAC, LTV or profitability
+claim.
+
+Fail → route rework to COMMERCIAL_ECONOMICS.
+
+## G17 — Revenue learning integrity
+
+PASS when:
+- material sales conclusions are traceable to recorded replies, qualification,
+  proposal/deal outcomes or other evidence;
+- sales events are mapped to lead/entity/offer where known;
+- one reply/deal is kept at observation level;
+- repeated objections or requests are separated from validated learning;
+- actual won/lost state is never inferred from silence.
+
+Critical fail when an unrecorded outcome is presented as fact or one anecdote is
+promoted directly to strategic truth.
+
+Fail → route rework to REVENUE_INTELLIGENCE.
+
+## G18 — Portfolio intelligence integrity
+
+PASS when:
+- productization, merge, priority or deprioritization recommendations identify
+  the entities reviewed and evidence basis;
+- commercial state, proof, revenue evidence and economics are used when relevant;
+- a portfolio recommendation remains analytical until governance is required;
+- repeated client delivery is not silently renamed into a canonical product;
+- strategic priority distinguishes "sell now", "productize", "experiment",
+  "keep as module", "merge review" and "deprioritize".
+
+Critical fail when portfolio priority is asserted without evidence or a new
+canonical entity is created silently.
+
+Fail → route rework to PORTFOLIO_INTELLIGENCE or governance.
