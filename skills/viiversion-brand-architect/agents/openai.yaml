@@ -1,6 +1,6 @@
 interface:
   display_name: "VIIVERSION Brand Architect"
-  short_description: "Агент бренда, продукта, GTM и дистрибуции VIIVERSION"
-  default_prompt: "Используй $viiversion-brand-architect, чтобы понять задачу, выбрать нужные источники VIIVERSION, построить правильную brand/product/GTM конструкцию, выбрать distribution path и проверить результат Brand QA."
+  short_description: "Единое ядро бренда, продукта, revenue, экономики и GTM VIIVERSION"
+  default_prompt: "Используй $viiversion-brand-architect как интерфейс VIIVERSION Core: выбери минимальные источники и роли, свяжи позиционирование, коммерческую реальность, GTM, продажи, revenue learning, economics и portfolio intelligence и проверь результат Brand QA G1-G18."
 policy:
   allow_implicit_invocation: true
