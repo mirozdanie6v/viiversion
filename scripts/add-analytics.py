@@ -9,7 +9,7 @@ for path in Path('public').rglob('*.html'):
     changed = False
 
     if 'telegram.org/js/telegram-web-app.js' not in text and '</head>' in text:
-        text = text.replace('</head>', f'  {TELEGRAM}\\n</head>', 1)
+        text = text.replace('</head>', f'  {TELEGRAM}\n</head>', 1)
         changed = True
 
     if 'dashboard.viiversion.com/tracker.js' not in text and '</body>' in text:
