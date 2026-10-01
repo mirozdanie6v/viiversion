@@ -51,6 +51,9 @@ const TAB_GROUPS = {
   market:["Channel_Profiles","Projection_Index","Market_Signals"],
   distribution:["Distribution_Matrix","Ecosystems","Launch_Waves","Distribution_Dashboard","Partner_Channels","GTM_Motions","Distribution_Pipeline","Daily_GTM"],
   sales:["Sales_Router","Outreach_Queue","Cross_Sell"],
+  revenue:["Sales_Router","Outreach_Queue","Revenue_Intelligence","Experiments"],
+  economics:["Commercial_Economics"],
+  portfolio:["Portfolio_Intelligence","Revenue_Intelligence","Commercial_Economics","Market_Signals"],
   governance:["Decision_Log","Command_Registry"]
 };
 
@@ -96,6 +99,10 @@ function classify(task,surface){
     gtm:/\bgtm\b|go.?to.?market|выход.*рынок|вывод.*рынок/.test(s),
     distribution:/distribution|дистриб|marketplace|маркетплейс|product hunt|plugin|плагин|app directory|wordpress|odoo|shopify|clover|square|partner|партнер|integrator|интегратор/.test(s),
     product:/product|продукт|software|booking|бронир|price|цена|readiness|готов|status|статус/.test(s),
+    productization:/productiz|продуктиз|превращ.*(?:в|во).*продукт|повторя.*(?:решен|интеграц)/.test(s),
+    economics:/profit|margin|марж|экономик|рентабель|cac\b|ltv\b|delivery cost|support cost|себестоим|выгодн|repeatab|кастомизац/.test(s),
+    revenueLearning:/revenue learning|sales learning|чему.*продаж|ответ.*клиент|reply|objection|возражен|qualification|proposal outcome|won.?lost|price reaction|proof reaction|повторя.*запрос/.test(s),
+    portfolio:/portfolio|портфел|приоритет.*продукт|что.*(?:усили|отлож|productize)|какие.*продукт.*(?:усили|отлож)|merge review|depriorit/.test(s),
     proof:/proof|доказ|case|кейс|demo|демо|maturity|внедрен|production|prototype|прототип/.test(s),
     governance:/canon|канон|canonical|корпоративн.*стратег|brand.*strategy|стратег.*бренд|principal.*direction|business.*direction|основн.*направлен|направлен.*бренд|canonical.*category|канонич.*категор|governance|decision log|change request/.test(s)
   };
@@ -107,21 +114,21 @@ export function buildLiveSourcePlan(args={}){
   const tabs=new Set();
 
   docs.add("corporate");
-  if(flags.market||flags.gtm||flags.distribution||flags.outreach||flags.redesign||args.final_public) docs.add("globalBrand");
-  if(flags.outreach) docs.add("salesPlaybook");
+  if(flags.market||flags.gtm||flags.distribution||flags.outreach||flags.redesign||flags.productization||flags.portfolio||args.final_public) docs.add("globalBrand");
+  if(flags.outreach||flags.revenueLearning) docs.add("salesPlaybook");
   if(flags.website) {
     docs.add("websiteStrategy");
     docs.add("websiteUX");
     docs.add("homepageArchitecture");
   }
 
-  if(flags.product||flags.proof||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
+  if(flags.product||flags.productization||flags.economics||flags.revenueLearning||flags.portfolio||flags.proof||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
     tabs.add("Entity_Registry");
   }
-  if(flags.product||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
+  if(flags.product||flags.productization||flags.economics||flags.revenueLearning||flags.portfolio||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public||args.current_state||args.implementation){
     for(const x of TAB_GROUPS.commercial) tabs.add(x);
   }
-  if(flags.proof||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public){
+  if(flags.proof||flags.productization||flags.portfolio||flags.market||flags.gtm||flags.distribution||flags.outreach||flags.website||args.final_public){
     tabs.add("Assets");
   }
   if(flags.website){
@@ -143,6 +150,15 @@ export function buildLiveSourcePlan(args={}){
     tabs.add("Channel_Profiles");
     tabs.add("Market_Signals");
   }
+  if(flags.revenueLearning||flags.productization||flags.portfolio){
+    for(const x of TAB_GROUPS.revenue) tabs.add(x);
+  }
+  if(flags.economics||flags.productization||flags.portfolio){
+    for(const x of TAB_GROUPS.economics) tabs.add(x);
+  }
+  if(flags.portfolio||flags.productization){
+    for(const x of TAB_GROUPS.portfolio) tabs.add(x);
+  }
   if(flags.governance){
     for(const x of TAB_GROUPS.governance) tabs.add(x);
     tabs.add("Entity_Registry");
@@ -160,10 +176,13 @@ export function buildLiveSourcePlan(args={}){
   if(flags.website) requiredClasses.push("website_projection");
   if(flags.distribution||flags.gtm) requiredClasses.push("distribution_state");
   if(flags.outreach) requiredClasses.push("sales_pipeline_state");
+  if(flags.revenueLearning||flags.productization||flags.portfolio) requiredClasses.push("revenue_learning_state");
+  if(flags.economics||flags.productization||flags.portfolio) requiredClasses.push("commercial_economics_state");
+  if(flags.portfolio||flags.productization) requiredClasses.push("portfolio_intelligence_state");
 
   return {
     task:String(args.task||"").trim(),
-    liveRequired:Boolean(args.final_public||args.current_state||args.implementation||flags.redesign||flags.product||flags.proof||flags.market||flags.distribution||flags.outreach),
+    liveRequired:Boolean(args.final_public||args.current_state||args.implementation||flags.redesign||flags.product||flags.productization||flags.economics||flags.revenueLearning||flags.portfolio||flags.proof||flags.market||flags.distribution||flags.outreach),
     documents:[...docs].map(key=>({key,...LIVE_SOURCE_REGISTRY[key]})),
     commercialMatrix:{
       driveId:LIVE_SOURCE_REGISTRY.commercialMatrix.driveId,
@@ -173,7 +192,7 @@ export function buildLiveSourcePlan(args={}){
     requiredSourceClasses:[...new Set(requiredClasses)],
     execution:[
       "Read only the returned Google Drive sources using the connected Google Drive app.",
-      "Preserve source precedence: L1 → L2 → Proof → L3 → channel projection → implementation.",
+      "Preserve source precedence: L1 → L2 → Proof → L3 → channel projection → implementation; specialized Revenue/Economics/Portfolio registries own only their analytical facts.",
       "Use snapshot only for fast reasoning; live observations override snapshot for current facts.",
       "Pass observed source classes/tabs to validate_live_context before final public claims or implementation."
     ]
@@ -188,7 +207,8 @@ export function validateLiveContext(args={}){
   const requiredTabs=plan.commercialMatrix.tabs;
   const missingTabs=requiredTabs.filter(x=>!tabs.has(x));
 
-  const mustBeStrict=Boolean(args.final_public||args.current_state||args.implementation);
+  const flags=classify(String(args.task||""),args.surface);
+  const mustBeStrict=Boolean(args.final_public||args.current_state||args.implementation||flags.productization||flags.economics||flags.revenueLearning||flags.portfolio);
   const pass=mustBeStrict ? (missingClasses.length===0 && missingTabs.length===0) : missingClasses.length===0;
 
   return {
