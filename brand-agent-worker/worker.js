@@ -373,7 +373,7 @@ async function handleOpenAiMcp(request, env) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-architect",version:"0.8.3",mcp:"/openai/mcp"});
+    return json({ok:true,service:"viiversion-brand-architect",version:"0.8.4",mcp:"/openai/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -388,7 +388,7 @@ async function handleOpenAiMcp(request, env) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-architect",version:"0.8.3"},
+      serverInfo:{name:"viiversion-brand-architect",version:"0.8.4"},
       instructions:"VIIVERSION Brand Architect provides evidence-bounded brand, product, website, proof, GTM and productization assistance. It does not access third-party accounts or credentials. When current/final facts require evidence that was not supplied, return the required evidence instead of inventing facts."
     });
   }
@@ -481,7 +481,7 @@ async function handleMcp(request, env) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-agent",version:"0.8.3",mcp:"/mcp"});
+    return json({ok:true,service:"viiversion-brand-agent",version:"0.8.4",mcp:"/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -496,7 +496,7 @@ async function handleMcp(request, env) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-agent",version:"0.8.3"},
+      serverInfo:{name:"viiversion-brand-agent",version:"0.8.4"},
       instructions:"VIIVERSION Brand Architect backend with persistent Durable Object runs, isolated Workers AI specialist execution, automatic role progression, bounded QA rework, final result assembly, and manual artifact controls. For current/final tasks, the caller must broker live Google Drive Source of Truth evidence through the user-authorized Drive connector and pass it to run_brand_task; Google credentials never move into Cloudflare."
     });
   }
@@ -550,7 +550,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
-      return json({ok:true,service:"viiversion-brand-agent",version:"0.8.3",mcp:"https://agent.viiversion.com/mcp"});
+      return json({ok:true,service:"viiversion-brand-agent",version:"0.8.4",mcp:"https://agent.viiversion.com/mcp"});
     }
     if (request.method === "GET" && url.pathname === "/privacy") return html(PRIVACY_PAGE);
     if (request.method === "GET" && url.pathname === "/terms") return html(TERMS_PAGE);
