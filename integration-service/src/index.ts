@@ -36,6 +36,7 @@ import {
 import {
   whatsappBrowserChat,
   whatsappBrowserChats,
+  whatsappBrowserPairLiveView,
   whatsappBrowserPairReset,
   whatsappBrowserPairStart,
   whatsappBrowserPairState,
@@ -248,6 +249,10 @@ export default {
 
       if (url.pathname === '/whatsapp/browser/connect/state' && request.method === 'GET') {
         return json(request, env, await whatsappBrowserPairState(request, env));
+      }
+
+      if (url.pathname === '/whatsapp/browser/connect/live' && request.method === 'GET') {
+        return json(request, env, await whatsappBrowserPairLiveView(request, env));
       }
 
       if (url.pathname === '/whatsapp/browser/connect/reset' && request.method === 'POST') {
