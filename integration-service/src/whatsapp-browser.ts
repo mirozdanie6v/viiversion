@@ -103,7 +103,7 @@ async function closeRemoteSession(env: Env, sessionId: string) {
 
 async function acquireRemoteBrowser(env: Env) {
   assertBrowserBindings(env);
-  const result = await acquire(env.BROWSER as any);
+  const result = await acquire(env.BROWSER as any, { keepAlive: 600000 });
   const sessionId = result.sessionId;
   const browser = await connect(env.BROWSER as any, sessionId);
   return { sessionId, browser };
@@ -150,8 +150,16 @@ async function findQrLocator(page: any, timeout = 12000) {
 }
 
 
-async function cleanQrFromPage(page: any) {
-  const ref = await page.locator('div[data-ref]').first().getAttribute('data-ref').catch(() => null);
+async function cleanQrFromPage(qrLocator: any) {
+  const ref = await qrLocator.evaluate((node: any) => {
+    let current: any = node;
+    for (let depth = 0; depth < 8 && current; depth += 1, current = current.parentElement) {
+      const value = current.getAttribute?.('data-ref');
+      if (value) return value;
+    }
+    const nested = node.querySelector?.('[data-ref]');
+    return nested?.getAttribute?.('data-ref') || null;
+  }).catch(() => null);
   if (!ref?.trim()) return null;
 
   const qr = QRCode.create(ref, { errorCorrectionLevel: 'M' });
@@ -442,7 +450,7 @@ export async function whatsappBrowserPairState(request: Request, env: Env) {
     }
 
     const qr = await findQrLocator(live.page, 12000);
-    const cleanQr = qr ? await cleanQrFromPage(live.page) : null;
+    const cleanQr = qr ? await cleanQrFromPage(qr) : null;
 
     if (cleanQr) {
       return {
