@@ -42,11 +42,14 @@ const auditFinalItem = objectSchema({
   verdict: { type: "string", enum: ["MATCH", "MISMATCH"] },
   required_change: string
 });
-const QA_GATES = Object.freeze(Array.from({ length: 15 }, (_, index) => `G${index + 1}`));
+const QA_GATES = Object.freeze(Array.from({ length: 18 }, (_, index) => `G${index + 1}`));
 const REWORK_ROLES = Object.freeze([
   BRAND_ROLE.SOURCE_TRUTH,
   BRAND_ROLE.BRAND_STRATEGY,
   BRAND_ROLE.COMMERCIAL_ARCHITECT,
+  BRAND_ROLE.COMMERCIAL_ECONOMICS,
+  BRAND_ROLE.REVENUE_INTELLIGENCE,
+  BRAND_ROLE.PORTFOLIO_INTELLIGENCE,
   BRAND_ROLE.MARKET_GTM,
   BRAND_ROLE.PRESENTATION_SYNTHESIS,
   BRAND_ROLE.CHANNEL_ARCHITECT,
@@ -88,6 +91,9 @@ export const ROLE_ARTIFACT_TYPE = Object.freeze({
   [BRAND_ROLE.SOURCE_TRUTH]: "source-context",
   [BRAND_ROLE.BRAND_STRATEGY]: "brand-decision",
   [BRAND_ROLE.COMMERCIAL_ARCHITECT]: "commercial-decision",
+  [BRAND_ROLE.COMMERCIAL_ECONOMICS]: "economics-decision",
+  [BRAND_ROLE.REVENUE_INTELLIGENCE]: "revenue-learning",
+  [BRAND_ROLE.PORTFOLIO_INTELLIGENCE]: "portfolio-decision",
   [BRAND_ROLE.MARKET_GTM]: "market-plan",
   [BRAND_ROLE.PRESENTATION_SYNTHESIS]: "presentation-concept",
   [BRAND_ROLE.CHANNEL_ARCHITECT]: "channel-projection",
@@ -125,6 +131,39 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
     productization_needed: { type: "boolean" },
     boundaries: stringArray,
     engineering_handoff_if_needed: stringArray
+  }),
+  "economics-decision": objectSchema({
+    economics_scope: string,
+    known_metrics: stringArray,
+    unknown_metrics: stringArray,
+    margin_signal: string,
+    repeatability_signal: string,
+    customization_signal: string,
+    economics_confidence: string,
+    measurement_requirements: stringArray
+  }),
+  "revenue-learning": objectSchema({
+    events_reviewed: stringArray,
+    entity_offer_mapping: stringArray,
+    outcomes: stringArray,
+    objections: stringArray,
+    repeated_demand_keys: stringArray,
+    price_signals: stringArray,
+    proof_signals: stringArray,
+    learning_stage: string,
+    evidence_refs: stringArray,
+    recommended_feedback: stringArray
+  }),
+  "portfolio-decision": objectSchema({
+    entities_reviewed: stringArray,
+    evidence_basis: stringArray,
+    portfolio_signals: stringArray,
+    productization_candidates: stringArray,
+    overlap_or_merge_candidates: stringArray,
+    deprioritization_candidates: stringArray,
+    strategic_priority: stringArray,
+    blockers: stringArray,
+    governance_requests: stringArray
   }),
   "market-plan": objectSchema({
     market: string,
@@ -166,7 +205,7 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
   }),
   "qa-report": objectSchema({
     decision: { type: "string", enum: ["PASS", "FAIL"] },
-    gate_results: { type: "array", minItems: 15, maxItems: 15, items: qaGate },
+    gate_results: { type: "array", minItems: 18, maxItems: 18, items: qaGate },
     critical_failures: stringArray,
     rework_targets: { type: "array", items: { type: "string", enum: REWORK_ROLES } },
     residual_uncertainty: stringArray
@@ -177,11 +216,14 @@ export const ROLE_CONTEXT_TYPES = Object.freeze({
   [BRAND_ROLE.SOURCE_TRUTH]: [],
   [BRAND_ROLE.BRAND_STRATEGY]: ["source-context"],
   [BRAND_ROLE.COMMERCIAL_ARCHITECT]: ["source-context", "brand-decision"],
-  [BRAND_ROLE.MARKET_GTM]: ["source-context", "brand-decision", "commercial-decision"],
+  [BRAND_ROLE.COMMERCIAL_ECONOMICS]: ["source-context", "brand-decision", "commercial-decision"],
+  [BRAND_ROLE.REVENUE_INTELLIGENCE]: ["source-context", "brand-decision", "commercial-decision"],
+  [BRAND_ROLE.PORTFOLIO_INTELLIGENCE]: ["source-context", "brand-decision", "commercial-decision", "economics-decision", "revenue-learning"],
+  [BRAND_ROLE.MARKET_GTM]: ["source-context", "brand-decision", "commercial-decision", "economics-decision", "revenue-learning", "portfolio-decision"],
   [BRAND_ROLE.PRESENTATION_SYNTHESIS]: ["source-context", "brand-decision", "commercial-decision", "market-plan"],
   [BRAND_ROLE.CHANNEL_ARCHITECT]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "presentation-concept"],
-  [BRAND_ROLE.PROOF_ANALYST]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "presentation-concept", "channel-projection"],
-  [BRAND_ROLE.BRAND_QA]: ["source-context", "brand-decision", "commercial-decision", "market-plan", "presentation-concept", "channel-projection", "proof-plan"]
+  [BRAND_ROLE.PROOF_ANALYST]: ["source-context", "brand-decision", "commercial-decision", "economics-decision", "revenue-learning", "portfolio-decision", "market-plan", "presentation-concept", "channel-projection"],
+  [BRAND_ROLE.BRAND_QA]: ["source-context", "brand-decision", "commercial-decision", "economics-decision", "revenue-learning", "portfolio-decision", "market-plan", "presentation-concept", "channel-projection", "proof-plan"]
 });
 
 export class BrandRoleError extends Error {
@@ -449,7 +491,7 @@ export function validateRolePayload(role, payload) {
   if (role === BRAND_ROLE.BRAND_QA) {
     const gates = payload.gate_results.map((entry) => entry.gate);
     if (new Set(gates).size !== QA_GATES.length || QA_GATES.some((gate) => !gates.includes(gate))) {
-      throw new BrandRoleError("QA_GATES_INCOMPLETE", "Brand QA must evaluate G1-G15 exactly once", 502);
+      throw new BrandRoleError("QA_GATES_INCOMPLETE", "Brand QA must evaluate G1-G18 exactly once", 502);
     }
     if (payload.decision === "FAIL" && payload.critical_failures.length === 0) {
       throw new BrandRoleError("QA_CRITICAL_FAILURE_REQUIRED", "Brand QA FAIL requires at least one concrete critical failure; uncertainty alone belongs in residual_uncertainty", 502);
@@ -565,8 +607,17 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
     role === BRAND_ROLE.SOURCE_TRUTH
       ? "Use only brokered evidence to describe source coverage. If evidence includes a validate_live_context result with pass=true, do not invent additional source requirements such as competitor research, market analysis, language research, or channel research unless the requested task or validated source plan explicitly requires them. Distinguish missing required Source of Truth from optional analytical uncertainty."
       : "",
+    role === BRAND_ROLE.COMMERCIAL_ECONOMICS
+      ? "ECONOMICS DUTY: distinguish recorded metrics from assumptions and unknowns. Never fabricate delivery cost, support cost, gross margin, CAC, LTV, repeatability or profitability. Sellability is not profitability. If required inputs are missing, put them in unknown_metrics and measurement_requirements."
+      : "",
+    role === BRAND_ROLE.REVENUE_INTELLIGENCE
+      ? "REVENUE DUTY: use only recorded sales evidence. Preserve evidence references and lead/entity/offer mapping when available. One reply, objection or deal is an observation, not validated learning. Never infer won/lost from silence. Separate repeated demand from validated learning."
+      : "",
+    role === BRAND_ROLE.PORTFOLIO_INTELLIGENCE
+      ? "PORTFOLIO DUTY: recommendations must cite evidence_basis and distinguish sell_now, productize, keep_as_module, experiment, merge_review, deprioritize and governance_candidate. Do not create, rename or retire canonical entities. Do not claim profitability or demand without supporting accepted artifacts."
+      : "",
     role === BRAND_ROLE.BRAND_QA
-      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth and G15 Feedback governance. Use FAIL only for a concrete critical contradiction, unsupported factual/commercial/proof claim, stale required decision, or governance violation that requires a new specialist revision. Missing optional detail that is honestly bounded belongs in residual_uncertainty and does not by itself force FAIL. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change. In AUDIT MODE, PASS means the produced audit is evidence-faithful and identifies material current-vs-target mismatches; it does NOT mean the audited page itself conforms. In REDESIGN MODE, grade the proposed new presentation itself, not the diagnosis. G11 must FAIL if the proposed artifact does not let a non-insider understand what VIIVERSION is/does and what can be obtained; G12 must FAIL if the result merely restores old approved copy, swaps synonyms, or lacks a materially new communication principle. A redesign cannot PASS if no accepted presentation-concept exists."
+      ? "For QA, explicitly evaluate G1 Identity, G2 Entity integrity, G3 Buyer relevance, G4 Commercial truth, G5 Proof integrity, G6 Channel fit, G7 System balance, G8 AI discipline, G9 Existing-system trust, G10 Decision freshness, G11 Clarity, G12 No ornamental complexity, G13 GTM coherence, G14 Distribution truth, G15 Feedback governance, G16 Commercial economics integrity, G17 Revenue learning integrity and G18 Portfolio intelligence integrity. G16 FAILS on invented margin/cost/CAC/LTV or treating sellability as profitability. G17 FAILS on unrecorded sales outcomes, inferred won/lost, or promoting one event directly to validated learning. G18 FAILS on portfolio priority without evidence or silent canonical entity creation/retirement. Use FAIL only for a concrete critical contradiction, unsupported factual/commercial/proof/economics/revenue/portfolio claim, stale required decision, or governance violation that requires a new specialist revision. Missing optional detail that is honestly bounded belongs in residual_uncertainty and does not by itself force FAIL. If decision is FAIL, rework_targets must contain only exact specialist role IDs present in the current route and must identify the earliest role whose output must change. In AUDIT MODE, PASS means the produced audit is evidence-faithful and identifies material current-vs-target mismatches; it does NOT mean the audited page itself conforms. In REDESIGN MODE, grade the proposed new presentation itself, not the diagnosis. G11 must FAIL if the proposed artifact does not let a non-insider understand what VIIVERSION is/does and what can be obtained; G12 must FAIL if the result merely restores old approved copy, swaps synonyms, or lacks a materially new communication principle. A redesign cannot PASS if no accepted presentation-concept exists."
       : ""
   ].filter(Boolean).join("\n");
 
@@ -650,8 +701,8 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
   let lastModelError;
   const maxTokens = [BRAND_ROLE.BRAND_QA, BRAND_ROLE.PRESENTATION_SYNTHESIS, BRAND_ROLE.BRAND_STRATEGY].includes(role)
     ? 4096
-    : role === BRAND_ROLE.MARKET_GTM ? 3072 : 2560;
-  const maxAttempts = [BRAND_ROLE.MARKET_GTM, BRAND_ROLE.PRESENTATION_SYNTHESIS, BRAND_ROLE.BRAND_STRATEGY].includes(role) ? 6 : 5;
+    : [BRAND_ROLE.MARKET_GTM, BRAND_ROLE.COMMERCIAL_ECONOMICS, BRAND_ROLE.REVENUE_INTELLIGENCE, BRAND_ROLE.PORTFOLIO_INTELLIGENCE].includes(role) ? 3072 : 2560;
+  const maxAttempts = [BRAND_ROLE.MARKET_GTM, BRAND_ROLE.PRESENTATION_SYNTHESIS, BRAND_ROLE.BRAND_STRATEGY, BRAND_ROLE.COMMERCIAL_ECONOMICS, BRAND_ROLE.REVENUE_INTELLIGENCE, BRAND_ROLE.PORTFOLIO_INTELLIGENCE].includes(role) ? 6 : 5;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const repairInstruction = attempt === 1
