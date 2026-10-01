@@ -286,6 +286,9 @@ function classifySurface(task, explicit) {
   if (/proposal|коммерческ|\bкп\b/.test(lower)) return "proposal";
   if (/product|продукт|booking|бронир/.test(lower)) return "product_page";
   if (/site|сайт|главн|homepage|лендинг/.test(lower)) return "website";
+  if (/profit|margin|марж|экономик|рентабель|cac\b|ltv\b|себестоим|выгодн/.test(lower)) return "commercial_economics";
+  if (/revenue learning|sales learning|чему.*продаж|ответ.*клиент|objection|возражен|won.?lost/.test(lower)) return "revenue_learning";
+  if (/portfolio|портфел|приоритет.*продукт|productize|продуктиз/.test(lower)) return "portfolio_review";
   return "brand_surface";
 }
 function taskPlan(args={}) {
@@ -320,7 +323,7 @@ function taskPlan(args={}) {
     surface,
     audience: clean(args.audience,120) || "infer from task",
     goal: clean(args.goal,120) || "infer from task",
-    reasoning:["goal","audience","buyer job","canonical entities","commercial state","proof","narrative","CTA","Brand QA"],
+    reasoning:["goal","audience","buyer job","canonical entities","commercial state","economics when material","proof","market/action","revenue feedback","portfolio learning","Brand QA"],
     narrativePattern:patterns[surface] || patterns.brand_surface,
     liveRefreshRequired:[...new Set(liveRefresh)],
     sourceSnapshotDate:SNAPSHOT_DATE,
@@ -373,7 +376,7 @@ async function handleOpenAiMcp(request, env) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-architect",version:"0.8.4",mcp:"/openai/mcp"});
+    return json({ok:true,service:"viiversion-brand-architect",version:"0.9.0",mcp:"/openai/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -388,8 +391,8 @@ async function handleOpenAiMcp(request, env) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-architect",version:"0.8.4"},
-      instructions:"VIIVERSION Brand Architect provides evidence-bounded brand, product, website, proof, GTM and productization assistance. It does not access third-party accounts or credentials. When current/final facts require evidence that was not supplied, return the required evidence instead of inventing facts."
+      serverInfo:{name:"viiversion-brand-architect",version:"0.9.0"},
+      instructions:"VIIVERSION Core / Brand Architect connects positioning, products, proof, GTM, revenue learning, commercial economics and portfolio intelligence under evidence and governance boundaries. It does not access third-party accounts or credentials. Current/final/economics/revenue/portfolio claims require supplied Source of Truth evidence; missing evidence must remain unknown rather than invented."
     });
   }
   if (method === "tools/list") return rpc(id,{tools:OPENAI_PUBLIC_TOOLS});
@@ -481,7 +484,7 @@ async function handleMcp(request, env) {
     }});
   }
   if (request.method === "GET") {
-    return json({ok:true,service:"viiversion-brand-agent",version:"0.8.4",mcp:"/mcp"});
+    return json({ok:true,service:"viiversion-brand-agent",version:"0.9.0",mcp:"/mcp"});
   }
   if (request.method !== "POST") return rpcError(null,-32600,"Method not allowed",405);
 
@@ -496,8 +499,8 @@ async function handleMcp(request, env) {
     return rpc(id,{
       protocolVersion:"2025-11-25",
       capabilities:{tools:{}},
-      serverInfo:{name:"viiversion-brand-agent",version:"0.8.4"},
-      instructions:"VIIVERSION Brand Architect backend with persistent Durable Object runs, isolated Workers AI specialist execution, automatic role progression, bounded QA rework, final result assembly, and manual artifact controls. For current/final tasks, the caller must broker live Google Drive Source of Truth evidence through the user-authorized Drive connector and pass it to run_brand_task; Google credentials never move into Cloudflare."
+      serverInfo:{name:"viiversion-brand-agent",version:"0.9.0"},
+      instructions:"VIIVERSION Core / Brand Architect backend with persistent Durable Object runs, isolated Workers AI specialist execution, automatic role progression, G1-G18 QA, bounded rework, final assembly and manual artifact controls. Positioning, products, GTM, revenue learning, commercial economics and portfolio intelligence share one governed core. For current/final/economics/revenue/portfolio tasks, the caller must broker live Google Drive Source of Truth evidence through the user-authorized Drive connector and pass it to run_brand_task; Google credentials never move into Cloudflare."
     });
   }
   if (method === "tools/list") return rpc(id,{tools:TOOLS});
@@ -550,7 +553,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
-      return json({ok:true,service:"viiversion-brand-agent",version:"0.8.4",mcp:"https://agent.viiversion.com/mcp"});
+      return json({ok:true,service:"viiversion-brand-agent",version:"0.9.0",mcp:"https://agent.viiversion.com/mcp"});
     }
     if (request.method === "GET" && url.pathname === "/privacy") return html(PRIVACY_PAGE);
     if (request.method === "GET" && url.pathname === "/terms") return html(TERMS_PAGE);
