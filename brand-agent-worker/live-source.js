@@ -101,7 +101,7 @@ function classify(task,surface){
     product:/product|продукт|software|booking|бронир|price|цена|readiness|готов|status|статус/.test(s),
     productization:/productiz|продуктиз|превращ.*(?:в|во).*продукт|повторя.*(?:решен|интеграц)/.test(s),
     economics:/profit|margin|марж|экономик|рентабель|cac\b|ltv\b|delivery cost|support cost|себестоим|выгодн|repeatab|кастомизац/.test(s),
-    revenueLearning:/revenue learning|sales learning|чему.*продаж|ответ.*клиент|reply|objection|возражен|qualification|proposal outcome|won.?lost|price reaction|proof reaction|повторя.*запрос/.test(s),
+    revenueLearning:/revenue learning|sales learning|sales event|what.*sales.*teach|client requested|prospect requested|customer requested|requested integration|чему.*продаж|ответ.*клиент|клиент.*(?:попрос|запрос)|reply|objection|возражен|qualification|proposal outcome|won.?lost|price reaction|proof reaction|повторя.*запрос/.test(s),
     portfolio:/portfolio|портфел|приоритет.*продукт|что.*(?:усили|отлож|productize)|какие.*продукт.*(?:усили|отлож)|merge review|depriorit/.test(s),
     proof:/proof|доказ|case|кейс|demo|демо|maturity|внедрен|production|prototype|прототип/.test(s),
     governance:/canon|канон|canonical|корпоративн.*стратег|brand.*strategy|стратег.*бренд|principal.*direction|business.*direction|основн.*направлен|направлен.*бренд|canonical.*category|канонич.*категор|governance|decision log|change request/.test(s)
