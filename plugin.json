@@ -1,7 +1,7 @@
 {
   "name": "viiversion-brand-architect",
-  "version": "0.8.3",
-  "description": "VIIVERSION Brand Architect for brand, product, website, proof, GTM and governance workflows.",
+  "version": "0.9.0",
+  "description": "VIIVERSION Core / Brand Architect for brand, product, GTM, revenue, economics, portfolio and governance workflows.",
   "author": {
     "name": "Olga Nogtich",
     "url": "https://viiversion.com"
@@ -20,13 +20,17 @@
     "distribution",
     "productization",
     "market-positioning",
-    "outreach"
+    "outreach",
+    "revenue-intelligence",
+    "commercial-economics",
+    "portfolio-intelligence",
+    "company-core"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "VIIVERSION Brand Architect",
-    "shortDescription": "Brand, product & GTM copilot",
-    "longDescription": "VIIVERSION Brand Architect helps structure and audit brand, product, website, proof, GTM and distribution work using explicit governance and evidence boundaries. It separates current implementation from canonical targets, preserves proof maturity, and routes complex tasks through specialist analysis and QA.",
+    "shortDescription": "Brand, revenue & product core",
+    "longDescription": "VIIVERSION Core / Brand Architect connects positioning, product architecture, proof, GTM, revenue learning, commercial economics and portfolio intelligence through one governed company model.",
     "developerName": "Olga Nogtich",
     "category": "Productivity",
     "capabilities": [
