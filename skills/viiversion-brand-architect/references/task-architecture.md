@@ -284,3 +284,77 @@ The default redesign output should contain:
 - new structure/copy or concept;
 - why the new solution is materially different;
 - only unresolved blockers that truly require user input.
+
+
+## Commercial economics / profitability
+
+Use when the user asks what is profitable, scalable, worth packaging, or how a
+price relates to effort/cost.
+
+1. Resolve entity/offer and current commercial state.
+2. Refresh `Commercial_Economics`.
+3. Separate observed metrics from assumptions.
+4. Inspect delivery effort, support burden, customization and repeatability.
+5. Compare price/revenue only to measured or explicitly modelled costs.
+6. State economics confidence.
+7. If key inputs are missing, return a measurement plan rather than a fabricated
+   margin.
+8. Feed measured economics into Portfolio Intelligence.
+
+## Revenue learning
+
+Use when the question is what sales activity is teaching VIIVERSION.
+
+1. Refresh `Sales_Router`, relevant `Outreach_Queue` rows and
+   `Revenue_Intelligence`.
+2. Link each material event to lead + entity/offer where known.
+3. Classify event: reply / objection / qualification / proposal reaction /
+   price reaction / proof reaction / won / lost / no-decision.
+4. Normalize repeated demand and objection keys without erasing original wording.
+5. Keep one event as an observation.
+6. Promote repeated consistent evidence to pattern only when sample/evidence
+   justifies it.
+7. Send broader market implications to `Market_Signals`.
+8. Send product/portfolio implications to `Portfolio_Intelligence`.
+9. Never infer won/lost from silence.
+
+## Portfolio review
+
+Use for "what should we sell/build/productize/stop/merge next?".
+
+1. Select the portfolio scope and entities.
+2. Refresh `Products`, `Assets`, `Revenue_Intelligence`,
+   `Commercial_Economics`, `Market_Signals`, `Portfolio_Intelligence`.
+3. For each entity, separate:
+   - current sellability/readiness;
+   - proof strength;
+   - qualified revenue demand;
+   - economics confidence/margin signal;
+   - repeatability;
+   - customization burden;
+   - productization/distribution state.
+4. Detect overlaps and repeated delivery patterns.
+5. Assign an analytical action class:
+   - sell_now;
+   - productize;
+   - keep_as_module;
+   - experiment;
+   - merge_review;
+   - deprioritize;
+   - governance_candidate.
+6. Record blockers and missing evidence.
+7. Do not create/retire a canonical entity without governance.
+
+## Company-core review
+
+Use when the user asks for an integrated company decision rather than a channel
+artifact.
+
+Route through the minimum relevant parts of:
+
+`Source Truth → Brand Strategy → Commercial Architecture → Commercial Economics
+→ Market/GTM → Revenue Intelligence → Portfolio Intelligence → Proof → Brand QA`
+
+The goal is not to invoke every role. The goal is to close the specific missing
+link between strategy, commercial reality, market action, sales evidence,
+economics and portfolio learning.
