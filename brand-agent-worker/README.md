@@ -46,3 +46,30 @@ and controlled market-feedback evaluation.
 
 
 v0.3.0 adds live Source of Truth orchestration via the connected Google Drive app. The MCP plans required reads and validates that final/current claims are grounded in live sources rather than snapshots.
+
+
+## v0.9.0 — VIIVERSION Core
+
+The Worker now routes the Brand Architect as the reasoning layer of one company core.
+
+Closed loop:
+
+```text
+Strategy → Commercial Reality → Market Projection → Revenue Execution → Delivery
+→ Revenue Learning → Commercial Economics → Portfolio Intelligence
+→ Strategic Review → governed propagation
+```
+
+New specialist roles:
+- `commercial-economics`
+- `revenue-intelligence`
+- `portfolio-intelligence`
+
+Brand QA is G1–G18. G16 protects economics integrity, G17 protects revenue-learning integrity, and G18 protects portfolio decisions.
+
+For these tasks the Worker requires brokered live Commercial Matrix evidence from:
+- `Commercial_Economics`
+- `Revenue_Intelligence`
+- `Portfolio_Intelligence`
+
+The Worker never stores Google credentials. Missing economics remain unknown; one sales event remains an observation; portfolio recommendations cannot silently mutate canon.
