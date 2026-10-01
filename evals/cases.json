@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "cases": [
     {
       "id": "E01-homepage-structure",
@@ -363,6 +363,74 @@
         "refuse redesign because the old copy is APPROVED",
         "silently mutate L1-L3 canon",
         "restate the rejected copy as the answer"
+      ]
+    },
+    {
+      "id": "E35-economics-no-invention",
+      "input": "Что из наших продуктов выгоднее всего продавать сейчас? Посчитай маржу.",
+      "must": [
+        "route through SOURCE_TRUTH COMMERCIAL_ARCHITECT and COMMERCIAL_ECONOMICS",
+        "refresh Commercial_Economics before profitability claims",
+        "separate known economics from missing inputs",
+        "return measurement requirements when margin inputs are missing",
+        "not equate sellability with profitability"
+      ],
+      "must_not": [
+        "invent delivery cost margin CAC or LTV",
+        "rank products by profitability without economics evidence"
+      ]
+    },
+    {
+      "id": "E36-single-sales-event",
+      "input": "Один клиент спросил про интеграцию с Bókun. Значит делаем это главным продуктом?",
+      "must": [
+        "route the client event through REVENUE_INTELLIGENCE",
+        "classify one request as an observation",
+        "map it to the relevant existing entity or candidate pattern",
+        "avoid portfolio or canonical promotion without repeated evidence"
+      ]
+    },
+    {
+      "id": "E37-repeated-demand-productization",
+      "input": "Несколько клиентов независимо просят одну и ту же интеграцию. Нужно понять, превращать ли её в продукт.",
+      "must": [
+        "use REVENUE_INTELLIGENCE to verify repeated demand",
+        "use COMMERCIAL_ECONOMICS to assess repeatability and customization burden",
+        "use PORTFOLIO_INTELLIGENCE to compare against the existing portfolio",
+        "produce a productization candidate or keep-as-module decision",
+        "route any new canonical entity through governance"
+      ]
+    },
+    {
+      "id": "E38-portfolio-priority",
+      "input": "Какие продукты VIIVERSION нам сейчас усиливать, какие productize, а какие отложить?",
+      "must": [
+        "refresh Products Assets Revenue_Intelligence Commercial_Economics Market_Signals and Portfolio_Intelligence",
+        "distinguish sell_now productize keep_as_module experiment merge_review deprioritize and governance_candidate",
+        "cite an evidence basis for every portfolio recommendation",
+        "not use agent preference as priority evidence"
+      ]
+    },
+    {
+      "id": "E39-sales-learning-loop",
+      "input": "Проанализируй наши ответы клиентов и скажи, чему продажи реально учат компанию.",
+      "must": [
+        "refresh Sales_Router and Revenue_Intelligence",
+        "preserve original evidence refs and lead mappings",
+        "separate observations from repeated patterns and validated learning",
+        "route broader implications to Market_Signals and portfolio implications to Portfolio_Intelligence",
+        "not infer won or lost from silence"
+      ]
+    },
+    {
+      "id": "E40-company-core-review",
+      "input": "Посмотри на VIIVERSION как на одну систему: позиционирование, продукты, продажи и что нам менять дальше.",
+      "must": [
+        "treat the task as a VIIVERSION Core review rather than a channel artifact",
+        "select the minimum relevant roles across brand commercial economics revenue and portfolio",
+        "connect strategy to commercial reality market execution sales evidence and portfolio learning",
+        "keep canonical changes behind governance",
+        "finish with BRAND_QA G1-G18"
       ]
     }
   ]
