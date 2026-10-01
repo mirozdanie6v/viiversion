@@ -284,11 +284,11 @@ function classifySurface(task, explicit) {
   if (/рассыл|outreach|campaign|кампан/.test(lower)) return "campaign";
   if (/позиционир.*рын|market positioning|рынок|market/.test(lower)) return "market";
   if (/proposal|коммерческ|\bкп\b/.test(lower)) return "proposal";
-  if (/product|продукт|booking|бронир/.test(lower)) return "product_page";
-  if (/site|сайт|главн|homepage|лендинг/.test(lower)) return "website";
   if (/profit|margin|марж|экономик|рентабель|cac\b|ltv\b|себестоим|выгодн/.test(lower)) return "commercial_economics";
   if (/revenue learning|sales learning|чему.*продаж|ответ.*клиент|objection|возражен|won.?lost/.test(lower)) return "revenue_learning";
-  if (/portfolio|портфел|приоритет.*продукт|productize|продуктиз/.test(lower)) return "portfolio_review";
+  if (/portfolio|портфел|приоритет.*продукт|какие.*продукт.*(?:усили|отлож|продав)|productize|продуктиз/.test(lower)) return "portfolio_review";
+  if (/product|продукт|booking|бронир/.test(lower)) return "product_page";
+  if (/site|сайт|главн|homepage|лендинг/.test(lower)) return "website";
   return "brand_surface";
 }
 function taskPlan(args={}) {
@@ -306,6 +306,9 @@ function taskPlan(args={}) {
     platform:["one product","user/problem","install/use path","proof","platform fit","compliance","launch/distribution milestone","KPI"],
     productization:["entity/candidate","target user","repeatable workflow","generic contract","install/use path","proof","distribution","engineering handoff","release gate"],
     feedback:["observation","repetition","pattern","measurable outcome","validated learning","change request"],
+    commercial_economics:["entity/offer","known economics","unknown economics","delivery/support burden","margin signal","repeatability","CAC/LTV assumptions","measurement requirements"],
+    revenue_learning:["recorded sales events","entity/offer mapping","outcomes","objections","repeated demand","price/proof signals","learning stage","feedback destination"],
+    portfolio_review:["portfolio scope","commercial state","proof","revenue evidence","economics","repeatability/customization","productization/priority action","governance boundary"],
     proposal:["route to Proposal Studio when available","seller grounding","target evidence","diagnosis","solution","commercial model","review"],
     brand_surface:["goal","audience","buyer job","canonical entities","commercial state","proof","narrative","CTA"]
   };
@@ -319,6 +322,9 @@ function taskPlan(args={}) {
   if (["distribution","platform","productization"].includes(surface)) liveRefresh.push("Distribution_Matrix","Launch_Waves","Distribution_Pipeline");
   if (surface==="campaign") liveRefresh.push("GTM_Motions","Sales Playbook","Sales_Router","Outreach_Queue");
   if (surface==="feedback") liveRefresh.push("Market_Signals");
+  if (surface==="commercial_economics") liveRefresh.push("Products/Offers","Commercial_Economics");
+  if (surface==="revenue_learning") liveRefresh.push("Sales Playbook","Sales_Router","Outreach_Queue","Revenue_Intelligence","Experiments");
+  if (surface==="portfolio_review") liveRefresh.push("Products","Assets","Revenue_Intelligence","Commercial_Economics","Market_Signals","Portfolio_Intelligence");
   return {
     surface,
     audience: clean(args.audience,120) || "infer from task",
