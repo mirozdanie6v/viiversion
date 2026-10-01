@@ -104,7 +104,7 @@ function inferSurface(task, explicit) {
   const q=task.toLowerCase();
   if (/profit|margin|марж|экономик|рентабель|cac\b|ltv\b|delivery cost|support cost|себестоим|выгодн/.test(q)) return "commercial-economics";
   if (/portfolio|портфел|что.*(?:усили|отлож|продав|стро|productize)|какие.*продукт.*(?:усили|отлож|продав)|merge review|depriorit/.test(q)) return "portfolio-review";
-  if (/revenue learning|sales learning|чему.*продаж|ответ.*клиент|objection|возражен|won.?lost|сделк.*(?:выигр|проигр)|повторя.*запрос/.test(q)) return "revenue-learning";
+  if (/revenue learning|sales learning|sales event|what.*sales.*teach|client requested|prospect requested|customer requested|requested integration|чему.*продаж|ответ.*клиент|клиент.*(?:попрос|запрос)|objection|возражен|won.?lost|сделк.*(?:выигр|проигр)|повторя.*запрос/.test(q)) return "revenue-learning";
   if (/homepage|hero|website|сайт|главн|лендинг|страниц/.test(q)) return "website";
   if (/gtm|distribution|дистриб|рынок|market|product hunt|marketplace|маркетплейс|launch|запуск/.test(q)) return "market";
   if (/outreach|рассыл|follow.?up|партнер|partner|campaign|кампан/.test(q)) return "campaign";
@@ -131,7 +131,7 @@ export function buildRolePlan(args={}) {
   const implementation=Boolean(args.implementation) || /внеси|измени|implement|deploy|реализ|код|репозитор/.test(q);
   const productization=/productiz|продуктиз|превращ.*(?:в|во).*продукт|повторя.*(?:решен|интеграц)/.test(q);
   const economics=surface==="commercial-economics" || productization || /profit|margin|марж|экономик|рентабель|cac\b|ltv\b|delivery cost|support cost|себестоим|выгодн|repeatab|кастомизац/.test(q);
-  const revenue=surface==="revenue-learning" || productization || /reply|ответ.*клиент|objection|возражен|qualification|proposal outcome|won.?lost|сделк|price reaction|proof reaction|повторя.*запрос/.test(q);
+  const revenue=surface==="revenue-learning" || productization || /sales event|what.*sales.*teach|client requested|prospect requested|customer requested|requested integration|reply|ответ.*клиент|клиент.*(?:попрос|запрос)|objection|возражен|qualification|proposal outcome|won.?lost|сделк|price reaction|proof reaction|повторя.*запрос/.test(q);
   const portfolio=surface==="portfolio-review" || productization || /portfolio|портфел|приоритет.*продукт|что.*(?:усили|отлож|productize)|какие.*продукт.*(?:усили|отлож)|merge review|depriorit/.test(q);
 
   const route=[];
