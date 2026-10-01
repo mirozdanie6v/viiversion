@@ -69,6 +69,15 @@ const selectedPresentation = objectSchema({
   visual_direction: string,
   why_selected: string
 });
+const homepageBlock = objectSchema({
+  block_number: { type: "string", enum: ["1","2","3"] },
+  purpose: string,
+  heading: string,
+  lead: string,
+  buyer_takeaway: string,
+  proof_refs: stringArray,
+  visual_treatment: string
+});
 const qaGate = objectSchema({
   gate: { type: "string", enum: QA_GATES },
   status: { type: "string", enum: ["PASS", "FAIL", "NOT_APPLICABLE"] },
@@ -134,6 +143,7 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
     hard_constraints: stringArray,
     concept_options: { type: "array", minItems: 2, items: presentationOption },
     selected_concept: selectedPresentation,
+    first_three_blocks: { type: "array", minItems: 3, maxItems: 3, items: homepageBlock },
     five_second_clarity_result: string,
     material_difference_from_current: string,
     unresolved_questions: stringArray
@@ -144,6 +154,7 @@ export const ROLE_OUTPUT_SCHEMAS = Object.freeze({
     narrative_sequence: stringArray,
     message_hierarchy: stringArray,
     proof_slots: stringArray,
+    first_three_blocks: { type: "array", minItems: 3, maxItems: 3, items: homepageBlock },
     cta: string,
     depth_rules: stringArray
   }),
@@ -220,6 +231,7 @@ function validateSchemaValue(schema, value, label) {
   if (schema.type === "array") {
     validateArray(value, label);
     if (schema.minItems && value.length < schema.minItems) throw new BrandRoleError("SCHEMA_VALIDATION_FAILED", `${label} has too few items`, 502);
+    if (schema.maxItems && value.length > schema.maxItems) throw new BrandRoleError("SCHEMA_VALIDATION_FAILED", `${label} has too many items`, 502);
     value.forEach((item, index) => validateSchemaValue(schema.items, item, `${label}[${index}]`));
     return;
   }
