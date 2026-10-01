@@ -42,7 +42,9 @@ jobs:
               await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=canonical-products`,{waitUntil:'domcontentloaded',timeout:30000});
               await page.waitForTimeout(500);
               const text=await page.locator('body').innerText();
-              deployed=text.includes('Четыре контура одной цифровой системы') &&
+              deployed=text.includes('Разрабатываем приложения и системы для бизнеса.') &&
+                       text.includes('Для работы с клиентами и для работы команды.') &&
+                       text.includes('Четыре контура одной цифровой системы') &&
                        text.includes('Системы, которые можно открыть и проверить') &&
                        await page.locator('[data-industry-tab]').count()>=6;
               if(deployed) break;
