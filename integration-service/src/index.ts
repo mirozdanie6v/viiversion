@@ -419,7 +419,11 @@ export default {
       return json(request, env, { error: { code: 'NOT_FOUND', message: 'Endpoint not found' } }, 404);
     } catch (error) {
       if (error instanceof Response) return error;
-      console.error(error instanceof Error ? error.message : 'Unknown integration error');
+      const message = error instanceof Error ? error.message : 'Unknown integration error';
+      console.error(message);
+      if (url.pathname.startsWith('/whatsapp/browser/connect/')) {
+        return json(request, env, { error: { code: 'WHATSAPP_BROWSER_SETUP_ERROR', message } }, 500);
+      }
       return json(request, env, { error: { code: 'INTERNAL_ERROR', message: 'Integration service error' } }, 500);
     }
   },
