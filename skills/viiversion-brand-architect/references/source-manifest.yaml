@@ -75,9 +75,15 @@ sources:
       Daily_GTM:
         owns: [operational_daily_gtm_plan_and_execution_state]
       Sales_Router:
-        owns: [lead_routing_and_current_sales_stage]
+        owns: [lead_routing_and_current_sales_stage, source_entity_mapping, offer_mapping, outcome_code, revenue_signal_link, learning_status]
       Outreach_Queue:
         owns: [outreach_message_state_due_followups_and_send_status]
+      Commercial_Economics:
+        owns: [price_basis, delivery_effort, delivery_cost, support_cost, margin_signal, customization_level, repeatability, cac_assumption, ltv_assumption, economics_confidence]
+      Revenue_Intelligence:
+        owns: [sales_outcomes, objections, repeated_demand, requested_capabilities, requested_integrations, price_signals, proof_signals, buyer_language, revenue_learning_stage]
+      Portfolio_Intelligence:
+        owns: [cross_portfolio_review, productization_priority, overlap_and_merge_candidates, deprioritization_candidates, portfolio_blockers, strategic_priority]
     refresh_when:
       - price
       - readiness
@@ -94,6 +100,9 @@ sources:
       - partner_motion
       - outreach_or_followup
       - market_feedback
+      - commercial_economics
+      - portfolio_review
+      - revenue_learning
 
   global_brand:
     level: L3_brand_market
@@ -222,7 +231,20 @@ refresh_policy:
     proof_required_before_public_claim: true
   feedback:
     market_signals_required_for_recorded_learning: true
+    revenue_intelligence_required_for_sales_learning: true
+    portfolio_intelligence_required_for_cross_portfolio_priority: true
     no_automatic_canonical_change: true
+  commercial_economics:
+    commercial_economics_required: true
+    missing_numbers_remain_unknown: true
+    no_invented_margin_or_cac: true
+  portfolio_review:
+    products_assets_market_signals_required: true
+    revenue_intelligence_required_when_sales_evidence_exists: true
+    commercial_economics_required_for_profitability_claims: true
+  revenue_learning:
+    sales_router_and_revenue_intelligence_required: true
+    one_sales_event_is_not_validated_learning: true
   canonical_change:
     corporate_and_registry_required: true
     explicit_approval_required_before_write: true
