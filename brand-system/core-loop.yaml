@@ -1,0 +1,144 @@
+version: "1.0"
+status: "binding operating model"
+name: "VIIVERSION Core"
+purpose: "Keep positioning, products, GTM, sales, economics and portfolio evolution connected to one governed company model."
+
+layers:
+  CANON:
+    owns:
+      - identity
+      - ontology
+      - positioning
+      - strategic_rules
+    sources:
+      - Corporate_Strategy_and_Positioning
+      - Entity_Registry
+      - Global_Brand_and_Market_Strategy
+  COMMERCIAL_REALITY:
+    owns:
+      - products
+      - offers
+      - readiness
+      - sellability
+      - proof
+      - economics
+      - productization_state
+    sources:
+      - Products
+      - Offers
+      - Assets
+      - Commercial_Economics
+  MARKET_ENGINE:
+    owns:
+      - market_projection
+      - audience
+      - buyer_job
+      - gtm_motion
+      - distribution
+    sources:
+      - Channel_Profiles
+      - GTM_Motions
+      - Distribution_Matrix
+      - Distribution_Pipeline
+      - Launch_Waves
+      - Partner_Channels
+  REVENUE_ENGINE:
+    owns:
+      - leads
+      - outreach
+      - conversations
+      - qualification
+      - proposals
+      - won_lost
+      - objections
+      - revenue_signals
+    sources:
+      - Sales_Router
+      - Outreach_Queue
+      - Experiments
+      - Revenue_Intelligence
+  DELIVERY_PRODUCT_ENGINE:
+    owns:
+      - delivery_outcomes
+      - repeated_solution_patterns
+      - reusable_modules
+      - candidate_products
+      - implementation_proof
+    sources:
+      - implementation_repositories
+      - Assets
+      - productization_contracts
+  LEARNING_ENGINE:
+    owns:
+      - observations
+      - patterns
+      - validated_learning
+      - portfolio_priority
+      - change_requests
+    sources:
+      - Revenue_Intelligence
+      - Market_Signals
+      - Commercial_Economics
+      - Portfolio_Intelligence
+      - Decision_Log
+
+closed_loop:
+  sequence:
+    - strategy
+    - commercial_reality
+    - market_projection
+    - revenue_execution
+    - delivery
+    - revenue_learning
+    - economics_learning
+    - portfolio_learning
+    - strategic_review
+    - approved_propagation
+  invariant: "The loop may recommend changes upstream; it may not silently rewrite L1-L3 canon."
+
+knowledge_graph:
+  primary_nodes:
+    - Entity
+    - Product
+    - Offer
+    - Proof
+    - Market
+    - Audience
+    - Projection
+    - GTM_Motion
+    - Lead
+    - Opportunity
+    - Proposal
+    - Deal
+    - Delivery
+    - Outcome
+    - Revenue_Signal
+    - Market_Signal
+    - Economics_Record
+    - Portfolio_Snapshot
+    - Learning
+    - Decision
+  required_links:
+    - "Offer -> Entity"
+    - "Proof -> Entity/Claim"
+    - "Projection -> Entity"
+    - "Lead/Opportunity -> Entity/Offer"
+    - "Revenue_Signal -> Lead + Entity/Offer"
+    - "Economics_Record -> Entity/Offer"
+    - "Portfolio_Snapshot -> Entity"
+    - "Learning -> Evidence"
+    - "Decision -> Learning/Change_Request"
+
+operating_rules:
+  - "One core, many projections: channel copy never becomes canonical identity."
+  - "Sales is a sensor of the core, not only an execution channel."
+  - "Client delivery is a source of repeatable product patterns."
+  - "Profitability and scalability are distinct from sellability."
+  - "Unknown economics remain unknown until measured."
+  - "One reply or one deal cannot become validated market truth."
+  - "Portfolio priority must cite commercial, proof, revenue, economics or explicit strategic evidence."
+  - "Repeated delivery pattern may become a candidate entity only through governance."
+  - "Every externally stated claim remains proof-bounded."
+
+success_condition:
+  description: "A material business event can be traced from canonical entity through market projection and revenue execution to outcome, learning and any resulting governed change."
