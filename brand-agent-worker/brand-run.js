@@ -291,7 +291,13 @@ export class BrandRunCoordinator extends DurableObject {
       const role = run.route[run.nextRoleIndex];
       if (!role) throw new BrandRoleError("ROUTE_EXHAUSTED", "Active run has no next role", 500);
       const invocationId = `auto-${run.reworkCycle ?? 0}-${run.nextRoleIndex}-${role}`;
-      const roleEvidence = role === BRAND_ROLE.SOURCE_TRUTH ? evidence : [];
+      const evidenceBoundRoles = new Set([
+        BRAND_ROLE.SOURCE_TRUTH,
+        BRAND_ROLE.COMMERCIAL_ECONOMICS,
+        BRAND_ROLE.REVENUE_INTELLIGENCE,
+        BRAND_ROLE.PORTFOLIO_INTELLIGENCE
+      ]);
+      const roleEvidence = evidenceBoundRoles.has(role) ? evidence : [];
 
       const execution = await this.executeRole({
         role,
