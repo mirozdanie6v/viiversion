@@ -13,6 +13,7 @@ Agents are specialized executors. They do not own corporate truth.
 - `reply` — classifies response and proposes next action.
 - `follow_up` — schedules/produces due follow-up according to Sales Playbook.
 - `sales_recorder` — writes outcomes to operational records and Market_Signals.
+- `revenue_intelligence` — converts recorded sales events into evidence-bounded revenue signals linked to lead/entity/offer where known.
 
 ## Proposal agents
 
@@ -53,3 +54,17 @@ Every agent call must receive:
 - allowed write set
 - guard policies
 - expected structured output schema
+
+
+## Core intelligence agents
+
+- `commercial_economics` — evaluates recorded price/effort/cost/support/margin/repeatability/CAC/LTV evidence and returns unknowns explicitly.
+- `portfolio_intelligence` — compares portfolio entities using commercial state, proof, revenue evidence and economics; recommends sell/productize/module/experiment/merge/deprioritize/governance-candidate actions without canonical mutation.
+- `market_feedback` — promotes only evidence-backed implications from revenue learning into Market_Signals.
+- `core_recorder` — records accepted learning artifacts and audit links across Revenue_Intelligence, Commercial_Economics, Portfolio_Intelligence and Market_Signals.
+
+## Core learning invariant
+
+Operational agents may produce learning and change requests. They may not mutate
+L1-L3 canon. Any canonical implication must be handed to the brand_governance
+workflow and explicit approval gate.
