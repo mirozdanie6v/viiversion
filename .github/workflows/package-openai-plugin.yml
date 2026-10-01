@@ -19,6 +19,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve plugin version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(python - <<'PY'
+          import json
+          import re
+          with open("openai-plugin/plugin.json", encoding="utf-8") as f:
+              plugin = json.load(f)
+          version = plugin["version"]
+          if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version):
+              raise SystemExit(f"Invalid plugin version: {version}")
+          print(version)
+          PY
+          )"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Validate OpenAI package
         shell: bash
         run: |
@@ -35,17 +53,22 @@ jobs:
           python -m json.tool openai-plugin/submission/test-cases.json >/dev/null
           python - <<'PY'
           import json
-          p=json.load(open("openai-plugin/plugin.json"))
-          assert p["version"]=="0.8.1"
+          import re
+          with open("openai-plugin/plugin.json", encoding="utf-8") as f:
+              p = json.load(f)
+          assert re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", p["version"]), p["version"]
           assert len(p["interface"]["displayName"]) <= 30
           assert len(p["interface"]["shortDescription"]) <= 30
-          tests=json.load(open("openai-plugin/submission/test-cases.json"))
+          with open("openai-plugin/submission/test-cases.json", encoding="utf-8") as f:
+              tests = json.load(f)
           assert len(tests["positive"]) == 5
           assert len(tests["negative"]) == 3
           PY
 
       - name: Build ZIP
         shell: bash
+        env:
+          PLUGIN_VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           rm -rf dist
@@ -55,27 +78,33 @@ jobs:
           if [ -d openai-plugin/assets ]; then cp -R openai-plugin/assets dist/viiversion-brand-architect-openai/; fi
           (
             cd dist
-            zip -r -9 viiversion-brand-architect-openai-v0.8.1.zip viiversion-brand-architect-openai
+            zip -r -9 "viiversion-brand-architect-openai-v${PLUGIN_VERSION}.zip" viiversion-brand-architect-openai
           )
-          sha256sum dist/viiversion-brand-architect-openai-v0.8.1.zip > dist/viiversion-brand-architect-openai-v0.8.1.zip.sha256
+          sha256sum "dist/viiversion-brand-architect-openai-v${PLUGIN_VERSION}.zip" > "dist/viiversion-brand-architect-openai-v${PLUGIN_VERSION}.zip.sha256"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: viiversion-brand-architect-openai-v0.8.1
+          name: viiversion-brand-architect-openai-v${{ steps.version.outputs.version }}
           path: |
-            dist/viiversion-brand-architect-openai-v0.8.1.zip
-            dist/viiversion-brand-architect-openai-v0.8.1.zip.sha256
+            dist/viiversion-brand-architect-openai-v${{ steps.version.outputs.version }}.zip
+            dist/viiversion-brand-architect-openai-v${{ steps.version.outputs.version }}.zip.sha256
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          PLUGIN_VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
-          tag="brand-architect-openai-v0.8.1"
+          tag="brand-architect-openai-v${PLUGIN_VERSION}"
+          zip="dist/viiversion-brand-architect-openai-v${PLUGIN_VERSION}.zip"
+          checksum="${zip}.sha256"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag"               dist/viiversion-brand-architect-openai-v0.8.1.zip               dist/viiversion-brand-architect-openai-v0.8.1.zip.sha256               --clobber
+            gh release upload "$tag" "$zip" "$checksum" --clobber
           else
-            gh release create "$tag"               dist/viiversion-brand-architect-openai-v0.8.1.zip               dist/viiversion-brand-architect-openai-v0.8.1.zip.sha256               --target "$GITHUB_SHA"               --title "VIIVERSION Brand Architect — OpenAI Plugin v0.8.1"               --notes "Submission-ready OpenAI Plugin package with a dedicated public MCP surface, public skill, review test cases, legal/support URLs and evidence-bounded Brand Architect workflow."
+            gh release create "$tag" "$zip" "$checksum" \
+              --target "$GITHUB_SHA" \
+              --title "VIIVERSION Brand Architect — OpenAI Plugin v${PLUGIN_VERSION}" \
+              --notes "Submission-ready OpenAI Plugin package with a dedicated public MCP surface, public skill, review test cases, legal/support URLs and evidence-bounded Brand Architect workflow."
           fi
