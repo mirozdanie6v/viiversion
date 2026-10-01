@@ -16,7 +16,10 @@ run-control, artifact-control, audit-log or debugging tools.
 - missing evidence produces an evidence request instead of a guessed current fact;
 - audits keep observed current state and canonical target separate;
 - proof maturity is preserved;
-- canonical changes are proposals until separately approved.
+- canonical changes are proposals until separately approved;
+- profitability claims require explicit economics evidence;
+- sales outcomes can produce revenue learning but one event never becomes validated strategy;
+- portfolio/productization decisions combine commercial state, proof, revenue and economics evidence.
 
 ## Submission materials
 
