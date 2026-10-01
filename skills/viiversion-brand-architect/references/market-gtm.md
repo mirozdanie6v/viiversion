@@ -19,9 +19,21 @@ Execution loop:
 
 `Projection → GTM Motion → Action → Proof → CTA → Metric → Feedback`
 
+Revenue loop:
+
+`Lead/Conversation → Qualification → Proposal/Deal outcome → Revenue Signal → Revenue Learning`
+
+Economics loop:
+
+`Observed effort/cost/revenue → Commercial Economics → confidence → Portfolio decision`
+
 Feedback loop:
 
 `Observation → Pattern → Validated Learning → Change Request → Strategic Review`
+
+Closed company loop:
+
+`Core → Commercial State → Market Interpretation → Revenue Execution → Delivery → Revenue Learning → Economics → Portfolio Intelligence → Strategic Review → Core`
 
 A downstream campaign, marketplace listing, reply or launch never rewrites L1-L3
 by itself.
@@ -170,7 +182,66 @@ Examples of current active pipeline:
 
 Refresh Distribution_Pipeline before treating any of these stages as current.
 
-## 10. Feedback governance
+## 10. Revenue intelligence
+
+Sales activity is a measurement surface for the company.
+
+Record material events in `Revenue_Intelligence` when they carry learning:
+- positive/negative reply;
+- qualification outcome;
+- objection;
+- requested capability or integration;
+- price reaction;
+- proof reaction;
+- proposal reaction;
+- won/lost/no-decision.
+
+Whenever known, preserve `lead_id + source_entity_id + offer_id`.
+Do not infer won/lost from silence. One event stays an observation.
+
+Revenue patterns may justify:
+- offer revision;
+- messaging revision;
+- proof improvement;
+- pricing/economics measurement;
+- productization review;
+- portfolio review;
+- market-signal proposal.
+
+They do not silently rewrite canon.
+
+## 11. Commercial economics
+
+Before calling a motion scalable or a product commercially attractive, distinguish:
+- price/revenue;
+- delivery effort;
+- delivery cost;
+- recurring support burden;
+- customization level;
+- repeatability;
+- CAC assumption;
+- LTV potential;
+- confidence/evidence.
+
+`Commercial_Economics` is authoritative for recorded economics. Missing
+economics must become a measurement task, not an invented margin.
+
+## 12. Portfolio intelligence
+
+Cross-product decisions must combine, where relevant:
+- current Products state;
+- proof strength;
+- Revenue_Intelligence;
+- Commercial_Economics;
+- Market_Signals;
+- Distribution_Matrix / pipeline.
+
+Portfolio actions are analytical classes:
+`sell_now / productize / keep_as_module / experiment / merge_review / deprioritize / governance_candidate`.
+
+A portfolio recommendation cannot create or delete canonical entities by itself.
+
+## 13. Feedback governance
 
 Market evidence may justify:
 - messaging revision;
