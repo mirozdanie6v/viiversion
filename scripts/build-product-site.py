@@ -1021,7 +1021,7 @@ home_text=(PUBLIC/"index.html").read_text(encoding="utf-8")
 for bad in ("коммерческих ядер","buyer journey","Entry offers","client work","Большая продажа"):
     if bad in home_text:
         raise SystemExit("Client-facing jargon leaked into home: "+bad)
-for marker in ("Проектируем и собираем цифровые системы вокруг реального процесса бизнеса","Четыре контура одной цифровой системы","Системы, которые можно открыть и проверить","Компоненты — ниже уровнем, чем сама система"):
+for marker in ("Разрабатываем приложения и системы для бизнеса.","Для работы с клиентами и для работы команды.","Четыре контура одной цифровой системы","Системы, которые можно открыть и проверить","Компоненты — ниже уровнем, чем сама система"):
     if marker not in home_text:
         raise SystemExit("Product site QA missing: "+marker)
 
