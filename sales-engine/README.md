@@ -31,7 +31,8 @@ Machine-readable commercial rules for the VIIVERSION sales operating system.
 - `config/problem-codes.yaml` — normalized observable problems.
 - `config/routing.yaml` — problem-to-product/offer routing.
 - `config/scoring.yaml` — speed-to-cash scoring and lanes.
-- `config/messaging.yaml` — client-facing messaging, CTA and pre-send QA.
+- `config/messaging.yaml` — client-facing messaging, mandatory existing-client context preflight, CTA and pre-send QA.
+- `config/client-context.yaml` — entity resolution and context-loading contract for existing clients before replies/follow-ups/proposals.
 - `config/lead-discovery.yaml` — machine rules for candidate discovery, qualification, rejection and product mapping.
 - `config/gtm-motions.yaml` — multi-channel GTM portfolio, daily allocation rules and channel-specific KPIs.
 - `schemas/lead.schema.json` — Sales Router contract.
