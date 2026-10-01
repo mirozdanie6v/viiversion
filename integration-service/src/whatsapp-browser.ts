@@ -209,7 +209,7 @@ async function persistContext(env: Env, context: any) {
 }
 
 async function validateStorageState(env: Env, storageStateText: string, timeout = 30000) {
-  let storageState: unknown;
+  let storageState: any;
   try {
     storageState = JSON.parse(storageStateText);
   } catch {
@@ -638,7 +638,7 @@ export async function whatsappBrowserPairState(request: Request, env: Env) {
       ok: true,
       paired: false,
       qrDetected: false,
-      interactiveRequired: diagnostic.interactiveRequired || true,
+      interactiveRequired: true,
       diagnosticHint: diagnostic.hint,
       interactiveAvailable: true,
       screenshotDataUrl: 'data:image/png;base64,' + bytesToBase64(new Uint8Array(screenshot)),
