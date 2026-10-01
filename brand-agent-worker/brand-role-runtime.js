@@ -376,6 +376,32 @@ function normalizeRolePayload(role, payload, task = "", evidence = [], contextAr
     return normalized;
   }
 
+  if (isRedesignTask(task)) {
+    const presentation = contextArtifacts.find((artifact) => artifact.type === "presentation-concept")?.payload;
+    const channel = contextArtifacts.find((artifact) => artifact.type === "channel-projection")?.payload;
+    const deterministicFailures = [];
+    try { validateRedesignBlocks(presentation?.first_three_blocks, "accepted presentation concept"); }
+    catch (error) { deterministicFailures.push(String(error?.message ?? error)); }
+    try { validateRedesignBlocks(channel?.first_three_blocks, "accepted channel projection"); }
+    catch (error) { deterministicFailures.push(String(error?.message ?? error)); }
+
+    if (deterministicFailures.length) {
+      forceQaGate(normalized, "G6", "Deterministic redesign contract failed: " + deterministicFailures.join(" | "));
+      forceQaGate(normalized, "G11", "Proposed first three blocks do not satisfy the concrete buyer-clarity contract: " + deterministicFailures.join(" | "));
+      forceQaGate(normalized, "G12", "Redesign is not materially valid under deterministic checks: " + deterministicFailures.join(" | "));
+      normalized.critical_failures = [...new Set([
+        ...(normalized.critical_failures ?? []),
+        ...deterministicFailures.map((x)=>"Redesign contract failure: " + x)
+      ])];
+      normalized.rework_targets = [...new Set([
+        ...(normalized.rework_targets ?? []),
+        BRAND_ROLE.PRESENTATION_SYNTHESIS,
+        BRAND_ROLE.CHANNEL_ARCHITECT
+      ])];
+      normalized.decision = "FAIL";
+    }
+  }
+
   let remainingFails = normalized.gate_results.filter((entry) => entry.status === "FAIL");
 
   if (isRedesignTask(task) && remainingFails.length > 0) {
@@ -531,10 +557,10 @@ function promptFor({ run, role, contextArtifacts, evidence }) {
       ? "REDESIGN MODE: the user has rejected the current/legacy presentation. L1 identity, live L2 commercial truth, Proof and L3 brand rules are hard constraints; old L4/L5 copy, block order and approved presentation decisions are observed inputs unless they encode a still-valid hard channel/UX constraint. Do not restore old Hero/copy solely because it is APPROVED. The run must create a materially new candidate presentation and explain why it changes first-screen understanding."
       : "",
     role === BRAND_ROLE.PRESENTATION_SYNTHESIS
-      ? "SYNTHESIS DUTY: generate at least two genuinely different presentation concepts, test them for five-second clarity, select one, and state exactly which legacy presentation principle it replaces. Do not use internal taxonomy as the first-screen explanation. concept_options and selected_concept must be concrete enough for CHANNEL_ARCHITECT to turn into blocks and copy."
+      ? "SYNTHESIS DUTY: generate at least two genuinely different presentation concepts, test them for five-second clarity, select one, and state exactly which legacy presentation principle it replaces. You MUST also produce first_three_blocks with exactly 3 buyer-facing blocks: Block 1 = concrete clarity/promise with finished H1+lead; Block 2 = immediate inspectable proof and MUST include one or more proof_refs; Block 3 = relevance/scope/scale expressed in buyer language. Do not use DIR-ENG, DIR-SW, Engineering Solutions or Software as standalone block ideas/headings. Internal taxonomy may inform reasoning but cannot be the information architecture of the first three screens."
       : "",
     role === BRAND_ROLE.CHANNEL_ARCHITECT && isRedesignTask(run.task)
-      ? "CHANNEL REDESIGN DUTY: consume the accepted presentation-concept as the creative target. Do not substitute legacy approved website copy for the selected concept. message_hierarchy and narrative_sequence must make the new first-three-block solution concrete."
+      ? "CHANNEL REDESIGN DUTY: consume the accepted presentation-concept as the creative target. Do not substitute legacy approved website copy for the selected concept. You MUST return first_three_blocks with exactly 3 finished buyer-facing blocks, each with heading, lead, buyer_takeaway, proof_refs and visual_treatment. Block 2 must remain immediate proof with at least one real proof_ref. DIR-ENG/DIR-SW/Engineering Solutions/Software cannot become standalone Block 2 or Block 3 headings. message_hierarchy and narrative_sequence must match these concrete blocks."
       : "",
     role === BRAND_ROLE.SOURCE_TRUTH
       ? "Use only brokered evidence to describe source coverage. If evidence includes a validate_live_context result with pass=true, do not invent additional source requirements such as competitor research, market analysis, language research, or channel research unless the requested task or validated source plan explicitly requires them. Distinguish missing required Source of Truth from optional analytical uncertainty."
