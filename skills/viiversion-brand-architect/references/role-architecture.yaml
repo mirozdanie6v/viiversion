@@ -1,6 +1,7 @@
-version: "1.0"
+version: "1.1"
 status: "canonical runtime role contract"
 principle: "one stateful orchestrator; isolated specialist role executions; artifacts are the only cross-role handoff"
+core_objective: "positioning, products, commercial economics, GTM, sales learning and portfolio evolution operate as one closed VIIVERSION intelligence loop"
 
 orchestrator:
   id: ORCHESTRATOR
@@ -14,6 +15,8 @@ orchestrator:
     - approval gates
     - final assembly
     - QA remediation loop
+    - core-loop closure
+    - routing validated market and revenue learning upstream
   must_not:
     - invent canonical facts
     - silently mutate L1-L3 canon
@@ -21,279 +24,119 @@ orchestrator:
     - upgrade proof maturity
     - bypass live-source requirements
     - treat a specialist draft as final without QA
+    - convert a single sales event into strategic truth
+    - prioritize portfolio entities without evidence from commercial, revenue and economics state
 
 roles:
   SOURCE_TRUTH:
     name_ru: "Аналитик источника истины"
     responsibility: "Определяет, какие источники авторитетны для задачи, извлекает минимально необходимый live-контекст и фиксирует его свежесть и границы."
-    outputs:
-      - source-context
-    allowed_inputs:
-      - task
-      - source-manifest
-      - live-source-plan
-      - approved Drive documents
-      - approved Commercial Matrix tabs
-    allowed_actions:
-      - resolve_source_authority
-      - request_live_source_reads
-      - summarize_verified_context
-      - identify_missing_or_stale_context
-    prohibited_actions:
-      - brand_strategy
-      - commercial_recommendation
-      - market_strategy
-      - channel_copy
-      - canonical_mutation
+    outputs: [source-context]
+    allowed_inputs: [task, source-manifest, live-source-plan, approved Drive documents, approved Commercial Matrix tabs]
+    allowed_actions: [resolve_source_authority, request_live_source_reads, summarize_verified_context, identify_missing_or_stale_context]
+    prohibited_actions: [brand_strategy, commercial_recommendation, market_strategy, channel_copy, canonical_mutation]
     output_contract:
-      required:
-        - source_classes
-        - sources_read
-        - tabs_read
-        - observed_at
-        - verified_facts
-        - uncertainties
-        - missing_requirements
+      required: [source_classes, sources_read, tabs_read, observed_at, verified_facts, uncertainties, missing_requirements]
 
   BRAND_STRATEGY:
     name_ru: "Стратег бренда"
     responsibility: "Применяет корпоративный канон, позиционирование, архитектуру бренда и governance к конкретной задаче без изменения канона."
-    outputs:
-      - brand-decision
-    allowed_inputs:
-      - task
-      - source-context
-      - brand-kernel
-      - canonical architecture
-      - approved brand strategy
-    allowed_actions:
-      - interpret_brand_canon
-      - resolve_identity_and_positioning
-      - define_brand_message_boundary
-      - propose_noncanonical_presentation
-    prohibited_actions:
-      - live_commercial_claim_without_source_context
-      - create_new_canonical_entity
-      - silently_change_parent_brand
-      - implementation
+    outputs: [brand-decision]
+    allowed_inputs: [task, source-context, brand-kernel, canonical_architecture, approved_brand_strategy]
+    allowed_actions: [interpret_brand_canon, resolve_identity_and_positioning, define_brand_message_boundary, propose_noncanonical_presentation]
+    prohibited_actions: [live_commercial_claim_without_source_context, create_new_canonical_entity, silently_change_parent_brand, implementation]
     output_contract:
-      required:
-        - task_scope
-        - canonical_constraints
-        - positioning_decision
-        - allowed_adaptations
-        - forbidden_drift
-        - unresolved_governance_questions
+      required: [task_scope, canonical_constraints, positioning_decision, allowed_adaptations, forbidden_drift, unresolved_governance_questions]
 
   COMMERCIAL_ARCHITECT:
     name_ru: "Архитектор продуктовой и коммерческой системы"
     responsibility: "Связывает задачу с реальными сущностями VIIVERSION: направлениями, продуктами, офферами, вертикалями, proof и состоянием продаваемости; ведёт productization contract."
-    outputs:
-      - commercial-decision
-      - productization-contract
-    allowed_inputs:
-      - task
-      - source-context
-      - brand-decision
-      - Entity_Registry
-      - Products
-      - Offers
-      - Verticals
-      - Assets
-    allowed_actions:
-      - map_entities
-      - assess_current_sellability
-      - select_relevant_entities
-      - define_packaging_boundary
-      - define_productization_contract
-    prohibited_actions:
-      - invent_product
-      - flatten_entity_types
-      - upgrade_readiness
-      - invent_price
-      - engineering_implementation
+    outputs: [commercial-decision, productization-contract]
+    allowed_inputs: [task, source-context, brand-decision, Entity_Registry, Products, Offers, Verticals, Assets]
+    allowed_actions: [map_entities, assess_current_sellability, select_relevant_entities, define_packaging_boundary, define_productization_contract]
+    prohibited_actions: [invent_product, flatten_entity_types, upgrade_readiness, invent_price, engineering_implementation]
     output_contract:
-      required:
-        - entity_mapping
-        - commercial_state
-        - packaging_decision
-        - productization_needed
-        - boundaries
-        - engineering_handoff_if_needed
+      required: [entity_mapping, commercial_state, packaging_decision, productization_needed, boundaries, engineering_handoff_if_needed]
+
+  COMMERCIAL_ECONOMICS:
+    name_ru: "Архитектор коммерческой экономики"
+    responsibility: "Проверяет экономическую жизнеспособность entity/offer: цену, delivery effort, delivery/support cost, margin signal, customization, repeatability, CAC и LTV assumptions. Не придумывает отсутствующие числа."
+    outputs: [economics-decision]
+    allowed_inputs: [task, source-context, commercial-decision, Commercial_Economics, Products, Offers, Experiments, Distribution_Matrix]
+    allowed_actions: [assess_economic_viability, compare_delivery_economics, identify_missing_cost_inputs, estimate_only_when_explicitly_authorized, define_economics_measurement_plan]
+    prohibited_actions: [invent_cost, invent_margin, invent_cac, invent_ltv, replace_commercial_state, canonical_mutation]
+    output_contract:
+      required: [economics_scope, known_metrics, unknown_metrics, margin_signal, repeatability_signal, customization_signal, economics_confidence, measurement_requirements]
 
   MARKET_GTM:
     name_ru: "Стратег рынка, GTM и дистрибуции"
     responsibility: "Определяет рынок, аудиторию, канал, GTM motion, дистрибуцию, следующий закрытый шаг, KPI и feedback loop на основе текущей коммерческой реальности."
-    outputs:
-      - market-plan
-      - gtm-plan
-      - distribution-plan
-    allowed_inputs:
-      - task
-      - source-context
-      - brand-decision
-      - commercial-decision
-      - Channel_Profiles
-      - GTM_Motions
-      - Distribution_Matrix
-      - Distribution_Pipeline
-      - Launch_Waves
-      - Partner_Channels
-      - Market_Signals
-    allowed_actions:
-      - market_interpretation
-      - channel_fit
-      - choose_primary_gtm_motion
-      - choose_distribution_path
-      - define_milestone_kpi_feedback
-    prohibited_actions:
-      - canonical_mutation
-      - claim_live_pipeline_without_live_context
-      - build_platform_adapter
-      - send_outreach
-      - implementation
+    outputs: [market-plan, gtm-plan, distribution-plan]
+    allowed_inputs: [task, source-context, brand-decision, commercial-decision, economics-decision, Channel_Profiles, GTM_Motions, Distribution_Matrix, Distribution_Pipeline, Launch_Waves, Partner_Channels, Market_Signals]
+    allowed_actions: [market_interpretation, channel_fit, choose_primary_gtm_motion, choose_distribution_path, define_milestone_kpi_feedback]
+    prohibited_actions: [canonical_mutation, claim_live_pipeline_without_live_context, build_platform_adapter, send_outreach, implementation]
     output_contract:
-      required:
-        - market
-        - audience
-        - buyer_job
-        - channel
-        - primary_motion
-        - distribution_path
-        - next_milestone
-        - kpi
-        - feedback_destination
+      required: [market, audience, buyer_job, channel, primary_motion, distribution_path, next_milestone, kpi, feedback_destination]
+
+  REVENUE_INTELLIGENCE:
+    name_ru: "Аналитик выручки и продаж"
+    responsibility: "Преобразует реальные sales events — replies, objections, qualification, proposal outcomes, won/lost и price/proof reactions — в структурированные revenue signals. Продажи являются сенсором ядра, а не только downstream execution."
+    outputs: [revenue-learning]
+    allowed_inputs: [task, source-context, Sales_Router, Outreach_Queue, Revenue_Intelligence, Experiments, proposals, recorded_conversation_outcomes]
+    allowed_actions: [classify_sales_outcome, normalize_objection, detect_repeated_demand, connect_revenue_event_to_entity_offer, create_revenue_signal, propose_market_signal]
+    prohibited_actions: [invent_reply, infer_won_deal_without_record, treat_single_event_as_validated_learning, canonical_mutation, send_outreach]
+    output_contract:
+      required: [events_reviewed, entity_offer_mapping, outcomes, objections, repeated_demand_keys, price_signals, proof_signals, learning_stage, evidence_refs, recommended_feedback]
+
+  PORTFOLIO_INTELLIGENCE:
+    name_ru: "Архитектор портфеля и productization"
+    responsibility: "Смотрит на весь портфель VIIVERSION и решает, что усиливать, объединять, productize, оставить модулем, перевести в эксперимент или вынести на стратегический review, используя commercial state + proof + revenue learning + economics."
+    outputs: [portfolio-decision]
+    allowed_inputs: [task, source-context, commercial-decision, economics-decision, revenue-learning, Products, Entity_Registry, Assets, Portfolio_Intelligence, Market_Signals, Distribution_Matrix]
+    allowed_actions: [compare_portfolio_entities, detect_repeated_delivery_pattern, recommend_productization, recommend_deprioritization, identify_overlap, propose_candidate_entity, define_portfolio_measurement]
+    prohibited_actions: [silently_create_entity, silently_kill_canonical_entity, invent_profitability, invent_demand, bypass_governance]
+    output_contract:
+      required: [entities_reviewed, evidence_basis, portfolio_signals, productization_candidates, overlap_or_merge_candidates, deprioritization_candidates, strategic_priority, blockers, governance_requests]
 
   PRESENTATION_SYNTHESIS:
     name_ru: "Директор синтеза presentation"
     responsibility: "Создаёт новую presentation-концепцию для redesign/new-structure задач из цели, аудитории, buyer jobs, канонических границ, коммерческой реальности и proof. Не восстанавливает legacy presentation автоматически."
-    outputs:
-      - presentation-concept
-      - synthesis-decision
-    allowed_inputs:
-      - task
-      - source-context
-      - brand-decision
-      - commercial-decision
-      - current presentation as observed material
-      - current channel constraints
-      - proof-plan when available
-    allowed_actions:
-      - distinguish_hard_constraints_from_legacy_presentation
-      - generate_fresh_presentation_hypothesis
-      - generate_alternative_concepts
-      - test_five_second_clarity
-      - select_or_reject_concept
-      - define_narrative_principle
-    prohibited_actions:
-      - canonical_mutation
-      - invent_commercial_state
-      - invent_proof
-      - restore_legacy_copy_only_because_approved
-      - treat_approval_status_as_quality_evidence
-      - implementation
+    outputs: [presentation-concept, synthesis-decision]
+    allowed_inputs: [task, source-context, brand-decision, commercial-decision, current_presentation, current_channel_constraints, proof-plan]
+    allowed_actions: [distinguish_hard_constraints_from_legacy_presentation, generate_fresh_presentation_hypothesis, generate_alternative_concepts, test_five_second_clarity, select_or_reject_concept, define_narrative_principle]
+    prohibited_actions: [canonical_mutation, invent_commercial_state, invent_proof, restore_legacy_copy_only_because_approved, treat_approval_status_as_quality_evidence, implementation]
     output_contract:
-      required:
-        - task_mode
-        - challenged_legacy_decisions
-        - hard_constraints
-        - concept_options
-        - selected_concept
-        - five_second_clarity_result
-        - material_difference_from_current
-        - unresolved_questions
+      required: [task_mode, challenged_legacy_decisions, hard_constraints, concept_options, selected_concept, five_second_clarity_result, material_difference_from_current, unresolved_questions]
 
   CHANNEL_ARCHITECT:
     name_ru: "Архитектор проекции и коммуникации"
     responsibility: "Преобразует подтверждённое решение в структуру конкретного канала или поверхности, сохраняя канон, коммерческую правду и buyer relevance."
-    outputs:
-      - channel-projection
-      - narrative-architecture
-    allowed_inputs:
-      - task
-      - source-context
-      - brand-decision
-      - commercial-decision
-      - market-plan
-      - current channel strategy
-      - approved channel decisions
-    allowed_actions:
-      - project_to_channel
-      - design_narrative_order
-      - define_message_hierarchy
-      - define_cta
-      - adapt_language_and_depth
-    prohibited_actions:
-      - redefine_canon
-      - invent_commercial_state
-      - invent_proof
-      - implementation_without_handoff
+    outputs: [channel-projection, narrative-architecture]
+    allowed_inputs: [task, source-context, brand-decision, commercial-decision, market-plan, current_channel_strategy, approved_channel_decisions]
+    allowed_actions: [project_to_channel, design_narrative_order, define_message_hierarchy, define_cta, adapt_language_and_depth]
+    prohibited_actions: [redefine_canon, invent_commercial_state, invent_proof, implementation_without_handoff]
     output_contract:
-      required:
-        - surface
-        - audience_state
-        - narrative_sequence
-        - message_hierarchy
-        - proof_slots
-        - cta
-        - depth_rules
+      required: [surface, audience_state, narrative_sequence, message_hierarchy, proof_slots, cta, depth_rules]
 
   PROOF_ANALYST:
     name_ru: "Аналитик доказательств"
     responsibility: "Проверяет, какие proof/assets действительно подтверждают конкретные заявления, и не допускает повышения зрелости демо, прототипов или beta."
-    outputs:
-      - proof-plan
-    allowed_inputs:
-      - task
-      - source-context
-      - proposed_claims
-      - Assets
-      - proof registry
-    allowed_actions:
-      - match_claim_to_proof
-      - state_proof_maturity
-      - downgrade_unsupported_claim
-      - identify_proof_gap
-    prohibited_actions:
-      - invent_case
-      - upgrade_maturity
-      - infer_production_status
-      - change_commercial_state
+    outputs: [proof-plan]
+    allowed_inputs: [task, source-context, proposed_claims, Assets, proof_registry]
+    allowed_actions: [match_claim_to_proof, state_proof_maturity, downgrade_unsupported_claim, identify_proof_gap]
+    prohibited_actions: [invent_case, upgrade_maturity, infer_production_status, change_commercial_state]
     output_contract:
-      required:
-        - claims
-        - proof_mapping
-        - maturity_boundaries
-        - unsupported_claims
-        - proof_gaps
+      required: [claims, proof_mapping, maturity_boundaries, unsupported_claims, proof_gaps]
 
   BRAND_QA:
     name_ru: "Независимый ревьюер бренда и governance"
-    responsibility: "Независимо прогоняет итог через G1-G15, проверяет свежесть решений и возвращает PASS/FAIL с точным маршрутом исправления."
-    outputs:
-      - qa-report
-    allowed_inputs:
-      - all accepted specialist artifacts
-      - qa-gates
-      - source-context
-    allowed_actions:
-      - run_g1_g15
-      - detect_drift
-      - detect_stale_source
-      - detect_claim_proof_mismatch
-      - route_rework
-    prohibited_actions:
-      - silently_rewrite_canon
-      - approve_own_generated_strategy
-      - downgrade_required_live_refresh
-      - implementation
+    responsibility: "Независимо прогоняет итог через G1-G18, проверяет свежесть решений и возвращает PASS/FAIL с точным маршрутом исправления."
+    outputs: [qa-report]
+    allowed_inputs: [all_accepted_specialist_artifacts, qa-gates, source-context]
+    allowed_actions: [run_g1_g18, detect_drift, detect_stale_source, detect_claim_proof_mismatch, detect_economics_invention, detect_revenue_overgeneralization, detect_portfolio_priority_without_evidence, route_rework]
+    prohibited_actions: [silently_rewrite_canon, approve_own_generated_strategy, downgrade_required_live_refresh, implementation]
     output_contract:
-      required:
-        - decision
-        - gate_results
-        - critical_failures
-        - rework_targets
-        - residual_uncertainty
+      required: [decision, gate_results, critical_failures, rework_targets, residual_uncertainty]
 
 routing:
   invariant: "The Orchestrator selects the minimum role set required by the task. Not every task invokes every role."
@@ -301,6 +144,12 @@ routing:
     current_product_status:
       - SOURCE_TRUTH
       - COMMERCIAL_ARCHITECT
+      - PROOF_ANALYST
+      - BRAND_QA
+    commercial_pricing_or_profitability:
+      - SOURCE_TRUTH
+      - COMMERCIAL_ARCHITECT
+      - COMMERCIAL_ECONOMICS
       - PROOF_ANALYST
       - BRAND_QA
     website_structure:
@@ -331,10 +180,25 @@ routing:
       - MARKET_GTM
       - PROOF_ANALYST
       - BRAND_QA
+    live_sales_learning:
+      - SOURCE_TRUTH
+      - REVENUE_INTELLIGENCE
+      - BRAND_QA
+    portfolio_review:
+      - SOURCE_TRUTH
+      - COMMERCIAL_ARCHITECT
+      - COMMERCIAL_ECONOMICS
+      - REVENUE_INTELLIGENCE
+      - PORTFOLIO_INTELLIGENCE
+      - PROOF_ANALYST
+      - BRAND_QA
     productization:
       - SOURCE_TRUTH
       - BRAND_STRATEGY
       - COMMERCIAL_ARCHITECT
+      - COMMERCIAL_ECONOMICS
+      - REVENUE_INTELLIGENCE
+      - PORTFOLIO_INTELLIGENCE
       - MARKET_GTM
       - PROOF_ANALYST
       - BRAND_QA
@@ -344,11 +208,27 @@ routing:
       - PROOF_ANALYST
       - BRAND_QA
 
+closed_loop:
+  flow:
+    - strategy
+    - commercial_reality
+    - market_projection
+    - revenue_execution
+    - delivery_and_product
+    - revenue_learning
+    - commercial_economics
+    - portfolio_learning
+    - strategic_review
+  rule: "Downstream outcomes may generate learning and change requests, but only approved governance can mutate L1-L3 canon."
+
 handoff_rules:
   - "Only accepted artifacts may be consumed by downstream roles."
   - "Live commercial/status/distribution claims require SOURCE_TRUTH context that passes live-context validation."
   - "A specialist may not mutate another specialist's artifact."
   - "BRAND_QA cannot turn FAIL into PASS by rewriting evidence; it routes rework."
+  - "Revenue events must preserve lead/opportunity evidence refs and may not be generalized beyond their learning stage."
+  - "Portfolio priority requires explicit evidence basis from commercial state plus at least one of revenue, proof, economics or strategic constraints."
+  - "Economics unknowns remain unknown until measured; missing cost data cannot be replaced with plausible numbers."
   - "For REDESIGN tasks, CHANNEL_ARCHITECT may not consume legacy presentation as its target unless PRESENTATION_SYNTHESIS independently selected it after comparison."
   - "For REDESIGN tasks, a result that only identifies mismatch or restores old approved copy is incomplete and cannot reach BRAND_QA as a final candidate."
   - "Canonical changes remain governance proposals until approved upstream."
