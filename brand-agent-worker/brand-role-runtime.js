@@ -290,7 +290,46 @@ function buildAuditFrame(evidence) {
   return { observed, targets, auditPairs };
 }
 
-function normalizeRolePayload(role, payload, task = "", evidence = []) {
+
+function normalizeText(value) {
+  return String(value ?? "").toLowerCase().replace(/[«»"'‘’“”.,:;!?()\[\]{}—–-]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function internalTaxonomyDominates(value) {
+  const text = normalizeText(value);
+  return /^(dir eng|dir sw|engineering solutions?|software solutions?|software|инженерные решения|программные продукты|софт)$/.test(text);
+}
+
+function validateRedesignBlocks(blocks, label) {
+  if (!Array.isArray(blocks) || blocks.length !== 3) {
+    throw new BrandRoleError("REDESIGN_BLOCKS_REQUIRED", label + " must contain exactly three concrete homepage blocks", 422);
+  }
+  const expected = ["1","2","3"];
+  blocks.forEach((block,index)=>{
+    if(String(block.block_number)!==expected[index]) {
+      throw new BrandRoleError("REDESIGN_BLOCK_ORDER_INVALID", label + " must be ordered as blocks 1, 2, 3", 422);
+    }
+    if(internalTaxonomyDominates(block.heading)) {
+      throw new BrandRoleError("REDESIGN_TAXONOMY_AS_BLOCK", label + " block " + (index+1) + " uses internal taxonomy as primary buyer-facing content", 422);
+    }
+  });
+  const oldHero = "разрабатываем приложения и системы для бизнеса";
+  if (normalizeText(blocks[0].heading) === oldHero) {
+    throw new BrandRoleError("REDESIGN_RESTORES_OLD_HERO", label + " restores the rejected legacy Hero", 422);
+  }
+  if (!Array.isArray(blocks[1].proof_refs) || blocks[1].proof_refs.length === 0) {
+    throw new BrandRoleError("REDESIGN_PROOF_AFTER_PROMISE_REQUIRED", label + " block 2 must contain inspectable proof references immediately after the first promise", 422);
+  }
+  return true;
+}
+
+function forceQaGate(normalized, gate, reason) {
+  normalized.gate_results = (normalized.gate_results ?? []).map((entry) =>
+    entry.gate === gate ? { ...entry, status:"FAIL", reason } : entry
+  );
+}
+
+function normalizeRolePayload(role, payload, task = "", evidence = [], contextArtifacts = []) {
   const normalized = structuredClone(payload);
 
   if (role === BRAND_ROLE.SOURCE_TRUTH) {
@@ -303,6 +342,16 @@ function normalizeRolePayload(role, payload, task = "", evidence = []) {
     normalized.observed_current = frame.observed;
     normalized.canonical_target = frame.targets;
     normalized.audit_pairs = frame.auditPairs;
+    return normalized;
+  }
+
+  if (role === BRAND_ROLE.PRESENTATION_SYNTHESIS && isRedesignTask(task)) {
+    validateRedesignBlocks(normalized.first_three_blocks, "presentation-concept.first_three_blocks");
+    return normalized;
+  }
+
+  if (role === BRAND_ROLE.CHANNEL_ARCHITECT && isRedesignTask(task)) {
+    validateRedesignBlocks(normalized.first_three_blocks, "channel-projection.first_three_blocks");
     return normalized;
   }
 
@@ -591,7 +640,7 @@ export async function executeBrandRole({ ai, run, role, invocationId, evidence =
         temperature: role === BRAND_ROLE.PRESENTATION_SYNTHESIS ? 0.35 : role === BRAND_ROLE.CHANNEL_ARCHITECT ? 0.15 : 0,
         max_tokens: maxTokens
       });
-      payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output), run.task, acceptedEvidence));
+      payload = validateRolePayload(role, normalizeRolePayload(role, extractPayload(output), run.task, acceptedEvidence, contextArtifacts));
       lastModelError = null;
       break;
     } catch (error) {
