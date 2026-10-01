@@ -13,6 +13,10 @@
     "typescript": "latest",
     "vitest": "latest",
     "wrangler": "latest",
-    "@cloudflare/playwright": "latest"
+    "@cloudflare/playwright": "latest",
+    "@types/qrcode": "latest"
+  },
+  "dependencies": {
+    "qrcode": "latest"
   }
 }
