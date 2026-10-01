@@ -51,9 +51,16 @@ steps:
   - id: follow_up
     agent: follow_up
     writes: [next_follow_up]
+  - id: revenue_intelligence
+    agent: revenue_intelligence
+    requires: [reply_classification]
+    reads: [Sales_Router, Outreach_Queue, proposals, recorded_conversation_outcomes]
+    writes: [Revenue_Intelligence, revenue_signal_links]
+    rule: "Material sales outcomes become evidence-bounded revenue signals; one event remains observation."
   - id: result_record
     agent: sales_recorder
-    writes: [Sales_Router, Experiments, Market_Signals]
+    requires: [revenue_intelligence]
+    writes: [Sales_Router, Revenue_Intelligence, Experiments, Market_Signals]
 
 guards:
   - canon_guard
