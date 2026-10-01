@@ -154,13 +154,25 @@ async function cleanQrFromPage(page: any) {
   const ref = await page.locator('div[data-ref]').first().getAttribute('data-ref').catch(() => null);
   if (!ref?.trim()) return null;
 
-  const dataUrl = await QRCode.toDataURL(ref, {
-    type: 'image/png',
-    errorCorrectionLevel: 'M',
-    margin: 4,
-    width: 640,
-    color: { dark: '#000000', light: '#ffffff' },
-  });
+  const qr = QRCode.create(ref, { errorCorrectionLevel: 'M' });
+  const size = qr.modules.size;
+  const margin = 4;
+  const dimension = size + margin * 2;
+  const modules = qr.modules.data;
+  const dark: string[] = [];
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      if (modules[row * size + col]) {
+        dark.push('M' + (col + margin) + ',' + (row + margin) + 'h1v1h-1z');
+      }
+    }
+  }
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + dimension + ' ' + dimension + '" shape-rendering="crispEdges">' +
+    '<rect width="100%" height="100%" fill="#fff"/>' +
+    '<path d="' + dark.join('') + '" fill="#000"/>' +
+    '</svg>';
+  const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ref));
   const key = [...new Uint8Array(digest)].slice(0, 8).map(value => value.toString(16).padStart(2, '0')).join('');
