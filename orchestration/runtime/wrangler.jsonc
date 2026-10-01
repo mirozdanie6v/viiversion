@@ -1,0 +1,12 @@
+{
+  "name": "viiversion-orchestrator",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-24",
+  "d1_databases": [
+    {
+      "binding": "ORCHESTRATION_DB",
+      "database_name": "viiversion-orchestration",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ]
+}

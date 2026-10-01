@@ -1,0 +1,62 @@
+version: "1.0"
+id: sales
+status: draft_runtime_contract
+purpose: "Run the end-to-end VIIVERSION sales execution flow without redefining L1-L3."
+
+inputs:
+  - lead_or_target
+  - market
+  - channel
+  - optional_product_hint
+
+steps:
+  - id: lead_discovery
+    agent: lead_discovery
+    writes: [run_state, lead_candidate]
+  - id: qualification
+    agent: qualification
+    requires: [lead_discovery]
+    writes: [qualification_result, evidence]
+  - id: routing
+    agent: routing
+    requires: [qualification]
+    reads: [Entity_Registry, Products, Offers, Verticals]
+    writes: [source_entity_id, offer_id, vertical_id]
+  - id: proof_selection
+    agent: proof
+    requires: [routing]
+    reads: [Assets]
+    writes: [proof_refs, allowed_claims]
+  - id: messaging
+    agent: messaging
+    requires: [routing, proof_selection]
+    reads: [Global_Brand_Market_Strategy, Sales_Playbook, Channel_Profiles]
+    writes: [draft_message]
+  - id: human_approval
+    type: gate
+    requires: [messaging]
+    rule: "No external send before explicit approval or an approved automation policy."
+  - id: send_or_record
+    agent: delivery
+    requires: [human_approval]
+    writes: [delivery_result]
+  - id: reply_classification
+    agent: reply
+    trigger: inbound_reply
+    writes: [reply_class, next_action]
+  - id: proposal
+    agent: proposal_studio
+    condition: "interest_or_discovery_complete"
+    writes: [proposal_ref]
+  - id: follow_up
+    agent: follow_up
+    writes: [next_follow_up]
+  - id: result_record
+    agent: sales_recorder
+    writes: [Sales_Router, Experiments, Market_Signals]
+
+guards:
+  - canon_guard
+  - proof_guard
+  - claim_guard
+  - approval_guard
