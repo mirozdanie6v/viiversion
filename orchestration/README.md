@@ -12,8 +12,10 @@ This directory does **not** define the VIIVERSION brand, ontology, product truth
 
 ## Principle
 
+VIIVERSION Core = one governed company intelligence model  
 Brand System = rules and truth  
-Command Layer = concise operating entry point  
+Commercial Matrix = live commercial / revenue / economics / portfolio state  
+Command Layer = optional concise operating entry point  
 Orchestrator = dispatcher and state machine  
 Agents = specialized executors  
 Workflows = business processes  
@@ -41,6 +43,7 @@ A trigger is **not** approval. It never by itself authorizes external sending, d
 - `website`: source check → projection → website strategy → copy/IA → governance → implementation → QA → decision update
 - `proposal`: client context → source check → diagnosis → solution/proof → commercial design → Proposal Studio → QA → release gate → record
 - `brand_governance`: source check → change classification → evidence → change request → strategic review → approval → canonical update → propagation → Decision Log
+- `core_learning`: source check → revenue intelligence → commercial economics → portfolio intelligence → market feedback → strategic review → record learning
 
 ## Safety boundary
 
@@ -54,3 +57,18 @@ No agent may:
 - treat a command trigger as approval.
 
 See `commands.yaml` and `policies/canon-guard.yaml`.
+
+
+## Closed company loop
+
+The active core contract is `../brand-system/core-loop.yaml`.
+
+```text
+Strategy → Commercial Reality → Market Projection → Revenue Execution → Delivery
+→ Revenue Learning → Commercial Economics → Portfolio Learning
+→ Strategic Review → governed propagation
+```
+
+`core_learning` is intentionally non-canonical. It can write analytical
+registries and change requests, but any L1-L3 mutation must move into
+`brand_governance` and pass explicit approval.
