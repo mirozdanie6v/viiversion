@@ -66,6 +66,9 @@ core_principles:
   - "Verticals package reusable engineering; they do not create separate platforms."
   - "Channel presentation may adapt language but cannot rewrite canon."
   - "Market feedback moves upward as signal, not automatic canonical truth."
+  - "Sales outcomes are sensors of the core and must be converted into evidence-bounded revenue learning."
+  - "Sellability is not profitability; economics must be measured or explicitly marked unknown."
+  - "Portfolio priority requires cross-evidence, not agent preference."
 
 primary_audiences:
   SME_owner:
@@ -332,3 +335,21 @@ market_gtm_snapshot:
     - Market_Signals
     - Sales_Router
     - Outreach_Queue
+    - Revenue_Intelligence
+    - Commercial_Economics
+    - Portfolio_Intelligence
+
+
+company_core_snapshot:
+  model: "VIIVERSION Core"
+  contract: "brand-system/core-loop.yaml"
+  closed_loop: "Strategy → Commercial Reality → Market Projection → Revenue Execution → Delivery → Revenue Learning → Commercial Economics → Portfolio Learning → Strategic Review → governed propagation"
+  registries:
+    revenue: Revenue_Intelligence
+    economics: Commercial_Economics
+    portfolio: Portfolio_Intelligence
+  rules:
+    - "one sales event is observation, not validated learning"
+    - "unknown economics remain unknown"
+    - "repeated delivery pattern becomes candidate before canonical entity"
+    - "portfolio recommendation cannot silently mutate canon"
