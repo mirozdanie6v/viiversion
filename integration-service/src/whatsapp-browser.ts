@@ -196,12 +196,91 @@ async function waitForLoggedIn(page: any, timeout = 30000) {
   }
 }
 
-async function persistContext(env: Env, context: any) {
+async function serializeContextState(context: any) {
   const state = await context.storageState({ indexedDB: true });
+  return JSON.stringify(state);
+}
+
+async function persistContext(env: Env, context: any) {
   await saveWhatsAppBrowserAuthState(env, {
-    storageState: JSON.stringify(state),
+    storageState: await serializeContextState(context),
     updatedAt: new Date().toISOString(),
   });
+}
+
+async function validateStorageState(env: Env, storageStateText: string, timeout = 30000) {
+  let storageState: unknown;
+  try {
+    storageState = JSON.parse(storageStateText);
+  } catch {
+    return false;
+  }
+
+  const { sessionId, browser } = await acquireRemoteBrowser(env);
+  let context: any = null;
+  try {
+    context = await browser.newContext({
+      storageState,
+      locale: 'en-GB',
+      timezoneId: DEFAULT_TIME_ZONE,
+      viewport: { width: 1365, height: 900 },
+    });
+    const page = await context.newPage();
+    await page.goto(WA_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    return await waitForLoggedIn(page, timeout);
+  } catch {
+    return false;
+  } finally {
+    if (context) {
+      try {
+        await context.close();
+      } catch {
+        // no-op
+      }
+    }
+    await disconnect(browser);
+    await closeRemoteSession(env, sessionId);
+  }
+}
+
+async function pairingDiagnostic(page: any) {
+  const text = await page.locator('body').innerText().catch(() => '');
+  const compact = text.replace(/\s+/g, ' ').trim();
+  const patterns = [
+    /couldn['’]?t link device/i,
+    /unable to link device/i,
+    /continue on whatsapp web/i,
+    /continue.*whatsapp web/i,
+    /passkey/i,
+    /security check/i,
+    /try again later/i,
+  ];
+  const match = patterns.map(pattern => compact.match(pattern)?.[0]).find(Boolean);
+  return {
+    interactiveRequired: Boolean(match),
+    hint: match ?? null,
+  };
+}
+
+async function liveViewUrl(context: any, page: any) {
+  let cdp: any = null;
+  try {
+    cdp = await context.newCDPSession(page);
+    const result = await cdp.send('Cloudflare.getLiveView', {
+      mode: 'tab',
+      expiresInMs: 600000,
+    });
+    const value = result?.devtoolsFrontendUrl;
+    return typeof value === 'string' && value ? value : null;
+  } finally {
+    if (cdp) {
+      try {
+        await cdp.detach();
+      } catch {
+        // no-op
+      }
+    }
+  }
 }
 
 async function contextFromStoredState(env: Env, browser: any) {
@@ -328,6 +407,10 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
     .status { font-weight:700; }
     .ok { color:#70e6a5; }
     .err { color:#ff8b8b; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    button { appearance:none; border:1px solid #355476; background:#17304c; color:#eef4ff; border-radius:10px; padding:11px 14px; font-weight:700; cursor:pointer; }
+    button[hidden] { display:none; }
+    .help { font-size:13px; color:#8fa3c0; margin-top:10px; }
   </style>
 </head>
 <body>
@@ -338,6 +421,10 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
   <div class="card">
     <div id="status" class="status">Starting secure browser session…</div>
     <img id="shot" alt="WhatsApp Web pairing screen" hidden>
+    <div class="actions">
+      <button id="live" type="button" hidden>Open interactive WhatsApp Web</button>
+    </div>
+    <div id="help" class="help" hidden>If WhatsApp asks you to continue on the web, open the interactive session and finish the security step there. Keep this setup page open.</div>
   </div>
 </main>
 <script>
@@ -345,7 +432,27 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
   history.replaceState(null, '', '/whatsapp/browser/connect');
   const status = document.getElementById('status');
   const shot = document.getElementById('shot');
+  const live = document.getElementById('live');
+  const help = document.getElementById('help');
   let currentQrKey = '';
+
+  live.addEventListener('click', async () => {
+    const popup = window.open('', '_blank');
+    live.disabled = true;
+    try {
+      const res = await fetch('/whatsapp/browser/connect/live?token=' + encodeURIComponent(token), { cache:'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data.liveViewUrl) throw new Error(data?.error?.message || data?.error || 'Unable to open interactive session');
+      if (popup) popup.location.href = data.liveViewUrl;
+      else window.location.href = data.liveViewUrl;
+    } catch (error) {
+      if (popup) popup.close();
+      status.textContent = error.message || String(error);
+      status.className = 'status err';
+    } finally {
+      live.disabled = false;
+    }
+  });
 
   async function poll() {
     try {
@@ -358,14 +465,30 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
         shot.hidden = true;
         return;
       }
-      status.textContent = data.qrDetected
-        ? 'Scan this QR code with WhatsApp.'
-        : 'WhatsApp Web is loading the QR code…';
+      if (data.persistenceCheckFailed) {
+        status.textContent = 'WhatsApp accepted the pairing, but the saved session did not survive a fresh-browser check. Open the interactive session and keep it open while the check retries.';
+        status.className = 'status err';
+        live.hidden = false;
+        help.hidden = false;
+      } else if (data.qrDetected) {
+        status.textContent = 'Scan this QR code with WhatsApp.';
+        status.className = 'status';
+        live.hidden = false;
+        help.hidden = false;
+      } else {
+        status.textContent = data.interactiveRequired
+          ? 'WhatsApp needs an additional step in the browser. Open the interactive session.'
+          : 'WhatsApp Web is waiting for the device-linking step…';
+        status.className = 'status';
+        live.hidden = false;
+        help.hidden = false;
+      }
       if (data.screenshotDataUrl && (!data.qrKey || data.qrKey !== currentQrKey)) {
         shot.src = data.screenshotDataUrl;
         shot.hidden = false;
         currentQrKey = data.qrKey || '';
       }
+      if (!data.qrDetected) shot.hidden = true;
       setTimeout(poll, data.qrDetected ? 2000 : 1200);
     } catch (error) {
       status.textContent = error.message || String(error);
@@ -417,6 +540,25 @@ export async function whatsappBrowserPairStart(request: Request, env: Env) {
   return { ok: true, paired, sessionId: live.sessionId };
 }
 
+export async function whatsappBrowserPairLiveView(request: Request, env: Env) {
+  if (!setupAuthorized(request, env)) throw new Response('Setup link is invalid or expired', { status: 401 });
+  assertBrowserBindings(env);
+
+  const live = await pairPage(env);
+  try {
+    const url = await liveViewUrl(live.context, live.page);
+    if (!url) throw new Error('Cloudflare Live View URL was not returned');
+    return {
+      ok: true,
+      sessionId: live.sessionId,
+      liveViewUrl: url,
+      expiresInMs: 600000,
+    };
+  } finally {
+    await disconnect(live.browser);
+  }
+}
+
 export async function whatsappBrowserPairReset(request: Request, env: Env) {
   if (!setupAuthorized(request, env)) throw new Response('Setup link is invalid or expired', { status: 401 });
   const runtime = await getWhatsAppBrowserRuntime(env);
@@ -432,21 +574,48 @@ export async function whatsappBrowserPairState(request: Request, env: Env) {
 
   const stored = await getWhatsAppBrowserAuthState(env);
   if (stored?.storageState) {
-    return { ok: true, paired: true, updatedAt: stored.updatedAt };
+    const valid = await validateStorageState(env, stored.storageState, 20000);
+    if (valid) {
+      return {
+        ok: true,
+        paired: true,
+        persistenceValidated: true,
+        updatedAt: stored.updatedAt,
+      };
+    }
+    await clearWhatsAppBrowserAuthState(env);
   }
 
   const live = await pairPage(env);
   try {
     if (await isLoggedIn(live.page)) {
-      await persistContext(env, live.context);
+      const storageState = await serializeContextState(live.context);
+      const persisted = await validateStorageState(env, storageState, 30000);
+      if (!persisted) {
+        return {
+          ok: true,
+          paired: false,
+          authenticatedInPairingSession: true,
+          persistenceCheckFailed: true,
+          interactiveRequired: true,
+        };
+      }
+
+      const updatedAt = new Date().toISOString();
+      await saveWhatsAppBrowserAuthState(env, { storageState, updatedAt });
       await saveWhatsAppBrowserRuntime(env, {
         sessionId: live.sessionId,
         phase: 'ready',
-        updatedAt: new Date().toISOString(),
+        updatedAt,
       });
       await closeRemoteSession(env, live.sessionId);
       await clearWhatsAppBrowserRuntime(env);
-      return { ok: true, paired: true, updatedAt: new Date().toISOString() };
+      return {
+        ok: true,
+        paired: true,
+        persistenceValidated: true,
+        updatedAt,
+      };
     }
 
     const qr = await findQrLocator(live.page, 12000);
@@ -459,14 +628,19 @@ export async function whatsappBrowserPairState(request: Request, env: Env) {
         qrDetected: true,
         qrKey: cleanQr.key,
         screenshotDataUrl: cleanQr.dataUrl,
+        interactiveAvailable: true,
       };
     }
 
+    const diagnostic = await pairingDiagnostic(live.page);
     const screenshot = await live.page.screenshot({ type: 'png', fullPage: false });
     return {
       ok: true,
       paired: false,
       qrDetected: false,
+      interactiveRequired: diagnostic.interactiveRequired || true,
+      diagnosticHint: diagnostic.hint,
+      interactiveAvailable: true,
       screenshotDataUrl: 'data:image/png;base64,' + bytesToBase64(new Uint8Array(screenshot)),
     };
   } finally {
