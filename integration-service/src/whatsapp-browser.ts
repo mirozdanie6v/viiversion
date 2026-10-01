@@ -125,6 +125,29 @@ async function isLoggedIn(page: any) {
   return (await page.locator('#pane-side').count()) > 0;
 }
 
+async function findQrLocator(page: any, timeout = 12000) {
+  const selectors = [
+    'canvas[aria-label*="Scan"]',
+    'div[data-ref] canvas',
+    'div[data-ref]',
+  ];
+
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    for (const selector of selectors) {
+      const locator = page.locator(selector).first();
+      if (!(await locator.count())) continue;
+      try {
+        if (await locator.isVisible()) return locator;
+      } catch {
+        // DOM may re-render while WhatsApp rotates the QR.
+      }
+    }
+    await page.waitForTimeout(500);
+  }
+  return null;
+}
+
 async function waitForLoggedIn(page: any, timeout = 30000) {
   try {
     await page.locator('#pane-side').waitFor({ state: 'visible', timeout });
@@ -295,12 +318,14 @@ export function whatsappBrowserSetupPage(request: Request, env: Env) {
         shot.hidden = true;
         return;
       }
-      status.textContent = 'Scan the QR code with WhatsApp.';
+      status.textContent = data.qrDetected
+        ? 'Scan this QR code with WhatsApp.'
+        : 'WhatsApp Web is loading the QR code…';
       if (data.screenshotDataUrl) {
         shot.src = data.screenshotDataUrl;
         shot.hidden = false;
       }
-      setTimeout(poll, 2200);
+      setTimeout(poll, data.qrDetected ? 3500 : 1800);
     } catch (error) {
       status.textContent = error.message || String(error);
       status.className = 'status err';
@@ -383,10 +408,15 @@ export async function whatsappBrowserPairState(request: Request, env: Env) {
       return { ok: true, paired: true, updatedAt: new Date().toISOString() };
     }
 
-    const screenshot = await live.page.screenshot({ type: 'png', fullPage: true });
+    const qr = await findQrLocator(live.page, 12000);
+    const screenshot = qr
+      ? await qr.screenshot({ type: 'png' })
+      : await live.page.screenshot({ type: 'png', fullPage: false });
+
     return {
       ok: true,
       paired: false,
+      qrDetected: Boolean(qr),
       screenshotDataUrl: 'data:image/png;base64,' + bytesToBase64(new Uint8Array(screenshot)),
     };
   } finally {
