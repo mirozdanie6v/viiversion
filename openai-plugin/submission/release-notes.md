@@ -1,14 +1,12 @@
-# Release notes — 0.8.1
+# Release notes — 0.9.0
 
-Initial OpenAI Plugin submission for VIIVERSION Brand Architect.
+VIIVERSION Core / Brand Architect now connects brand, product, GTM and commercial learning in one governed loop.
 
-- Adds a dedicated public MCP surface at `/openai/mcp`.
-- Keeps internal debug/orchestration tools off the public surface.
-- Provides evidence-bounded brand, proof, website audit, GTM and productization workflows.
-- Separates observed current state from canonical target in audits.
-- Returns missing evidence requirements instead of inventing current/final facts.
-- Adds public privacy, terms and support pages.
-- Adds a domain-verification challenge endpoint.
-- Adds automatic deletion scheduling for persistent run state after 30 days.
-
-- Hardens structured-output parsing and retry behavior for Workers AI specialist calls.
+- Adds Revenue Intelligence for evidence-bounded sales learning from replies, objections, proposals and won/lost outcomes.
+- Adds Commercial Economics for delivery effort, cost, support burden, margin signal, repeatability, CAC/LTV assumptions and confidence.
+- Adds Portfolio Intelligence for productization, priority, overlap/merge and deprioritization decisions across the full VIIVERSION portfolio.
+- Adds the closed loop: Strategy → Commercial Reality → Market Projection → Revenue Execution → Delivery → Revenue Learning → Commercial Economics → Portfolio Learning → Strategic Review.
+- Extends Brand QA from G1–G15 to G1–G18 with economics, revenue-learning and portfolio-integrity gates.
+- Keeps one sales event at observation level and preserves canonical governance for any L1–L3 change.
+- Keeps current/final facts evidence-bounded and never fabricates missing profitability data.
+- Includes the unified orchestration contract and core-learning workflow in the packaged artifact.
