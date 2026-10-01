@@ -1,4 +1,4 @@
-export type WorkflowId = "sales" | "website" | "proposal" | "brand_governance";
+export type WorkflowId = "sales" | "website" | "proposal" | "brand_governance" | "core_learning";
 
 const WORKFLOW_STEPS: Record<WorkflowId, readonly string[]> = {
   sales: [
@@ -12,6 +12,7 @@ const WORKFLOW_STEPS: Record<WorkflowId, readonly string[]> = {
     "reply_classification",
     "proposal",
     "follow_up",
+    "revenue_intelligence",
     "result_record",
   ],
   website: [
@@ -46,6 +47,15 @@ const WORKFLOW_STEPS: Record<WorkflowId, readonly string[]> = {
     "canonical_update",
     "propagation_plan",
     "decision_record",
+  ],
+  core_learning: [
+    "source_check",
+    "revenue_intelligence",
+    "commercial_economics",
+    "portfolio_intelligence",
+    "market_feedback",
+    "strategic_review",
+    "record_learning",
   ],
 };
 
