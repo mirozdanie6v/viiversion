@@ -1,4 +1,11 @@
-# VIIVERSION Reply Playbook v1
+# VIIVERSION Reply Playbook v1.1
+
+## Mandatory client-context preflight
+Before classifying or answering any client reply, resolve the named company/person to the existing lead record and load **Sales_Router + Outreach_Queue + available communication history**. Determine current stage, latest client message/reaction, what VIIVERSION already sent, current next action and known open questions.
+
+Do not draft from the isolated last message. Do not restart a cold introduction for a relationship already at Replied/Demo/Discovery/Proposal/Negotiation. If the user mentions a known client in ordinary language, this preflight applies even without an explicit `ПРОДАЖИ` command.
+
+When interpreting a short reply, emoji/reaction or silence, separate **FACT / INFERENCE / CONFIDENCE**. Never convert inference into recorded fact.
 
 ## Interested / "send demo"
 Send the single most relevant asset. Then ask one diagnostic question tied to the workflow. Do not add a second pitch.
