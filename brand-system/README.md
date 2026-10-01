@@ -26,24 +26,36 @@ These files are **not an independent Source of Truth**. They implement and mirro
 ```text
 L1 Corporate Canon
   ↓
-L2 Commercial System + Proof
+L2 Commercial System + Proof + Economics
   ↓
 L3 Global Brand & Market System
   ↓
 L4 Projection Engine
   Entity × Market × Audience × Channel × Language × Goal
   ↓
-L5 Implementation
+Revenue + Delivery Execution
+  ↓
+Revenue Intelligence + Market Signals
+  ↓
+Portfolio Intelligence
+  ↓
+Strategic Review / Decision Log
+  ↺ governed propagation
 ```
 
 Downward flow carries definitions and approved decisions.
-Upward flow carries observations, patterns and validated learning.
+Upward flow carries observed sales outcomes, economics, delivery patterns, market signals and validated learning.
+
+The binding closed-loop machine contract is `core-loop.yaml`.
 
 ## Rules
 
 - Stable IDs are immutable and never reused.
 - A channel may create `display_name`, `headline`, `CTA` and other projection fields, but it must not overwrite `canonical_name`.
 - Website, Sales Engine and marketplace code are consumers of the canonical system, not ontology owners.
+- Sales is also a sensor: structured outcomes and objections flow through Revenue_Intelligence.
+- Commercial profitability/scalability evidence lives in Commercial_Economics, not in invented narrative.
+- Cross-portfolio priority and productization recommendations live in Portfolio_Intelligence and remain non-canonical until governance approves a canonical change.
 - P01–P36 remain valid stable IDs.
 - Engineering Solutions has six canonical upper categories: ENG-A through ENG-F.
 - Conflicting downstream data must be escalated to the appropriate Source of Truth instead of silently normalized in code.
