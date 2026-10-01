@@ -1,0 +1,80 @@
+version: "1.0"
+id: core_learning
+status: active_runtime_contract
+purpose: "Close the VIIVERSION company loop from real revenue evidence through economics and portfolio learning without allowing operational evidence to silently mutate canon."
+
+inputs:
+  - optional_entity_scope
+  - optional_market_scope
+  - optional_time_window
+  - optional_trigger_event
+
+steps:
+  - id: source_check
+    agent: source_resolver
+    reads:
+      - Products
+      - Offers
+      - Assets
+      - Sales_Router
+      - Outreach_Queue
+      - Experiments
+      - Revenue_Intelligence
+      - Commercial_Economics
+      - Market_Signals
+      - Portfolio_Intelligence
+      - Distribution_Matrix
+      - Distribution_Pipeline
+    writes: [source_snapshot]
+
+  - id: revenue_intelligence
+    agent: revenue_intelligence
+    requires: [source_check]
+    writes: [revenue_learning]
+    rule: "Preserve lead/entity/offer links and separate observation, pattern and validated learning."
+
+  - id: commercial_economics
+    agent: commercial_economics
+    requires: [source_check]
+    writes: [economics_decision]
+    rule: "Missing cost/margin/CAC/LTV inputs remain unknown and become measurement requirements."
+
+  - id: portfolio_intelligence
+    agent: portfolio_intelligence
+    requires: [revenue_intelligence, commercial_economics]
+    reads: [Products, Assets, Revenue_Intelligence, Commercial_Economics, Market_Signals]
+    writes: [Portfolio_Intelligence, portfolio_decision]
+    rule: "Portfolio actions are analytical and cannot create, rename or retire canonical entities."
+
+  - id: market_feedback
+    agent: market_feedback
+    requires: [revenue_intelligence, portfolio_intelligence]
+    writes: [Market_Signals]
+    rule: "Only evidence-backed broader implications are promoted from revenue learning into market learning."
+
+  - id: strategic_review
+    agent: governance_review
+    requires: [portfolio_intelligence, market_feedback]
+    writes: [strategic_review_result, optional_change_request]
+    rule: "If L1-L3 change is indicated, create a change request and route to brand_governance; do not mutate canon here."
+
+  - id: record_learning
+    agent: core_recorder
+    requires: [strategic_review]
+    writes: [Revenue_Intelligence, Commercial_Economics, Portfolio_Intelligence, Market_Signals, audit_log]
+
+guards:
+  - source_precedence_guard
+  - economics_integrity_guard
+  - revenue_learning_guard
+  - portfolio_evidence_guard
+  - canon_guard
+
+completion:
+  must_return:
+    - evidence_scope
+    - revenue_learning
+    - economics_state
+    - portfolio_decision
+    - strategic_review_result
+    - governance_handoff_if_any
