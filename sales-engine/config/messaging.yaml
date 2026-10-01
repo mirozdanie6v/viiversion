@@ -1,4 +1,4 @@
-version: "1.2"
+version: "1.3"
 name: "VIIVERSION Sales Messaging Execution"
 
 source_of_truth:
@@ -11,6 +11,31 @@ brand_identity:
   canonical: "VIIVERSION is an engineering product company that builds digital systems for businesses and develops its own software products."
   short_ru: "Мы VIIVERSION — инженерная команда, создаём цифровые системы для бизнеса и собственные программные продукты."
   local_context: "Vietnam/Nha Trang may be mentioned as place of current presence or work, never as the primary company identity."
+
+client_context_preflight:
+  required: true
+  applies_when:
+    - "a named client, company or contact is mentioned"
+    - "the user asks about a reply, reaction, silence, follow-up, next step or proposal"
+    - "the task continues an existing commercial thread"
+  resolve_order:
+    - "Sales_Router by company/person/lead_id"
+    - "Outreach_Queue by lead_id/company"
+    - "approved communication/client records when available"
+  required_state:
+    - "lead_id"
+    - "current stage"
+    - "latest client message/reaction"
+    - "latest VIIVERSION message/asset already sent"
+    - "current next action"
+    - "decision maker/persona"
+    - "known open questions/constraints"
+  guards:
+    - "Never generate client-facing content before context resolution."
+    - "Never restart cold outreach for Replied/Demo/Discovery/Proposal/Negotiation unless explicitly requested."
+    - "Never ask the user to repeat context already present in approved sources."
+    - "When records conflict, prefer the latest timestamped interaction and surface unresolved conflicts."
+    - "Keep FACT, INFERENCE and CONFIDENCE distinct when interpreting client intent."
 
 principles:
   - "One message = one commercial job."
