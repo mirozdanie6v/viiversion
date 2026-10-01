@@ -19,6 +19,39 @@ ownership:
       - price_hypotheses
       - live_channel_fit
       - operational_status
+  commercial_economics:
+    sheet: Commercial_Economics
+    owns:
+      - delivery_effort
+      - delivery_cost
+      - support_cost
+      - margin_signal
+      - customization_level
+      - repeatability
+      - cac_assumptions
+      - ltv_assumptions
+      - economics_confidence
+  revenue_intelligence:
+    sheet: Revenue_Intelligence
+    owns:
+      - structured_sales_outcomes
+      - objection_patterns
+      - repeated_demand
+      - price_reactions
+      - proof_reactions
+      - requested_capabilities
+      - requested_integrations
+      - buyer_language
+      - revenue_learning_stage
+  portfolio_intelligence:
+    sheet: Portfolio_Intelligence
+    owns:
+      - cross_portfolio_priority
+      - productization_candidates
+      - overlap_and_merge_candidates
+      - deprioritization_candidates
+      - portfolio_blockers
+      - portfolio_review_status
   proof_registry:
     sheet: Assets
     owns:
@@ -65,6 +98,22 @@ decision_log:
 market_signals:
   sheet: Market_Signals
   rule: "Signals may propose changes but never rewrite canon automatically."
+
+closed_learning_loop:
+  flow:
+    - sales_and_market_observation
+    - revenue_signal
+    - economics_measurement
+    - portfolio_interpretation
+    - validated_learning
+    - change_request
+    - strategic_review
+  rules:
+    - "A single reply, objection or deal is evidence, not canonical truth."
+    - "Revenue_Intelligence records sales learning; Market_Signals records broader market learning."
+    - "Portfolio_Intelligence may recommend priority or productization but may not mutate canonical identity."
+    - "Commercial_Economics may contain assumptions only when their confidence and evidence are explicit."
+    - "Any L1-L3 mutation still requires Decision_Log and explicit approval."
 
 new_entity_flow:
   - experiment
