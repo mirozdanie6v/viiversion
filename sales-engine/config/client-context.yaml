@@ -1,0 +1,63 @@
+version: "1.0"
+name: "VIIVERSION Client Context Resolver"
+
+purpose: "Prevent stateless client handling. Resolve existing commercial context before analysis, reply drafting, follow-up or proposal work."
+
+trigger:
+  automatic: true
+  conditions:
+    - "named company/client/contact appears in the request"
+    - "request refers to a client reply, reaction, silence, follow-up or next step"
+    - "request asks to continue an existing commercial conversation"
+  explicit_sales_command_required: false
+
+sources:
+  primary:
+    - "Commercial Matrix / Sales_Router"
+    - "Commercial Matrix / Outreach_Queue"
+  secondary:
+    - "approved client communication records"
+    - "client-specific Google Drive documents"
+  join_keys:
+    - "lead_id"
+    - "normalized company name"
+    - "known contact/person"
+
+preflight:
+  required_before:
+    - "drafting any client-facing text"
+    - "interpreting a reply/reaction/silence"
+    - "recommending next action"
+    - "creating follow-up"
+    - "proposal handoff"
+  load:
+    - "current stage"
+    - "latest dated client interaction"
+    - "latest dated VIIVERSION interaction"
+    - "reply summary"
+    - "asset/demo already sent"
+    - "next action and next date"
+    - "decision maker / persona"
+    - "problem / offer / trigger"
+    - "notes and unresolved questions"
+
+stage_guard:
+  active_stages: ["Replied", "Demo", "Discovery", "Proposal", "Negotiation"]
+  rule: "If current stage is active, continue from the latest confirmed state. Do not generate a first-touch/cold message unless the user explicitly asks to restart."
+
+conflict_resolution:
+  - "Prefer the latest timestamped interaction for operational state."
+  - "Do not silently discard conflicting records."
+  - "Surface unresolved conflicts before using them as facts."
+
+interpretation:
+  format:
+    fact: "directly recorded message/action"
+    inference: "reasoned interpretation of the fact"
+    confidence: "low|medium|high"
+  rule: "Inference never overwrites the factual client record."
+
+failure_behavior:
+  no_match: "Search secondary approved client sources before treating the client as new."
+  partial_match: "Use the matched history and mark missing fields; do not ask the user to repeat information already retrievable."
+  forbidden: "Stateless drafting from only the current user message when an existing client is referenced."
