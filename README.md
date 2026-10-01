@@ -70,11 +70,12 @@ It must not silently:
 
 ## Runtime
 
-v0.6.0 includes the production Brand Agent runtime at `agent.viiversion.com`.
+v0.9.0 extends the production Brand Agent runtime contract at `agent.viiversion.com` into the unified VIIVERSION Core model.
 
 Runtime responsibilities:
 - persistent per-run state in Cloudflare Durable Objects;
-- seven isolated specialist roles;
+- isolated specialist roles selected by minimum-required routing;
+- Revenue Intelligence, Commercial Economics and Portfolio Intelligence loops;
 - Workers AI JSON-schema execution;
 - PENDING → ACCEPT/REJECT artifact handoff;
 - automatic route progression;
@@ -90,7 +91,7 @@ credentials are never copied into the Worker.
 
 ## Market / GTM / Distribution
 
-v0.6.0 includes Brand Architect beyond website/product presentation into the
+v0.9.0 includes Brand Architect beyond website/product presentation into the
 operational market layer: Projection Engine, GTM motion selection, partner and
 platform distribution, outreach campaign architecture, Software/plugin
 productization, launch planning and controlled market feedback.
@@ -102,9 +103,41 @@ without becoming independent sources of brand truth.
 
 ## Live Source of Truth
 
-v0.6.0 keeps Google Drive as the user-authorized live Source of Truth app.
+v0.9.0 keeps Google Drive as the user-authorized live Source of Truth app.
 For current/final/implementation tasks the agent asks Brand MCP which Drive
 sources are required, reads only those sources through Google Drive, then
 validates the observed source classes/tabs before making current claims.
 
 Google credentials are not stored in the Cloudflare Worker.
+
+
+## VIIVERSION Core
+
+Brand Architect is now the reasoning/interface layer of a wider company core,
+not an isolated marketing agent.
+
+The closed loop is:
+
+```text
+Strategy
+→ Commercial Reality
+→ Market Projection
+→ Revenue Execution
+→ Delivery
+→ Revenue Learning
+→ Commercial Economics
+→ Portfolio Learning
+→ Strategic Review
+→ governed propagation
+```
+
+The binding machine-readable contract is `brand-system/core-loop.yaml`.
+
+Live Commercial Matrix registries:
+- `Commercial_Economics`
+- `Revenue_Intelligence`
+- `Portfolio_Intelligence`
+
+These registries let real sales and delivery outcomes influence productization,
+portfolio priorities and strategic change requests without allowing downstream
+activity to silently rewrite canonical identity.
