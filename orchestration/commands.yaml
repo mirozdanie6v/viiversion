@@ -1,0 +1,123 @@
+version: "1.0"
+status: active_contract
+authority:
+  operational_registry: "Google Drive → VIIVERSION Commercial Matrix → Command_Registry"
+  executable_mirror: "GitHub → /orchestration/commands.yaml"
+activation:
+  mode: exact_prefix_token
+  rule: "The first non-empty token must exactly match a trigger or alias. The remaining message is the task payload."
+  case_sensitive: false
+  command_only_message: "Resolve the mode and wait for the user's task; do not invent one."
+principles:
+  - "A command selects an operating workflow; it does not replace any Source of Truth."
+  - "A command does not itself grant approval to send, deploy, publish, or mutate canonical truth."
+  - "All workflows inherit Canon Guard and their profile-specific governance."
+  - "Conflicts are resolved by source precedence, never by the command text."
+
+commands:
+  CMD-SITE:
+    trigger: "САЙТ"
+    aliases: ["SITE", "/site"]
+    workflow_id: website
+    purpose: "Run the controlled VIIVERSION website workflow."
+    required_sources:
+      - Corporate Strategy & Positioning
+      - Commercial Matrix / Entity_Registry
+      - Commercial Matrix / Products
+      - Commercial Matrix / Assets
+      - Global Brand & Market Strategy
+      - Website Channel Strategy & Projection
+      - Website UX & Design System
+      - Homepage_Blocks
+      - Website_Decisions
+    canonical_access: read_only
+    allowed_writes:
+      - Projection_Index
+      - Website_Decisions
+      - website implementation branch/code after governance gate
+    approval:
+      implementation: required_when_governance_requires
+      deploy: explicit_or_preapproved_policy
+    recording_targets: [Projection_Index, Website_Decisions, implementation_refs]
+
+  CMD-SALES:
+    trigger: "ПРОДАЖИ"
+    aliases: ["SALES", "/sales"]
+    workflow_id: sales
+    purpose: "Run lead discovery, qualification, routing, proof, messaging, reply handling and follow-up."
+    required_sources:
+      - Corporate Strategy & Positioning
+      - Commercial Matrix / Entity_Registry
+      - Commercial Matrix / Products
+      - Commercial Matrix / Offers
+      - Commercial Matrix / Verticals
+      - Commercial Matrix / Assets
+      - Global Brand & Market Strategy
+      - Channel_Profiles
+      - Sales Playbook
+      - lead and outreach history
+    canonical_access: read_only
+    allowed_writes:
+      - Sales_Router
+      - Outreach_Queue
+      - Experiments
+      - Market_Signals
+      - approved delivery records
+    approval:
+      external_send: explicit_or_preapproved_automation_policy
+    recording_targets: [Sales_Router, Outreach_Queue, Experiments, Market_Signals]
+
+  CMD-PROPOSAL:
+    trigger: "КП"
+    aliases: ["PROPOSAL", "/proposal", "/kp"]
+    workflow_id: proposal
+    purpose: "Run Proposal Studio / Proposal Orchestrator for a specific qualified opportunity."
+    required_sources:
+      - client and communication context
+      - discovery evidence
+      - Corporate Strategy & Positioning
+      - Commercial Matrix / Entity_Registry
+      - Commercial Matrix / Products
+      - Commercial Matrix / Offers
+      - Commercial Matrix / Assets
+      - Global Brand & Market Strategy
+      - Sales Playbook
+      - current pricing and readiness
+      - Proposal Studio / Proposal Orchestrator rules
+    canonical_access: read_only
+    allowed_writes:
+      - proposal artifact and release metadata
+      - proposal reference in sales records
+      - opportunity next step
+      - Market_Signals when applicable
+    approval:
+      final_external_release: explicit_or_preapproved_release_policy
+    recording_targets: [proposal_ref, Sales_Router, Market_Signals]
+
+  CMD-BRAND:
+    trigger: "БРЕНД"
+    aliases: ["BRAND", "/brand"]
+    workflow_id: brand_governance
+    purpose: "Run controlled L1-L3 brand and canonical governance."
+    required_sources:
+      - Corporate Strategy & Positioning
+      - Commercial Matrix / Entity_Registry
+      - Commercial Matrix / Assets
+      - Global Brand & Market Strategy
+      - Decision_Log
+      - Market_Signals
+      - /brand-system
+    canonical_access: controlled_write_after_approval
+    allowed_writes_before_approval:
+      - analysis
+      - change_request
+      - Decision_Log draft/proposal record
+    allowed_writes_after_approval:
+      - affected canonical Drive sources
+      - Entity_Registry
+      - Decision_Log
+      - /brand-system executable mirrors
+    approval:
+      canonical_mutation: explicit
+    recording_targets: [Decision_Log, Entity_Registry, affected_canonical_sources]
+    change_path: "Observation → Pattern → Validated Learning → Change Request → Strategic Review → Approved Change"

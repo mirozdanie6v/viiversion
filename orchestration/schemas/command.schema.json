@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VIIVERSION Command Invocation",
+  "type": "object",
+  "required": ["command_id", "workflow_id", "payload"],
+  "properties": {
+    "command_id": {
+      "enum": ["CMD-SITE", "CMD-SALES", "CMD-PROPOSAL", "CMD-BRAND"]
+    },
+    "workflow_id": {
+      "enum": ["website", "sales", "proposal", "brand_governance"]
+    },
+    "matched_trigger": {"type": "string"},
+    "payload": {"type": "string"},
+    "requires_approval": {"type": "boolean"},
+    "source_refs": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "additionalProperties": false
+}

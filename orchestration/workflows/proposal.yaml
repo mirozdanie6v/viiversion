@@ -1,0 +1,49 @@
+version: "1.0"
+id: proposal
+status: draft_runtime_contract
+purpose: "Create a client-specific commercial proposal from approved VIIVERSION truth, proof and current commercial state."
+
+steps:
+  - id: context_load
+    agent: proposal_context
+    reads: [client_context, communication_history, discovery]
+    writes: [client_snapshot]
+  - id: source_check
+    agent: source_resolver
+    reads: [Corporate_Canon, Entity_Registry, Commercial_Matrix, Assets, Global_Brand_Market_Strategy, Sales_Playbook]
+    writes: [source_snapshot]
+  - id: diagnosis
+    agent: proposal_diagnosis
+    requires: [context_load, source_check]
+    writes: [confirmed_facts, assumptions, goals, constraints]
+  - id: solution_routing
+    agent: routing
+    requires: [diagnosis]
+    writes: [source_entity_ids, offer_ids, architecture]
+  - id: proof_selection
+    agent: proof
+    requires: [solution_routing]
+    writes: [proof_refs, allowed_claims]
+  - id: commercial_design
+    agent: proposal_commercial
+    requires: [solution_routing, proof_selection]
+    reads: [current_pricing, readiness]
+    writes: [scope, packages, pricing, boundaries]
+  - id: proposal_build
+    agent: proposal_studio
+    requires: [commercial_design]
+    writes: [proposal_artifact]
+  - id: proposal_qa
+    agent: proposal_qa
+    requires: [proposal_build]
+    writes: [qa_result]
+  - id: release_gate
+    type: gate
+    requires: [proposal_qa]
+    rule: "Final external release requires explicit approval or an approved release policy."
+  - id: record_result
+    agent: sales_recorder
+    requires: [release_gate]
+    writes: [proposal_ref, Sales_Router, Market_Signals]
+
+guards: [canon_guard, proof_guard, claim_guard, pricing_guard, approval_guard]
