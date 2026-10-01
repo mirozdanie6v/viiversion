@@ -4,10 +4,21 @@ authority:
   operational_registry: "Google Drive → VIIVERSION Commercial Matrix → Command_Registry"
   executable_mirror: "GitHub → /orchestration/commands.yaml"
 activation:
-  mode: exact_prefix_token
-  rule: "The first non-empty token must exactly match a trigger or alias. The remaining message is the task payload."
+  mode: hybrid_intent_router
+  rule: "Explicit trigger/alias is a force-route shortcut, not a prerequisite. Automatically route a request into the matching workflow when intent is clear from the task."
   case_sensitive: false
   command_only_message: "Resolve the mode and wait for the user's task; do not invent one."
+  mandatory_sales_intent:
+    - "named existing client/company/person"
+    - "client reply or communication history"
+    - "draft/reply/follow-up/outreach/proposal about an existing commercial relationship"
+    - "interpretation of a client's message, reaction, silence or next step"
+  client_context_preflight:
+    required: true
+    rule: "Before any client-specific advice, interpretation, draft, follow-up or proposal, resolve the client across Sales_Router and Outreach_Queue by company/person/lead_id, load the full matching history and current stage, then continue from that state."
+    no_match: "Search other approved client/communication sources before treating the entity as new. Never ask the user to restate context that is already available in approved sources."
+    stage_guard: "Existing stage/history overrides generic cold-outreach defaults. Never restart a cold sequence for a lead already at Replied, Demo, Discovery, Proposal or Negotiation."
+    evidence_rule: "Separate recorded facts from inference. Latest timestamped interaction wins when operational records conflict; unresolved conflicts must be surfaced."
 principles:
   - "A command selects an operating workflow; it does not replace any Source of Truth."
   - "A command does not itself grant approval to send, deploy, publish, or mutate canonical truth."
@@ -55,7 +66,10 @@ commands:
       - Global Brand & Market Strategy
       - Channel_Profiles
       - Sales Playbook
-      - lead and outreach history
+      - Sales_Router
+      - Outreach_Queue
+      - full lead and communication history
+      - Buyer State when available
     canonical_access: read_only
     allowed_writes:
       - Sales_Router
@@ -66,6 +80,11 @@ commands:
     approval:
       external_send: explicit_or_preapproved_automation_policy
     recording_targets: [Sales_Router, Outreach_Queue, Experiments, Market_Signals]
+    preflight:
+      - "Resolve named client/company/person to lead_id before generating client-facing content."
+      - "Load all matching Sales_Router and Outreach_Queue records and the latest communication state."
+      - "Use current stage + latest reply to determine the next action; do not fall back to cold outreach when a relationship already exists."
+      - "If the user references a known client in ordinary language, auto-route to Sales even without the ПРОДАЖИ trigger."
 
   CMD-PROPOSAL:
     trigger: "КП"
