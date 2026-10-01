@@ -50,6 +50,9 @@ jobs:
           test -s skills/viiversion-brand-architect/references/market-gtm.md
           test -s skills/viiversion-brand-architect/references/role-architecture.yaml
           test -s brand-system/core-loop.yaml
+          test -s orchestration/workflows/core-learning.yaml
+          test -s orchestration/runtime/src/workflows.ts
+          test -s orchestration/schemas/run.schema.json
           test -s evals/cases.json
           python -m json.tool plugin.json >/dev/null
           python -m json.tool .codex-plugin/plugin.json >/dev/null
@@ -65,6 +68,9 @@ jobs:
           grep -Fq 'COMMERCIAL_ECONOMICS' skills/viiversion-brand-architect/references/role-architecture.yaml
           grep -Fq 'PORTFOLIO_INTELLIGENCE' skills/viiversion-brand-architect/references/role-architecture.yaml
           grep -Fq 'G18' skills/viiversion-brand-architect/references/qa-gates.md
+          grep -Fq 'core_learning' orchestration/runtime/src/workflows.ts
+          grep -Fq 'revenue_intelligence' orchestration/workflows/sales.yaml
+          python -m json.tool orchestration/schemas/run.schema.json >/dev/null
 
       - name: Build ZIP
         shell: bash
@@ -76,7 +82,7 @@ jobs:
           rm -rf dist
           mkdir -p "$ROOT"
           cp README.md plugin.json .app.json "$ROOT/"
-          cp -R .codex-plugin skills evals brand-system "$ROOT/"
+          cp -R .codex-plugin skills evals brand-system orchestration "$ROOT/"
           (
             cd dist
             zip -r -9 "viiversion-brand-architect-v${PACKAGE_VERSION}.zip" viiversion-brand-architect
