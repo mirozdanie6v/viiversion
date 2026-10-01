@@ -750,6 +750,71 @@ export async function assembleBrandResult({ ai, run }) {
     throw new BrandRoleError("REDESIGN_SYNTHESIS_REQUIRED", "Redesign final assembly requires an accepted presentation-concept", 409);
   }
 
+  if (isRedesignTask(run.task)) {
+    const presentation = latest.get("presentation-concept")?.payload;
+    const channel = latest.get("channel-projection")?.payload;
+    const sourceContext = latest.get("source-context")?.payload ?? {};
+    validateRedesignBlocks(presentation?.first_three_blocks, "final presentation concept");
+    validateRedesignBlocks(channel?.first_three_blocks, "final channel projection");
+
+    const russian = /[А-Яа-яЁё]/.test(String(run.task ?? ""));
+    const blocks = channel.first_three_blocks;
+    const blockText = blocks.map((block,index) => {
+      const proof = (block.proof_refs ?? []).length ? block.proof_refs.join(", ") : (russian ? "не требуется в этом блоке" : "not required in this block");
+      if (russian) {
+        return [
+          "Блок " + (index + 1),
+          "Заголовок: " + block.heading,
+          "Lead: " + block.lead,
+          "Функция: " + block.purpose,
+          "Что должен понять посетитель: " + block.buyer_takeaway,
+          "Proof: " + proof,
+          "Визуально: " + block.visual_treatment
+        ].join("\n");
+      }
+      return [
+        "Block " + (index + 1),
+        "Heading: " + block.heading,
+        "Lead: " + block.lead,
+        "Purpose: " + block.purpose,
+        "Buyer takeaway: " + block.buyer_takeaway,
+        "Proof: " + proof,
+        "Visual treatment: " + block.visual_treatment
+      ].join("\n");
+    }).join("\n\n");
+
+    const diagnosis = (presentation.challenged_legacy_decisions ?? []).join("; ");
+    const principle = presentation.selected_concept?.principle ?? presentation.material_difference_from_current;
+    const answer = russian
+      ? ["Почему старая подача не работает: " + diagnosis,
+         "Новый принцип: " + principle,
+         "",
+         blockText,
+         "",
+         "Материальное отличие: " + presentation.material_difference_from_current].join("\n")
+      : ["Why the old presentation fails: " + diagnosis,
+         "New principle: " + principle,
+         "",
+         blockText,
+         "",
+         "Material difference: " + presentation.material_difference_from_current].join("\n");
+
+    return {
+      answer,
+      key_decisions: [
+        String(principle),
+        russian ? "Второй блок обязан показывать проверяемый proof сразу после первого promise." : "Block 2 must show inspectable proof immediately after the first promise.",
+        String(presentation.selected_concept?.visual_direction ?? "")
+      ].filter(Boolean),
+      uncertainties: [...new Set([
+        ...(sourceContext.uncertainties ?? []),
+        ...(presentation.unresolved_questions ?? [])
+      ])],
+      source_trace: [...new Set(sourceContext.sources_read ?? [])],
+      audit_items: []
+    };
+  }
+
   const system = [
     "You are the final assembler for VIIVERSION Brand Architect.",
     "Use only the accepted specialist artifacts supplied below.",
