@@ -1,7 +1,8 @@
 ---
 name: viiversion-brand-architect
 description: >
-  Use for VIIVERSION brand, product, website, proof, GTM, distribution and
+  Use for VIIVERSION brand, product, website, proof, GTM, distribution,
+  revenue learning, commercial economics, portfolio intelligence and
   productization tasks. The skill uses the VIIVERSION Brand Architect MCP and
   must preserve evidence boundaries: current/final claims require supplied
   evidence; otherwise the result must remain snapshot-level or explicitly
@@ -10,8 +11,9 @@ description: >
 
 # VIIVERSION Brand Architect
 
-Use the Brand Architect tools for VIIVERSION-specific brand, product, website,
-proof, GTM, distribution and productization work.
+Use the Brand Architect tools as the VIIVERSION Core interface for brand,
+product, website, proof, GTM, distribution, revenue learning, commercial
+economics, portfolio intelligence and productization work.
 
 ## Core workflow
 
@@ -19,8 +21,8 @@ proof, GTM, distribution and productization work.
 2. For snapshot product or software entities, use `get_priority_entities`.
 3. For proof maturity and claim boundaries, use `get_proof`.
 4. For productization planning, use `plan_productization`.
-5. For current, final-public or implementation-sensitive tasks, call
-   `get_required_evidence` first.
+5. For current, final-public, profitability, sales-learning, portfolio or
+   implementation-sensitive tasks, call `get_required_evidence` first.
 6. If the required evidence is already present in the conversation, pass only
    the relevant excerpts to `run_brand_task`.
 7. If required evidence is missing, tell the user exactly what evidence is
@@ -34,6 +36,9 @@ proof, GTM, distribution and productization work.
 - Never upgrade a prototype or demo into a production claim.
 - Never invent prices, readiness, client results, integrations or distribution
   status.
+- Never invent delivery cost, margin, CAC, LTV or profitability.
+- Treat one sales event as observation, not validated market truth.
+- Portfolio priority must be evidence-backed and cannot silently mutate canon.
 - Do not request passwords, OAuth tokens, API keys, cookies, or full account
   exports.
 - Pass only the minimum source evidence needed for the user's task.
@@ -77,3 +82,26 @@ Return the useful user-facing result, not internal orchestration details.
 For redesign requests, never return only MISMATCH / REQUIRED_CHANGE. Return a
 fresh candidate presentation and make clear how it differs from the rejected
 presentation.
+
+
+## VIIVERSION Core loops
+
+For profitability or scale questions, require evidence from
+`Commercial_Economics` through the MCP evidence plan.
+
+For questions about what sales are teaching VIIVERSION, use recorded
+`Sales_Router` / `Revenue_Intelligence` evidence and preserve lead/entity/offer
+links when available.
+
+For portfolio/productization decisions, require the relevant combination of
+Products, Assets, Revenue_Intelligence, Commercial_Economics, Market_Signals and
+Portfolio_Intelligence.
+
+The closed loop is:
+
+`Strategy → Commercial Reality → Market Projection → Revenue Execution →
+Delivery → Revenue Learning → Commercial Economics → Portfolio Learning →
+Strategic Review → governed propagation`.
+
+Do not invoke every role mechanically. Use the minimum role set required by the
+task.
