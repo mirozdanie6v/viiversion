@@ -2,6 +2,9 @@ export const BRAND_ROLE = Object.freeze({
   SOURCE_TRUTH: "source-truth",
   BRAND_STRATEGY: "brand-strategy",
   COMMERCIAL_ARCHITECT: "commercial-architect",
+  COMMERCIAL_ECONOMICS: "commercial-economics",
+  REVENUE_INTELLIGENCE: "revenue-intelligence",
+  PORTFOLIO_INTELLIGENCE: "portfolio-intelligence",
   MARKET_GTM: "market-gtm",
   PRESENTATION_SYNTHESIS: "presentation-synthesis",
   CHANNEL_ARCHITECT: "channel-architect",
@@ -27,6 +30,24 @@ export const BRAND_ROLE_DEFINITIONS = Object.freeze({
     responsibility: "Map the task to real VIIVERSION entities, commercial state, packaging and productization boundaries.",
     outputs: ["commercial-decision", "productization-contract"],
     prohibited: ["invent_product", "upgrade_readiness", "invent_price", "engineering_implementation"]
+  }),
+  [BRAND_ROLE.COMMERCIAL_ECONOMICS]: Object.freeze({
+    title: "Архитектор коммерческой экономики",
+    responsibility: "Assess recorded price, delivery/support effort and cost, margin signal, customization, repeatability, CAC/LTV assumptions and economics confidence without inventing missing numbers.",
+    outputs: ["economics-decision"],
+    prohibited: ["invent_cost", "invent_margin", "invent_cac", "invent_ltv", "replace_commercial_state", "canonical_mutation"]
+  }),
+  [BRAND_ROLE.REVENUE_INTELLIGENCE]: Object.freeze({
+    title: "Аналитик выручки и продаж",
+    responsibility: "Convert recorded replies, objections, qualification, proposal outcomes, won/lost and price/proof reactions into evidence-bounded revenue learning linked to lead/entity/offer where known.",
+    outputs: ["revenue-learning"],
+    prohibited: ["invent_reply", "infer_won_lost_from_silence", "promote_single_event_to_validated_learning", "canonical_mutation", "send_outreach"]
+  }),
+  [BRAND_ROLE.PORTFOLIO_INTELLIGENCE]: Object.freeze({
+    title: "Архитектор портфеля и productization",
+    responsibility: "Compare the VIIVERSION portfolio using commercial state, proof, revenue learning and economics to recommend sell/productize/module/experiment/merge/deprioritize/governance-candidate actions.",
+    outputs: ["portfolio-decision"],
+    prohibited: ["silently_create_entity", "silently_retire_entity", "invent_profitability", "invent_demand", "bypass_governance"]
   }),
   [BRAND_ROLE.MARKET_GTM]: Object.freeze({
     title: "Стратег рынка, GTM и дистрибуции",
@@ -54,7 +75,7 @@ export const BRAND_ROLE_DEFINITIONS = Object.freeze({
   }),
   [BRAND_ROLE.BRAND_QA]: Object.freeze({
     title: "Независимый ревьюер бренда и governance",
-    responsibility: "Run G1-G15 independently and return PASS/FAIL with precise rework targets and residual uncertainty.",
+    responsibility: "Run G1-G18 independently and return PASS/FAIL with precise rework targets and residual uncertainty.",
     outputs: ["qa-report"],
     prohibited: ["silently_rewrite_canon", "approve_own_generated_strategy", "downgrade_live_refresh_requirement", "implementation"]
   })
@@ -81,6 +102,9 @@ export function inferTaskMode(task, explicit) {
 function inferSurface(task, explicit) {
   if (explicit) return clean(explicit,80).toLowerCase();
   const q=task.toLowerCase();
+  if (/profit|margin|марж|экономик|рентабель|cac\b|ltv\b|delivery cost|support cost|себестоим|выгодн/.test(q)) return "commercial-economics";
+  if (/portfolio|портфел|что.*(?:усили|отлож|продав|стро|productize)|какие.*продукт.*(?:усили|отлож|продав)|merge review|depriorit/.test(q)) return "portfolio-review";
+  if (/revenue learning|sales learning|чему.*продаж|ответ.*клиент|objection|возражен|won.?lost|сделк.*(?:выигр|проигр)|повторя.*запрос/.test(q)) return "revenue-learning";
   if (/homepage|hero|website|сайт|главн|лендинг|страниц/.test(q)) return "website";
   if (/gtm|distribution|дистриб|рынок|market|product hunt|marketplace|маркетплейс|launch|запуск/.test(q)) return "market";
   if (/outreach|рассыл|follow.?up|партнер|partner|campaign|кампан/.test(q)) return "campaign";
@@ -105,21 +129,29 @@ export function buildRolePlan(args={}) {
   const current=Boolean(args.current_state) || /сейчас|текущ|today|current|price|цена|readiness|готов|status|статус|sellab|прода/.test(q);
   const finalPublic=Boolean(args.final_public) || /финальн|public|публич|опубли/.test(q);
   const implementation=Boolean(args.implementation) || /внеси|измени|implement|deploy|реализ|код|репозитор/.test(q);
+  const productization=/productiz|продуктиз|превращ.*(?:в|во).*продукт|повторя.*(?:решен|интеграц)/.test(q);
+  const economics=surface==="commercial-economics" || productization || /profit|margin|марж|экономик|рентабель|cac\b|ltv\b|delivery cost|support cost|себестоим|выгодн|repeatab|кастомизац/.test(q);
+  const revenue=surface==="revenue-learning" || productization || /reply|ответ.*клиент|objection|возражен|qualification|proposal outcome|won.?lost|сделк|price reaction|proof reaction|повторя.*запрос/.test(q);
+  const portfolio=surface==="portfolio-review" || productization || /portfolio|портфел|приоритет.*продукт|что.*(?:усили|отлож|productize)|какие.*продукт.*(?:усили|отлож)|merge review|depriorit/.test(q);
 
   const route=[];
   const reasons={};
-  const sourceRequired=current||finalPublic||implementation||["website","market","campaign","product","proof"].includes(surface);
-  if(sourceRequired) add(route,BRAND_ROLE.SOURCE_TRUTH,reasons,"task depends on current/final/implementation or entity/proof state");
+  const sourceRequired=current||finalPublic||implementation||economics||revenue||portfolio||["website","market","campaign","product","proof"].includes(surface);
+  if(sourceRequired) add(route,BRAND_ROLE.SOURCE_TRUTH,reasons,"task depends on current/final/implementation, economics, revenue, portfolio or entity/proof state");
 
-  if(["brand","website","market","campaign","product","audit"].includes(surface)) {
+  if(["brand","website","market","campaign","product","audit","portfolio-review"].includes(surface) || productization) {
     add(route,BRAND_ROLE.BRAND_STRATEGY,reasons,"task requires canonical brand interpretation");
   }
 
-  if(["website","market","campaign","product","proof"].includes(surface) || /booking|offer|product|продукт|цена|sell|readiness|proof|кейс|demo|демо/.test(q)) {
+  if(["website","market","campaign","product","proof","commercial-economics","portfolio-review"].includes(surface) || /booking|offer|product|продукт|цена|sell|readiness|proof|кейс|demo|демо/.test(q) || economics || portfolio) {
     add(route,BRAND_ROLE.COMMERCIAL_ARCHITECT,reasons,"task depends on canonical entities, packaging or commercial state");
   }
 
-  if(["market","campaign"].includes(surface) || /gtm|distribution|дистриб|launch|запуск|marketplace|маркетплейс|product hunt|партнер|partner|outreach|рассыл/.test(q)) {
+  if(economics) add(route,BRAND_ROLE.COMMERCIAL_ECONOMICS,reasons,"task requires economics, repeatability or scalability evidence");
+  if(revenue) add(route,BRAND_ROLE.REVENUE_INTELLIGENCE,reasons,"task requires evidence-bounded learning from recorded sales outcomes");
+  if(portfolio) add(route,BRAND_ROLE.PORTFOLIO_INTELLIGENCE,reasons,"task requires cross-portfolio productization or priority reasoning");
+
+  if(["market","campaign"].includes(surface) || productization || /gtm|distribution|дистриб|launch|запуск|marketplace|маркетплейс|product hunt|партнер|partner|outreach|рассыл/.test(q)) {
     add(route,BRAND_ROLE.MARKET_GTM,reasons,"task requires market/GTM/distribution decision");
   }
 
@@ -127,15 +159,15 @@ export function buildRolePlan(args={}) {
     add(route,BRAND_ROLE.PRESENTATION_SYNTHESIS,reasons,"redesign/new presentation requires fresh synthesis before channel projection");
   }
 
-  if(["website"].includes(surface) || /linkedin|presentation|презентац|headline|hero|copy|текст|сообщен|message|страниц|сайт/.test(q)) {
+  if(surface==="website" || /linkedin|presentation|презентац|headline|hero|copy|текст|сообщен|message|страниц|сайт/.test(q)) {
     add(route,BRAND_ROLE.CHANNEL_ARCHITECT,reasons,"task requires a concrete channel/surface projection");
   }
 
-  if(["website","market","campaign","product","proof","audit"].includes(surface) || /proof|доказ|case|кейс|demo|демо|claim|production|prototype|прототип/.test(q)) {
+  if(["website","market","campaign","product","proof","audit","portfolio-review"].includes(surface) || productization || /proof|доказ|case|кейс|demo|демо|claim|production|prototype|прототип/.test(q)) {
     add(route,BRAND_ROLE.PROOF_ANALYST,reasons,"claims or decisions require evidence and maturity control");
   }
 
-  add(route,BRAND_ROLE.BRAND_QA,reasons,"all final Brand Architect outputs require independent G1-G15 review");
+  add(route,BRAND_ROLE.BRAND_QA,reasons,"all final Brand Architect outputs require independent G1-G18 review");
 
   const artifacts=route.map(role=>({
     role,
@@ -156,7 +188,10 @@ export function buildRolePlan(args={}) {
       "Orchestrator owns routing, run state, artifact acceptance/rejection and final assembly.",
       "Use the minimum sufficient role set; do not invoke every role mechanically.",
       "Only accepted specialist artifacts may be consumed downstream.",
-      "Current/final commercial or distribution claims require validated live source context.",
+      "Current/final commercial, revenue, economics, portfolio or distribution claims require validated live source context.",
+      "Missing economics remain unknown; never invent margin, CAC or LTV.",
+      "One sales event is an observation, not validated learning.",
+      "Portfolio priority requires explicit evidence and cannot silently mutate canon.",
       "Specialists cannot mutate another role's artifact or silently change canon.",
       "BRAND_QA routes rework; it cannot manufacture evidence to turn FAIL into PASS.",
       "REDESIGN is not AUDIT: legacy approved presentation is observed material, not the mandatory creative target.",
@@ -167,8 +202,8 @@ export function buildRolePlan(args={}) {
 
 export const ROLE_TOOL = Object.freeze({
   name:"plan_agent_roles",
-  title:"Plan VIIVERSION Brand Architect specialist roles",
-  description:"Select the minimum specialist-role route for a VIIVERSION Brand Architect task. Returns deterministic role ownership, reasons, output artifacts and invariants.",
+  title:"Plan VIIVERSION Core specialist roles",
+  description:"Select the minimum specialist-role route for a VIIVERSION Core / Brand Architect task. Returns deterministic role ownership, reasons, output artifacts and invariants.",
   inputSchema:{
     type:"object",
     required:["task"],
