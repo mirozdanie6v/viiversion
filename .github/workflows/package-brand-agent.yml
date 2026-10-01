@@ -16,6 +16,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve package version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(python - <<'PY'
+          import json
+          import re
+          with open("plugin.json", encoding="utf-8") as f:
+              plugin = json.load(f)
+          version = plugin["version"]
+          if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version):
+              raise SystemExit(f"Invalid plugin version: {version}")
+          print(version)
+          PY
+          )"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Validate package
         shell: bash
         run: |
@@ -31,43 +49,63 @@ jobs:
           test -s skills/viiversion-brand-architect/references/qa-gates.md
           test -s skills/viiversion-brand-architect/references/market-gtm.md
           test -s skills/viiversion-brand-architect/references/role-architecture.yaml
+          test -s brand-system/core-loop.yaml
           test -s evals/cases.json
           python -m json.tool plugin.json >/dev/null
           python -m json.tool .codex-plugin/plugin.json >/dev/null
           python -m json.tool evals/cases.json >/dev/null
+          python - <<'PY'
+          import json
+          root=json.load(open("plugin.json"))
+          codex=json.load(open(".codex-plugin/plugin.json"))
+          assert root["version"] == codex["version"], (root["version"], codex["version"])
+          PY
           grep -Fq 'allow_implicit_invocation: true' skills/viiversion-brand-architect/agents/openai.yaml
+          grep -Fq 'REVENUE_INTELLIGENCE' skills/viiversion-brand-architect/references/role-architecture.yaml
+          grep -Fq 'COMMERCIAL_ECONOMICS' skills/viiversion-brand-architect/references/role-architecture.yaml
+          grep -Fq 'PORTFOLIO_INTELLIGENCE' skills/viiversion-brand-architect/references/role-architecture.yaml
+          grep -Fq 'G18' skills/viiversion-brand-architect/references/qa-gates.md
 
       - name: Build ZIP
         shell: bash
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           ROOT="dist/viiversion-brand-architect"
           rm -rf dist
           mkdir -p "$ROOT"
           cp README.md plugin.json .app.json "$ROOT/"
-          cp -R .codex-plugin skills evals "$ROOT/"
+          cp -R .codex-plugin skills evals brand-system "$ROOT/"
           (
             cd dist
-            zip -r -9 viiversion-brand-architect-v0.6.0.zip viiversion-brand-architect
+            zip -r -9 "viiversion-brand-architect-v${PACKAGE_VERSION}.zip" viiversion-brand-architect
           )
-          sha256sum dist/viiversion-brand-architect-v0.6.0.zip > dist/viiversion-brand-architect-v0.6.0.zip.sha256
+          sha256sum "dist/viiversion-brand-architect-v${PACKAGE_VERSION}.zip" > "dist/viiversion-brand-architect-v${PACKAGE_VERSION}.zip.sha256"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: viiversion-brand-architect-v0.6.0
+          name: viiversion-brand-architect-v${{ steps.version.outputs.version }}
           path: |
-            dist/viiversion-brand-architect-v0.6.0.zip
-            dist/viiversion-brand-architect-v0.6.0.zip.sha256
+            dist/viiversion-brand-architect-v${{ steps.version.outputs.version }}.zip
+            dist/viiversion-brand-architect-v${{ steps.version.outputs.version }}.zip.sha256
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view brand-agent-v0.6.0 >/dev/null 2>&1; then
-            gh release upload brand-agent-v0.6.0               dist/viiversion-brand-architect-v0.6.0.zip               dist/viiversion-brand-architect-v0.6.0.zip.sha256               --clobber
+          tag="brand-agent-v${PACKAGE_VERSION}"
+          zip="dist/viiversion-brand-architect-v${PACKAGE_VERSION}.zip"
+          checksum="${zip}.sha256"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$zip" "$checksum" --clobber
           else
-            gh release create brand-agent-v0.6.0               dist/viiversion-brand-architect-v0.6.0.zip               dist/viiversion-brand-architect-v0.6.0.zip.sha256               --target "$GITHUB_SHA"               --title "VIIVERSION Brand Architect v0.6.0"               --notes "v0.6.0 adds the seven-role autonomous Brand Architect contract, automatic live Source brokerage, bounded QA rework, final result assembly, and production Cloudflare Workers AI orchestration."
+            gh release create "$tag" "$zip" "$checksum" \
+              --target "$GITHUB_SHA" \
+              --title "VIIVERSION Core / Brand Architect v${PACKAGE_VERSION}" \
+              --notes "Unified VIIVERSION Core release connecting positioning, product architecture, GTM, revenue learning, commercial economics and portfolio intelligence with evidence-bounded governance and Brand QA G1-G18."
           fi
