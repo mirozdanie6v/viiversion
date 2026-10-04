@@ -568,3 +568,36 @@ export async function saveAdminRestCredentials(request: Request, env: Env) {
   });
   return Response.json({ ok: true, vendorId });
 }
+
+function authorizePilotLifecycle(request: Request, env: Env, vendorId: string) {
+  const token = env.BOKUN_BOOKING_TEST_TOKEN?.trim();
+  if (!token || request.headers.get('x-viiversion-booking-test-token') !== token) {
+    throw new Response('Unauthorized', { status: 401 });
+  }
+  if (!allowedVendor(env, vendorId)) throw new Response('Vendor not allowed', { status: 403 });
+}
+
+export async function readPilotBooking(request: Request, env: Env, vendorId: string, code: string) {
+  authorizePilotLifecycle(request, env, vendorId);
+  if (!/^NHA-(?:T)?[0-9]+$/.test(code)) throw new Response('Invalid booking code', { status: 400 });
+  const result = await restRequest(env, vendorId, '/booking.json/booking/' + encodeURIComponent(code));
+  const booking = plainObject(result);
+  if (!booking || !String(booking.externalBookingReference ?? '').startsWith('LT-TEST-')) {
+    throw new Response('Only VIIVERSION pilot bookings are permitted', { status: 403 });
+  }
+  return booking;
+}
+
+export async function confirmPilotBooking(request: Request, env: Env, vendorId: string, code: string) {
+  if (request.headers.get('x-viiversion-booking-intent') !== 'CONFIRM_REAL_BOKUN_TEST_BOOKING') {
+    throw new Response('Explicit test confirmation intent required', { status: 412 });
+  }
+  const booking = await readPilotBooking(request, env, vendorId, code);
+  if (booking.status === 'CONFIRMED') return { booking };
+  if (booking.status !== 'RESERVED') throw new Response('Booking is not reserved', { status: 409 });
+  // Test confirmation must not assert that any payment has been received.
+  return restRequest(env, vendorId, '/checkout.json/confirm-reserved/' + encodeURIComponent(code), {
+    method: 'POST',
+    body: { amount: 0, currency: 'USD', sendNotificationToMainContact: false, showPricesInNotification: false },
+  });
+}
