@@ -7,7 +7,7 @@ User explicitly requested one confirmed test booking after Hùng reported that N
 - Original booking NHA-105381046: Bókun readback status TIMEOUT.
 - Replacement booking NHA-105698735 (bookingId 105698735): CONFIRMED.
 - Product: Robinson Beach, activity 1287578, adult category 1250028, one passenger.
-- Departure selected from live availability: 2026-10-07, startTimeId 5782388 (09:00 local).
+- Departure selected from live availability: 2026-10-07, startTimeId 5782388 (product slot label 09:00; timezone interpretation not verified in the extranet).
 - Customer: VIIVERSION / CONFIRMED TEST - DO NOT OPERATE.
 - External reference: LT-TEST-CONFIRMED-37189591568.
 - Payment: NOT_PAID, totalPaid 0. No payment or charge was recorded.
@@ -35,7 +35,7 @@ Read-only Bókun API audit passed:
 - Seller ID 137689 / Nha Trang Love Travel.
 - Activity booking 148680796 / NHA-T148680796: CONFIRMED, product ID 1287578.
 - Booking channel ID 445748 / VIIVERSION AI – Love Travel, type APP.
-- Departure startDateTime 1791363600000 / 2026-10-07 09:00 Asia/Ho_Chi_Minh.
+- Departure startDateTime 1791363600000 (ISO serialization 2026-10-07T09:00:00.000Z). Do not infer the extranet's displayed local time without checking its timezone handling.
 - Payment NOT_PAID, totalPaid 0.
 - No booking mutation or additional booking creation in this audit.
 - The prior summary incorrectly selected productBookings (absent in this API response); actual activityBookings was explicitly inspected and asserted in this audit.
