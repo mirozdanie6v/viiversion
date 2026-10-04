@@ -10,6 +10,8 @@ import {
   handleInstall,
   saveAdminRestCredentials,
   submitReservedCheckout,
+  readPilotBooking,
+  confirmPilotBooking,
 } from './bokun';
 import {
   completeWhatsAppCoexistence,
@@ -401,6 +403,15 @@ export default {
           return json(request, env, { error: { code: 'INVALID_JSON', message: 'Booking request JSON is required' } }, 400);
         }
         return json(request, env, await getCheckoutOptions(env, vendorId, bookingRequest, currency));
+      }
+
+      if (url.pathname === '/admin/bokun/pilot/booking' && request.method === 'GET') {
+        return json(request, env, await readPilotBooking(request, env,
+          value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID), value(url, 'code', '')));
+      }
+      if (url.pathname === '/admin/bokun/pilot/confirm' && request.method === 'POST') {
+        return json(request, env, await confirmPilotBooking(request, env,
+          value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID), value(url, 'code', '')));
       }
 
       if (url.pathname === '/admin/bokun/checkout/submit-reserve' && request.method === 'POST') {
