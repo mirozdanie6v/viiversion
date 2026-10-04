@@ -596,8 +596,10 @@ export async function confirmPilotBooking(request: Request, env: Env, vendorId: 
   if (booking.status === 'CONFIRMED') return { booking };
   if (booking.status !== 'RESERVED') throw new Response('Booking is not reserved', { status: 409 });
   // Test confirmation must not assert that any payment has been received.
-  return restRequest(env, vendorId, '/checkout.json/confirm-reserved/' + encodeURIComponent(code), {
-    method: 'POST',
-    body: { amount: 0, currency: 'USD', sendNotificationToMainContact: false, showPricesInNotification: false },
-  });
+  const confirmed = await restRequest(env, vendorId,
+    '/booking.json/' + encodeURIComponent(code) + '/confirm?currency=USD&lang=EN&sendCustomerNotification=false', {
+      method: 'POST',
+      body: { externalBookingReference: booking.externalBookingReference },
+    });
+  return { booking: confirmed };
 }
