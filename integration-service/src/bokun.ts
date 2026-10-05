@@ -28,6 +28,7 @@ export interface Env {
   BOKUN_REST_BASE_URL?: string;
   BOKUN_REAL_BOOKING_ENABLED?: string;
   BOKUN_BOOKING_TEST_TOKEN?: string;
+  LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256?: string;
   ALLOWED_ORIGIN_SUFFIX?: string;
   META_WHATSAPP_ACCESS_TOKEN?: string;
   META_WHATSAPP_PHONE_NUMBER_ID?: string;
@@ -52,11 +53,12 @@ async function sha256Hex(value: string) {
   return [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function loveTravelDemoTokenHash(request: Request) {
+async function loveTravelDemoTokenHash(request: Request, env: Env) {
   const token = request.headers.get('x-love-travel-demo-token')?.trim() ?? '';
   if (!token) throw new Response('Unauthorized', { status:401 });
   const hash = await sha256Hex(token);
-  if (hash !== LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256) throw new Response('Unauthorized', { status:401 });
+  const expected = env.LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256?.trim() || LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256;
+  if (hash !== expected) throw new Response('Unauthorized', { status:401 });
   return hash;
 }
 
@@ -575,7 +577,7 @@ export async function submitLoveTravelClientDemoBooking(
   checkoutRequest: unknown,
   currency = 'USD',
 ) {
-  const tokenHash = await loveTravelDemoTokenHash(request);
+  const tokenHash = await loveTravelDemoTokenHash(request, env);
   if (request.headers.get('x-viiversion-booking-intent') !== 'SUBMIT_LOVE_TRAVEL_CLIENT_DEMO_BOOKING') {
     throw new Response('Explicit Love Travel demo booking intent required', { status: 412 });
   }
