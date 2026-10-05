@@ -1,0 +1,43 @@
+name: Deploy integration service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'integration-service/**'
+      - '.github/workflows/deploy-integration-service.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: integration-service
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: npm install --no-fund --no-audit
+      - run: npm run typecheck
+      - run: npm test
+      - name: Verify Cloudflare authentication
+        run: npx wrangler whoami
+      - name: Deploy
+        run: npx wrangler deploy --config wrangler.jsonc
+      - name: Verify live Bókun integration
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS 'https://integration.viiversion.com/api/bokun/status?vendorId=137689' > /tmp/status.json
+          jq -e '.ok == true and .oauthConnected == true and .restCredentialsReady == true and .vendorId == "137689"' /tmp/status.json >/dev/null
+          code="$(curl -sS -o /tmp/no-token.txt -w '%{http_code}'             -X POST 'https://integration.viiversion.com/internal/lovetravel/bokun/demo-submit?vendorId=137689&currency=USD'             -H 'content-type: application/json' --data '{}')"
+          test "$code" = 401
