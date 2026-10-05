@@ -26,6 +26,7 @@ export interface Env {
   BOKUN_REST_BASE_URL?: string;
   BOKUN_REAL_BOOKING_ENABLED?: string;
   BOKUN_BOOKING_TEST_TOKEN?: string;
+  LOVE_TRAVEL_DEMO_TOKEN?: string;
   ALLOWED_ORIGIN_SUFFIX?: string;
   META_WHATSAPP_ACCESS_TOKEN?: string;
   META_WHATSAPP_PHONE_NUMBER_ID?: string;
@@ -547,6 +548,74 @@ export async function submitReservedCheckout(
     method: 'POST',
     body: checkout,
   });
+}
+
+
+export async function submitLoveTravelClientDemoBooking(
+  request: Request,
+  env: Env,
+  vendorId: string,
+  checkoutRequest: unknown,
+  currency = 'USD',
+) {
+  const expected = env.LOVE_TRAVEL_DEMO_TOKEN?.trim() ?? '';
+  if (!expected || request.headers.get('authorization') !== 'Bearer ' + expected) {
+    throw new Response('Unauthorized', { status: 401 });
+  }
+  if (request.headers.get('x-viiversion-booking-intent') !== 'SUBMIT_LOVE_TRAVEL_CLIENT_DEMO_BOOKING') {
+    throw new Response('Explicit Love Travel demo booking intent required', { status: 412 });
+  }
+  if (!allowedVendor(env, vendorId)) throw new Response('Vendor not allowed', { status: 403 });
+
+  numeric(vendorId, 'vendorId');
+  const checkout = validatePilotCheckoutRequest(env, checkoutRequest);
+  const booking = checkout.directBooking;
+  const reference = String(booking.externalBookingReference ?? '').trim();
+  if (!reference.startsWith('LT-TEST-CLIENT-')) {
+    throw new Response('Client demo reference must start with LT-TEST-CLIENT-', { status: 400 });
+  }
+  if (String(booking.externalBookingEntityName ?? '') !== 'VIIVERSION'
+    || String(booking.externalBookingEntityCode ?? '') !== 'LOVE_TRAVEL') {
+    throw new Response('Invalid client demo booking entity', { status: 400 });
+  }
+
+  const optionType = String(checkout.checkoutOption ?? '');
+  const liveContract = await getCheckoutOptions(env, vendorId, booking, currency);
+  if (!reserveAllowed(liveContract, optionType)) {
+    throw new Response('Live Bókun checkout no longer allows reserve for this option', { status: 409 });
+  }
+
+  const reservation = await restRequest(env, vendorId, checkoutSubmitPath(currency), {
+    method: 'POST',
+    body: checkout,
+  });
+  const reservationRoot = plainObject(reservation);
+  const reserved = plainObject(reservationRoot?.booking) ?? reservationRoot;
+  const code = String(reserved?.confirmationCode ?? '').trim();
+  const status = String(reserved?.status ?? '').trim().toUpperCase();
+  if (!/^NHA-[0-9]+$/.test(code)) throw new Response('Bókun did not return a valid booking code', { status: 502 });
+
+  let confirmed = reserved;
+  if (status === 'RESERVED') {
+    confirmed = plainObject(await restRequest(
+      env,
+      vendorId,
+      '/booking.json/' + encodeURIComponent(code) + '/confirm?currency='
+        + encodeURIComponent(currencyCode(currency)) + '&lang=EN&sendCustomerNotification=false',
+      {
+        method: 'POST',
+        body: { externalBookingReference: reference },
+      },
+    ));
+  } else if (status !== 'CONFIRMED') {
+    throw new Response('Bókun client demo booking was not reservable', { status: 409 });
+  }
+
+  return {
+    ok: true,
+    mode: 'LOVE_TRAVEL_CLIENT_DEMO',
+    booking: confirmed,
+  };
 }
 
 export async function saveAdminRestCredentials(request: Request, env: Env) {
