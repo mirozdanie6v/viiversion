@@ -6,6 +6,8 @@ import {
   saveInstallation,
   saveOAuthState,
   saveRestCredentials,
+  claimLoveTravelDemoBooking,
+  updateLoveTravelDemoBooking,
 } from './store';
 
 export interface Env {
@@ -26,7 +28,6 @@ export interface Env {
   BOKUN_REST_BASE_URL?: string;
   BOKUN_REAL_BOOKING_ENABLED?: string;
   BOKUN_BOOKING_TEST_TOKEN?: string;
-  LOVE_TRAVEL_DEMO_TOKEN?: string;
   ALLOWED_ORIGIN_SUFFIX?: string;
   META_WHATSAPP_ACCESS_TOKEN?: string;
   META_WHATSAPP_PHONE_NUMBER_ID?: string;
@@ -43,6 +44,22 @@ export interface Env {
 }
 
 const encoder = new TextEncoder();
+const LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256 = '0551905d7ba4e0dee3190b5e9f29f7a07be5ce0d09a27cd35ce587f601019432';
+
+
+async function sha256Hex(value: string) {
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value)));
+  return [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function loveTravelDemoTokenHash(request: Request) {
+  const token = request.headers.get('x-love-travel-demo-token')?.trim() ?? '';
+  if (!token) throw new Response('Unauthorized', { status:401 });
+  const hash = await sha256Hex(token);
+  if (hash !== LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256) throw new Response('Unauthorized', { status:401 });
+  return hash;
+}
+
 
 function required(value: string | undefined, name: string) {
   const clean = value?.trim();
@@ -558,10 +575,7 @@ export async function submitLoveTravelClientDemoBooking(
   checkoutRequest: unknown,
   currency = 'USD',
 ) {
-  const expected = env.LOVE_TRAVEL_DEMO_TOKEN?.trim() ?? '';
-  if (!expected || request.headers.get('authorization') !== 'Bearer ' + expected) {
-    throw new Response('Unauthorized', { status: 401 });
-  }
+  const tokenHash = await loveTravelDemoTokenHash(request);
   if (request.headers.get('x-viiversion-booking-intent') !== 'SUBMIT_LOVE_TRAVEL_CLIENT_DEMO_BOOKING') {
     throw new Response('Explicit Love Travel demo booking intent required', { status: 412 });
   }
@@ -579,43 +593,91 @@ export async function submitLoveTravelClientDemoBooking(
     throw new Response('Invalid client demo booking entity', { status: 400 });
   }
 
+  const activity = plainObject(Array.isArray(booking.activityBookings) ? booking.activityBookings[0] : null);
+  const productId = String(activity?.activityId ?? '').trim();
+  if (!configuredProductIds(env).has(productId)) throw new Response('Unsupported Bókun product', { status:400 });
+
   const optionType = String(checkout.checkoutOption ?? '');
   const liveContract = await getCheckoutOptions(env, vendorId, booking, currency);
   if (!reserveAllowed(liveContract, optionType)) {
     throw new Response('Live Bókun checkout no longer allows reserve for this option', { status: 409 });
   }
 
-  const reservation = await restRequest(env, vendorId, checkoutSubmitPath(currency), {
-    method: 'POST',
-    body: checkout,
+  const claim = await claimLoveTravelDemoBooking(env, {
+    tokenHash,
+    productId,
+    status:'PENDING',
+    externalReference:reference,
+    updatedAt:new Date().toISOString(),
   });
-  const reservationRoot = plainObject(reservation);
-  const reserved = plainObject(reservationRoot?.booking) ?? reservationRoot;
-  const code = String(reserved?.confirmationCode ?? '').trim();
-  const status = String(reserved?.status ?? '').trim().toUpperCase();
-  if (!/^NHA-[0-9]+$/.test(code)) throw new Response('Bókun did not return a valid booking code', { status: 502 });
-
-  let confirmed = reserved;
-  if (status === 'RESERVED') {
-    confirmed = plainObject(await restRequest(
-      env,
-      vendorId,
-      '/booking.json/' + encodeURIComponent(code) + '/confirm?currency='
-        + encodeURIComponent(currencyCode(currency)) + '&lang=EN&sendCustomerNotification=false',
-      {
-        method: 'POST',
-        body: { externalBookingReference: reference },
-      },
-    ));
-  } else if (status !== 'CONFIRMED') {
-    throw new Response('Bókun client demo booking was not reservable', { status: 409 });
+  if (!claim.claimed) {
+    if (claim.value.status === 'CONFIRMED' && claim.value.confirmationCode) {
+      return {
+        ok:true,
+        mode:'LOVE_TRAVEL_CLIENT_DEMO',
+        reused:true,
+        booking:{
+          confirmationCode:claim.value.confirmationCode,
+          status:claim.value.bookingStatus || 'CONFIRMED',
+          paymentType:'NOT_PAID',
+          totalPaid:0,
+          externalBookingReference:claim.value.externalReference,
+        },
+      };
+    }
+    throw new Response('This client demo token has already been used for this product', { status:409 });
   }
 
-  return {
-    ok: true,
-    mode: 'LOVE_TRAVEL_CLIENT_DEMO',
-    booking: confirmed,
-  };
+  try {
+    const reservation = await restRequest(env, vendorId, checkoutSubmitPath(currency), {
+      method: 'POST',
+      body: checkout,
+    });
+    const reservationRoot = plainObject(reservation);
+    const reserved = plainObject(reservationRoot?.booking) ?? reservationRoot;
+    const code = String(reserved?.confirmationCode ?? '').trim();
+    const status = String(reserved?.status ?? '').trim().toUpperCase();
+    if (!/^NHA-[0-9]+$/.test(code)) throw new Response('Bókun did not return a valid booking code', { status: 502 });
+
+    let confirmed = reserved;
+    if (status === 'RESERVED') {
+      confirmed = plainObject(await restRequest(
+        env,
+        vendorId,
+        '/booking.json/' + encodeURIComponent(code) + '/confirm?currency='
+          + encodeURIComponent(currencyCode(currency)) + '&lang=EN&sendCustomerNotification=false',
+        {
+          method: 'POST',
+          body: { externalBookingReference: reference },
+        },
+      ));
+    } else if (status !== 'CONFIRMED') {
+      throw new Response('Bókun client demo booking was not reservable', { status: 409 });
+    }
+
+    const confirmationCode = String(confirmed?.confirmationCode ?? code);
+    const bookingStatus = String(confirmed?.status ?? 'CONFIRMED').toUpperCase();
+    await updateLoveTravelDemoBooking(env, {
+      ...claim.value,
+      status:'CONFIRMED',
+      confirmationCode,
+      bookingStatus,
+      updatedAt:new Date().toISOString(),
+    });
+
+    return {
+      ok: true,
+      mode: 'LOVE_TRAVEL_CLIENT_DEMO',
+      booking: confirmed,
+    };
+  } catch (error) {
+    await updateLoveTravelDemoBooking(env, {
+      ...claim.value,
+      status:'ERROR',
+      updatedAt:new Date().toISOString(),
+    }).catch(() => undefined);
+    throw error;
+  }
 }
 
 export async function saveAdminRestCredentials(request: Request, env: Env) {
