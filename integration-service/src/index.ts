@@ -10,6 +10,7 @@ import {
   handleInstall,
   saveAdminRestCredentials,
   submitReservedCheckout,
+  submitLoveTravelClientDemoBooking,
   readPilotBooking,
   confirmPilotBooking,
 } from './bokun';
@@ -412,6 +413,20 @@ export default {
       if (url.pathname === '/admin/bokun/pilot/confirm' && request.method === 'POST') {
         return json(request, env, await confirmPilotBooking(request, env,
           value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID), value(url, 'code', '')));
+      }
+
+      if (url.pathname === '/internal/lovetravel/bokun/demo-submit' && request.method === 'POST') {
+        const declaredLength = Number(request.headers.get('content-length') ?? '0');
+        if (Number.isFinite(declaredLength) && declaredLength > 65536) {
+          return json(request, env, { error: { code: 'PAYLOAD_TOO_LARGE', message: 'Checkout request is too large' } }, 413);
+        }
+        const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
+        const currency = value(url, 'currency', 'USD');
+        const checkoutRequest = await request.json<unknown>().catch(() => null);
+        if (!checkoutRequest) {
+          return json(request, env, { error: { code: 'INVALID_JSON', message: 'Checkout request JSON is required' } }, 400);
+        }
+        return json(request, env, await submitLoveTravelClientDemoBooking(request, env, vendorId, checkoutRequest, currency));
       }
 
       if (url.pathname === '/admin/bokun/checkout/submit-reserve' && request.method === 'POST') {
