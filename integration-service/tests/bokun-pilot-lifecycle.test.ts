@@ -30,14 +30,14 @@ it('client demo submit stays server-only and requires explicit intent', async ()
   };
   await expect(submitLoveTravelClientDemoBooking(
     new Request('https://test'),
-    {LOVE_TRAVEL_DEMO_TOKEN:'server-secret',BOKUN_PRODUCT_IDS:'1287578,1287580'} as any,
+    {LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256:'9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',BOKUN_PRODUCT_IDS:'1287578,1287580'} as any,
     '137689',
     checkout,
   )).rejects.toMatchObject({status:401});
 
   await expect(submitLoveTravelClientDemoBooking(
-    new Request('https://test', {headers:{authorization:'Bearer server-secret'}}),
-    {LOVE_TRAVEL_DEMO_TOKEN:'server-secret',BOKUN_PRODUCT_IDS:'1287578,1287580'} as any,
+    new Request('https://test', {headers:{'x-love-travel-demo-token':'test'}}),
+    {LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256:'9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',BOKUN_PRODUCT_IDS:'1287578,1287580'} as any,
     '137689',
     checkout,
   )).rejects.toMatchObject({status:412});
@@ -45,7 +45,7 @@ it('client demo submit stays server-only and requires explicit intent', async ()
 
 it('client demo submit rejects non-client test references before any Bókun write', async () => {
   const request = new Request('https://test', {headers:{
-    authorization:'Bearer server-secret',
+    'x-love-travel-demo-token':'test',
     'x-viiversion-booking-intent':'SUBMIT_LOVE_TRAVEL_CLIENT_DEMO_BOOKING',
   }});
   const checkout = {
@@ -64,7 +64,7 @@ it('client demo submit rejects non-client test references before any Bókun writ
   };
   await expect(submitLoveTravelClientDemoBooking(
     request,
-    {LOVE_TRAVEL_DEMO_TOKEN:'server-secret',BOKUN_PRODUCT_IDS:'1287578,1287580'} as any,
+    {LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256:'9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',BOKUN_PRODUCT_IDS:'1287578,1287580'} as any,
     '137689',
     checkout,
   )).rejects.toMatchObject({status:400});
