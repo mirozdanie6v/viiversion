@@ -45,7 +45,7 @@ export interface Env {
 }
 
 const encoder = new TextEncoder();
-const LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256 = '0551905d7ba4e0dee3190b5e9f29f7a07be5ce0d09a27cd35ce587f601019432';
+const LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256 = '42cad24054916ff2040742df44c06a31421534cf640b784371f8d05e46635489';
 
 
 async function sha256Hex(value: string) {
