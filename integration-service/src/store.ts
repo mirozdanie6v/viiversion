@@ -133,6 +133,17 @@ export type WhatsAppBrowserSendResult = {
   [key: string]: unknown;
 };
 
+export type LoveTravelDemoBookingGuard = {
+  tokenHash: string;
+  productId: string;
+  status: 'PENDING' | 'CONFIRMED' | 'ERROR';
+  externalReference: string;
+  confirmationCode?: string;
+  bookingStatus?: string;
+  updatedAt: string;
+};
+
+
 type WhatsAppBrowserAuthMeta = {
   chunks: number;
   updatedAt: string;
@@ -200,6 +211,48 @@ export class IntegrationStore {
       const value = await this.state.storage.get<RestCredentials>(`rest:${vendorId}`);
       return json({ value: value ?? null });
     }
+
+    if (url.pathname === '/lovetravel/demo/claim' && request.method === 'POST') {
+      const input = await request.json<LoveTravelDemoBookingGuard>();
+      if (!/^[0-9a-f]{64}$/.test(input.tokenHash || '') || !/^\d+$/.test(input.productId || '') || !input.externalReference) {
+        return json({ error:'invalid_demo_guard' }, 400);
+      }
+      const key = `lt:demo:${input.tokenHash}:${input.productId}`;
+      const result = await this.state.storage.transaction(async txn => {
+        const existing = await txn.get<LoveTravelDemoBookingGuard>(key);
+        if (existing) return { claimed:false, value:existing };
+        const value: LoveTravelDemoBookingGuard = {
+          tokenHash:input.tokenHash,
+          productId:input.productId,
+          status:'PENDING',
+          externalReference:input.externalReference,
+          updatedAt:new Date().toISOString(),
+        };
+        await txn.put(key,value);
+        return { claimed:true, value };
+      });
+      return json(result);
+    }
+
+    if (url.pathname === '/lovetravel/demo/update' && request.method === 'POST') {
+      const input = await request.json<LoveTravelDemoBookingGuard>();
+      if (!/^[0-9a-f]{64}$/.test(input.tokenHash || '') || !/^\d+$/.test(input.productId || '')) {
+        return json({ error:'invalid_demo_guard' }, 400);
+      }
+      const key = `lt:demo:${input.tokenHash}:${input.productId}`;
+      const current = await this.state.storage.get<LoveTravelDemoBookingGuard>(key);
+      if (!current) return json({ error:'demo_guard_not_found' }, 404);
+      const value: LoveTravelDemoBookingGuard = {
+        ...current,
+        status:input.status,
+        confirmationCode:input.confirmationCode,
+        bookingStatus:input.bookingStatus,
+        updatedAt:new Date().toISOString(),
+      };
+      await this.state.storage.put(key,value);
+      return json({ ok:true, value });
+    }
+
 
     if (url.pathname === '/whatsapp/onboarding-session' && request.method === 'POST') {
       const input = await request.json<WhatsAppOnboardingSession>();
@@ -624,6 +677,23 @@ export async function getRestCredentials(env: StoreEnv, vendorId: string) {
   const result = await call<{ value: RestCredentials | null }>(env, '/rest?vendorId=' + encodeURIComponent(vendorId));
   return result.value;
 }
+
+export async function claimLoveTravelDemoBooking(env: StoreEnv, value: LoveTravelDemoBookingGuard) {
+  return call<{ claimed:boolean; value:LoveTravelDemoBookingGuard }>(env, '/lovetravel/demo/claim', {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify(value),
+  });
+}
+
+export async function updateLoveTravelDemoBooking(env: StoreEnv, value: LoveTravelDemoBookingGuard) {
+  return call<{ ok:boolean; value:LoveTravelDemoBookingGuard }>(env, '/lovetravel/demo/update', {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify(value),
+  });
+}
+
 
 export async function saveWhatsAppOnboardingSession(env: StoreEnv, value: WhatsAppOnboardingSession) {
   await call(env, '/whatsapp/onboarding-session', {
