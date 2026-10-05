@@ -1,11 +1,7 @@
 name: Deploy integration service
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'integration-service/**'
-      - '.github/workflows/deploy-integration-service.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
