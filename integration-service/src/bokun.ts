@@ -585,7 +585,8 @@ export async function submitLoveTravelClientDemoBooking(
 
   numeric(vendorId, 'vendorId');
   const checkout = validatePilotCheckoutRequest(env, checkoutRequest);
-  const booking = checkout.directBooking;
+  const booking = plainObject(checkout.directBooking);
+  if (!booking) throw new Response('Invalid client demo booking request', { status:400 });
   const reference = String(booking.externalBookingReference ?? '').trim();
   if (!reference.startsWith('LT-TEST-CLIENT-')) {
     throw new Response('Client demo reference must start with LT-TEST-CLIENT-', { status: 400 });
