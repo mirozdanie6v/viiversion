@@ -457,6 +457,32 @@ export function checkoutSubmitPath(currency = 'USD') {
   return '/checkout.json/submit?' + new URLSearchParams({ currency: currencyCode(currency) }).toString();
 }
 
+export function bookingSearchPath() {
+  return '/booking.json/booking-search';
+}
+
+export function bookingSearchRequest(bookingDate: string, page = 1, itemsPerPage = 100) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) throw new Response('bookingDate must be YYYY-MM-DD', { status: 400 });
+  if (!Number.isInteger(page) || page < 1 || page > 1000) throw new Response('Invalid booking search page', { status: 400 });
+  if (!Number.isInteger(itemsPerPage) || itemsPerPage < 1 || itemsPerPage > 100) throw new Response('Invalid booking search page size', { status: 400 });
+
+  const center = new Date(bookingDate + 'T00:00:00.000Z');
+  if (Number.isNaN(center.getTime())) throw new Response('Invalid bookingDate', { status: 400 });
+  const from = new Date(center.getTime() - 24 * 60 * 60 * 1000);
+  const to = new Date(center.getTime() + 2 * 24 * 60 * 60 * 1000 - 1);
+
+  return {
+    page,
+    itemsPerPage,
+    startDateRange: {
+      from: from.toISOString().replace('.000Z', 'Z'),
+      includeLower: true,
+      includeUpper: true,
+      to: to.toISOString().replace('.999Z', 'Z'),
+    },
+  };
+}
+
 function configuredProductIds(env: Env) {
   return new Set(configuredProducts(env).map(product => product.id));
 }
@@ -720,6 +746,66 @@ export async function readPilotBooking(request: Request, env: Env, vendorId: str
     throw new Response('Only VIIVERSION pilot bookings are permitted', { status: 403 });
   }
   return booking;
+}
+
+function bookingSearchItems(payload: unknown) {
+  const object = plainObject(payload);
+  return Array.isArray(object?.items) ? object.items : [];
+}
+
+function bookingSearchTotalPages(payload: unknown, currentPage: number) {
+  const object = plainObject(payload);
+  const paging = plainObject(object?.paging);
+  const total = Number(object?.totalPages ?? paging?.totalPages ?? paging?.totalPageCount ?? currentPage);
+  return Number.isInteger(total) && total >= currentPage ? Math.min(total, 5) : currentPage;
+}
+
+export async function reconcileLoveTravelClientDemoBooking(
+  request: Request,
+  env: Env,
+  vendorId: string,
+  externalBookingReference: string,
+  bookingDate: string,
+) {
+  await loveTravelDemoTokenHash(request, env);
+  if (request.headers.get('x-viiversion-booking-intent') !== 'RECONCILE_LOVE_TRAVEL_CLIENT_DEMO_BOOKING') {
+    throw new Response('Explicit Love Travel reconciliation intent required', { status: 412 });
+  }
+  if (!allowedVendor(env, vendorId)) throw new Response('Vendor not allowed', { status: 403 });
+  numeric(vendorId, 'vendorId');
+
+  const reference = externalBookingReference.trim();
+  if (!/^LT-TEST-CLIENT-[A-Za-z0-9._:-]{1,120}$/.test(reference)) {
+    throw new Response('Invalid Love Travel client demo external reference', { status: 400 });
+  }
+
+  for (let page = 1; page <= 5; page += 1) {
+    const search = await restRequest(env, vendorId, bookingSearchPath(), {
+      method: 'POST',
+      body: bookingSearchRequest(bookingDate, page, 100),
+    });
+    const items = bookingSearchItems(search);
+    for (const raw of items) {
+      const item = plainObject(raw);
+      const code = String(item?.confirmationCode ?? item?.bookingConfirmationCode ?? '').trim();
+      if (!/^NHA-(?:T)?[0-9]+$/.test(code)) continue;
+      const full = plainObject(await restRequest(env, vendorId, '/booking.json/booking/' + encodeURIComponent(code)));
+      if (!full) continue;
+      if (String(full.externalBookingReference ?? '').trim() !== reference) continue;
+      return {
+        ok: true,
+        found: true,
+        booking: full,
+      };
+    }
+    if (page >= bookingSearchTotalPages(search, page)) break;
+  }
+
+  return {
+    ok: true,
+    found: false,
+    externalBookingReference: reference,
+  };
 }
 
 export async function confirmPilotBooking(request: Request, env: Env, vendorId: string, code: string) {
