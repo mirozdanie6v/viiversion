@@ -11,6 +11,7 @@ import {
   saveAdminRestCredentials,
   submitReservedCheckout,
   submitLoveTravelClientDemoBooking,
+  reconcileLoveTravelClientDemoBooking,
   readPilotBooking,
   confirmPilotBooking,
 } from './bokun';
@@ -427,6 +428,25 @@ export default {
           return json(request, env, { error: { code: 'INVALID_JSON', message: 'Checkout request JSON is required' } }, 400);
         }
         return json(request, env, await submitLoveTravelClientDemoBooking(request, env, vendorId, checkoutRequest, currency));
+      }
+
+      if (url.pathname === '/internal/lovetravel/bokun/reconcile' && request.method === 'POST') {
+        const declaredLength = Number(request.headers.get('content-length') ?? '0');
+        if (Number.isFinite(declaredLength) && declaredLength > 8192) {
+          return json(request, env, { error: { code: 'PAYLOAD_TOO_LARGE', message: 'Reconciliation request is too large' } }, 413);
+        }
+        const vendorId = value(url, 'vendorId', env.BOKUN_DEFAULT_VENDOR_ID);
+        const payload = await request.json<{ externalBookingReference?: string; bookingDate?: string }>().catch(() => null);
+        if (!payload) {
+          return json(request, env, { error: { code: 'INVALID_JSON', message: 'Reconciliation JSON is required' } }, 400);
+        }
+        return json(request, env, await reconcileLoveTravelClientDemoBooking(
+          request,
+          env,
+          vendorId,
+          String(payload.externalBookingReference ?? ''),
+          String(payload.bookingDate ?? ''),
+        ));
       }
 
       if (url.pathname === '/admin/bokun/checkout/submit-reserve' && request.method === 'POST') {

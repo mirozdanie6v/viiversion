@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   bokunRestDate,
+  bookingSearchPath,
+  bookingSearchRequest,
   canonicalOAuthQuery,
   canonicalVendorId,
   checkoutOptionsPath,
@@ -41,6 +43,23 @@ describe('Bókun integration primitives', () => {
     expect(checkoutOptionsPath('usd')).toBe('/checkout.json/options/booking-request?currency=USD');
     expect(checkoutSubmitPath('USD')).toBe('/checkout.json/submit?currency=USD');
     expect(() => checkoutOptionsPath('US')).toThrow();
+  });
+
+  it('builds bounded booking-search requests around the activity date for reconciliation', () => {
+    expect(bookingSearchPath()).toBe('/booking.json/booking-search');
+    expect(bookingSearchRequest('2026-10-08', 2, 100)).toEqual({
+      page: 2,
+      itemsPerPage: 100,
+      startDateRange: {
+        from: '2026-10-07T00:00:00Z',
+        includeLower: true,
+        includeUpper: true,
+        to: '2026-10-09T23:59:59Z',
+      },
+    });
+    expect(() => bookingSearchRequest('../bad')).toThrow();
+    expect(() => bookingSearchRequest('2026-10-08', 0, 100)).toThrow();
+    expect(() => bookingSearchRequest('2026-10-08', 1, 101)).toThrow();
   });
 
   it('accepts only configured LoveTravel pilot products and LT-TEST references', () => {
