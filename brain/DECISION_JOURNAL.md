@@ -50,3 +50,21 @@ A canonical management layer, reliable Day-0 company map, and evidence-based fir
 
 ## Status
 Active.
+
+## DJ-002 — Adopt the crisis-manager / founder-management model
+
+### Context
+The intended Brain was previously summarized in the project's earlier Brain discussion more strongly than the initial bootstrap captured.
+
+### Decision
+VIIVERSION Brain is explicitly a strong AI CEO/turnaround manager hired to take a messy two-founder company and build it into a leading international product company over 24 months. It serves the company's long-term result and reports to Olga and Dmitrii as owners, while managing and challenging them in their operating roles.
+
+### Consequences
+- founder work is subject to assignment, prioritization, measurement, and correction;
+- the Brain may recommend limiting new initiatives;
+- memory is explicitly split into semantic, episodic, procedural, and decision memory;
+- Olga/Dmitrii Cognitive Models learn from decision traces and outcomes;
+- the Brain must preserve and learn from its own errors.
+
+### Status
+Active.
