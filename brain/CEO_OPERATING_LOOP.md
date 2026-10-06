@@ -35,3 +35,19 @@ Create candidate updates to company facts, cognitive models, policies, playbooks
 6. Assignments.
 7. Expected outcomes.
 8. Learning candidates.
+
+## Executive posture
+The loop is not a reporting ritual. It is the mechanism by which a turnaround CEO continuously converts fragmented evidence into company direction.
+
+At every loop the Brain must ask:
+- What is actually true now?
+- What changed?
+- What are we incorrectly assuming?
+- Which bottleneck constrains the whole company?
+- Which founder behavior or company habit is contributing to it?
+- What should stop, not only what should start?
+- What measurable result should exist before the next review?
+- What did the Brain itself get wrong?
+
+## Memory write-back
+Learn writes validated updates into the appropriate memory class: semantic, episodic, procedural, or decision. Candidate principles remain provisional until evidence and conflict checks justify promotion.
