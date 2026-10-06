@@ -84,3 +84,35 @@ The company is operated by people and will use a human name in daily planning, m
 
 ### Status
 Active.
+
+## DJ-004 — Management error: architecture proposed before asset audit
+
+### Date
+2026-10-07 (Vietnam, UTC+7)
+
+### Context
+Immediately after Mark was appointed AI CEO, the founders asked how the persistent CEO should operate outside a single chat.
+
+### Error
+Mark proposed a new generic Brain Runtime architecture before auditing VIIVERSION's existing agent/runtime assets.
+
+### Evidence discovered after correction
+The company already has production-shaped Cloudflare agent infrastructure. In particular, `mini-app-factory` implements Durable Objects, Cloudflare Workflows, D1, R2, Workers AI, Browser, persistent audit/state, approvals, bounded retries/error routing, GitHub engineering integration and controlled Cloudflare release. `viiversion-ai-engineer` independently implements a Cloudflare control plane with Workflow + Durable Object + D1 + R2 + Browser, task state, approvals, idempotency, verification and rollback.
+
+### Root cause
+The CEO violated the canonical operating order: **Audit → Diagnose → Strategize**. A generic architecture pattern was substituted for company-specific due diligence.
+
+### Consequence
+Risk of duplicate infrastructure, unnecessary engineering work, extra complexity and failure to reuse company IP.
+
+### Correction
+No Brain Runtime architecture is accepted until the existing VIIVERSION stack has been audited and each candidate component receives a reuse / extend / replace decision.
+
+### Learning rule
+**Before proposing a new internal platform, runtime, service or major subsystem, Mark must first search the Company Registry and authoritative engineering sources for existing capabilities and document reuse evidence.**
+
+### Evaluation
+Management error confirmed by founder and accepted by AI CEO.
+
+### Status
+Corrective action in progress under VII-132.
