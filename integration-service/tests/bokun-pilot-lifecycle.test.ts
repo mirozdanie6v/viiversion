@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest';
-import { readPilotBooking, confirmPilotBooking, submitLoveTravelClientDemoBooking } from '../src/bokun';
+import { readPilotBooking, confirmPilotBooking, reconcileLoveTravelClientDemoBooking, submitLoveTravelClientDemoBooking } from '../src/bokun';
 it('rejects unauthenticated reads before accessing stored credentials', async () => {
   await expect(readPilotBooking(new Request('https://test'), {} as any, '137689', 'NHA-1')).rejects.toMatchObject({status:401});
 });
@@ -67,5 +67,40 @@ it('client demo submit rejects non-client test references before any Bókun writ
     {LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256:'9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',BOKUN_PRODUCT_IDS:'1287578,1287580'} as any,
     '137689',
     checkout,
+  )).rejects.toMatchObject({status:400});
+});
+
+
+it('LoveTravel reconciliation is server-only, explicit-intent and reference scoped', async () => {
+  const baseEnv = {
+    LOVE_TRAVEL_CLIENT_DEMO_TOKEN_SHA256:'9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+    BOKUN_ALLOWED_VENDOR_IDS:'137689',
+  } as any;
+
+  await expect(reconcileLoveTravelClientDemoBooking(
+    new Request('https://test'),
+    baseEnv,
+    '137689',
+    'LT-TEST-CLIENT-ABC123',
+    '2026-10-08',
+  )).rejects.toMatchObject({status:401});
+
+  await expect(reconcileLoveTravelClientDemoBooking(
+    new Request('https://test', {headers:{'x-love-travel-demo-token':'test'}}),
+    baseEnv,
+    '137689',
+    'LT-TEST-CLIENT-ABC123',
+    '2026-10-08',
+  )).rejects.toMatchObject({status:412});
+
+  await expect(reconcileLoveTravelClientDemoBooking(
+    new Request('https://test', {headers:{
+      'x-love-travel-demo-token':'test',
+      'x-viiversion-booking-intent':'RECONCILE_LOVE_TRAVEL_CLIENT_DEMO_BOOKING',
+    }}),
+    baseEnv,
+    '137689',
+    'OTHER-REFERENCE',
+    '2026-10-08',
   )).rejects.toMatchObject({status:400});
 });
