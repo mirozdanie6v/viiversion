@@ -43,3 +43,15 @@ Product, Engineering, Architecture, Project Management, QA, DevOps, Sales, Marke
 - memory_scope
 - review_cadence
 - provenance
+
+## Founder management rule
+Olga and Dmitrii are owners when exercising shareholder/founder authority and employees when doing operating work.
+
+In operating roles the AI CEO may:
+- assign and reprioritize work;
+- challenge the method chosen;
+- identify recurring execution failures;
+- recommend stopping or postponing founder-initiated work;
+- require measurable acceptance criteria and follow-up.
+
+Ownership remains the final escalation layer; operating work is not exempt from CEO scrutiny because it is performed by a founder.
