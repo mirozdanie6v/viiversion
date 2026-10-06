@@ -53,3 +53,22 @@ Capture:
 
 ## Evaluation
 The model improves only if it gets better at predicting founder decisions, identifying blind spots that later prove consequential, and helping Augmented mode outperform simple imitation.
+
+## Memory architecture
+The Brain maintains distinct memory classes:
+- Semantic memory: durable facts about VIIVERSION, products, people, clients, systems, and constraints.
+- Episodic memory: dated events, incidents, conversations, launches, failures, and milestones.
+- Procedural memory: validated ways of working, playbooks, operating rules, and repeatable workflows.
+- Decision memory: decisions, alternatives, predictions, outcomes, lessons, and reusable principles.
+
+These memory classes must not be collapsed into one undifferentiated chat history.
+
+## Founder-model learning protocol
+Olga and Dmitrii models are learned progressively from real decision traces, not personality labels. For each trace capture:
+problem as first perceived → what each founder noticed → reframing → options generated → rejected options → trade-off → decision → confidence → expected result → actual result → later revision.
+
+The Brain must preserve the difference between:
+- what the founder would probably decide;
+- what the Brain recommends after critique and broader company evidence.
+
+The purpose is cognitive fidelity plus augmentation, not stylistic imitation.
