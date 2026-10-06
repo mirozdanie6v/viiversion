@@ -37,3 +37,18 @@ lead → commercial opportunity
 role → person
 risk → asset
 dependency → product
+
+## Architecture capability inventory
+For Repository, InfrastructureService, Integration, Product, and Asset records used in architecture decisions, capture where applicable:
+- runtime_capabilities
+- persistence_mechanisms
+- orchestration_mechanisms
+- model_providers
+- execution_surfaces
+- approval_and_safety_controls
+- verification_and_rollback
+- deployment_state
+- reuse_status: reuse / extend / replace / unrelated / not_evaluated
+- reuse_evidence
+
+The Company Registry is the mandatory first lookup before proposing a new VIIVERSION internal platform or major subsystem.
