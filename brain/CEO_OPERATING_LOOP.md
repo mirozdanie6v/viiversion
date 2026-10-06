@@ -51,3 +51,14 @@ At every loop the Brain must ask:
 
 ## Memory write-back
 Learn writes validated updates into the appropriate memory class: semantic, episodic, procedural, or decision. Candidate principles remain provisional until evidence and conflict checks justify promotion.
+
+## Architecture preflight
+Before **Strategize** may propose a new platform, runtime, service, or agent subsystem, **Audit** must:
+1. search the Company Registry;
+2. inspect relevant GitHub repositories and current runtime evidence;
+3. inspect related Linear work and architecture decisions;
+4. identify overlapping capabilities;
+5. classify candidates as **reuse / extend / replace / unrelated**;
+6. document the uncovered gap.
+
+A new architecture is invalid if this preflight is absent. Added as a corrective control from DJ-004.
