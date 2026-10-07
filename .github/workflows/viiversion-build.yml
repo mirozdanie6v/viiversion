@@ -46,7 +46,7 @@ jobs:
           test -s public/assets/cases/uniq-smart-rent.webp
           test -s public/assets/cases/pet-nika.webp
 
-          grep -Fq "Разрабатываем приложения и системы для бизнеса." public/index.html
+          grep -Fq "Разработка кастомных ИТ-систем, мобильных приложений и сквозных интеграций." public/index.html
           grep -Fq "Четыре контура одной цифровой системы" public/index.html
           grep -Fq "Системы, которые можно открыть и проверить" public/index.html
           grep -Fq "Компоненты — ниже уровнем, чем сама система" public/index.html
