@@ -729,19 +729,19 @@ def home(lang):
     for kicker,title,desc,parts in systems:
         system_cards+=f'''<article class="system-card"><div class="system-index">{escape(kicker)}</div><h3>{escape(title)}</h3><p>{escape(desc)}</p><div class="system-components">{"".join(f'<span class="system-pill">{escape(x)}</span>' for x in parts)}</div></article>'''
     direction_labels = ([
-        "Цифровые продукты и клиентский опыт",
-        "Внутренние системы и бизнес-операции",
-        "Автоматизация и оркестрация процессов",
-        "AI-системы и агенты",
-        "Интеграции и платежи",
-        "Данные и платформы",
+        "Продажи и обслуживание клиентов",
+        "Управление заявками и работой команды",
+        "Автоматизация бизнес-процессов",
+        "AI для клиентов и сотрудников",
+        "Интеграция систем и платежей",
+        "Данные, аналитика и корпоративные системы",
     ] if lang=="ru" else [
-        "Digital products & customer experience",
-        "Internal systems & business operations",
-        "Automation & process orchestration",
-        "AI systems & agents",
-        "Integrations & payments",
-        "Data & platforms",
+        "Sales & customer service",
+        "Requests & team operations",
+        "Business process automation",
+        "AI for customers & employees",
+        "Systems & payment integration",
+        "Data, analytics & enterprise systems",
     ])
     direction_tabs = "".join(
         f'<button class="hero-direction-tab" type="button" data-direction-tab="{idx}" aria-pressed="false">{escape(label)}</button>'
