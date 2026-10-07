@@ -88,6 +88,19 @@ Decision IDs:
 
 This approval covers copy only. Hero CTA and visual remain unresolved and must be approved separately through the Website Decision & Execution Protocol.
 
+### Website-only direction tags
+
+The Hero may surface the following six **website-only** direction labels as clickable tags/tabs:
+
+1. **Цифровые продукты и клиентский опыт**
+2. **Внутренние системы и бизнес-операции**
+3. **Автоматизация и оркестрация процессов**
+4. **AI-системы и агенты**
+5. **Интеграции и платежи**
+6. **Данные и платформы**
+
+These labels are public website presentation only. They do **not** rename canonical Engineering Solutions A–F, P01–P48, Product_Architecture_AF or Entity_Registry. Their click destinations/content are intentionally unresolved until separately approved.
+
 ## Non-negotiable implementation rules
 
 - Buyer language before seller/technical jargon.
