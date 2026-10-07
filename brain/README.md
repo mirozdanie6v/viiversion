@@ -109,3 +109,58 @@ Existing systems already provide persistence, durable orchestration, concurrency
 8. Verification adapter requiring authoritative evidence before consequential completion.
 
 Not in v0.1: new generic agent framework, new model platform, product-specific execution engine, refactor of Factory/AI Engineer, autonomous material spending or irreversible production control.
+
+
+## VII-142 extraction pass 2 — cognitive/quality/recovery patterns
+
+A wider reuse scan was performed beyond persistence/runtime infrastructure.
+
+### EventVideoHumanEditor
+Direct reusable runtime is intentionally limited: README confirms Semantic v5 is implemented and passed 18/18 human sample approvals, while Editor Brain and Premiere/After Effects execution are not implemented in that repository.
+Reusable concept: semantic decomposition before action, typed intent/importance/continuity/story-note/edit-strategy, and a human-calibrated quality gate. Do not import video-domain code into Brain.
+
+### VIIVERSION Demo Studio — useful cross-domain patterns
+Verified current implementation already ports Human Editor semantics and adds production cognitive controls:
+- docs/EDITOR_BRAIN_REUSE.md + src/editor-brain.ts: transform raw timeline/events into typed semantic units before action; preserve causal action→result relationships; attach intent, importance and rationale.
+- src/editor-critic.ts: independent deterministic critic over a proposed plan; critic produces findings/revisions and can reject before execution.
+- docs/UX_DESIGN_BRAIN_REUSE.md + src/presentation-design-brain.ts: strict PASS / REVISE / BLOCKED review contract; reviewer does not directly edit owner artifact; finding → owner stage → required action; bounded revision.
+- docs/JOB_RELIABILITY.md + src/job-manager.ts: observable long-running stage/progress/attempt/heartbeat; distinguish transient vs permanent failures; bounded automatic recovery; same job ID resumes from private recovery state; terminal failure instead of infinite retry.
+- AI Director: inspect environment → structured plan → validate plan in deterministic engine before execution.
+
+Brain adaptations:
+1. **Semantic Decision Frame**: raw observations are first classified into typed facts/entities/relationships/importance/causal links before strategy.
+2. **Independent CEO Critic**: proposed diagnosis/strategy is reviewed separately from its authoring stage. Critic cannot silently edit the proposal; returns PASS/REVISE/BLOCKED + findings.
+3. **Bounded Management Revision**: revision returns to the owning stage with explicit required action; repeated no-progress becomes BLOCKED.
+4. **Causal continuity**: decisions and actions preserve objective→action→expected result→observed result links; no isolated task counting.
+5. **Observable CEO run**: stage, attempt, heartbeat, blocker/retry reason and last checkpoint are first-class state.
+6. **Recovery classification**: transient source/tool failures retry boundedly; policy/evidence/authority failures block rather than loop.
+
+Reuse mode: pattern-copy/adaptation only. Demo Studio and EventVideoHumanEditor remain unchanged.
+
+### Proposal Studio
+Useful additional pattern already implemented:
+- context isolation between specialists;
+- independent review gates;
+- bounded owner-stage revisions;
+- hashes + invalidated downstream stages;
+- BLOCKED_NO_PROGRESS when revision repeats without artifact/finding change.
+Brain adaptation: invalidate downstream diagnosis/strategy/assignments when an upstream factual premise changes, rather than leaving stale conclusions active.
+
+### ZL Web Agent
+Useful additional pattern:
+- lead retains responsibility for integrated result while specialists provide bounded expert judgments;
+- explicit read-only evidence bridge and least privilege;
+- cannot claim completion without evidence.
+Brain adaptation: Mark remains accountable CEO; specialist agents advise/execute bounded mandates and do not fragment final accountability.
+
+### Revised minimal CEO delta
+The wider scan reduces, rather than expands, custom Brain logic. New CEO-specific code should be limited to:
+- company ontology/current-state/decision/checkpoint contracts;
+- semantic management-frame builder over company observations;
+- reconciliation + downstream invalidation graph;
+- CEO-specific policy/decision-rights/founder-override rules;
+- CEO critic rubric (diagnosis/strategy/organization/assignment) using PASS/REVISE/BLOCKED;
+- Operating Loop stage mapping and management-specific acceptance criteria;
+- source authority/freshness adapters.
+
+Persistence, orchestration, retries, recovery, idempotency, generic verification, bounded revision and critic mechanics are existing VIIVERSION patterns to adapt, not reinvent.
