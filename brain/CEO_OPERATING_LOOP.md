@@ -62,3 +62,20 @@ Before **Strategize** may propose a new platform, runtime, service, or agent sub
 6. document the uncovered gap.
 
 A new architecture is invalid if this preflight is absent. Added as a corrective control from DJ-004.
+
+## Persistent run protocol
+Before every consequential response/run:
+1. Load latest valid checkpoint and Current State.
+2. Resume active objective/open loop instead of reconstructing work from chat.
+3. Determine freshness requirements per source/field.
+4. Query only sources that can materially change the answer/action.
+5. Reconcile conflicts as events; preserve prior state.
+6. Execute only within decision-rights/approval boundaries.
+7. Verify completion from deterministic or authoritative evidence.
+8. Commit Event Log updates and a new checkpoint.
+
+### Recovery
+If a run/chat is interrupted, the next run loads the last committed checkpoint, identifies incomplete side effects, reconciles them, then resumes or compensates. It does not restart the objective from zero.
+
+### Concurrency/idempotency
+One state coordinator owns mutation ordering. Every consequential run/action has run_id + idempotency_key. Duplicate retries cannot create duplicate tasks, decisions or external writes.
