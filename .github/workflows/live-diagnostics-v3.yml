@@ -42,8 +42,8 @@ jobs:
               await page.goto(`${target}?qa=${Date.now()}&utm_source=qa&utm_campaign=canonical-products`,{waitUntil:'domcontentloaded',timeout:30000});
               await page.waitForTimeout(500);
               const text=await page.locator('body').innerText();
-              deployed=text.includes('Разрабатываем приложения и системы для бизнеса.') &&
-                       text.includes('Для работы с клиентами и для работы команды.') &&
+              deployed=text.includes('Разработка кастомных ИТ-систем, мобильных приложений и сквозных интеграций.') &&
+                       text.includes('Связываем ваши сайты, облачные сервисы, CRM и мессенджеры в единый автоматизированный контур. Строим модульную архитектуру, которая позволяет внедрять решения поэтапно и масштабировать бизнес без остановки текущих операций.') &&
                        text.includes('Четыре контура одной цифровой системы') &&
                        text.includes('Системы, которые можно открыть и проверить') &&
                        await page.locator('[data-industry-tab]').count()>=6;
