@@ -350,6 +350,19 @@ Neutral/no-name functional recordings are acceptable when they are based on real
 
 A decorative concept animation is not equivalent to working proof.
 
+### Website-only direction labels
+
+Current public direction labels approved for homepage navigation/tags are:
+
+- **Цифровые продукты и клиентский опыт**
+- **Внутренние системы и бизнес-операции**
+- **Автоматизация и оркестрация процессов**
+- **AI-системы и агенты**
+- **Интеграции и платежи**
+- **Данные и платформы**
+
+They are a website presentation layer only and do not rename canonical A–F or P01–P48. Their eventual tab content/destination is a separate website decision.
+
 ### Buyer-job solution rule
 
 The homepage may surface the six main commercial directions only through buyer-readable jobs/results:
