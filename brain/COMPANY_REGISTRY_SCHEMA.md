@@ -52,3 +52,50 @@ For Repository, InfrastructureService, Integration, Product, and Asset records u
 - reuse_evidence
 
 The Company Registry is the mandatory first lookup before proposing a new VIIVERSION internal platform or major subsystem.
+
+## Persistent Brain state contracts
+
+### Current State
+- state_version
+- as_of
+- active_objective
+- priorities
+- active_projects
+- blockers
+- open_loops
+- pending_approvals
+- risks
+- operating_loop_stage
+- last_checkpoint_id
+
+### Event Log
+Append-only:
+- event_id
+- occurred_at / observed_at
+- event_type
+- entity_refs
+- source / source_ref
+- before / after
+- confidence
+- run_id
+- idempotency_key
+
+### Checkpoint
+- checkpoint_id / previous_checkpoint_id
+- created_at / run_id
+- active_objective
+- operating_loop_stage
+- audit_cursor
+- completed_scope / remaining_scope
+- open_loops / blockers
+- open_hypotheses / invalidated_conclusions
+- pending_approvals
+- source_cursors
+- evidence_refs
+- state_version
+
+### Source reconciliation
+A conflicting authoritative observation never silently overwrites history. Record old value, new value, source, observed_at, confidence, affected decisions and reconciliation status.
+
+### Invariants
+Unknown remains unknown. Models may propose state changes but may not self-certify consequential completion. Cross-type aggregation requires explicit relationships. Retried runs use idempotency keys and must not duplicate decisions, tasks or external writes.
