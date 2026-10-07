@@ -354,12 +354,12 @@ A decorative concept animation is not equivalent to working proof.
 
 Current public direction labels approved for homepage navigation/tags are:
 
-- **Цифровые продукты и клиентский опыт**
-- **Внутренние системы и бизнес-операции**
-- **Автоматизация и оркестрация процессов**
-- **AI-системы и агенты**
-- **Интеграции и платежи**
-- **Данные и платформы**
+- **Продажи и обслуживание клиентов**
+- **Управление заявками и работой команды**
+- **Автоматизация бизнес-процессов**
+- **AI для клиентов и сотрудников**
+- **Интеграция систем и платежей**
+- **Данные, аналитика и корпоративные системы**
 
 They are a website presentation layer only and do not rename canonical A–F or P01–P48. Their eventual tab content/destination is a separate website decision.
 
