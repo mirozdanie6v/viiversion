@@ -74,3 +74,38 @@ read-only inspect → identify stable contract/pattern → document dependencies
 - Any upstream source-product change is separate work under that product's regression/CI/E2E gates.
 
 Bootstrap fails if Mark cannot start, resume, checkpoint, reconcile and roll back its CEO state without modifying a source product.
+
+
+## VII-142 extraction pass 1 — concrete reuse map
+
+### Mini App Factory: reuse by adaptation, source remains untouched
+- apps/orchestrator/src/index.ts :: FactoryRunCoordinator — single-writer Durable Object serialization via exclusive tail; DO last-known-run recovery cache. Brain adaptation: BrainStateCoordinator.
+- apps/orchestrator/src/index.ts :: FactoryRunWorkflow — durable cycle, step.do retries/timeouts, waitForEvent, bounded cycles, error routing/resume. Brain adaptation: CeoOperatingWorkflow.
+- apps/orchestrator/src/storage.mjs :: CloudflareD1Repository — transactional D1 snapshot + audit writes; workflow_step_receipts for idempotent workflow transitions; error-route persistence; immutable evidence references. Brain adaptation: BrainD1Repository.
+- apps/orchestrator/wrangler.jsonc — D1 + R2 + DO + Workflow binding topology. Brain gets separate bindings/namespaces; no Factory binding is reused directly.
+
+Reuse mode: pattern-copy/adaptation into Brain-owned code. No import from Factory runtime and no Factory schema/binding mutation.
+
+### VIIVERSION AI Engineer: reuse by adaptation, source remains untouched
+- apps/control-plane/src/task-state.ts — explicit finite-state transition graph + terminal states + transition assertion. Brain adaptation: CEO run/action lifecycle.
+- apps/control-plane/src/storage.ts :: findTaskByIdempotency + createTask + updateTaskTransition — account-scoped idempotency, compare request semantics, conditional legal transitions. Brain adaptation: run/action idempotency and state CAS.
+- apps/control-plane/src/workflow.ts — inspect→plan→risk/approval→lock→apply→authoritative verify→proof; model cannot declare completion; failed verification triggers rollback; rollback itself is verified.
+- apps/control-plane/src/coordinator.ts — lease + fencing token concurrency protection. Brain adaptation: mutation/connector-action lease where single-writer DO ordering is insufficient.
+- packages/change-engine/src/index.ts — canonical JSON hashing and deterministic risk decision. Brain adaptation: canonical decision/action hash + deterministic approval policy.
+- packages/verification/src/index.ts — expected-vs-authoritative-observed verifier contract. Brain adaptation: typed source-specific verification adapters.
+- apps/control-plane/src/index.ts — Idempotency-Key conflict semantics and rollback-as-new-task pattern. Brain adaptation: every consequential external action has immutable request hash and compensating action lineage.
+
+Reuse mode: pattern-copy/adaptation. WordPress-specific operations, site schemas, credentials and verification are not copied.
+
+### Minimal missing CEO layer
+Existing systems already provide persistence, durable orchestration, concurrency, idempotency, approvals, verification, rollback and evidence patterns. Mark-specific delta is limited to:
+1. CEO domain contracts: CompanyEntity/Relationship, CurrentState, Event, Decision, Checkpoint, SourceCursor, OperatingRun, Objective/OpenLoop.
+2. Brain-owned D1 repository/schema implementing those contracts and append-only reconciliation history.
+3. BrainStateCoordinator for ordered state mutations/checkpoint CAS.
+4. CeoOperatingWorkflow implementing Audit→Diagnose→Strategize→Organize→Assign→Measure→Correct→Learn with resumable checkpoint stages.
+5. Source adapters with declared authority/freshness for GitHub, Linear and Drive; read selectively.
+6. Reconciliation engine: remembered state vs authoritative observation → event + affected-decision trace, never silent overwrite.
+7. CEO policy/approval adapter enforcing Constitution/decision-rights and founder overrides.
+8. Verification adapter requiring authoritative evidence before consequential completion.
+
+Not in v0.1: new generic agent framework, new model platform, product-specific execution engine, refactor of Factory/AI Engineer, autonomous material spending or irreversible production control.
