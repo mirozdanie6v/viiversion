@@ -164,3 +164,30 @@ The wider scan reduces, rather than expands, custom Brain logic. New CEO-specifi
 - source authority/freshness adapters.
 
 Persistence, orchestration, retries, recovery, idempotency, generic verification, bounded revision and critic mechanics are existing VIIVERSION patterns to adapt, not reinvent.
+
+
+## VII-142 audit correction — reuse claims vs proven portability
+
+A source-level audit challenged extraction passes 1–2. Result: the overall reuse direction is valid, but previous wording overstated how much is "ready-made" for Mark.
+
+Evidence classes for reuse:
+- **Verified implemented source mechanism**: code exists and behavior is inspectable in source.
+- **Verified product-domain behavior**: tests/docs demonstrate it inside its original product.
+- **Portable pattern**: architecture is suitable to adapt, but portability to Brain is not yet proven.
+- **Brain-ready module**: requires an extraction/adapter test inside Brain. None of the audited cross-product mechanisms may be called Brain-ready until this gate passes.
+
+Corrections:
+1. Mini App Factory DO serialization, Cloudflare Workflow, D1 repository/audit/receipts and error routing are implemented mechanisms, but are coupled to Factory run schemas, CoreError, bindings and stage model. Reuse status: PORTABLE PATTERN / extraction candidate, not drop-in module.
+2. AI Engineer lifecycle/idempotency/verification/rollback/concurrency are implemented mechanisms, but coupled to task/site/change-engine semantics. Reuse status: PORTABLE PATTERN / extraction candidate, not drop-in module.
+3. Demo Studio critic/revision/recovery mechanisms are implemented and some have regression tests, but they are editorial/design/job-domain code. Reuse status: PORTABLE COGNITIVE/RELIABILITY PATTERN, not generic CEO critic/runtime.
+4. EventVideoHumanEditor contributes semantic-v5 concepts and human calibration only. Its README explicitly states Editor Brain execution is not implemented. It is not a source of executable CEO/editor orchestration.
+5. Proposal Studio documents and implements proposal-specific orchestration/gates, but it explicitly has no separate model runtime. Its downstream invalidation/no-progress policy is a strong pattern, not reusable infrastructure.
+6. ZL Web Agent has concrete Lead + bounded specialist tools and typed evidence report. This validates responsibility/context-boundary architecture, not persistence/orchestration.
+
+Therefore the safe conclusion is:
+**VIIVERSION already contains several independently implemented mechanisms that substantially reduce design risk for Mark, but it does not yet contain a pre-existing generic Brain runtime that can simply be assembled.**
+
+Required proof before claiming code reuse:
+source mechanism → isolate minimal dependencies → Brain-owned adapter/copy → unit/contract tests → fault/idempotency/recovery tests where relevant → prove no source-repo changes → only then mark Brain-ready.
+
+VII-144 must implement the smallest CEO layer while treating cross-product code as reference implementations until each extraction candidate passes this portability gate.
