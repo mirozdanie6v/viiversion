@@ -92,12 +92,12 @@ This approval covers copy only. Hero CTA and visual remain unresolved and must b
 
 The Hero may surface the following six **website-only** direction labels as clickable tags/tabs:
 
-1. **Цифровые продукты и клиентский опыт**
-2. **Внутренние системы и бизнес-операции**
-3. **Автоматизация и оркестрация процессов**
-4. **AI-системы и агенты**
-5. **Интеграции и платежи**
-6. **Данные и платформы**
+1. **Продажи и обслуживание клиентов**
+2. **Управление заявками и работой команды**
+3. **Автоматизация бизнес-процессов**
+4. **AI для клиентов и сотрудников**
+5. **Интеграция систем и платежей**
+6. **Данные, аналитика и корпоративные системы**
 
 These labels are public website presentation only. They do **not** rename canonical Engineering Solutions A–F, P01–P48, Product_Architecture_AF or Entity_Registry. Their click destinations/content are intentionally unresolved until separately approved.
 
