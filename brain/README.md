@@ -57,3 +57,20 @@ Runtime mapping:
 - Linear/Drive/etc.: authoritative sources for declared fields.
 
 A fresh chat must recover the same active objective/open loops and must not reconstruct Mark from chat history alone.
+
+
+## Non-destructive reuse invariant
+Source products are references and integration peers, not Brain internals.
+
+Mandatory sequence:
+read-only inspect → identify stable contract/pattern → document dependencies/state/side effects → implement behind a Brain-owned boundary → test independently → integrate through a versioned interface.
+
+- mini-app-factory, viiversion-ai-engineer and every other source product must remain independently deployable.
+- VII-142 may not move/rename source files, mutate source schemas/state, change bindings/secrets/runtime dependencies, or require a source-product deployment merely to bootstrap Mark.
+- Brain owns separate persistence namespaces, schemas/migrations, Durable Object/Workflow identities, artifact storage and secrets.
+- Existing production data is not Brain's writable state store.
+- Prefer pattern-copy or adapters to unsafe shared runtime coupling.
+- Shared packages require proven compatibility, versioning, rollback and independent deployability; deduplication alone is not justification.
+- Any upstream source-product change is separate work under that product's regression/CI/E2E gates.
+
+Bootstrap fails if Mark cannot start, resume, checkpoint, reconcile and roll back its CEO state without modifying a source product.
