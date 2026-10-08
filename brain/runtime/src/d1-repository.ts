@@ -1,6 +1,6 @@
 import type {BrainRepository} from "./repository.ts";import type {BrainEvent,Checkpoint,CompanyState,Decision,Run} from "./contracts.ts";
 type Row=Record<string,unknown>;export interface D1Stmt{bind(...v:unknown[]):D1Stmt;first<T=Row>():Promise<T|null>;run():Promise<{meta?:{changes?:number}}>}export interface D1{prepare(sql:string):D1Stmt}
-export class D1BrainRepository implements BrainRepository{constructor(private db:D1){}
+export class D1BrainRepository implements BrainRepository{private db:D1;constructor(db:D1){this.db=db}
 async loadState(){const r=await this.db.prepare("SELECT snapshot_json FROM company_state WHERE id=1").first<{snapshot_json:string}>();return r?JSON.parse(r.snapshot_json):null}
 async saveState(n:CompanyState,e:number){const r=await this.db.prepare("UPDATE company_state SET version=?,snapshot_json=?,updated_at=? WHERE id=1 AND version=?").bind(n.version,JSON.stringify(n),n.updatedAt,e).run();if(!r.meta?.changes)throw new Error("STATE_VERSION_CONFLICT")}
 async seedState(n:CompanyState){await this.db.prepare("INSERT OR IGNORE INTO company_state(id,version,snapshot_json,updated_at) VALUES(1,?,?,?)").bind(n.version,JSON.stringify(n),n.updatedAt).run()}
