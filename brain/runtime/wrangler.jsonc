@@ -1,0 +1,1 @@
+{"name":"viiversion-brain","main":"src/worker.ts","compatibility_date":"2026-10-01","d1_databases":[{"binding":"BRAIN_DB","database_name":"viiversion-brain","database_id":"REPLACE_AFTER_D1_CREATE","migrations_dir":"migrations"}],"workflows":[{"name":"viiversion-brain-ceo","binding":"CEO_WORKFLOW","class_name":"CeoWorkflow"}]}
