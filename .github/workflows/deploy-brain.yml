@@ -1,0 +1,62 @@
+name: Deploy VIIVERSION Brain
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: brain/runtime
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: brain-v0.1-bootstrap
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: npm install --no-fund --no-audit
+      - run: npm test
+      - name: Verify Cloudflare authentication
+        run: npx wrangler whoami
+      - name: Find or create Brain D1
+        id: d1
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 list --json > /tmp/d1.json
+          id="$(node -e "const x=require('/tmp/d1.json'); const d=x.find(v=>v.name==='viiversion-brain'); if(d) process.stdout.write(d.uuid||d.id)")"
+          if [ -z "$id" ]; then
+            npx wrangler d1 create viiversion-brain --json > /tmp/create.json
+            id="$(node -e "const x=require('/tmp/create.json'); process.stdout.write(x.uuid||x.id||x.database_id||'')")"
+          fi
+          test -n "$id"
+          echo "database_id=$id" >> "$GITHUB_OUTPUT"
+      - name: Bind D1 id
+        shell: bash
+        run: |
+          node -e "const fs=require('fs'); const p='wrangler.jsonc'; const x=JSON.parse(fs.readFileSync(p,'utf8')); x.d1_databases[0].database_id=process.env.DB; fs.writeFileSync(p,JSON.stringify(x,null,2)+'\n')" 
+        env:
+          DB: ${{ steps.d1.outputs.database_id }}
+      - name: Apply D1 migrations
+        run: npx wrangler d1 migrations apply viiversion-brain --remote --config wrangler.jsonc
+      - name: Deploy Worker and Workflow
+        run: npx wrangler deploy --config wrangler.jsonc
+      - name: Persist D1 binding to branch
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add brain/runtime/wrangler.jsonc
+          git diff --cached --quiet || git commit -m "brain: bind provisioned D1"
+          git push origin HEAD:brain-v0.1-bootstrap
