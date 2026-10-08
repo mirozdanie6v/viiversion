@@ -1,1 +1,1 @@
-{"name":"@viiversion/brain-runtime","private":true,"type":"module","scripts":{"test":"node --test --experimental-strip-types tests/*.test.ts"},"devDependencies":{}}
+{"name":"@viiversion/brain-runtime","private":true,"type":"module","scripts":{"test":"node --test --experimental-strip-types tests/*.test.ts","deploy":"wrangler deploy --config wrangler.jsonc"},"devDependencies":{"wrangler":"latest","typescript":"latest","@cloudflare/workers-types":"latest"}}
