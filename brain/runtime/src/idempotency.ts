@@ -1,0 +1,2 @@
+export function stableJson(value:unknown):string{if(value===null||typeof value!=="object")return JSON.stringify(value);if(Array.isArray(value))return "["+value.map(stableJson).join(",")+"]";const o=value as Record<string,unknown>;return "{"+Object.keys(o).sort().map(k=>JSON.stringify(k)+":"+stableJson(o[k])).join(",")+"}"}
+export function requestKey(scope:string,value:unknown){return scope+":"+stableJson(value)}
