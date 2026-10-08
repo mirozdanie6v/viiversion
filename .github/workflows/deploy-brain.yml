@@ -38,10 +38,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx wrangler d1 list --json > /tmp/d1.json
+          npx wrangler d1 list --format json > /tmp/d1.json
           id="$(node -e "const x=require('/tmp/d1.json'); const d=x.find(v=>v.name==='viiversion-brain'); if(d) process.stdout.write(d.uuid||d.id)")"
           if [ -z "$id" ]; then
-            npx wrangler d1 create viiversion-brain --json > /tmp/create.json
+            npx wrangler d1 create viiversion-brain --format json > /tmp/create.json
             id="$(node -e "const x=require('/tmp/create.json'); process.stdout.write(x.uuid||x.id||x.database_id||'')")"
           fi
           test -n "$id"
