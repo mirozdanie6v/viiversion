@@ -2,6 +2,12 @@ name: Deploy VIIVERSION Brain
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - brain-v0.1-bootstrap
+    paths:
+      - 'brain/runtime/**'
+      - '.github/workflows/deploy-brain.yml'
 
 permissions:
   contents: write
