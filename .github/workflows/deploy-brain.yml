@@ -38,11 +38,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx wrangler d1 list --format json > /tmp/d1.json
-          id="$(node -e "const x=require('/tmp/d1.json'); const d=x.find(v=>v.name==='viiversion-brain'); if(d) process.stdout.write(d.uuid||d.id)")"
+          # Provisioning only: inspect Wrangler's normal output; no unsupported JSON flags.
+          npx wrangler d1 list | tee /tmp/d1-list.txt
+          id="$(grep 'viiversion-brain' /tmp/d1-list.txt | grep -Eo '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' | head -n1 || true)"
           if [ -z "$id" ]; then
-            npx wrangler d1 create viiversion-brain --format json > /tmp/create.json
-            id="$(node -e "const x=require('/tmp/create.json'); process.stdout.write(x.uuid||x.id||x.database_id||'')")"
+            npx wrangler d1 create viiversion-brain | tee /tmp/d1-create.txt
+            id="$(grep -Eo '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' /tmp/d1-create.txt | head -n1 || true)"
           fi
           test -n "$id"
           echo "database_id=$id" >> "$GITHUB_OUTPUT"
