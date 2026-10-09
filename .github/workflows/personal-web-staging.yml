@@ -167,31 +167,10 @@ jobs:
             -H "content-type: application/json" \
             -d '{"url":"https://viiversion.com/","actions":[]}' )"
           test "$disabled" = 403
-          curl --fail --silent --show-error --max-time 100 \
+          session_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
             -X POST "$WORKER_URL/v1/session/start" -H "authorization: Bearer $SMOKE_TOKEN" \
             -H "content-type: application/json" \
-            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-login-start.json
-          jq -e '.ok == true and (.loginId | type == "string") and (.liveViewUrl | startswith("https://live.browser.run/"))' /tmp/pw-login-start.json > /dev/null
-          LOGIN_ID="$(jq -r '.loginId' /tmp/pw-login-start.json)"
-          COMMIT_CODE="$(curl --silent --show-error --max-time 100 --output /tmp/pw-login-commit.json --write-out '%{http_code}' \
-            -X POST "$WORKER_URL/v1/session/commit" -H "authorization: Bearer $SMOKE_TOKEN" \
-            -H "content-type: application/json" \
-            -d "{\"loginId\":\"$LOGIN_ID\"}")"
-          if [ "$COMMIT_CODE" != 200 ]; then
-            echo "::error::Session commit returned HTTP $COMMIT_CODE"
-            jq -r '.error // "Unknown session commit error"' /tmp/pw-login-commit.json
-            exit 1
-          fi
-          jq -e '.ok == true and .origin == "https://viiversion.com"' /tmp/pw-login-commit.json > /dev/null
-          curl --fail --silent --show-error --max-time 100 \
-            -X POST "$WORKER_URL/v1/session/scrape" -H "authorization: Bearer $SMOKE_TOKEN" \
-            -H "content-type: application/json" \
-            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-scrape.json
-          jq -e '.ok == true and .sessionOrigin == "https://viiversion.com"' /tmp/pw-session-scrape.json > /dev/null
-          curl --fail --silent --show-error --max-time 30 \
-            -X POST "$WORKER_URL/v1/session/revoke" -H "authorization: Bearer $SMOKE_TOKEN" \
-            -H "content-type: application/json" \
-            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-revoke.json
-          jq -e '.ok == true and .revoked == true' /tmp/pw-session-revoke.json > /dev/null
-          echo "Live encrypted session creation, reuse, and revocation passed; no account credentials used"
+            -d '{"url":"https://viiversion.com/"}')"
+          test "$session_status" = 503
+          echo "Experimental persistent login API is safely disabled pending live verification"
           echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
