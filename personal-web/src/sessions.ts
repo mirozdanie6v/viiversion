@@ -1,4 +1,4 @@
-import { acquire, connect } from "@cloudflare/playwright";
+import { acquire, connect, launch } from "@cloudflare/playwright";
 import { InputError, publicUrl } from "./policy";
 import { openSession, sealSession, filterStorageState } from "./session-crypto";
 import { readRenderedPage } from "./extract";
@@ -167,7 +167,7 @@ export async function scrapeWithSavedLogin(env: SessionEnv, input: unknown) {
   const raw = await openSession(session, origin, key);
   const state = filterStorageState(JSON.parse(raw), origin);
 
-  const browser = await connect(env.BROWSER, (await acquire(env.BROWSER)).sessionId);
+  const browser = await launch(env.BROWSER);
   let context: any;
   try {
     context = await browser.newContext({
