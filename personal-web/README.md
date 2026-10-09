@@ -14,7 +14,7 @@ This is an independent implementation of a **subset** of Firecrawl features, not
 | Discover up to 300 same-site URLs by visiting up to 8 pages | `POST /v1/map` | `web_map` |
 | Crawl up to 8 pages, depth 0–2, respecting robots.txt | `POST /v1/crawl` | `web_crawl` |
 | Structured extraction with named CSS selectors | `POST /v1/extract` | `web_extract` |
-| PNG screenshot of a rendered page | `POST /v1/screenshot` | planned |
+| PNG screenshot of a rendered page | `POST /v1/screenshot` | `web_screenshot` |
 | Explicit click, fill, select, scroll, wait actions | `POST /v1/interact` | `web_interact` (disabled by default) |
 | Health endpoint | `GET /health` | — |
 | Stateless MCP Streamable HTTP endpoint | `POST /mcp` | — |
