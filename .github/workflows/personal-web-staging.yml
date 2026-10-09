@@ -46,14 +46,19 @@ jobs:
           npx wrangler whoami
       - name: Deploy only the separate personal-web staging Worker
         run: |
-          npx wrangler deploy --name viiversion-personal-web-staging | tee "$RUNNER_TEMP/personal-web-deploy.log"
-          WORKER_URL="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/personal-web-deploy.log" | head -n1)"
-          if [ -z "$WORKER_URL" ]; then
-            echo "::error::Staging Worker URL was not detected in Wrangler output"
-            exit 1
-          fi
-          echo "WORKER_URL=$WORKER_URL" >> "$GITHUB_ENV"
-          echo "Staging Worker deployed: $WORKER_URL"
+          set -euo pipefail
+          WORKER_URL="https://viiversion-personal-web-staging.viiversion.workers.dev"
+          for attempt in 1 2 3; do
+            if npx wrangler deploy --name viiversion-personal-web-staging; then
+              echo "WORKER_URL=$WORKER_URL" >> "$GITHUB_ENV"
+              echo "Staging Worker deployed: $WORKER_URL"
+              exit 0
+            fi
+            echo "::warning::Cloudflare deployment attempt $attempt failed; retrying transient API errors"
+            sleep 7
+          done
+          echo "::error::Cloudflare deployment did not succeed after 3 attempts"
+          exit 1
       - name: Set private bearer token (never print it)
         run: |
           set -euo pipefail
