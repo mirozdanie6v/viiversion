@@ -26,6 +26,18 @@ It does **not** yet provide: web-wide search, AI-inferred JSON schemas, PDFs,
 fully verified live authenticated sessions, async long-running crawl queues,
 browser history, or a registered ChatGPT App. These are later development steps.
 
+## Current validated status
+
+- **Stage 1:** deployed and live-tested on VIIVERSION: scrape, extract, map, crawl,
+  screenshot, stateless MCP tool inventory, bearer authentication and disabled writes.
+- **Stage 2:** encrypted Durable Object vault and human-login code are present,
+  unit-tested and build-tested, but deliberately **feature-gated off** in staging.
+  A Cloudflare Live View session did not preserve its chosen page context across
+  `acquire/connect` invocations; automated session commit returned HTTP 409.
+  Use a Durable Object-coordinated persistent connection (or another verified
+  session handoff) before lifting this guard.
+- **Stage 3:** autonomous reasoning/actions and ChatGPT registration are not deployed.
+
 ## Local checks
 
 ```bash
@@ -86,8 +98,10 @@ make these tools available automatically in a chat.
 
 Live View browser session code and a Durable Object encryption vault are now included,
 and staging now provisions an independent encryption key once in Cloudflare.
-An automated public-site session roundtrip must pass before we treat it as
-verified. **Real account login and manual Live View still require an owner trial.**
+**Saved browser sessions are currently disabled** (`ENABLE_SAVED_SESSIONS=false`):
+the first live test found that a Playwright page/context did not survive
+disconnect/reconnect reliably. Only after a corrected session lifecycle passes
+end-to-end tests and an owner-controlled manual login should this be enabled.
 
 ### Persistent secrets (required for real personal use)
 
