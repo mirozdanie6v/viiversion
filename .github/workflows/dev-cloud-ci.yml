@@ -18,7 +18,7 @@ permissions:
 jobs:
   unit:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,3 +28,7 @@ jobs:
         run: python3 -m py_compile dev-cloud/viidev.py dev-cloud/tests/test_viidev.py
       - name: Offline unit tests
         run: python3 -m unittest discover -s dev-cloud/tests -v
+      - name: Ubuntu bootstrap shell syntax
+        run: bash -n dev-cloud/deploy/*.sh
+      - name: Validate user service unit
+        run: systemd-analyze verify dev-cloud/deploy/viiversion-dev-cloud.service
