@@ -12,6 +12,8 @@ const descriptors = [
     inputSchema: { type: "object", properties: { url: { type: "string" }, limit: { type: "integer", minimum: 1, maximum: 8 }, depth: { type: "integer", minimum: 0, maximum: 2 } }, required: ["url"], additionalProperties: false } },
   { name: "web_extract", description: "Extract structured fields from a rendered page using named CSS selectors.",
     inputSchema: { type: "object", properties: { url: { type: "string" }, fields: { type: "object", additionalProperties: { type: "string" } } }, required: ["url", "fields"], additionalProperties: false } },
+  { name: "web_screenshot", description: "Capture the rendered page as a PNG image.",
+    inputSchema: { type: "object", properties: { url: { type: "string" }, fullPage: { type: "boolean" } }, required: ["url"], additionalProperties: false } },
   { name: "web_interact", description: "Run explicitly requested browser clicks, fills, selects, scrolling or waits; server owner must enable this tool.",
     inputSchema: { type: "object", properties: { url: { type: "string" }, actions: { type: "array", maxItems: 10, items: { type: "object" } } }, required: ["url", "actions"], additionalProperties: false } }
 ] as const;
@@ -21,6 +23,7 @@ const tools = new Map<string, string>([
   ["web_map", "/v1/map"],
   ["web_crawl", "/v1/crawl"],
   ["web_extract", "/v1/extract"],
+  ["web_screenshot", "/v1/screenshot"],
   ["web_interact", "/v1/interact"]
 ]);
 
@@ -70,6 +73,20 @@ export async function handleMcp(request: Request, runner: Runner): Promise<Respo
     }
     try {
       const response = await runner(target, args);
+      if (response.ok && response.headers.get("content-type")?.includes("image/png")) {
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        if (bytes.length > 3_000_000) {
+          return rpc(id, { result: { content: [{ type: "text", text: "Screenshot exceeds 3 MB MCP limit" }], isError: true } });
+        }
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        }
+        return rpc(id, { result: {
+          content: [{ type: "image", data: btoa(binary), mimeType: "image/png" }],
+          isError: false
+        } });
+      }
       const body = await response.text();
       return rpc(id, { result: {
         content: [{ type: "text", text: body }],
