@@ -108,8 +108,9 @@ end-to-end tests and an owner-controlled manual login should this be enabled.
 In the GitHub repository's **Settings → Secrets and variables → Actions**, configure:
 
 - `PERSONAL_WEB_API_TOKEN`: a long-lived random bearer token of **at least 32 characters**,
-  stored securely by the owner; without it, staging generates a *temporary, unrecoverable*
-  token on each deployment.
+  stored securely by the owner. Without this repository secret, deployment **preserves**
+  any existing Cloudflare Worker token but skips authenticated live smoke tests.
+  This avoids accidental token rotation and intermittent HTTP 401 errors.
 - `PERSONAL_WEB_VAULT_KEY`: an **optional backup-controlled** 64-character hex value
   representing 32 random bytes. If omitted, staging creates a random encryption
   secret **once in Cloudflare** and preserves it across redeploys. The generated
@@ -117,7 +118,9 @@ In the GitHub repository's **Settings → Secrets and variables → Actions**, c
   logins undecryptable. Never put keys in source, chat, issues, workflow logs or URLs.
 
 The staging deployment pipeline forwards supplied values as Cloudflare Worker secrets
-(`WEB_API_TOKEN`, `SESSION_VAULT_KEY`) and provisions the missing vault key only once. The encryption secret is **not**
+(`WEB_API_TOKEN`, `SESSION_VAULT_KEY`) and provisions the missing vault key only once.
+The `PERSONAL_WEB_API_TOKEN` repository secret is a required owner setup step before
+the Worker can be used reliably from an external MCP client. Keep the bearer token private. The encryption secret is **not**
 derived from the HTTP access token. Cookie data lives encrypted at rest in the
 `PersonalWebVault` Durable Object.
 
