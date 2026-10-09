@@ -69,11 +69,13 @@ export async function beginBrowserLogin(env: SessionEnv, input: unknown) {
   let browser: any;
   try {
     browser = await connect(env.BROWSER, sessionId);
-    const context = await browser.newContext({
+    // Use the remote browser's default persistent context. A newly created
+    // non-default Playwright context can disappear when its CDP client disconnects.
+    const context = browser.contexts()[0] ?? await browser.newContext({
       viewport: { width: 1365, height: 900 }, locale: "en-US"
     });
     await protectContext(context);
-    const page = await context.newPage();
+    const page = context.pages()[0] ?? await context.newPage();
     await page.goto(target, { waitUntil: "domcontentloaded", timeout: 25000 });
 
     const cdp = await context.newCDPSession(page);
