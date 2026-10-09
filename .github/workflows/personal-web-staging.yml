@@ -99,4 +99,29 @@ jobs:
             -H "content-type: application/json" \
             -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' > /tmp/pw-mcp.json
           jq -e '.result.tools | length >= 6' /tmp/pw-mcp.json > /dev/null
-          echo "Live scrape and MCP smoke passed on $WORKER_URL"
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/extract" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","fields":{"headline":"h1"}}' > /tmp/pw-extract.json
+          jq -e '.ok == true and (.data | has("headline"))' /tmp/pw-extract.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/map" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","limit":1,"depth":0}' > /tmp/pw-map.json
+          jq -e '.ok == true and .visitedPages == 1' /tmp/pw-map.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/crawl" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","limit":1,"depth":0}' > /tmp/pw-crawl.json
+          jq -e '.ok == true and (.documents | length == 1)' /tmp/pw-crawl.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/screenshot" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","fullPage":false}' > /tmp/pw-screenshot.png
+          test "$(head -c 8 /tmp/pw-screenshot.png | od -An -tx1 | tr -d ' \\n')" = "89504e470d0a1a0a"
+          disabled="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/interact" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","actions":[]}' )"
+          test "$disabled" = 403
+          echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
