@@ -13,7 +13,8 @@
   "vars": {
     "MAX_CRAWL_PAGES": "8",
     "ENABLE_INTERACT": "false",
-    "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com"
+    "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com",
+    "ENABLE_SAVED_SESSIONS": "false"
   },
   "durable_objects": {
     "bindings": [
