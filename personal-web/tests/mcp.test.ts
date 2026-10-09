@@ -22,6 +22,16 @@ describe("stateless MCP facade", () => {
     expect(result.result.isError).toBe(false);
     expect(result.result.content[0].text).toContain("example.com");
   });
+  it("returns screenshot bytes using MCP image content", async () => {
+    const screenshot = async () => new Response(new Uint8Array([137,80,78,71]), {
+      headers: { "content-type": "image/png" }
+    });
+    const response = await handleMcp(request("tools/call", { name: "web_screenshot", arguments: { url: "https://example.com" } }), screenshot);
+    const result = await response.json() as any;
+    expect(result.result.isError).toBe(false);
+    expect(result.result.content[0]).toMatchObject({ type: "image", mimeType: "image/png" });
+    expect(result.result.content[0].data).toBe("iVBORw==");
+  });
   it("refuses unsupported tools", async () => {
     const response = await handleMcp(request("tools/call", { name: "run_shell", arguments: {} }), mock);
     expect((await response.json() as any).error.code).toBe(-32602);
