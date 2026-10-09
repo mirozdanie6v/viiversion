@@ -60,18 +60,21 @@ jobs:
           done
           echo "::error::Cloudflare deployment did not succeed after 3 attempts"
           exit 1
-      - name: Set private bearer token (never print it)
+      - name: Configure permanent owner API token if present
         run: |
           set -euo pipefail
-          if [ -n "$PERSONAL_WEB_API_TOKEN" ] && [ "${#PERSONAL_WEB_API_TOKEN}" -ge 32 ]; then
-            TOKEN="$PERSONAL_WEB_API_TOKEN"
+          if [ -z "$PERSONAL_WEB_API_TOKEN" ]; then
+            echo "SMOKE_TOKEN_AVAILABLE=false" >> "$GITHUB_ENV"
+            echo "::notice::PERSONAL_WEB_API_TOKEN is not configured; preserving Worker secret and skipping authenticated smoke. Set the repository secret for stable owner access."
+          elif [ "${#PERSONAL_WEB_API_TOKEN}" -lt 32 ]; then
+            echo "::error::PERSONAL_WEB_API_TOKEN must contain at least 32 characters"
+            exit 1
           else
-            TOKEN="$(openssl rand -hex 32)"
-            echo "::notice::Temporary staging token generated. Configure the PERSONAL_WEB_API_TOKEN repository secret for durable owner access."
+            echo "::add-mask::$PERSONAL_WEB_API_TOKEN"
+            printf "%s" "$PERSONAL_WEB_API_TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
+            echo "SMOKE_TOKEN=$PERSONAL_WEB_API_TOKEN" >> "$GITHUB_ENV"
+            echo "SMOKE_TOKEN_AVAILABLE=true" >> "$GITHUB_ENV"
           fi
-          echo "::add-mask::$TOKEN"
-          printf "%s" "$TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
-          echo "SMOKE_TOKEN=$TOKEN" >> "$GITHUB_ENV"
       - name: Provision encryption key once or preserve existing stable key
         run: |
           set -euo pipefail
@@ -108,6 +111,13 @@ jobs:
             echo "::error::Worker /health not reachable after retries; last HTTP response:"
             cat /tmp/pw-health.json
             exit 1
+          fi
+          unauth="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/scrape" -H 'content-type: application/json' -d '{"url":"https://viiversion.com/"}')"
+          test "$unauth" = 401
+          if [ "${SMOKE_TOKEN_AVAILABLE:-false}" != "true" ]; then
+            echo "Staging health and access denial passed; authenticated smoke requires PERSONAL_WEB_API_TOKEN."
+            exit 0
           fi
           AUTH_READY=false
           for i in $(seq 1 20); do
