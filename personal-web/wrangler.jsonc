@@ -14,5 +14,21 @@
     "MAX_CRAWL_PAGES": "8",
     "ENABLE_INTERACT": "false",
     "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com"
-  }
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "VAULT",
+        "class_name": "PersonalWebVault"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "PersonalWebVault"
+      ]
+    }
+  ]
 }
