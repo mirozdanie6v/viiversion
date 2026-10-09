@@ -69,8 +69,21 @@ jobs:
       - name: Live Cloudflare browser smoke (approved site only)
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --max-time 20 "$WORKER_URL/health" > /tmp/pw-health.json
-          jq -e '.ok == true and .configured == true' /tmp/pw-health.json > /dev/null
+          READY=false
+          for i in $(seq 1 20); do
+            code="$(curl --silent --show-error --max-time 12 --output /tmp/pw-health.json --write-out '%{http_code}' "$WORKER_URL/health" || true)"
+            if [ "$code" = "200" ] && jq -e '.ok == true and .configured == true' /tmp/pw-health.json > /dev/null 2>&1; then
+              READY=true
+              break
+            fi
+            echo "Cloudflare staging propagation check $i: HTTP $code"
+            sleep 3
+          done
+          if [ "$READY" != "true" ]; then
+            echo "::error::Worker /health not reachable after retries; last HTTP response:"
+            cat /tmp/pw-health.json
+            exit 1
+          fi
           unauth="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
             -X POST "$WORKER_URL/v1/scrape" -H 'content-type: application/json' -d '{"url":"https://viiversion.com/"}')"
           test "$unauth" = 401
