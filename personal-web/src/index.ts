@@ -1,4 +1,5 @@
 import { launch } from "@cloudflare/playwright";
+import { handleMcp } from "./mcp";
 import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy";
 import { readRenderedPage, extractFields, type PageDocument } from "./extract";
 
@@ -213,6 +214,19 @@ async function handle(request: Request, env: Env): Promise<Response> {
     return json({ ok: true, name: NAME, version: VERSION, configured: Boolean(env.WEB_API_TOKEN && env.WEB_API_TOKEN.length >= 32) });
   }
   if (!authorized(request, env)) return json({ ok: false, error: "Unauthorized" }, 401);
+  if (pathname === "/mcp") {
+    return handleMcp(request, async (path, params) => handle(
+      new Request(new URL(path, request.url), {
+        method: "POST",
+        headers: {
+          "authorization": request.headers.get("authorization") ?? "",
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(params)
+      }),
+      env
+    ));
+  }
   if (request.method !== "POST") return json({ ok: false, error: "POST required" }, 405);
   if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot"].includes(pathname)) {
     return json({ ok: false, error: "Unknown operation" }, 404);
