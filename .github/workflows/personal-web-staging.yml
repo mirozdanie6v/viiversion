@@ -1,0 +1,89 @@
+name: Personal Web staging deployment
+
+on:
+  push:
+    branches: [feat/personal-web-firecrawl-mvp]
+    paths:
+      - "personal-web/**"
+      - ".github/workflows/personal-web-staging.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: personal-web-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: personal-web
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PERSONAL_WEB_API_TOKEN: ${{ secrets.PERSONAL_WEB_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies and verify code
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npx wrangler deploy --dry-run
+      - name: Check Cloudflare credentials without exposing values
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID}" ]; then
+            echo "::error::Cloudflare deployment credentials are not configured"
+            exit 1
+          fi
+          npx wrangler whoami
+      - name: Deploy only the separate personal-web staging Worker
+        run: |
+          npx wrangler deploy --name viiversion-personal-web-staging | tee "$RUNNER_TEMP/personal-web-deploy.log"
+          WORKER_URL="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/personal-web-deploy.log" | head -n1)"
+          if [ -z "$WORKER_URL" ]; then
+            echo "::error::Staging Worker URL was not detected in Wrangler output"
+            exit 1
+          fi
+          echo "WORKER_URL=$WORKER_URL" >> "$GITHUB_ENV"
+          echo "Staging Worker deployed: $WORKER_URL"
+      - name: Set private bearer token (never print it)
+        run: |
+          set -euo pipefail
+          if [ -n "$PERSONAL_WEB_API_TOKEN" ] && [ "${#PERSONAL_WEB_API_TOKEN}" -ge 32 ]; then
+            TOKEN="$PERSONAL_WEB_API_TOKEN"
+          else
+            TOKEN="$(openssl rand -hex 32)"
+            echo "::notice::Temporary staging token generated. Configure the PERSONAL_WEB_API_TOKEN repository secret for durable owner access."
+          fi
+          echo "::add-mask::$TOKEN"
+          printf "%s" "$TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
+          echo "SMOKE_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+      - name: Live Cloudflare browser smoke (approved site only)
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 20 "$WORKER_URL/health" > /tmp/pw-health.json
+          jq -e '.ok == true and .configured == true' /tmp/pw-health.json > /dev/null
+          unauth="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/scrape" -H 'content-type: application/json' -d '{"url":"https://viiversion.com/"}')"
+          test "$unauth" = 401
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/scrape" \
+            -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-scrape.json
+          jq -e '.ok == true and (.document.url | startswith("https://viiversion.com")) and (.document.title | type == "string")' /tmp/pw-scrape.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/mcp" \
+            -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' > /tmp/pw-mcp.json
+          jq -e '.result.tools | length >= 6' /tmp/pw-mcp.json > /dev/null
+          echo "Live scrape and MCP smoke passed on $WORKER_URL"
