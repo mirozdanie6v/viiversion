@@ -1,10 +1,14 @@
 import { launch } from "@cloudflare/playwright";
 import { handleMcp } from "./mcp";
+import { beginBrowserLogin, finishBrowserLogin, listBrowserLogins, revokeBrowserLogin, scrapeWithSavedLogin } from "./sessions";
+export { PersonalWebVault } from "./session-vault";
 import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy";
 import { readRenderedPage, extractFields, type PageDocument } from "./extract";
 
 interface Env {
   BROWSER: Fetcher;
+  VAULT: DurableObjectNamespace;
+  SESSION_VAULT_KEY?: string;
   WEB_API_TOKEN?: string;
   ALLOWED_HOSTS?: string;
   MAX_CRAWL_PAGES?: string;
@@ -234,12 +238,18 @@ async function handle(request: Request, env: Env): Promise<Response> {
     ));
   }
   if (request.method !== "POST") return json({ ok: false, error: "POST required" }, 405);
-  if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot"].includes(pathname)) {
+  if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot",
+    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape"].includes(pathname)) {
     return json({ ok: false, error: "Unknown operation" }, 404);
   }
 
   try {
     const data = await parseBody(request);
+    if (pathname === "/v1/session/start") return json(await beginBrowserLogin(env, data.url));
+    if (pathname === "/v1/session/commit") return json(await finishBrowserLogin(env, data.loginId));
+    if (pathname === "/v1/session/list") return json(await listBrowserLogins(env));
+    if (pathname === "/v1/session/revoke") return json(await revokeBrowserLogin(env, data.url));
+    if (pathname === "/v1/session/scrape") return json(await scrapeWithSavedLogin(env, data.url));
     const target = publicUrl(data.url, env.ALLOWED_HOSTS);
     if (pathname === "/v1/interact" && env.ENABLE_INTERACT !== "true") {
       throw new InputError("Interactive mode is disabled", 403);
