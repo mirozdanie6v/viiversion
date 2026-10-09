@@ -3,11 +3,16 @@
   "name": "viiversion-personal-web",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-08",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": true,
-  "browser": { "binding": "BROWSER" },
+  "browser": {
+    "binding": "BROWSER"
+  },
   "vars": {
     "MAX_CRAWL_PAGES": "8",
-    "ENABLE_INTERACT": "false"
+    "ENABLE_INTERACT": "false",
+    "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com"
   }
 }
