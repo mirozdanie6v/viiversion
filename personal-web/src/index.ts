@@ -9,6 +9,7 @@ interface Env {
   BROWSER: Fetcher;
   VAULT: DurableObjectNamespace;
   SESSION_VAULT_KEY?: string;
+  ENABLE_SAVED_SESSIONS?: string;
   WEB_API_TOKEN?: string;
   ALLOWED_HOSTS?: string;
   MAX_CRAWL_PAGES?: string;
@@ -245,6 +246,9 @@ async function handle(request: Request, env: Env): Promise<Response> {
 
   try {
     const data = await parseBody(request);
+    if (pathname.startsWith("/v1/session/") && env.ENABLE_SAVED_SESSIONS !== "true") {
+      throw new InputError("Saved browser sessions are not enabled until live verification passes", 503);
+    }
     if (pathname === "/v1/session/start") return json(await beginBrowserLogin(env, data.url));
     if (pathname === "/v1/session/commit") return json(await finishBrowserLogin(env, data.loginId));
     if (pathname === "/v1/session/list") return json(await listBrowserLogins(env));
