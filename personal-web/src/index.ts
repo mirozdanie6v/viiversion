@@ -113,7 +113,13 @@ async function walkSite(
   const origin = new URL(start).origin;
   const robots = await robotsForSite(origin);
   checkRobots(robots, start);
-  const limit = Math.min(Math.max(1, requestedPages), Math.min(8, Number(env.MAX_CRAWL_PAGES) || 8));
+  if (!Number.isInteger(requestedPages) || requestedPages < 1 || requestedPages > 8) {
+    throw new InputError("limit must be an integer from 1 to 8");
+  }
+  if (!Number.isInteger(requestedDepth) || requestedDepth < 0 || requestedDepth > 2) {
+    throw new InputError("depth must be an integer from 0 to 2");
+  }
+  const limit = Math.min(requestedPages, Math.min(8, Number(env.MAX_CRAWL_PAGES) || 8));
   const depthLimit = Math.min(Math.max(0, requestedDepth), 2);
   const pending: Array<{ url: string; depth: number }> = [{ url: start, depth: 0 }];
   const queued = new Set([start]);
@@ -235,6 +241,9 @@ async function handle(request: Request, env: Env): Promise<Response> {
   try {
     const data = await parseBody(request);
     const target = publicUrl(data.url, env.ALLOWED_HOSTS);
+    if (pathname === "/v1/interact" && env.ENABLE_INTERACT !== "true") {
+      throw new InputError("Interactive mode is disabled", 403);
+    }
     return await withBrowser(env, async page => {
       if (pathname === "/v1/map" || pathname === "/v1/crawl") {
         return json(await walkSite(page, env, target, pathname === "/v1/map" ? "map" : "crawl",
