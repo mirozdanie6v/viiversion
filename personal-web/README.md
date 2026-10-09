@@ -17,10 +17,13 @@ This is an independent implementation of a **subset** of Firecrawl features, not
 | PNG screenshot of a rendered page | `POST /v1/screenshot` | `web_screenshot` |
 | Explicit click, fill, select, scroll, wait actions | `POST /v1/interact` | `web_interact` (disabled by default) |
 | Health endpoint | `GET /health` | — |
+| Manual remote login through time-limited Cloudflare Live View | `POST /v1/session/start` + `/v1/session/commit` | API-only |
+| Encrypted saved sessions: list and revoke | `POST /v1/session/list` + `/v1/session/revoke` | API-only |
+| Read with saved per-site cookies/storage | `POST /v1/session/scrape` | `web_session_scrape` |
 | Stateless MCP Streamable HTTP endpoint | `POST /mcp` | — |
 
 It does **not** yet provide: web-wide search, AI-inferred JSON schemas, PDFs,
-authenticated persistent browser sessions, async long-running crawl queues,
+fully verified live authenticated sessions, async long-running crawl queues,
 browser history, or a registered ChatGPT App. These are later development steps.
 
 ## Local checks
@@ -78,6 +81,54 @@ curl -sS "$URL/v1/extract" \
 An MCP client must support passing that header. ChatGPT App connection/authorization
 requires a separate configured connector/authentication step; deployment alone does not
 make these tools available automatically in a chat.
+
+## Private browser logins (development stage)
+
+Live View browser session code and a Durable Object encryption vault are now included,
+but **the feature remains disabled until its dedicated encryption key is configured and
+an end-to-end login/logout test passes**.
+
+### Persistent secrets (required for real personal use)
+
+In the GitHub repository's **Settings → Secrets and variables → Actions**, configure:
+
+- `PERSONAL_WEB_API_TOKEN`: a long-lived random bearer token of **at least 32 characters**,
+  stored securely by the owner; without it, staging generates a *temporary, unrecoverable*
+  token on each deployment.
+- `PERSONAL_WEB_VAULT_KEY`: a separate **64-character hex** value representing 32 random
+  bytes. Keep this key backed up securely; losing/changing it makes previously saved
+  logins undecryptable. Never put it in source, chat, issue, workflow logs or URLs.
+
+The staging deployment pipeline securely forwards these values as Cloudflare Worker
+secrets (`WEB_API_TOKEN`, `SESSION_VAULT_KEY`). The encryption secret is **not**
+derived from the HTTP access token. Cookie data lives encrypted at rest in the
+`PersonalWebVault` Durable Object.
+
+### Session lifecycle
+
+1. `POST /v1/session/start` with `{"url":"https://viiversion.com/"}` creates an isolated
+   remote Chrome session and returns `loginId` and a **short-lived sensitive**
+   `liveViewUrl`. It does not collect a password.
+2. Open `liveViewUrl` in your own browser, sign in manually using the website
+   and finish at the original site. The URL grants temporary browser control;
+   do not forward it, include it in logs or paste it into untrusted systems.
+3. `POST /v1/session/commit` with `{"loginId":"..."}` captures browser storage,
+   filters it to the initial origin, encrypts it using AES-256-GCM and stores it
+   for up to seven days. The remote login browser closes.
+4. `POST /v1/session/scrape` with the same origin URL loads those cookies/storage
+   into a fresh browser context and refreshes them following a successful visit.
+5. `POST /v1/session/list` with `{}` returns metadata, **not cookie values**.
+6. `POST /v1/session/revoke` with `{"url":"https://viiversion.com/"}` deletes
+   the saved login.
+
+Limits: one human login browser stays alive at most ~10 minutes; Live View links
+last 5 minutes; at most 8 saved site origins; 7-day encrypted storage TTL.
+
+Only start or reuse sessions on **sites you control or are authorized to access**.
+Browser credentials are never imported from WhatsApp or another VIIVERSION project.
+A saved session does not prove that a website is currently logged in; sites can
+expire cookies, require MFA, or forbid automated access. Test on an owned
+account before using this feature.
 
 ## Security & reliability
 
