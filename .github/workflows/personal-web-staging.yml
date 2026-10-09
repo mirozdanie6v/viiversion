@@ -26,6 +26,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       PERSONAL_WEB_API_TOKEN: ${{ secrets.PERSONAL_WEB_API_TOKEN }}
+      PERSONAL_WEB_VAULT_KEY: ${{ secrets.PERSONAL_WEB_VAULT_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -71,6 +72,18 @@ jobs:
           echo "::add-mask::$TOKEN"
           printf "%s" "$TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
           echo "SMOKE_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+      - name: Configure persistent encrypted session vault only when owner key exists
+        run: |
+          set -euo pipefail
+          if [ -z "$PERSONAL_WEB_VAULT_KEY" ]; then
+            echo "::notice::Saved login feature stays disabled until PERSONAL_WEB_VAULT_KEY is set."
+          elif [[ ! "$PERSONAL_WEB_VAULT_KEY" =~ ^[a-fA-F0-9]{64}$ ]]; then
+            echo "::error::PERSONAL_WEB_VAULT_KEY must contain exactly 64 hexadecimal characters"
+            exit 1
+          else
+            echo "::add-mask::$PERSONAL_WEB_VAULT_KEY"
+            printf "%s" "$PERSONAL_WEB_VAULT_KEY" | npx wrangler secret put SESSION_VAULT_KEY --name viiversion-personal-web-staging
+          fi
       - name: Live Cloudflare browser smoke (approved site only)
         run: |
           set -euo pipefail
