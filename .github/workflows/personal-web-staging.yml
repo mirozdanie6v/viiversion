@@ -72,17 +72,24 @@ jobs:
           echo "::add-mask::$TOKEN"
           printf "%s" "$TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
           echo "SMOKE_TOKEN=$TOKEN" >> "$GITHUB_ENV"
-      - name: Configure persistent encrypted session vault only when owner key exists
+      - name: Provision encryption key once or preserve existing stable key
         run: |
           set -euo pipefail
-          if [ -z "$PERSONAL_WEB_VAULT_KEY" ]; then
-            echo "::notice::Saved login feature stays disabled until PERSONAL_WEB_VAULT_KEY is set."
-          elif [[ ! "$PERSONAL_WEB_VAULT_KEY" =~ ^[a-fA-F0-9]{64}$ ]]; then
-            echo "::error::PERSONAL_WEB_VAULT_KEY must contain exactly 64 hexadecimal characters"
-            exit 1
-          else
+          npx wrangler secret list --name viiversion-personal-web-staging --format json > /tmp/pw-secret-names.json
+          if [ -n "$PERSONAL_WEB_VAULT_KEY" ]; then
+            if [[ ! "$PERSONAL_WEB_VAULT_KEY" =~ ^[a-fA-F0-9]{64}$ ]]; then
+              echo "::error::PERSONAL_WEB_VAULT_KEY must be exactly 64 hexadecimal characters"
+              exit 1
+            fi
             echo "::add-mask::$PERSONAL_WEB_VAULT_KEY"
             printf "%s" "$PERSONAL_WEB_VAULT_KEY" | npx wrangler secret put SESSION_VAULT_KEY --name viiversion-personal-web-staging
+          elif jq -e 'map(.name) | index("SESSION_VAULT_KEY") != null' /tmp/pw-secret-names.json > /dev/null; then
+            echo "Cloudflare-managed session vault key already exists; preserving it"
+          else
+            VAULT_KEY="$(openssl rand -hex 32)"
+            echo "::add-mask::$VAULT_KEY"
+            printf "%s" "$VAULT_KEY" | npx wrangler secret put SESSION_VAULT_KEY --name viiversion-personal-web-staging
+            echo "::notice::Generated a new one-time Cloudflare-only encryption key; future deploys preserve it"
           fi
       - name: Live Cloudflare browser smoke (approved site only)
         run: |
@@ -160,4 +167,26 @@ jobs:
             -H "content-type: application/json" \
             -d '{"url":"https://viiversion.com/","actions":[]}' )"
           test "$disabled" = 403
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/session/start" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-login-start.json
+          jq -e '.ok == true and (.loginId | type == "string") and (.liveViewUrl | startswith("https://live.browser.run/"))' /tmp/pw-login-start.json > /dev/null
+          LOGIN_ID="$(jq -r '.loginId' /tmp/pw-login-start.json)"
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/session/commit" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d "{\"loginId\":\"$LOGIN_ID\"}" > /tmp/pw-login-commit.json
+          jq -e '.ok == true and .origin == "https://viiversion.com"' /tmp/pw-login-commit.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/session/scrape" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-scrape.json
+          jq -e '.ok == true and .sessionOrigin == "https://viiversion.com"' /tmp/pw-session-scrape.json > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+            -X POST "$WORKER_URL/v1/session/revoke" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-revoke.json
+          jq -e '.ok == true and .revoked == true' /tmp/pw-session-revoke.json > /dev/null
+          echo "Live encrypted session creation, reuse, and revocation passed; no account credentials used"
           echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
