@@ -117,12 +117,25 @@ export async function finishBrowserLogin(env: SessionEnv, loginId: unknown) {
   const { pending } = await vault<{ pending: Pending }>(env, "/pending/get", { id: loginId });
   const browser = await connect(env.BROWSER, pending.browserSessionId);
   try {
-    const context = browser.contexts()[0];
-    const page = context?.pages()[0];
-    if (!context || !page) throw new InputError("Remote login session is no longer available", 409);
-    const url = publicUrl(page.url(), env.ALLOWED_HOSTS);
-    if (new URL(url).origin !== pending.origin) {
-      throw new InputError("Complete login and return to the requested site before saving", 409);
+    // A remote Chromium session can have a default blank context in addition
+    // to the context used for login. Search all tabs by validated origin.
+    let context: any = null;
+    let page: any = null;
+    for (const candidateContext of browser.contexts()) {
+      for (const candidatePage of candidateContext.pages()) {
+        try {
+          const url = publicUrl(candidatePage.url(), env.ALLOWED_HOSTS);
+          if (new URL(url).origin === pending.origin) {
+            context = candidateContext;
+            page = candidatePage;
+            break;
+          }
+        } catch { /* blank pages and identity-provider tabs are not saved */ }
+      }
+      if (page) break;
+    }
+    if (!context || !page) {
+      throw new InputError("Return the remote browser to the requested site's origin before saving; no matching tab found", 409);
     }
     const state = filterStorageState(await context.storageState({ indexedDB: true }), pending.origin);
     const sealed = await sealSession(JSON.stringify(state), pending.origin, key);
