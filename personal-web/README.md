@@ -85,8 +85,9 @@ make these tools available automatically in a chat.
 ## Private browser logins (development stage)
 
 Live View browser session code and a Durable Object encryption vault are now included,
-but **the feature remains disabled until its dedicated encryption key is configured and
-an end-to-end login/logout test passes**.
+and staging now provisions an independent encryption key once in Cloudflare.
+An automated public-site session roundtrip must pass before we treat it as
+verified. **Real account login and manual Live View still require an owner trial.**
 
 ### Persistent secrets (required for real personal use)
 
@@ -95,12 +96,14 @@ In the GitHub repository's **Settings → Secrets and variables → Actions**, c
 - `PERSONAL_WEB_API_TOKEN`: a long-lived random bearer token of **at least 32 characters**,
   stored securely by the owner; without it, staging generates a *temporary, unrecoverable*
   token on each deployment.
-- `PERSONAL_WEB_VAULT_KEY`: a separate **64-character hex** value representing 32 random
-  bytes. Keep this key backed up securely; losing/changing it makes previously saved
-  logins undecryptable. Never put it in source, chat, issue, workflow logs or URLs.
+- `PERSONAL_WEB_VAULT_KEY`: an **optional backup-controlled** 64-character hex value
+  representing 32 random bytes. If omitted, staging creates a random encryption
+  secret **once in Cloudflare** and preserves it across redeploys. The generated
+  key cannot be recovered from the dashboard; losing it makes previously saved
+  logins undecryptable. Never put keys in source, chat, issues, workflow logs or URLs.
 
-The staging deployment pipeline securely forwards these values as Cloudflare Worker
-secrets (`WEB_API_TOKEN`, `SESSION_VAULT_KEY`). The encryption secret is **not**
+The staging deployment pipeline forwards supplied values as Cloudflare Worker secrets
+(`WEB_API_TOKEN`, `SESSION_VAULT_KEY`) and provisions the missing vault key only once. The encryption secret is **not**
 derived from the HTTP access token. Cookie data lives encrypted at rest in the
 `PersonalWebVault` Durable Object.
 
