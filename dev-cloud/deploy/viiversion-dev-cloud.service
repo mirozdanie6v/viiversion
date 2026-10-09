@@ -1,0 +1,18 @@
+[Unit]
+Description=VIIVERSION Dev Cloud Codex single-worker queue
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/viiversion
+ExecStart=/usr/bin/python3 %h/viiversion/dev-cloud/viidev.py worker --interval 10
+Restart=on-failure
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+UMask=0077
+NoNewPrivileges=yes
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
