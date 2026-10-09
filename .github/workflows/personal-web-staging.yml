@@ -173,10 +173,15 @@ jobs:
             -d '{"url":"https://viiversion.com/"}' > /tmp/pw-login-start.json
           jq -e '.ok == true and (.loginId | type == "string") and (.liveViewUrl | startswith("https://live.browser.run/"))' /tmp/pw-login-start.json > /dev/null
           LOGIN_ID="$(jq -r '.loginId' /tmp/pw-login-start.json)"
-          curl --fail --silent --show-error --max-time 100 \
+          COMMIT_CODE="$(curl --silent --show-error --max-time 100 --output /tmp/pw-login-commit.json --write-out '%{http_code}' \
             -X POST "$WORKER_URL/v1/session/commit" -H "authorization: Bearer $SMOKE_TOKEN" \
             -H "content-type: application/json" \
-            -d "{\"loginId\":\"$LOGIN_ID\"}" > /tmp/pw-login-commit.json
+            -d "{\"loginId\":\"$LOGIN_ID\"}")"
+          if [ "$COMMIT_CODE" != 200 ]; then
+            echo "::error::Session commit returned HTTP $COMMIT_CODE"
+            jq -r '.error // "Unknown session commit error"' /tmp/pw-login-commit.json
+            exit 1
+          fi
           jq -e '.ok == true and .origin == "https://viiversion.com"' /tmp/pw-login-commit.json > /dev/null
           curl --fail --silent --show-error --max-time 100 \
             -X POST "$WORKER_URL/v1/session/scrape" -H "authorization: Bearer $SMOKE_TOKEN" \
