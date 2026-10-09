@@ -14,6 +14,8 @@ const descriptors = [
     inputSchema: { type: "object", properties: { url: { type: "string" }, fields: { type: "object", additionalProperties: { type: "string" } } }, required: ["url", "fields"], additionalProperties: false } },
   { name: "web_screenshot", description: "Capture the rendered page as a PNG image.",
     inputSchema: { type: "object", properties: { url: { type: "string" }, fullPage: { type: "boolean" } }, required: ["url"], additionalProperties: false } },
+  { name: "web_session_scrape", description: "Render a URL using a previously saved, encrypted owner-only browser login. The site must match the saved session's origin.",
+    inputSchema: { type: "object", properties: { url: { type: "string" } }, required: ["url"], additionalProperties: false } },
   { name: "web_interact", description: "Run explicitly requested browser clicks, fills, selects, scrolling or waits; server owner must enable this tool.",
     inputSchema: { type: "object", properties: { url: { type: "string" }, actions: { type: "array", maxItems: 10, items: { type: "object" } } }, required: ["url", "actions"], additionalProperties: false } }
 ] as const;
@@ -24,6 +26,7 @@ const tools = new Map<string, string>([
   ["web_crawl", "/v1/crawl"],
   ["web_extract", "/v1/extract"],
   ["web_screenshot", "/v1/screenshot"],
+  ["web_session_scrape", "/v1/session/scrape"],
   ["web_interact", "/v1/interact"]
 ]);
 
