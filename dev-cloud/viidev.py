@@ -118,7 +118,7 @@ def run_one(db):
     if db.execute("SELECT 1 FROM tasks WHERE status='needs_review' LIMIT 1").fetchone():
         return "review_required"
     task = db.execute("""SELECT * FROM tasks WHERE status='queued'
-                          ORDER BY created_at,id LIMIT 1""").fetchone()
+                          ORDER BY created_at,rowid LIMIT 1""").fetchone()
     if task is None:
         return "empty"
     ident = task["id"]
@@ -223,7 +223,7 @@ def main(argv=None):
         print(enqueue(db, args))
     elif args.command == "list":
         rows = db.execute("""SELECT id,project,title,status,attempts,branch,note
-                             FROM tasks ORDER BY created_at,id""").fetchall()
+                             FROM tasks ORDER BY created_at,rowid""").fetchall()
         print(json.dumps([dict(row) for row in rows], ensure_ascii=False, indent=2))
     elif args.command == "status":
         counts = {r["status"]: r["n"] for r in db.execute(
