@@ -30,12 +30,12 @@ browser history, or a registered ChatGPT App. These are later development steps.
 
 - **Stage 1:** deployed and live-tested on VIIVERSION: scrape, extract, map, crawl,
   screenshot, stateless MCP tool inventory, bearer authentication and disabled writes.
-- **Stage 2:** encrypted Durable Object vault and human-login code are present,
-  unit-tested and build-tested, but deliberately **feature-gated off** in staging.
-  A Cloudflare Live View session did not preserve its chosen page context across
-  `acquire/connect` invocations; automated session commit returned HTTP 409.
-  Use a Durable Object-coordinated persistent connection (or another verified
-  session handoff) before lifting this guard.
+- **Stage 2 (automated staging smoke passed):** one owner-scoped Durable Object now
+  holds the live Chrome connection during `/v1/session/start` and `commit`.
+  A real Cloudflare Browser Run test confirms Live View URL generation, a
+  separate-request commit, encrypted storage, a fresh-browser read and revocation.
+  **A genuine manual login with MFA has not yet been performed by the owner**;
+  this is still required before relying on saved account sessions.
 - **Stage 3:** autonomous reasoning/actions and ChatGPT registration are not deployed.
 
 ## Local checks
@@ -98,19 +98,22 @@ make these tools available automatically in a chat.
 
 Live View browser session code and a Durable Object encryption vault are now included,
 and staging now provisions an independent encryption key once in Cloudflare.
-**Saved browser sessions are currently disabled** (`ENABLE_SAVED_SESSIONS=false`):
-the first live test found that a Playwright page/context did not survive
-disconnect/reconnect reliably. Only after a corrected session lifecycle passes
-end-to-end tests and an owner-controlled manual login should this be enabled.
+The first implementation disconnected from Chrome between the two requests and
+lost the page; this has been replaced with a connected browser held by the
+`PersonalWebVault` Durable Object. The automated staging login/commit/reuse/
+revoke test now passes with `ENABLE_SAVED_SESSIONS=true` **without entering
+account credentials**. Real account login (including SSO/MFA), browser idle
+expiry and human interaction still need a manual owner acceptance test.
 
 ### Persistent secrets (required for real personal use)
 
 In the GitHub repository's **Settings → Secrets and variables → Actions**, configure:
 
 - `PERSONAL_WEB_API_TOKEN`: a long-lived random bearer token of **at least 32 characters**,
-  stored securely by the owner. Without this repository secret, deployment **preserves**
-  any existing Cloudflare Worker token but skips authenticated live smoke tests.
-  This avoids accidental token rotation and intermittent HTTP 401 errors.
+  stored securely by the owner. If missing, staging generates a **temporary**
+  bearer token for the complete live smoke test and deletes it immediately
+  afterward; therefore the Worker is **unusable by an owner** until this
+  stable repository secret is supplied. The token is never printed to logs.
 - `PERSONAL_WEB_VAULT_KEY`: an **optional backup-controlled** 64-character hex value
   representing 32 random bytes. If omitted, staging creates a random encryption
   secret **once in Cloudflare** and preserves it across redeploys. The generated
@@ -120,9 +123,22 @@ In the GitHub repository's **Settings → Secrets and variables → Actions**, c
 The staging deployment pipeline forwards supplied values as Cloudflare Worker secrets
 (`WEB_API_TOKEN`, `SESSION_VAULT_KEY`) and provisions the missing vault key only once.
 The `PERSONAL_WEB_API_TOKEN` repository secret is a required owner setup step before
-the Worker can be used reliably from an external MCP client. Keep the bearer token private. The encryption secret is **not**
+the Worker can be used by an external API or MCP client. Keep the bearer token private. The encryption secret is **not**
 derived from the HTTP access token. Cookie data lives encrypted at rest in the
 `PersonalWebVault` Durable Object.
+
+### First permanent owner setup
+
+1. Open [repository Actions secrets](https://github.com/mirozdanie6v/viiversion/settings/secrets/actions/new).
+2. Name the new secret exactly `PERSONAL_WEB_API_TOKEN`.
+3. Generate an unpredictable value with a password manager (at least 32 characters;
+   preferably 64 random characters), save it securely and add the same value as
+   the GitHub Actions secret. Never commit it or paste it into an issue or chat.
+4. Run the GitHub Action **Personal Web staging deployment** with **Run workflow**
+   on branch `feat/personal-web-firecrawl-mvp` (or trigger a new branch commit).
+   This deploys the bearer token into the isolated Cloudflare Worker and runs
+   the complete authenticated browser and MCP live test.
+5. HTTP API calls and the MCP client must use `Authorization: Bearer <your secret>`.
 
 ### Session lifecycle
 
