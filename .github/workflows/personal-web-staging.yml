@@ -64,8 +64,13 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$PERSONAL_WEB_API_TOKEN" ]; then
-            echo "SMOKE_TOKEN_AVAILABLE=false" >> "$GITHUB_ENV"
-            echo "::notice::PERSONAL_WEB_API_TOKEN is not configured; preserving Worker secret and skipping authenticated smoke. Set the repository secret for stable owner access."
+            TEMP_TOKEN="$(openssl rand -hex 32)"
+            echo "::add-mask::$TEMP_TOKEN"
+            printf "%s" "$TEMP_TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
+            echo "SMOKE_TOKEN=$TEMP_TOKEN" >> "$GITHUB_ENV"
+            echo "SMOKE_TOKEN_AVAILABLE=true" >> "$GITHUB_ENV"
+            echo "SMOKE_TOKEN_TEMP=true" >> "$GITHUB_ENV"
+            echo "::notice::Using a temporary staging-only bearer token for full live smoke; deleting it after the run. Set PERSONAL_WEB_API_TOKEN for permanent access."
           elif [ "${#PERSONAL_WEB_API_TOKEN}" -lt 32 ]; then
             echo "::error::PERSONAL_WEB_API_TOKEN must contain at least 32 characters"
             exit 1
@@ -115,10 +120,6 @@ jobs:
           unauth="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
             -X POST "$WORKER_URL/v1/scrape" -H 'content-type: application/json' -d '{"url":"https://viiversion.com/"}')"
           test "$unauth" = 401
-          if [ "${SMOKE_TOKEN_AVAILABLE:-false}" != "true" ]; then
-            echo "Staging health and access denial passed; authenticated smoke requires PERSONAL_WEB_API_TOKEN."
-            exit 0
-          fi
           AUTH_READY=false
           for i in $(seq 1 20); do
             auth_code="$(curl --silent --show-error --max-time 15 --output /tmp/pw-auth.json --write-out '%{http_code}' \
@@ -177,10 +178,38 @@ jobs:
             -H "content-type: application/json" \
             -d '{"url":"https://viiversion.com/","actions":[]}' )"
           test "$disabled" = 403
-          session_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
+          curl --fail --silent --show-error --max-time 100 \
             -X POST "$WORKER_URL/v1/session/start" -H "authorization: Bearer $SMOKE_TOKEN" \
             -H "content-type: application/json" \
-            -d '{"url":"https://viiversion.com/"}')"
-          test "$session_status" = 503
-          echo "Experimental persistent login API is safely disabled pending live verification"
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-login-start.json
+          jq -e '.ok == true and (.loginId | type == "string") and (.liveViewUrl | startswith("https://live.browser.run/"))' /tmp/pw-login-start.json > /dev/null
+          LOGIN_ID="$(jq -r '.loginId' /tmp/pw-login-start.json)"
+          COMMIT_CODE="$(curl --silent --show-error --max-time 100 --output /tmp/pw-login-commit.json --write-out '%{http_code}' \
+            -X POST "$WORKER_URL/v1/session/commit" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d "{\"loginId\":\"$LOGIN_ID\"}")"
+          if [ "$COMMIT_CODE" != 200 ]; then
+            echo "::error::Manual browser session handoff failed: HTTP $COMMIT_CODE"
+            jq -r '.error // "Unexpected response"' /tmp/pw-login-commit.json
+            exit 1
+          fi
+          jq -e '.ok == true and .origin == "https://viiversion.com"' /tmp/pw-login-commit.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/session/scrape" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-scrape.json
+          jq -e '.ok == true and .sessionOrigin == "https://viiversion.com"' /tmp/pw-session-scrape.json > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+            -X POST "$WORKER_URL/v1/session/revoke" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-revoke.json
+          jq -e '.ok == true and .revoked == true' /tmp/pw-session-revoke.json > /dev/null
+          echo "Stateful Durable Object browser handoff, encrypted save, reuse and revoke passed"
           echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
+      - name: Remove temporary staging access credential
+        if: always()
+        run: |
+          if [ "${SMOKE_TOKEN_TEMP:-false}" = "true" ]; then
+            echo "Deleting temporary bearer token; add a permanent repository secret for owner access"
+            npx wrangler secret delete WEB_API_TOKEN --name viiversion-personal-web-staging --yes
+          fi
