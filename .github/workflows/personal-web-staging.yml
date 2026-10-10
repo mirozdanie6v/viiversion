@@ -211,5 +211,11 @@ jobs:
         run: |
           if [ "${SMOKE_TOKEN_TEMP:-false}" = "true" ]; then
             echo "Deleting temporary bearer token; add a permanent repository secret for owner access"
-            npx wrangler secret delete WEB_API_TOKEN --name viiversion-personal-web-staging --yes
+            printf '{"WEB_API_TOKEN":null}' | npx wrangler secret bulk --name viiversion-personal-web-staging
+            npx wrangler secret list --name viiversion-personal-web-staging --format json > /tmp/pw-cleanup-secrets.json
+            if jq -e 'map(.name) | index("WEB_API_TOKEN") != null' /tmp/pw-cleanup-secrets.json > /dev/null; then
+              echo "::error::Temporary staging secret is still present after cleanup"
+              exit 1
+            fi
+            echo "Temporary staging owner token deleted and verified"
           fi
