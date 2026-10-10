@@ -1,4 +1,4 @@
-import { acquire, connect, launch } from "@cloudflare/playwright";
+import { launch } from "@cloudflare/playwright";
 import { InputError, publicUrl } from "./policy";
 import { openSession, sealSession, filterStorageState } from "./session-crypto";
 import { readRenderedPage } from "./extract";
@@ -47,13 +47,6 @@ async function vault<T>(env: SessionEnv, action: string, data: unknown): Promise
   return result as T;
 }
 
-async function closeRemote(env: SessionEnv, sessionId: string): Promise<void> {
-  const binding = env.BROWSER as any;
-  if (typeof binding.closeSession === "function") {
-    await binding.closeSession(sessionId).catch(() => {});
-  }
-}
-
 async function protectContext(context: any): Promise<void> {
   await context.route("**/*", async (route: any) => {
     try { publicUrl(route.request().url()); await route.continue(); }
@@ -61,104 +54,22 @@ async function protectContext(context: any): Promise<void> {
   });
 }
 
+/**
+ * The owner-scoped Durable Object owns both the browser and the login state.
+ * We do not disconnect from Chrome between starting and committing a login.
+ */
 export async function beginBrowserLogin(env: SessionEnv, input: unknown) {
   requireVault(env);
   const target = publicUrl(input, env.ALLOWED_HOSTS);
-  const origin = new URL(target).origin;
-  const { sessionId } = await acquire(env.BROWSER, { keep_alive: 600000 });
-  let browser: any;
-  try {
-    browser = await connect(env.BROWSER, sessionId);
-    // Use the remote browser's default persistent context. A newly created
-    // non-default Playwright context can disappear when its CDP client disconnects.
-    const context = browser.contexts()[0] ?? await browser.newContext({
-      viewport: { width: 1365, height: 900 }, locale: "en-US"
-    });
-    await protectContext(context);
-    const page = context.pages()[0] ?? await context.newPage();
-    await page.goto(target, { waitUntil: "domcontentloaded", timeout: 25000 });
-
-    const cdp = await context.newCDPSession(page);
-    let liveViewUrl: string;
-    try {
-      const view = await cdp.send("Cloudflare.getLiveView", {
-        mode: "tab", expiresInMs: 300000
-      });
-      liveViewUrl = view.devtoolsFrontendUrl;
-    } finally {
-      await cdp.detach().catch(() => {});
-    }
-    if (!liveViewUrl || !liveViewUrl.startsWith("https://live.browser.run/")) {
-      throw new InputError("Cloudflare did not return a valid Live View URL", 502);
-    }
-
-    const now = Date.now();
-    const pending: Pending = {
-      id: crypto.randomUUID(), origin, browserSessionId: sessionId,
-      createdAt: now, expiresAt: now + 8 * 60_000
-    };
-    await vault(env, "/pending/create", { value: pending });
-    return {
-      ok: true, loginId: pending.id, origin, liveViewUrl,
-      expiresAt: new Date(pending.expiresAt).toISOString(),
-      instructions: "Open Live View, log in yourself, return to the original site, then call session/commit. Treat this URL as a secret."
-    };
-  } catch (error) {
-    await closeRemote(env, sessionId);
-    throw error;
-  } finally {
-    if (browser) await browser.close().catch(() => {});
-  }
+  return vault(env, "/login/start", { url: target });
 }
 
 export async function finishBrowserLogin(env: SessionEnv, loginId: unknown) {
-  const key = requireVault(env);
+  requireVault(env);
   if (typeof loginId !== "string" || !/^[0-9a-f-]{36}$/i.test(loginId)) {
     throw new InputError("loginId must be a valid UUID");
   }
-  const { pending } = await vault<{ pending: Pending }>(env, "/pending/get", { id: loginId });
-  const browser = await connect(env.BROWSER, pending.browserSessionId);
-  try {
-    // A remote Chromium session can have a default blank context in addition
-    // to the context used for login. Search all tabs by validated origin.
-    let context: any = null;
-    let page: any = null;
-    for (const candidateContext of browser.contexts()) {
-      for (const candidatePage of candidateContext.pages()) {
-        try {
-          const url = publicUrl(candidatePage.url(), env.ALLOWED_HOSTS);
-          if (new URL(url).origin === pending.origin) {
-            context = candidateContext;
-            page = candidatePage;
-            break;
-          }
-        } catch { /* blank pages and identity-provider tabs are not saved */ }
-      }
-      if (page) break;
-    }
-    if (!context || !page) {
-      throw new InputError("Return the remote browser to the requested site's origin before saving; no matching tab found", 409);
-    }
-    const state = filterStorageState(await context.storageState({ indexedDB: true }), pending.origin);
-    const sealed = await sealSession(JSON.stringify(state), pending.origin, key);
-    const now = Date.now();
-    const saved: Saved = {
-      ...sealed, origin: pending.origin, createdAt: now,
-      expiresAt: now + 7 * 24 * 3600 * 1000, cookieCount: state.cookies.length
-    };
-    await vault(env, "/state/put", { value: saved });
-    await vault(env, "/pending/consume", { id: loginId });
-    return {
-      ok: true, origin: pending.origin,
-      cookieCount: saved.cookieCount, expiresAt: new Date(saved.expiresAt).toISOString(),
-      warning: state.cookies.length === 0 && state.origins.length === 0
-        ? "No persistent cookies or local storage were detected; this login may not survive browser restart."
-        : null
-    };
-  } finally {
-    await browser.close().catch(() => {});
-    await closeRemote(env, pending.browserSessionId);
-  }
+  return vault(env, "/login/commit", { loginId });
 }
 
 export async function listBrowserLogins(env: SessionEnv) {
