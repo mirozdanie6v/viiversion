@@ -1,0 +1,221 @@
+name: Personal Web staging deployment
+
+on:
+  push:
+    branches: [feat/personal-web-firecrawl-mvp]
+    paths:
+      - "personal-web/**"
+      - ".github/workflows/personal-web-staging.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: personal-web-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: personal-web
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PERSONAL_WEB_API_TOKEN: ${{ secrets.PERSONAL_WEB_API_TOKEN }}
+      PERSONAL_WEB_VAULT_KEY: ${{ secrets.PERSONAL_WEB_VAULT_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies and verify code
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npx wrangler deploy --dry-run
+      - name: Check Cloudflare credentials without exposing values
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID}" ]; then
+            echo "::error::Cloudflare deployment credentials are not configured"
+            exit 1
+          fi
+          npx wrangler whoami
+      - name: Deploy only the separate personal-web staging Worker
+        run: |
+          set -euo pipefail
+          WORKER_URL="https://viiversion-personal-web-staging.viiversion.workers.dev"
+          for attempt in 1 2 3; do
+            if npx wrangler deploy --name viiversion-personal-web-staging; then
+              echo "WORKER_URL=$WORKER_URL" >> "$GITHUB_ENV"
+              echo "Staging Worker deployed: $WORKER_URL"
+              exit 0
+            fi
+            echo "::warning::Cloudflare deployment attempt $attempt failed; retrying transient API errors"
+            sleep 7
+          done
+          echo "::error::Cloudflare deployment did not succeed after 3 attempts"
+          exit 1
+      - name: Configure permanent owner API token if present
+        run: |
+          set -euo pipefail
+          if [ -z "$PERSONAL_WEB_API_TOKEN" ]; then
+            TEMP_TOKEN="$(openssl rand -hex 32)"
+            echo "::add-mask::$TEMP_TOKEN"
+            printf "%s" "$TEMP_TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
+            echo "SMOKE_TOKEN=$TEMP_TOKEN" >> "$GITHUB_ENV"
+            echo "SMOKE_TOKEN_AVAILABLE=true" >> "$GITHUB_ENV"
+            echo "SMOKE_TOKEN_TEMP=true" >> "$GITHUB_ENV"
+            echo "::notice::Using a temporary staging-only bearer token for full live smoke; deleting it after the run. Set PERSONAL_WEB_API_TOKEN for permanent access."
+          elif [ "${#PERSONAL_WEB_API_TOKEN}" -lt 32 ]; then
+            echo "::error::PERSONAL_WEB_API_TOKEN must contain at least 32 characters"
+            exit 1
+          else
+            echo "::add-mask::$PERSONAL_WEB_API_TOKEN"
+            printf "%s" "$PERSONAL_WEB_API_TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
+            echo "SMOKE_TOKEN=$PERSONAL_WEB_API_TOKEN" >> "$GITHUB_ENV"
+            echo "SMOKE_TOKEN_AVAILABLE=true" >> "$GITHUB_ENV"
+          fi
+      - name: Provision encryption key once or preserve existing stable key
+        run: |
+          set -euo pipefail
+          npx wrangler secret list --name viiversion-personal-web-staging --format json > /tmp/pw-secret-names.json
+          if [ -n "$PERSONAL_WEB_VAULT_KEY" ]; then
+            if [[ ! "$PERSONAL_WEB_VAULT_KEY" =~ ^[a-fA-F0-9]{64}$ ]]; then
+              echo "::error::PERSONAL_WEB_VAULT_KEY must be exactly 64 hexadecimal characters"
+              exit 1
+            fi
+            echo "::add-mask::$PERSONAL_WEB_VAULT_KEY"
+            printf "%s" "$PERSONAL_WEB_VAULT_KEY" | npx wrangler secret put SESSION_VAULT_KEY --name viiversion-personal-web-staging
+          elif jq -e 'map(.name) | index("SESSION_VAULT_KEY") != null' /tmp/pw-secret-names.json > /dev/null; then
+            echo "Cloudflare-managed session vault key already exists; preserving it"
+          else
+            VAULT_KEY="$(openssl rand -hex 32)"
+            echo "::add-mask::$VAULT_KEY"
+            printf "%s" "$VAULT_KEY" | npx wrangler secret put SESSION_VAULT_KEY --name viiversion-personal-web-staging
+            echo "::notice::Generated a new one-time Cloudflare-only encryption key; future deploys preserve it"
+          fi
+      - name: Live Cloudflare browser smoke (approved site only)
+        run: |
+          set -euo pipefail
+          READY=false
+          for i in $(seq 1 20); do
+            code="$(curl --silent --show-error --max-time 12 --output /tmp/pw-health.json --write-out '%{http_code}' "$WORKER_URL/health" || true)"
+            if [ "$code" = "200" ] && jq -e '.ok == true and .configured == true' /tmp/pw-health.json > /dev/null 2>&1; then
+              READY=true
+              break
+            fi
+            echo "Cloudflare staging propagation check $i: HTTP $code"
+            sleep 3
+          done
+          if [ "$READY" != "true" ]; then
+            echo "::error::Worker /health not reachable after retries; last HTTP response:"
+            cat /tmp/pw-health.json
+            exit 1
+          fi
+          unauth="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/scrape" -H 'content-type: application/json' -d '{"url":"https://viiversion.com/"}')"
+          test "$unauth" = 401
+          AUTH_READY=false
+          for i in $(seq 1 20); do
+            auth_code="$(curl --silent --show-error --max-time 15 --output /tmp/pw-auth.json --write-out '%{http_code}' \
+              -X POST "$WORKER_URL/mcp" \
+              -H "authorization: Bearer $SMOKE_TOKEN" \
+              -H "content-type: application/json" \
+              -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' || true)"
+            if [ "$auth_code" = "200" ] && jq -e '.result.tools | length >= 6' /tmp/pw-auth.json > /dev/null 2>&1; then
+              AUTH_READY=true
+              break
+            fi
+            echo "Cloudflare secret propagation check $i: HTTP $auth_code"
+            sleep 3
+          done
+          if [ "$AUTH_READY" != "true" ]; then
+            echo "::error::New WEB_API_TOKEN did not become active within the bounded retry window"
+            exit 1
+          fi
+          unauth="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/scrape" -H 'content-type: application/json' -d '{"url":"https://viiversion.com/"}')"
+          test "$unauth" = 401
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/scrape" \
+            -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-scrape.json
+          jq -e '.ok == true and (.document.url | startswith("https://viiversion.com")) and (.document.title | type == "string")' /tmp/pw-scrape.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/mcp" \
+            -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' > /tmp/pw-mcp.json
+          jq -e '.result.tools | length >= 6' /tmp/pw-mcp.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/extract" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","fields":{"headline":"h1"}}' > /tmp/pw-extract.json
+          jq -e '.ok == true and (.data | has("headline"))' /tmp/pw-extract.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/map" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","limit":1,"depth":0}' > /tmp/pw-map.json
+          jq -e '.ok == true and .visitedPages == 1' /tmp/pw-map.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/crawl" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","limit":1,"depth":0}' > /tmp/pw-crawl.json
+          jq -e '.ok == true and (.documents | length == 1)' /tmp/pw-crawl.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/screenshot" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","fullPage":false}' > /tmp/pw-screenshot.png
+          test "$(head -c 8 /tmp/pw-screenshot.png | od -An -tx1 | tr -d ' \\n')" = "89504e470d0a1a0a"
+          disabled="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/interact" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","actions":[]}' )"
+          test "$disabled" = 403
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/session/start" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-login-start.json
+          jq -e '.ok == true and (.loginId | type == "string") and (.liveViewUrl | startswith("https://live.browser.run/"))' /tmp/pw-login-start.json > /dev/null
+          LOGIN_ID="$(jq -r '.loginId' /tmp/pw-login-start.json)"
+          COMMIT_CODE="$(curl --silent --show-error --max-time 100 --output /tmp/pw-login-commit.json --write-out '%{http_code}' \
+            -X POST "$WORKER_URL/v1/session/commit" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d "{\"loginId\":\"$LOGIN_ID\"}")"
+          if [ "$COMMIT_CODE" != 200 ]; then
+            echo "::error::Manual browser session handoff failed: HTTP $COMMIT_CODE"
+            jq -r '.error // "Unexpected response"' /tmp/pw-login-commit.json
+            exit 1
+          fi
+          jq -e '.ok == true and .origin == "https://viiversion.com"' /tmp/pw-login-commit.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/session/scrape" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-scrape.json
+          jq -e '.ok == true and .sessionOrigin == "https://viiversion.com"' /tmp/pw-session-scrape.json > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+            -X POST "$WORKER_URL/v1/session/revoke" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-revoke.json
+          jq -e '.ok == true and .revoked == true' /tmp/pw-session-revoke.json > /dev/null
+          echo "Stateful Durable Object browser handoff, encrypted save, reuse and revoke passed"
+          echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
+      - name: Remove temporary staging access credential
+        if: always()
+        run: |
+          if [ "${SMOKE_TOKEN_TEMP:-false}" = "true" ]; then
+            echo "Deleting temporary bearer token; add a permanent repository secret for owner access"
+            printf '{"WEB_API_TOKEN":null}' | npx wrangler secret bulk --name viiversion-personal-web-staging
+            npx wrangler secret list --name viiversion-personal-web-staging --format json > /tmp/pw-cleanup-secrets.json
+            if jq -e 'map(.name) | index("WEB_API_TOKEN") != null' /tmp/pw-cleanup-secrets.json > /dev/null; then
+              echo "::error::Temporary staging secret is still present after cleanup"
+              exit 1
+            fi
+            echo "Temporary staging owner token deleted and verified"
+          fi

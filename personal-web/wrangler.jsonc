@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "viiversion-personal-web",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-08",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "browser": {
+    "binding": "BROWSER"
+  },
+  "vars": {
+    "MAX_CRAWL_PAGES": "8",
+    "ENABLE_INTERACT": "false",
+    "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com",
+    "ENABLE_SAVED_SESSIONS": "true"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "VAULT",
+        "class_name": "PersonalWebVault"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "PersonalWebVault"
+      ]
+    }
+  ]
+}
