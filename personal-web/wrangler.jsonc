@@ -14,7 +14,7 @@
     "MAX_CRAWL_PAGES": "8",
     "ENABLE_INTERACT": "false",
     "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com",
-    "ENABLE_SAVED_SESSIONS": "false"
+    "ENABLE_SAVED_SESSIONS": "true"
   },
   "durable_objects": {
     "bindings": [
