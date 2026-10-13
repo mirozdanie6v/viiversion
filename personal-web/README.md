@@ -41,7 +41,27 @@ client registration, owner consent, PKCE authorization code exchange, MCP tool
 inventory, denial of admin API access to OAuth access tokens, refresh rotation,
 replay rejection and token revocation.
 
-### Connect in ChatGPT
+### Current ChatGPT plan limitation (verified 13 Oct 2026)
+
+Official documentation for custom MCP apps currently enables developer mode on
+**ChatGPT Pro** (read/fetch integrations only) and **Business/Enterprise/Edu**
+(workspace-managed custom MCP; write actions only where allowed).
+**ChatGPT Plus does not offer arbitrary private custom MCP registration**.
+Do not promise a Plus user that the `Plugins → Add custom MCP server` action
+will appear. This limitation concerns registration in the ChatGPT UI, not the
+Cloudflare service or its OAuth endpoint.
+
+Sources:
+- https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt
+- https://help.openai.com/en/articles/11509118-admin-controls-security-and-compliance-for-plugins-and-apps
+
+While custom MCP registration is unavailable, the deployed owner console at
+`/owner` continues to work as a separate website, and REST/MCP APIs can be
+used by authorized developer clients. Genuine target-site login requires the
+owner to complete passwords/MFA inside Live View. Never supply website passwords
+or the owner bearer credential to the conversational assistant.
+
+### Connect in ChatGPT (only when custom MCP creation is enabled on the plan)
 
 1. Use **chatgpt.com** in a browser (not the Android client for creation).
 2. Open **Plugins** → **Add** → **Add custom MCP server**.
