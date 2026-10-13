@@ -1,14 +1,18 @@
 import { launch } from "@cloudflare/playwright";
 import { handleMcp } from "./mcp";
 import { ownerHtml, ownerJs } from "./owner-ui";
+import { oauthRoute, verifyOAuth, oauthUnauthorized } from "./oauth";
 import { beginBrowserLogin, finishBrowserLogin, listBrowserLogins, revokeBrowserLogin, scrapeWithSavedLogin } from "./sessions";
 export { PersonalWebVault } from "./session-vault";
+export { PersonalWebOAuth } from "./oauth-vault";
 import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy";
 import { readRenderedPage, extractFields, type PageDocument } from "./extract";
 
 interface Env {
   BROWSER: Fetcher;
   VAULT: DurableObjectNamespace;
+  OAUTH: DurableObjectNamespace;
+  ENABLE_OAUTH?: string;
   SESSION_VAULT_KEY?: string;
   ENABLE_SAVED_SESSIONS?: string;
   WEB_API_TOKEN?: string;
@@ -33,10 +37,19 @@ function errorResponse(error: unknown): Response {
   return json({ ok: false, error: "Browser operation failed" }, 502);
 }
 
-function authorized(request: Request, env: Env): boolean {
+const oauthReadOnlyPaths = new Set([
+  "/mcp", "/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract",
+  "/v1/screenshot", "/v1/session/scrape"
+]);
+
+async function authorized(request: Request, env: Env, path: string): Promise<boolean> {
   const key = env.WEB_API_TOKEN;
-  if (!key || key.length < 32) return false;
-  return request.headers.get("authorization") === "Bearer " + key;
+  const header = request.headers.get("authorization") ?? "";
+  if (key && key.length >= 32 && header === "Bearer " + key) return true;
+  // An OAuth bearer only authorizes read-only MCP tools, never the Live View
+  // administration API, credential management, or browser click/fill actions.
+  if (!oauthReadOnlyPaths.has(path)) return false;
+  return verifyOAuth(request, env);
 }
 
 async function parseBody(request: Request): Promise<Record<string, any>> {
@@ -222,6 +235,8 @@ async function interact(page: any, env: Env, data: Record<string, any>) {
 
 async function handle(request: Request, env: Env): Promise<Response> {
   const pathname = new URL(request.url).pathname;
+  const oauth = await oauthRoute(request, env);
+  if (oauth) return oauth;
   if (request.method === "GET" && (pathname === "/owner" || pathname === "/owner.js")) {
     const isJs = pathname.endsWith(".js");
     return new Response(isJs ? ownerJs : ownerHtml, { headers: {
@@ -236,7 +251,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   if (request.method === "GET" && pathname === "/health") {
     return json({ ok: true, name: NAME, version: VERSION, configured: Boolean(env.WEB_API_TOKEN && env.WEB_API_TOKEN.length >= 32) });
   }
-  if (!authorized(request, env)) return json({ ok: false, error: "Unauthorized" }, 401);
+  if (!await authorized(request, env, pathname)) return oauthUnauthorized(request);
   if (pathname === "/mcp") {
     return handleMcp(request, async (path, params) => handle(
       new Request(new URL(path, request.url), {
