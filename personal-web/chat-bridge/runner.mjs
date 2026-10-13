@@ -31,24 +31,11 @@ function checkRequest(data) {
       target.port || target.hash || target.search) {
     throw new Error("Only public HTTPS URLs without query/fragment/credentials are accepted");
   }
-  // This is a PUBLIC Actions log; browser has no saved site cookies.
-  // Permit regular public HTTPS domains, never internal/private targets.
-  const h = target.hostname.toLowerCase();
-  if (!h.includes(".") || h.length > 253 || !/^[a-z0-9.-]+$/.test(h) ||
-      /^[0-9.]+$/.test(h) ||
-      h.split(".").some(label => !label || label.length > 63 || label[0] === "-" ||
-        label.endsWith("-")) ||
-      ["localhost","local","internal","test","invalid","onion","lan","private","arpa"].some(
-        suffix => h === suffix || h.endsWith("." + suffix)
-      ) ||
-      ["nip.io","sslip.io","localtest.me","lvh.me","localhost.direct"].some(
-        suffix => h === suffix || h.endsWith("." + suffix)
-      ) ||
-      ["workers.dev","pages.dev"].some(suffix => h.endsWith("." + suffix))) {
-    throw new Error("Only public HTTPS DNS hostnames are supported");
-  }
-  if (/(^|\\/)(login|signin|account|dashboard|admin|billing|inbox|oauth)(\\/|$)/i.test(target.pathname)) {
-    throw new Error("Private account sections are excluded from the public bridge");
+  // Exact public sites only: do not put client dashboards, credentials,
+  // unpublished staging content or authenticated sessions in GitHub logs.
+  if (target.hostname !== "viiversion.com" &&
+      !(target.hostname === "github.com" && /^\/mirozdanie6v(?:\/|$)/.test(target.pathname))) {
+    throw new Error("Only public viiversion.com and github.com/mirozdanie6v pages are enabled");
   }
   const payload = { url: target.href };
   if (data.operation === "map" || data.operation === "crawl") {
