@@ -44,6 +44,15 @@ button:hover,.button:hover{background:#38526e}button:disabled{opacity:.4;cursor:
 <button id="revoke" type="button">Удалить сессию этого сайта</button>
 <p id="status" role="status" aria-live="polite">Готово к подключению.</p>
 </section>
+<section><h2>4. Одобряемые действия</h2>
+<p>Сначала создайте план, просмотрите операции, затем отдельно подтвердите запуск. Не передавайте пароли или коды.</p>
+<label for="actions">Шаги в JSON</label>
+<textarea id="actions" rows="5">[{"type":"scroll","pixels":300}]</textarea>
+<button id="propose" type="button">Подготовить план</button>
+<button id="approve" type="button">Одобрить действия</button>
+<button id="execute" type="button">Выполнить план</button>
+<p id="approvalStatus" role="status" aria-live="polite">План ещё не подготовлен.</p>
+</section>
 </main><script src="/owner.js" defer></script></body></html>`;
 
 export const ownerJs = `(() => {
