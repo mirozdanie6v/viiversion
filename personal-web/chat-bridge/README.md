@@ -18,6 +18,9 @@ normal ChatGPT → GitHub plugin → request.json push → GitHub Actions
 - 13 October 2026, [run 38396071404](https://github.com/mirozdanie6v/viiversion/actions/runs/38396071404): public page scraped with the personal Chrome browser.
 - 13 October 2026, [run 38396217569](https://github.com/mirozdanie6v/viiversion/actions/runs/38396217569): map found 30 links on viiversion.com.
 - 13 October 2026, [run 38396424512](https://github.com/mirozdanie6v/viiversion/actions/runs/38396424512): **actual MCP `tools/call`** returned the page title and 33 discovered links.
+- 13 October 2026, [run 38399933467](https://github.com/mirozdanie6v/viiversion/actions/runs/38399933467): independent external domain `example.com` passed.
+- 13 October 2026, [run 38400064388](https://github.com/mirozdanie6v/viiversion/actions/runs/38400064388): independent external domain `python.org` passed.
+- 13 October 2026, [run 38400417732](https://github.com/mirozdanie6v/viiversion/actions/runs/38400417732): modern external JavaScript site `react.dev` passed after URL validation hardening.
 
 ## How to submit a new command from ChatGPT
 
@@ -52,11 +55,11 @@ MCP transport marker and the browser document or link map.
 ### Security boundary: PUBLIC REPOSITORY
 
 `mirozdanie6v/viiversion` is **public**. All request files and workflow logs
-are public and may be retained by GitHub. The runner rejects all except
-`https://viiversion.com/*` and public
-`https://github.com/mirozdanie6v/*` pages, rejects URLs with query strings,
-fragments or URL credentials, never includes cookies or session tokens in logs,
-and invokes **only the existing read-only MCP tools**.
+are public and may be retained by GitHub. The bridge now accepts anonymous pages on ordinary public HTTPS domains. It
+rejects private/internal/IP-literal hostnames, common private account paths,
+URLs with query strings/fragments/embedded credentials, and known IP-mapped DNS
+aliases. It never attaches saved login sessions and invokes **only read-only
+MCP tools**. Public GitHub workflow logs may contain page text.
 
 NEVER enable `web_session_scrape`, `web_interact`, account or admin pages in
 this workflow. For real logged-in accounts, implement a **separate private
