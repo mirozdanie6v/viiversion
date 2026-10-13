@@ -137,6 +137,16 @@ export class PersonalWebOAuth {
       return Response.json({ ok: true, tokens: await this.tokens(valid.clientId, valid.resource, valid.scope) });
     }
 
+    if (action === "/revoke") {
+      const value = String(data.token ?? "");
+      if (/^[a-f0-9]{64}$/.test(value)) {
+        const hashed = await digest(value);
+        await storage.delete("access:" + hashed);
+        await storage.delete("refresh:" + hashed);
+      }
+      return Response.json({ ok: true });
+    }
+
     if (action === "/verify") {
       const value = String(data.token ?? "");
       if (!/^[a-f0-9]{64}$/.test(value)) return Response.json({ ok: false }, { status: 401 });
