@@ -55,6 +55,8 @@ export async function explorePublicPage(
   page: any, data: Record<string, any>, allowedHosts = ""
 ): Promise<Record<string, unknown>> {
   const start = publicUrl(data.url, allowedHosts);
+  const initialOrigin = new URL(start).origin;
+  const restrictedToOrigin = data.stayOnOrigin === true;
   const steps = stepsFrom(data);
   const response = await page.goto(start, { waitUntil: "domcontentloaded", timeout: 20000 });
   if (!response || response.status() >= 400) throw new InputError("Page returned HTTP " + (response?.status() ?? "no response"), 502);
@@ -64,6 +66,9 @@ export async function explorePublicPage(
   for (const step of steps) {
     if (step.type === "follow") {
       const target = publicUrl(new URL(step.href, current).toString(), allowedHosts);
+      if (restrictedToOrigin && new URL(target).origin !== initialOrigin) {
+        throw new InputError("Authenticated navigation must stay on the saved site's origin", 403);
+      }
       const found = await page.locator("a[href]").evaluateAll((elements: Element[], wanted: string) =>
         elements.some(e => (e as HTMLAnchorElement).href === wanted), target);
       if (!found) throw new InputError("Follow target is not a link on the current page", 403);
@@ -76,6 +81,9 @@ export async function explorePublicPage(
       await page.waitForTimeout(step.milliseconds);
     }
     current = publicUrl(page.url(), allowedHosts);
+    if (restrictedToOrigin && new URL(current).origin !== initialOrigin) {
+      throw new InputError("Navigation left the authorized site's origin", 409);
+    }
     if (step.type === "read") {
       const doc = await readRenderedPage(page, 7000);
       readings.push({ url: doc.url, title: doc.title, markdown: doc.markdown.slice(0, 7000) });
