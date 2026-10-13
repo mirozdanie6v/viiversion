@@ -14,6 +14,7 @@ const descriptors = [
     inputSchema: { type: "object", properties: { url: { type: "string" }, fields: { type: "object", additionalProperties: { type: "string" } } }, required: ["url", "fields"], additionalProperties: false } },
   { name: "web_screenshot", description: "Capture the rendered page as a PNG image.",
     inputSchema: { type: "object", properties: { url: { type: "string" }, fullPage: { type: "boolean" } }, required: ["url"], additionalProperties: false } },
+  { name: "web_batch", description: "Read a few public web pages together.", inputSchema: { type: "object", properties: { urls: { type: "array", minItems: 1, maxItems: 4, items: { type: "string" } } }, required: ["urls"], additionalProperties: false } },
   { name: "web_explore", description: "Read-only multi-step Chromium navigation with link following, scrolling and page controls inspection; never clicks buttons or submits forms.",
     inputSchema: { type: "object", properties: { url: { type: "string" }, inspect: { type: "boolean" },
       steps: { type: "array", maxItems: 6, items: { type: "object",
@@ -37,6 +38,7 @@ const tools = new Map<string, string>([
   ["web_crawl", "/v1/crawl"],
   ["web_extract", "/v1/extract"],
   ["web_screenshot", "/v1/screenshot"],
+  ["web_batch", "/v1/batch"],
   ["web_explore", "/v1/explore"],
   ["web_session_scrape", "/v1/session/scrape"]
 ]);
