@@ -206,11 +206,21 @@ jobs:
             -H "content-type: application/json" \
             -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-scrape.json
           jq -e '.ok == true and .sessionOrigin == "https://viiversion.com"' /tmp/pw-session-scrape.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/v1/session/explore" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","steps":[{"type":"scroll","pixels":200}]}' > /tmp/pw-session-explore.json
+          jq -e '.ok == true and .sessionReused == true and (.pageControls.forms | type == "array")' /tmp/pw-session-explore.json >/dev/null
           curl --fail --silent --show-error --max-time 30 \
             -X POST "$WORKER_URL/v1/session/revoke" -H "authorization: Bearer $SMOKE_TOKEN" \
             -H "content-type: application/json" \
             -d '{"url":"https://viiversion.com/"}' > /tmp/pw-session-revoke.json
           jq -e '.ok == true and .revoked == true' /tmp/pw-session-revoke.json > /dev/null
+          curl --fail --silent --show-error --max-time 100 \
+            -X POST "$WORKER_URL/mcp" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d '{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"web_batch","arguments":{"urls":["https://viiversion.com/","https://example.com/"]}}}' > /tmp/pw-batch-mcp.json
+          jq -e '.result.isError == false and ((.result.content[0].text | fromjson).completed) == 2' /tmp/pw-batch-mcp.json >/dev/null
           echo "Stateful Durable Object browser handoff, encrypted save, reuse and revoke passed"
           echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
           if [ "${PERMANENT_OWNER_ACCESS:-false}" = "true" ]; then
