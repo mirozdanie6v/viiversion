@@ -178,8 +178,13 @@ export class PersonalWebVault {
       if (!/^[a-f0-9]{64}$/.test(digest) || !origin.startsWith("https://")) {
         return Response.json({ error: "Invalid plan" }, { status: 400 });
       }
-      const pending = await storage.list({ prefix: "approval:" });
-      if (pending.size >= 10) return Response.json({ error: "Too many pending plans" }, { status: 429 });
+      const pending = await storage.list<{expiresAt: number}>({ prefix: "approval:" });
+      let active = 0;
+      for (const [key, item] of pending) {
+        if (item.expiresAt <= now) await storage.delete(key);
+        else active++;
+      }
+      if (active >= 10) return Response.json({ error: "Too many pending plans" }, { status: 429 });
       const planId = crypto.randomUUID();
       const expiresAt = now + 3 * 60_000;
       await storage.put("approval:" + planId, { digest, origin, expiresAt, approved: false });
@@ -187,10 +192,14 @@ export class PersonalWebVault {
     }
     if (action === "/action/approve") {
       const key = "approval:" + String(data.planId ?? "");
-      const p = await storage.get<{digest: string; origin: string; expiresAt: number; approved: boolean}>(key);
-      if (!p || p.expiresAt <= now) return Response.json({ error: "Plan expired" }, { status: 410 });
-      await storage.put(key, { ...p, approved: true });
-      return Response.json({ ok: true, expiresAt: new Date(p.expiresAt).toISOString() });
+      const expiration = await storage.transaction(async txn => {
+        const p = await txn.get<{digest: string; origin: string; expiresAt: number; approved: boolean}>(key);
+        if (!p || p.expiresAt <= now) return null;
+        await txn.put(key, { ...p, approved: true });
+        return p.expiresAt;
+      });
+      if (!expiration) return Response.json({ error: "Plan expired or consumed" }, { status: 410 });
+      return Response.json({ ok: true, expiresAt: new Date(expiration).toISOString() });
     }
     if (action === "/action/consume") {
       const key = "approval:" + String(data.planId ?? "");
