@@ -171,6 +171,40 @@ export class PersonalWebVault {
     if (action === "/login/start") return this.startLogin(data.url);
     if (action === "/login/commit") return this.commitLogin(data.loginId);
 
+    // Action plans persist only a SHA-256 digest, never submitted form values.
+    if (action === "/action/propose") {
+      const digest = String(data.digest ?? "");
+      const origin = String(data.origin ?? "");
+      if (!/^[a-f0-9]{64}$/.test(digest) || !origin.startsWith("https://")) {
+        return Response.json({ error: "Invalid plan" }, { status: 400 });
+      }
+      const pending = await storage.list({ prefix: "approval:" });
+      if (pending.size >= 10) return Response.json({ error: "Too many pending plans" }, { status: 429 });
+      const planId = crypto.randomUUID();
+      const expiresAt = now + 3 * 60_000;
+      await storage.put("approval:" + planId, { digest, origin, expiresAt, approved: false });
+      return Response.json({ ok: true, planId, expiresAt: new Date(expiresAt).toISOString() });
+    }
+    if (action === "/action/approve") {
+      const key = "approval:" + String(data.planId ?? "");
+      const p = await storage.get<{digest: string; origin: string; expiresAt: number; approved: boolean}>(key);
+      if (!p || p.expiresAt <= now) return Response.json({ error: "Plan expired" }, { status: 410 });
+      await storage.put(key, { ...p, approved: true });
+      return Response.json({ ok: true, expiresAt: new Date(p.expiresAt).toISOString() });
+    }
+    if (action === "/action/consume") {
+      const key = "approval:" + String(data.planId ?? "");
+      const result = await storage.transaction(async txn => {
+        const p = await txn.get<{digest: string; origin: string; expiresAt: number; approved: boolean}>(key);
+        if (!p || !p.approved || p.expiresAt <= now ||
+            p.digest !== data.digest || p.origin !== data.origin) return false;
+        await txn.delete(key);
+        return true;
+      });
+      return result ? Response.json({ ok: true }) :
+        Response.json({ error: "Explicit approval is required for this exact plan" }, { status: 403 });
+    }
+
     if (action === "/state/put") {
       const item = data.value as Stored;
       if (!item || item.expiresAt <= now || item.expiresAt > now + 8 * 24 * 3600 * 1000 ||
