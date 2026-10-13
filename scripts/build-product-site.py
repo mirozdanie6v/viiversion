@@ -12,6 +12,7 @@ HOME = PUBLIC / "index.html"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from site_content import LANGS, BRAND, CASES, TEAM, NAV
+from site_directions import DIRECTIONS, ITEMS, PACKAGE_FIRST, SYSTEM_FIRST, PRODUCT_DETAIL_ROUTES, OWNED_SOFTWARE_ROUTE
 from product_catalog import (
     FAMILIES, SELLABLE_PRODUCTS, ADDONS, INDUSTRY_CONFIGS, TARGET_LANDINGS,
     SOFTWARE_PRODUCTS, PARTNER_PRODUCTS, LEGACY_REDIRECTS
@@ -170,7 +171,8 @@ CSS = r'''
 :root{--ink:#071524;--muted:#5a6878;--line:#dfe6ee;--soft:#f5f7fa;--soft2:#eef3f8;--blue:#145dff;--navy:#06111f;--green:#0c8f68;--orange:#b76a12;--max:1180px;--r:20px;--shadow:0 18px 55px rgba(15,35,68,.08)}
 *{box-sizing:border-box}html{scroll-behavior:smooth;max-width:100%}body{margin:0;max-width:100%;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;background:#fff}img,svg,video,canvas{max-width:100%;height:auto}a{text-decoration:none;color:inherit}button,input,textarea{font:inherit}.wrap{width:min(var(--max),calc(100% - 40px));margin:auto;min-width:0}
 .site-header{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.93);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.header-row{height:72px;display:flex;align-items:center;gap:24px}.brand{margin-right:auto;min-width:0;display:flex;align-items:center}.vii-logo{height:34px!important;width:auto!important;max-width:190px!important;object-fit:contain}.brand-word{font-weight:900;letter-spacing:.08em;font-size:21px}.nav{display:flex;gap:20px;font-size:14px;font-weight:680}.nav a:hover,.text-link{color:var(--blue)}.header-actions{display:flex;align-items:center;gap:9px;flex:0 0 auto;min-width:0}.lang-link{font-size:12px;font-weight:850;border:1px solid var(--line);border-radius:9px;padding:8px 9px}.header-cta,.btn{display:inline-flex;max-width:100%;align-items:center;justify-content:center;border-radius:11px;padding:12px 17px;font-size:14px;font-weight:800;border:1px solid transparent;cursor:pointer}.header-cta,.btn-primary{background:var(--ink);color:#fff}.header-cta:hover,.btn-primary:hover{background:var(--blue)}.btn-secondary{border-color:#cbd6e4;background:#fff}.mobile-toggle{display:none;border:0;background:none;font-size:24px}
-.hero{padding:82px 0 68px;background:radial-gradient(circle at 82% 10%,rgba(20,93,255,.20),transparent 34%),linear-gradient(135deg,#06111f,#0d2138 68%,#103154);color:#fff}.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:62px;align-items:center}.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:#6f7d8e}.hero .eyebrow{color:#8fb5ff}.hero h1,.page-hero h1{font-size:clamp(42px,6vw,76px);line-height:.98;letter-spacing:-.052em;margin:15px 0 23px}.hero p{font-size:20px;color:#c8d4e2;max-width:770px}.hero-direction-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:30px;max-width:760px}.hero-direction-tab{appearance:none;display:flex;align-items:center;justify-content:flex-start;min-height:62px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.065);color:#e7eef7;border-radius:16px;padding:14px 17px;font-size:15px;line-height:1.28;font-weight:780;text-align:left;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.10);transition:border-color .18s ease,background .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease}.hero-direction-tab:hover,.hero-direction-tab:focus-visible{border-color:rgba(143,181,255,.8);background:rgba(143,181,255,.13);color:#fff;outline:none;transform:translateY(-2px);box-shadow:0 14px 32px rgba(0,0,0,.16)}.hero-direction-tab.active,.hero-direction-tab[aria-pressed="true"]{border-color:#8fb5ff;background:#8fb5ff;color:#071524;box-shadow:0 14px 34px rgba(20,93,255,.24)}.hero-direction-tab:active{transform:translateY(1px)}.hero-actions,.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.hero .btn-secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,.32)}.hero-proof{margin-top:34px;display:flex;gap:10px;flex-wrap:wrap}.hero-proof span{font-size:12px;border:1px solid rgba(255,255,255,.18);padding:8px 10px;border-radius:999px;color:#d3deea}
+.hero{padding:82px 0 68px;background:radial-gradient(circle at 82% 10%,rgba(20,93,255,.20),transparent 34%),linear-gradient(135deg,#06111f,#0d2138 68%,#103154);color:#fff}.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:62px;align-items:center}.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:#6f7d8e}.hero .eyebrow{color:#8fb5ff}.hero h1,.page-hero h1{font-size:clamp(42px,6vw,76px);line-height:.98;letter-spacing:-.052em;margin:15px 0 23px}.hero p{font-size:20px;color:#c8d4e2;max-width:770px}.hero-direction-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:30px;max-width:760px}.hero-direction-tab{appearance:none;display:flex;align-items:center;justify-content:flex-start;min-height:62px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.065);color:#e7eef7;border-radius:16px;padding:14px 17px;font-size:15px;line-height:1.28;font-weight:780;text-align:left;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.10);transition:border-color .18s ease,background .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease}.hero-direction-tab:hover,.hero-direction-tab:focus-visible{border-color:rgba(143,181,255,.8);background:rgba(143,181,255,.13);color:#fff;outline:none;transform:translateY(-2px);box-shadow:0 14px 32px rgba(0,0,0,.16)}.hero-direction-tab.active,.hero-direction-tab[aria-pressed="true"]{border-color:#8fb5ff;background:#8fb5ff;color:#071524;box-shadow:0 14px 34px rgba(20,93,255,.24)}.hero-direction-tab:active{transform:translateY(1px)}.direction-panel[hidden]{display:none!important}.direction-panel{scroll-margin-top:82px}.direction-panel-inner{border:1px solid var(--line);border-radius:22px;padding:26px;background:#fff}.direction-preview-intro{max-width:850px;color:var(--muted)}.direction-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,.8fr);gap:28px;margin-top:22px}.direction-subgroups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.direction-group{border-top:1px solid var(--line);padding-top:16px}.direction-group h3{font-size:18px;margin:0 0 8px}.direction-group ul,.direction-services ul,.direction-jobs ul{padding-left:18px;margin:0}.direction-group li,.direction-services li,.direction-jobs li{margin:10px 0}.direction-item-desc{display:block;color:var(--muted);font-size:13px}.direction-maturity{display:block;color:#606f80;font-size:11px}.direction-aside{padding:21px;background:var(--soft);border-radius:17px}.direction-aside h3{margin:0 0 12px}.direction-aside .btn{margin-top:20px}.direction-page-section{margin-bottom:20px}.direction-jobs li{font-size:16px}.direction-panel h2{font-size:clamp(24px,3.2vw,36px);margin:0}.direction-panel .eyebrow{margin-bottom:9px}@media(max-width:720px){.direction-layout,.direction-subgroups{grid-template-columns:minmax(0,1fr)}.direction-panel-inner{padding:18px}.direction-aside{padding:18px}}
+.hero-actions,.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.hero .btn-secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,.32)}.hero-proof{margin-top:34px;display:flex;gap:10px;flex-wrap:wrap}.hero-proof span{font-size:12px;border:1px solid rgba(255,255,255,.18);padding:8px 10px;border-radius:999px;color:#d3deea}
 .process-map{border-radius:26px;padding:24px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);box-shadow:0 32px 90px rgba(0,0,0,.22)}.process-map h3{margin:0 0 18px;font-size:15px;color:#cfe0f2}.process-flow{display:grid;gap:9px}.process-node{padding:13px 15px;border-radius:12px;background:rgba(255,255,255,.07);display:flex;justify-content:space-between;align-items:center}.process-node b{font-size:14px}.process-node span{color:#8fb5ff;font-size:12px}.process-arrow{text-align:center;color:#6f8caf}
 .section{padding:72px 0;border-bottom:1px solid var(--line)}.section.soft{background:var(--soft)}.section.dark{background:var(--navy);color:#fff;border-bottom:0}.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:28px}.section-head h2,.section h2{font-size:clamp(30px,4vw,47px);line-height:1.04;letter-spacing:-.04em;margin:8px 0 0}.section-head p{max-width:590px;color:var(--muted);margin:0}.dark .section-head p,.dark p{color:#b7c6d8}.text-link{font-size:14px;font-weight:800}
 .grid2,.grid3,.grid4,.grid5,.case-grid,.offer-grid,.team-grid{display:grid;gap:15px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid5{grid-template-columns:repeat(5,minmax(0,1fr))}.case-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.offer-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -202,13 +204,28 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(toggle&&nav) toggle.addEventListener("click",()=>nav.classList.toggle("open"));
 
   const directionTabs=[...document.querySelectorAll("[data-direction-tab]")];
-  directionTabs.forEach(tab=>tab.addEventListener("click",()=>{
-    directionTabs.forEach(x=>{
-      const active=x===tab;
-      x.classList.toggle("active",active);
-      x.setAttribute("aria-pressed",active?"true":"false");
-    });
-  }));
+  const directionPanels=[...document.querySelectorAll("[data-direction-panel]")];
+  if(directionTabs.length && directionPanels.length){
+    directionTabs.forEach(tab=>tab.addEventListener("click",()=>{
+      const selected=tab.dataset.directionTab;
+      let visiblePanel=null;
+      directionTabs.forEach(x=>{
+        const active=x.dataset.directionTab===selected;
+        x.classList.toggle("active",active);
+        x.setAttribute("aria-pressed",active?"true":"false");
+        x.setAttribute("aria-expanded",active?"true":"false");
+      });
+      directionPanels.forEach(panel=>{
+        const show=panel.dataset.directionPanel===selected;
+        panel.hidden=!show;
+        if(show)visiblePanel=panel;
+      });
+      if(visiblePanel){
+        const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        visiblePanel.scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
+      }
+    }));
+  }
 
   const industryTabs=[...document.querySelectorAll("[data-industry-tab]")];
   const industryPanels=[...document.querySelectorAll("[data-industry-panel]")];
@@ -728,25 +745,13 @@ def home(lang):
     system_cards=""
     for kicker,title,desc,parts in systems:
         system_cards+=f'''<article class="system-card"><div class="system-index">{escape(kicker)}</div><h3>{escape(title)}</h3><p>{escape(desc)}</p><div class="system-components">{"".join(f'<span class="system-pill">{escape(x)}</span>' for x in parts)}</div></article>'''
-    direction_labels = ([
-        "Продажи и обслуживание клиентов",
-        "Управление заявками и работой команды",
-        "Автоматизация бизнес-процессов",
-        "AI для клиентов и сотрудников",
-        "Интеграция систем и платежей",
-        "Данные, аналитика и корпоративные системы",
-    ] if lang=="ru" else [
-        "Sales & customer service",
-        "Requests & team operations",
-        "Business process automation",
-        "AI for customers & employees",
-        "Systems & payment integration",
-        "Data, analytics & enterprise systems",
-    ])
     direction_tabs = "".join(
-        f'<button class="hero-direction-tab" type="button" data-direction-tab="{idx}" aria-pressed="false">{escape(label)}</button>'
-        for idx,label in enumerate(direction_labels, start=1)
+        f'<button class="hero-direction-tab" id="direction-tab-{d["key"]}" type="button" '
+        f'data-direction-tab="{d["key"]}" aria-controls="direction-panel-{d["key"]}" '
+        f'aria-pressed="false" aria-expanded="false">{escape(d[lang])}</button>'
+        for d in DIRECTIONS
     )
+    direction_panels = "".join(direction_preview(lang, d) for d in DIRECTIONS)
     return f'''
     <section class="hero"><div class="wrap hero-grid"><div>
       <div class="eyebrow">{escape(b["tagline"])}</div><h1>{escape(b["hero_title"])}</h1><p>{escape(b["hero_lead"])}</p>
@@ -754,7 +759,9 @@ def home(lang):
       <div class="hero-actions"><a class="btn btn-primary" href="#systems">{escape(b["hero_primary"])} ↓</a><a class="btn btn-secondary" href="#proof">{escape(b["hero_secondary"])}</a></div>
     </div><aside class="process-map"><h3>{"Один связанный контур" if lang=="ru" else "One connected system"}</h3><div class="architecture-stack">{arch_html}</div></aside></div></section>
 
-    <section class="section" id="proof"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{escape(b["proof_title"])}</h2></div><p>{escape(proof_lead)}</p></div><div class="case-grid">{top_cases}</div><div style="margin-top:18px"><a class="text-link" href="{loc(lang,'/cases/')}">{c["all_cases"]} →</a></div></div></section>
+    {direction_panels}
+
+    <section class="section" id="proof"<div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["proof"]}</div><h2>{escape(b["proof_title"])}</h2></div><p>{escape(proof_lead)}</p></div><div class="case-grid">{top_cases}</div><div style="margin-top:18px"><a class="text-link" href="{loc(lang,'/cases/')}">{c["all_cases"]} →</a></div></div></section>
 
     <section class="section soft" id="systems"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Системная архитектура" if lang=="ru" else "System architecture"}</div><h2>{"Четыре контура одной цифровой системы" if lang=="ru" else "Four layers of one digital system"}</h2></div><p>{escape(systems_lead)}</p></div><div class="systems-grid">{system_cards}</div></div></section>
 
@@ -766,6 +773,105 @@ def home(lang):
 
     <section class="section dark"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:#8fb5ff">{"Инженерная глубина" if lang=="ru" else "Engineering depth"}</div><h2>{escape(engineering_title)}</h2></div><p>{escape(engineering_text)}</p></div><div class="actions"><a class="btn btn-secondary" href="{loc(lang,'/enterprise/')}">{"Инженерия и крупные системы" if lang=="ru" else "Engineering & enterprise"} →</a><a class="btn btn-secondary" href="{loc(lang,'/software/')}">{"Программные продукты VIIVERSION" if lang=="ru" else "VIIVERSION software"} →</a><a class="btn btn-secondary" href="{loc(lang,'/partners/')}">{"Партнёрские форматы" if lang=="ru" else "Partner delivery"} →</a></div></div></section>
     '''
+
+
+def direction_item(lang, product_id, detail=False):
+    """Render a linked item only if its product page actually exists."""
+    title_ru, title_en, desc_ru, desc_en = ITEMS[product_id]
+    title, desc = (title_ru, desc_ru) if lang == "ru" else (title_en, desc_en)
+    href = PRODUCT_DETAIL_ROUTES.get(product_id)
+    name = escape(title)
+    if href:
+        name = f'<a class="text-link" href="{loc(lang, href)}">{name} →</a>'
+    status = ""
+    if product_id in PACKAGE_FIRST:
+        status = "Разработка / упаковка под задачу" if lang == "ru" else "Custom build / packaging"
+    elif product_id in SYSTEM_FIRST:
+        status = "Внедрение в составе системы" if lang == "ru" else "Available as part of a system"
+    maturity = f'<small class="direction-maturity">{escape(status)}</small>' if status else ""
+    description = f'<span class="direction-item-desc">{escape(desc)}</span>' if detail else ""
+    return f'<li>{name}{description}{maturity}</li>'
+
+def direction_groups(lang, d, detail=False):
+    groups = []
+    for ru_title, en_title, ids in d["groups"]:
+        heading = ru_title if lang == "ru" else en_title
+        items = "".join(direction_item(lang, p, detail) for p in ids)
+        groups.append(f'<section class="direction-group"><h3>{escape(heading)}</h3><ul>{items}</ul></section>')
+    return '<div class="direction-subgroups">' + "".join(groups) + '</div>'
+
+def direction_works(lang, d, detail=False):
+    # Commercial Matrix gives canonical services only for some clusters.
+    # Custom delivery statements below are ways to implement modules, not invented Pxx products.
+    list_items = "".join(direction_item(lang, p, detail) for p in d["services"])
+    own_works = d["works_ru"] if lang == "ru" else d["works_en"]
+    list_items += "".join(f'<li>{escape(work)}</li>' for work in own_works)
+    return f'<div class="direction-services"><ul>{list_items}</ul></div>'
+
+def direction_preview(lang, d):
+    title = escape(d[lang])
+    lead = escape(d["lead_ru"] if lang == "ru" else d["lead_en"])
+    details_url = loc(lang, "/solutions/" + d["slug"] + "/")
+    eyebrow = "Подразделы и решения" if lang == "ru" else "Areas and solutions"
+    services_title = "Инженерные услуги и внедрение" if lang == "ru" else "Engineering and delivery"
+    link_title = "Подробнее о направлении" if lang == "ru" else "Explore this direction"
+    software_note = "Готовые модули и индивидуальная разработка — варианты решения одной задачи." if lang == "ru" else "Reusable modules and custom engineering are alternative ways to meet a business need."
+    return f'''<section class="section soft direction-panel" id="direction-panel-{d["key"]}"
+      data-direction-panel="{d["key"]}" role="region" aria-labelledby="direction-tab-{d["key"]}" hidden>
+      <div class="wrap"><div class="direction-panel-inner">
+        <div class="eyebrow">{eyebrow}</div><h2>{title}</h2>
+        <p class="direction-preview-intro">{lead}</p>
+        <div class="direction-layout">
+          <div>{direction_groups(lang, d, detail=False)}</div>
+          <aside class="direction-aside"><h3>{services_title}</h3>
+            {direction_works(lang, d)}
+            <p class="direction-item-desc">{software_note}</p>
+            <a class="btn btn-primary" href="{details_url}">{link_title} →</a>
+          </aside>
+        </div>
+      </div></div></section>'''
+
+def direction_page(lang, d):
+    title = d[lang]
+    lead = d["lead_ru"] if lang == "ru" else d["lead_en"]
+    group_header = "Подразделы и модули" if lang == "ru" else "Areas, products and modules"
+    services_header = "Инженерные услуги и внедрение" if lang == "ru" else "Engineering services and delivery"
+    tasks_title = "С какими задачами можно обратиться" if lang == "ru" else "Problems we can address"
+    scenarios = d["jobs_ru"] if lang == "ru" else d["jobs_en"]
+    job_list = "".join(f'<li>{escape(job)}</li>' for job in scenarios)
+    proof_html = "".join(case_card(lang, slug) for slug in d["examples"] if slug in CASES)
+    proof_section = ""
+    if proof_html:
+        cases_title = "Связанные демо и прототипы" if lang == "ru" else "Related demos and prototypes"
+        proof_note = ("Каждый пример имеет собственный статус. Он подтверждает только показанные функции, а не готовность всего направления."
+                      if lang == "ru" else "Each example carries its own status and proves only the functions shown.")
+        proof_section = f'''<section class="section"><div class="wrap"><div class="section-head">
+          <div><h2>{cases_title}</h2></div><p>{proof_note}</p>
+          </div><div class="case-grid">{proof_html}</div></div></section>'''
+    delivery_title = "Как реализуем" if lang == "ru" else "Delivery options"
+    delivery_copy = (
+        "Можно внедрить отдельный модуль, связать новые функции с действующими сервисами или спроектировать систему под нестандартный процесс. Состав и совместимость определяются после технической оценки."
+        if lang == "ru" else
+        "We can implement a single module, integrate new functions into existing services or design a custom system. Scope and compatibility follow technical assessment."
+    )
+    software_text = ("Собственные программные продукты VIIVERSION представлены отдельно."
+                     if lang == "ru" else "VIIVERSION's own software products are listed separately.")
+    software_link = "Программные продукты" if lang == "ru" else "Owned software"
+    cta = "Обсудить задачу" if lang == "ru" else "Discuss a project"
+    return hero(lang, "Инженерные решения" if lang == "ru" else "Engineering solutions", title, lead,
+                "/solutions/" + d["slug"] + "/", (("Направления" if lang == "ru" else "Directions"), "/solutions/")) + f'''
+    <section class="section"><div class="wrap"><div class="section-head"><div><h2>{tasks_title}</h2></div></div>
+      <div class="direction-jobs"><ul>{job_list}</ul></div></div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><h2>{group_header}</h2></div></div>
+      {direction_groups(lang, d, detail=True)}</div></section>
+    <section class="section"><div class="wrap"><div class="section-head"><div><h2>{services_header}</h2></div></div>
+      {direction_works(lang, d, detail=True)}</div></section>
+    <section class="section soft"><div class="wrap"><div class="section-head"><div><h2>{delivery_title}</h2></div></div>
+      <p>{escape(delivery_copy)}</p><p><a class="text-link" href="{loc(lang, OWNED_SOFTWARE_ROUTE)}">{software_link} →</a> — {software_text}</p>
+      <div class="actions"><a class="btn btn-primary" data-interest="{escape(title)}"
+       data-cta="direction" href="#contact">{cta} →</a></div></div></section>
+    {proof_section}'''
+
 
 def products_index(lang):
     cards="".join(product_card(lang,s) for s in SELLABLE_PRODUCTS)
@@ -808,6 +914,19 @@ def product_page(lang,slug):
     <section class="section soft"><div class="wrap two-col"><div><div class="eyebrow">{buy_title}</div><h2>{buy_title}</h2><p class="quote">{escape(buy_text)}</p></div><div class="trust-box" style="margin-top:0"><h3>{"До старта фиксируем" if lang=="ru" else "Agreed before starting"}</h3><div class="trust-list"><div class="trust-item">✓ {"Состав первого пакета" if lang=="ru" else "Starter scope"}</div><div class="trust-item">✓ {"Срок" if lang=="ru" else "Timeline"}</div><div class="trust-item">✓ {"Стоимость" if lang=="ru" else "Price"}</div><div class="trust-item">✓ {"Необходимые доступы" if lang=="ru" else "Required access"}</div></div></div></div></section>'''
     return body
 
+
+def direction_index(lang):
+    label = "Инженерные направления" if lang == "ru" else "Engineering directions"
+    intro = ("Разработка под задачу, готовые модули и интеграция с действующими системами."
+             if lang == "ru" else "Custom engineering, reusable modules and integration with existing systems.")
+    cards = []
+    for d in DIRECTIONS:
+        name = d[lang]
+        desc = d["lead_ru"] if lang == "ru" else d["lead_en"]
+        url = loc(lang, "/solutions/" + d["slug"] + "/")
+        cards.append(f'<a class="card" href="{url}"><h3>{escape(name)}</h3><p>{escape(desc)}</p><span class="text-link">{"Подробнее" if lang=="ru" else "Learn more"} →</span></a>')
+    return f'<section class="section soft"><div class="wrap"><div class="section-head"><div><h2>{label}</h2></div><p>{intro}</p></div><div class="grid3">{"".join(cards)}</div></div></section>'
+
 def solutions_index(lang):
     target_cards=[]
     for slug,item in TARGET_LANDINGS.items():
@@ -819,7 +938,7 @@ def solutions_index(lang):
         industry_cards.append(f'<a class="card" href="{loc(lang,"/industries/"+slug+"/")}"><div class="kicker">{"Отрасль" if lang=="ru" else "Industry"}</div><h3>{escape(d["name"])}</h3><p>{escape(d["lead"])}</p><span class="text-link">{"Посмотреть типовой контур" if lang=="ru" else "See the typical system"} →</span></a>')
     title="Сценарии цифровых систем" if lang=="ru" else "Digital system scenarios"
     lead="Здесь показано, как конкретные строительные блоки работают внутри разных бизнес-процессов." if lang=="ru" else "See how specific building blocks work inside different business workflows."
-    return hero(lang,"Решения" if lang=="ru" else "Solutions",title,lead,"/solutions/")+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Конкретные сценарии" if lang=="ru" else "Specific scenarios"}</div><h2>{"От задачи к рабочему контуру" if lang=="ru" else "From task to working flow"}</h2></div></div><div class="grid3">{"".join(target_cards)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"По сфере бизнеса" if lang=="ru" else "By industry"}</div><h2>{"Все отрасли" if lang=="ru" else "All industries"}</h2></div></div><div class="grid3">{"".join(industry_cards)}</div></div></section>'
+    return hero(lang,"Решения" if lang=="ru" else "Solutions",title,lead,"/solutions/")+direction_index(lang)+f'<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"Конкретные сценарии" if lang=="ru" else "Specific scenarios"}</div><h2>{"От задачи к рабочему контуру" if lang=="ru" else "From task to working flow"}</h2></div></div><div class="grid3">{"".join(target_cards)}</div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{"По сфере бизнеса" if lang=="ru" else "By industry"}</div><h2>{"Все отрасли" if lang=="ru" else "All industries"}</h2></div></div><div class="grid3">{"".join(industry_cards)}</div></div></section>'
 
 def target_page(lang,slug):
     c=COPY[lang]; d=TARGET_LANDINGS[slug]; t=d[lang]
@@ -966,6 +1085,13 @@ for lang in LANGS:
         p=SELLABLE_PRODUCTS[slug][lang]
         pages[base_dir+f"products/{slug}/index.html"] = page(lang, f'{p["name"]} — VIIVERSION', p["short"], product_page(lang,slug), f"/products/{slug}/", page_type="Product", interest=p["name"])
 
+    for d in DIRECTIONS:
+        route = "/solutions/" + d["slug"] + "/"
+        description = d["lead_ru"] if lang == "ru" else d["lead_en"]
+        pages[base_dir + "solutions/" + d["slug"] + "/index.html"] = page(
+            lang, d[lang] + " — VIIVERSION", description,
+            direction_page(lang, d), route, page_type="Service", interest=d[lang])
+    
     pages[base_dir+"solutions/index.html"] = page(lang, ("Решения — VIIVERSION" if lang=="ru" else "Solutions — VIIVERSION"), ("Один продукт в конкретной отрасли и задаче." if lang=="ru" else "One product applied to a specific industry and problem."), solutions_index(lang), "/solutions/")
     for slug in TARGET_LANDINGS:
         t=TARGET_LANDINGS[slug][lang]
