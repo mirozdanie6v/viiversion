@@ -2,7 +2,7 @@ import { launch } from "@cloudflare/playwright";
 import { handleMcp } from "./mcp";
 import { ownerHtml, ownerJs } from "./owner-ui";
 import { oauthRoute, verifyOAuth, oauthUnauthorized } from "./oauth";
-import { beginBrowserLogin, finishBrowserLogin, listBrowserLogins, revokeBrowserLogin, scrapeWithSavedLogin } from "./sessions";
+import { beginBrowserLogin, finishBrowserLogin, listBrowserLogins, revokeBrowserLogin, scrapeWithSavedLogin, exploreWithSavedLogin } from "./sessions";
 export { PersonalWebVault } from "./session-vault";
 export { PersonalWebOAuth } from "./oauth-vault";
 import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy";
@@ -270,7 +270,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
   if (request.method !== "POST") return json({ ok: false, error: "POST required" }, 405);
   if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot",
-    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/explore", "/v1/batch"].includes(pathname)) {
+    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/session/explore", "/v1/explore", "/v1/batch"].includes(pathname)) {
     return json({ ok: false, error: "Unknown operation" }, 404);
   }
 
@@ -284,6 +284,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (pathname === "/v1/session/list") return json(await listBrowserLogins(env));
     if (pathname === "/v1/session/revoke") return json(await revokeBrowserLogin(env, data.url));
     if (pathname === "/v1/session/scrape") return json(await scrapeWithSavedLogin(env, data.url));
+    if (pathname === "/v1/session/explore") return json(await exploreWithSavedLogin(env, data.url, data.steps));
     // Public read operations may visit any validated public HTTPS host. The
     // explicit allowlist still applies to login/session APIs and interactions.
     // Never reuse this broader policy for credentialed browser actions.
