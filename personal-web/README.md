@@ -25,6 +25,9 @@ MCP bridge remains available for anonymous/public research. New capabilities:
   approval. Old `/v1/interact` is **always forbidden**, including when
   interactive support is enabled. Approved operations are currently only
   reachable using the owner's secure panel/API, never via the public bridge.
+  **Execution is currently disabled** (`ENABLE_INTERACT=false`) until the
+  previously disclosed owner bearer credential is replaced. The approval
+  workflow passed its controlled live test before this safety lock was applied.
   Credentials/MFA must be entered manually in Live View.
 - Actions and session contents **must never be passed through the public
   GitHub Actions logs**. Private-session chat orchestration is not deployed.
