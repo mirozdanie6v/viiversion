@@ -1,5 +1,6 @@
 import { launch } from "@cloudflare/playwright";
 import { handleMcp } from "./mcp";
+import { ownerHtml, ownerJs } from "./owner-ui";
 import { beginBrowserLogin, finishBrowserLogin, listBrowserLogins, revokeBrowserLogin, scrapeWithSavedLogin } from "./sessions";
 export { PersonalWebVault } from "./session-vault";
 import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy";
@@ -221,6 +222,17 @@ async function interact(page: any, env: Env, data: Record<string, any>) {
 
 async function handle(request: Request, env: Env): Promise<Response> {
   const pathname = new URL(request.url).pathname;
+  if (request.method === "GET" && (pathname === "/owner" || pathname === "/owner.js")) {
+    const isJs = pathname.endsWith(".js");
+    return new Response(isJs ? ownerJs : ownerHtml, { headers: {
+      "content-type": isJs ? "text/javascript; charset=utf-8" : "text/html; charset=utf-8",
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'"
+    } });
+  }
   if (request.method === "GET" && pathname === "/health") {
     return json({ ok: true, name: NAME, version: VERSION, configured: Boolean(env.WEB_API_TOKEN && env.WEB_API_TOKEN.length >= 32) });
   }
