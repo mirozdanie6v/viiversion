@@ -213,6 +213,86 @@ jobs:
           else
             echo "::notice::Only a temporary smoke credential was used; permanent owner access is not configured."
           fi
+      - name: Verify ChatGPT OAuth 2.1 and MCP permission boundaries
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "$WORKER_URL/.well-known/oauth-protected-resource" > /tmp/pw-resource.json
+          jq -e --arg r "$WORKER_URL/mcp" '.resource == $r and (.authorization_servers | length == 1)' /tmp/pw-resource.json >/dev/null
+          curl --fail --silent --show-error "$WORKER_URL/.well-known/oauth-authorization-server" > /tmp/pw-discovery.json
+          jq -e '(.code_challenge_methods_supported | index("S256")) != null and .authorization_response_iss_parameter_supported == true' /tmp/pw-discovery.json >/dev/null
+          curl --fail --silent --show-error "$WORKER_URL/owner" > /tmp/pw-owner.html
+          grep -q "VIIVERSION Personal Web" /tmp/pw-owner.html
+          curl --fail --silent --show-error "$WORKER_URL/owner.js" > /tmp/pw-owner.js
+          grep -q "session/commit" /tmp/pw-owner.js
+          curl --fail --silent --show-error -X POST "$WORKER_URL/oauth/register" -H 'Content-Type: application/json' \
+            -d '{"client_name":"VIIVERSION Staging MCP Test","redirect_uris":["https://chatgpt.com/connector_platform_oauth_redirect"]}' > /tmp/pw-client.json
+          CLIENT_ID="$(jq -r '.client_id' /tmp/pw-client.json)"
+          test "${#CLIENT_ID}" -gt 30
+          denied="$(curl -sS -o /tmp/pw-invalid-client.json -w '%{http_code}' -X POST "$WORKER_URL/oauth/register" -H 'Content-Type: application/json' \
+            -d '{"client_name":"Bad Client","redirect_uris":["https://evil.example/callback"]}')"
+          test "$denied" = 400
+          VERIFIER="$(openssl rand -hex 32)"
+          CHALLENGE="$(printf '%s' "$VERIFIER" | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
+          curl --fail --silent --show-error -G "$WORKER_URL/oauth/authorize" \
+            --data-urlencode "client_id=$CLIENT_ID" \
+            --data-urlencode 'redirect_uri=https://chatgpt.com/connector_platform_oauth_redirect' \
+            --data-urlencode 'response_type=code' \
+            --data-urlencode 'scope=web:read' \
+            --data-urlencode 'state=staging-check-01' \
+            --data-urlencode 'code_challenge_method=S256' \
+            --data-urlencode "code_challenge=$CHALLENGE" \
+            --data-urlencode "resource=$WORKER_URL/mcp" > /tmp/pw-consent.html
+          grep -q 'Личный ключ доступа' /tmp/pw-consent.html
+          curl --silent --show-error -D /tmp/pw-oauth-redirect-headers -o /dev/null \
+            -X POST "$WORKER_URL/oauth/authorize" \
+            --data-urlencode "client_id=$CLIENT_ID" \
+            --data-urlencode 'redirect_uri=https://chatgpt.com/connector_platform_oauth_redirect' \
+            --data-urlencode 'response_type=code' \
+            --data-urlencode 'scope=web:read' \
+            --data-urlencode 'state=staging-check-01' \
+            --data-urlencode 'code_challenge_method=S256' \
+            --data-urlencode "code_challenge=$CHALLENGE" \
+            --data-urlencode "resource=$WORKER_URL/mcp" \
+            --data-urlencode "owner_token=$SMOKE_TOKEN"
+          AUTH_CODE="$(python3 -c 'import urllib.parse; from pathlib import Path; h=Path("/tmp/pw-oauth-redirect-headers").read_text().splitlines(); v=next((x.split(":",1)[1].strip() for x in h if x.lower().startswith("location:")),""); p=urllib.parse.urlparse(v); assert p.scheme=="https" and p.hostname=="chatgpt.com" and p.path=="/connector_platform_oauth_redirect"; q=urllib.parse.parse_qs(p.query); assert q["iss"][0].startswith("https://") and q["state"][0]=="staging-check-01"; print(q["code"][0])')"
+          curl --fail --silent --show-error -X POST "$WORKER_URL/oauth/token" \
+            --data-urlencode 'grant_type=authorization_code' \
+            --data-urlencode "client_id=$CLIENT_ID" \
+            --data-urlencode 'redirect_uri=https://chatgpt.com/connector_platform_oauth_redirect' \
+            --data-urlencode "code=$AUTH_CODE" \
+            --data-urlencode "code_verifier=$VERIFIER" \
+            --data-urlencode "resource=$WORKER_URL/mcp" > /tmp/pw-oauth-token.json
+          ACCESS="$(jq -r '.access_token' /tmp/pw-oauth-token.json)"
+          REFRESH="$(jq -r '.refresh_token' /tmp/pw-oauth-token.json)"
+          test "${#ACCESS}" = 64
+          test "${#REFRESH}" = 64
+          curl --fail --silent --show-error -X POST "$WORKER_URL/mcp" \
+            -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' > /tmp/pw-oauth-mcp.json
+          jq -e '(.result.tools | length >= 6) and (.result.tools | all(.securitySchemes[0].type == "oauth2")) and (.result.tools | any(.name == "web_interact") | not)' /tmp/pw-oauth-mcp.json > /dev/null
+          no_admin="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$WORKER_URL/v1/session/start" \
+            -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' -d '{"url":"https://viiversion.com/"}')"
+          test "$no_admin" = 401
+          curl --fail --silent --show-error -X POST "$WORKER_URL/oauth/token" \
+            --data-urlencode 'grant_type=refresh_token' \
+            --data-urlencode "client_id=$CLIENT_ID" --data-urlencode "refresh_token=$REFRESH" \
+            --data-urlencode "resource=$WORKER_URL/mcp" > /tmp/pw-oauth-refreshed.json
+          ACCESS_2="$(jq -r '.access_token' /tmp/pw-oauth-refreshed.json)"
+          REFRESH_2="$(jq -r '.refresh_token' /tmp/pw-oauth-refreshed.json)"
+          test "$ACCESS_2" != "$ACCESS"
+          reused="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$WORKER_URL/oauth/token" \
+            --data-urlencode 'grant_type=refresh_token' --data-urlencode "client_id=$CLIENT_ID" \
+            --data-urlencode "refresh_token=$REFRESH" --data-urlencode "resource=$WORKER_URL/mcp")"
+          test "$reused" = 400
+          for token in "$ACCESS" "$ACCESS_2" "$REFRESH_2"; do
+            curl --fail --silent --show-error -X POST "$WORKER_URL/oauth/revoke" \
+              --data-urlencode "token=$token" -o /dev/null
+          done
+          invalid="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$WORKER_URL/mcp" \
+            -H "Authorization: Bearer $ACCESS_2" -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}')"
+          test "$invalid" = 401
+          echo "ChatGPT OAuth discovery, DCR, S256 PKCE, owner consent, access, refresh rotation, revocation and MCP read-only boundaries PASSED"
       - name: Remove temporary staging access credential
         if: always()
         run: |
