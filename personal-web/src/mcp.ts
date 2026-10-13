@@ -15,10 +15,14 @@ const descriptors = [
   { name: "web_screenshot", description: "Capture the rendered page as a PNG image.",
     inputSchema: { type: "object", properties: { url: { type: "string" }, fullPage: { type: "boolean" } }, required: ["url"], additionalProperties: false } },
   { name: "web_session_scrape", description: "Render a URL using a previously saved, encrypted owner-only browser login. The site must match the saved session's origin.",
-    inputSchema: { type: "object", properties: { url: { type: "string" } }, required: ["url"], additionalProperties: false } },
-  { name: "web_interact", description: "Run explicitly requested browser clicks, fills, selects, scrolling or waits; server owner must enable this tool.",
-    inputSchema: { type: "object", properties: { url: { type: "string" }, actions: { type: "array", maxItems: 10, items: { type: "object" } } }, required: ["url", "actions"], additionalProperties: false } }
+    inputSchema: { type: "object", properties: { url: { type: "string" } }, required: ["url"], additionalProperties: false } }
 ] as const;
+
+const visibleDescriptors = descriptors.map(tool => ({
+  ...tool,
+  annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
+  securitySchemes: [{ type: "oauth2", scopes: ["web:read"] }]
+}));
 
 const tools = new Map<string, string>([
   ["web_scrape", "/v1/scrape"],
@@ -26,8 +30,7 @@ const tools = new Map<string, string>([
   ["web_crawl", "/v1/crawl"],
   ["web_extract", "/v1/extract"],
   ["web_screenshot", "/v1/screenshot"],
-  ["web_session_scrape", "/v1/session/scrape"],
-  ["web_interact", "/v1/interact"]
+  ["web_session_scrape", "/v1/session/scrape"]
 ]);
 
 type Runner = (path: string, params: Record<string, unknown>) => Promise<Response>;
@@ -65,7 +68,7 @@ export async function handleMcp(request: Request, runner: Runner): Promise<Respo
     } });
   }
   if (method === "ping") return rpc(id, { result: {} });
-  if (method === "tools/list") return rpc(id, { result: { tools: descriptors } });
+  if (method === "tools/list") return rpc(id, { result: { tools: visibleDescriptors } });
   if (method === "tools/call") {
     const name = message.params?.name;
     const target = tools.get(name);
