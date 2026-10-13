@@ -1,18 +1,9 @@
 {
-  "id": "explore-cases-live-20261013",
-  "operation": "explore",
-  "url": "https://viiversion.com/",
-  "steps": [
-    {
-      "type": "follow",
-      "href": "https://viiversion.com/cases/"
-    },
-    {
-      "type": "scroll",
-      "pixels": 450
-    },
-    {
-      "type": "read"
-    }
+  "id": "multi-site-batch-live-20261013",
+  "operation": "batch",
+  "urls": [
+    "https://example.com/",
+    "https://www.python.org/",
+    "https://react.dev/"
   ]
 }
