@@ -11,7 +11,8 @@ const tools = {
   scrape: "web_scrape",
   map: "web_map",
   crawl: "web_crawl",
-  extract: "web_extract"
+  extract: "web_extract",
+  explore: "web_explore"
 };
 
 function checkRequest(data) {
@@ -58,6 +59,29 @@ function checkRequest(data) {
     }
     payload.limit = limit;
     payload.depth = depth;
+  }
+  if (data.operation === "explore") {
+    const steps = data.steps ?? [];
+    if (!Array.isArray(steps) || steps.length > 4) {
+      throw new Error("Explore supports a maximum of four safe steps per public request");
+    }
+    for (const step of steps) {
+      if (!step || typeof step !== "object") throw new Error("Invalid navigation step");
+      if (step.type === "read") continue;
+      if (step.type === "scroll" && Number.isInteger(step.pixels) && Math.abs(step.pixels) <= 2400) continue;
+      if (step.type === "wait" && Number.isInteger(step.milliseconds) && step.milliseconds >= 0 && step.milliseconds <= 2000) continue;
+      if (step.type === "follow" && typeof step.href === "string") {
+        const next = new URL(step.href, target);
+        if (next.protocol !== "https:" || next.username || next.password ||
+            next.port || next.search || next.hash || next.hostname !== target.hostname) {
+          throw new Error("Public bridge may follow only same-host, anonymous HTTPS links");
+        }
+        continue;
+      }
+      throw new Error("Only read/follow/scroll/wait are permitted in public browser bridge");
+    }
+    payload.steps = steps;
+    payload.inspect = true;
   }
   if (data.operation === "extract") {
     const fields = data.fields;
