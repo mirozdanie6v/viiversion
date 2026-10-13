@@ -42,7 +42,7 @@ function errorResponse(error: unknown): Response {
 
 const oauthReadOnlyPaths = new Set([
   "/mcp", "/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract",
-  "/v1/screenshot", "/v1/explore", "/v1/batch", "/v1/session/scrape"
+  "/v1/screenshot", "/v1/explore", "/v1/batch", "/v1/session/scrape", "/v1/session/explore"
 ]);
 
 async function authorized(request: Request, env: Env, path: string): Promise<boolean> {
