@@ -7,11 +7,11 @@
 import fs from "node:fs/promises";
 
 const endpoint = "https://viiversion-personal-web-staging.viiversion.workers.dev";
-const routes = {
-  scrape: "/v1/scrape",
-  map: "/v1/map",
-  crawl: "/v1/crawl",
-  extract: "/v1/extract"
+const tools = {
+  scrape: "web_scrape",
+  map: "web_map",
+  crawl: "web_crawl",
+  extract: "web_extract"
 };
 
 function checkRequest(data) {
@@ -21,8 +21,8 @@ function checkRequest(data) {
   if (typeof data.id !== "string" || !/^[A-Za-z0-9_-]{1,48}$/.test(data.id)) {
     throw new Error("Invalid request id");
   }
-  const route = routes[data.operation];
-  if (!route) throw new Error("Operation must be scrape/map/crawl/extract");
+  const toolName = tools[data.operation];
+  if (!toolName) throw new Error("Operation must be scrape/map/crawl/extract");
   if (typeof data.url !== "string" || data.url.length > 1024) {
     throw new Error("Missing/oversized URL");
   }
@@ -57,7 +57,7 @@ function checkRequest(data) {
     }
     payload.fields = fields;
   }
-  return { id: data.id, operation: data.operation, route, payload };
+  return { id: data.id, operation: data.operation, toolName, payload };
 }
 
 async function main() {
@@ -66,21 +66,30 @@ async function main() {
   const request = checkRequest(JSON.parse(
     await fs.readFile(new URL("./request.json", import.meta.url), "utf8")
   ));
-  const response = await fetch(endpoint + request.route, {
+  const response = await fetch(endpoint + "/mcp", {
     method: "POST",
     headers: {
       "Authorization": "Bearer " + token,
       "content-type": "application/json"
     },
-    body: JSON.stringify(request.payload),
+    body: JSON.stringify({
+      jsonrpc: "2.0", id: request.id, method: "tools/call",
+      params: { name: request.toolName, arguments: request.payload }
+    }),
     signal: AbortSignal.timeout(95000),
     redirect: "error"
   });
   if (!response.ok) throw new Error("Personal Web returned HTTP " + response.status);
-  const data = await response.json();
-  if (!data.ok) throw new Error("Personal Web reported an unsuccessful operation");
+  const rpc = await response.json();
+  if (rpc.error || rpc.result?.isError || !Array.isArray(rpc.result?.content)) {
+    throw new Error("Personal Web MCP tool call was unsuccessful");
+  }
+  const text = rpc.result.content.find(part => part.type === "text")?.text;
+  if (typeof text !== "string") throw new Error("MCP returned no readable output");
+  const data = JSON.parse(text);
+  if (!data.ok) throw new Error("Personal Web MCP tool reported an unsuccessful operation");
   const safe = JSON.stringify({ id: request.id, operation: request.operation,
-    url: request.payload.url, response: data });
+    url: request.payload.url, transport: "mcp-tools-call", response: data });
   console.log("PERSONAL_WEB_BRIDGE_RESULT_BEGIN");
   console.log(safe.slice(0, 27000));
   console.log("PERSONAL_WEB_BRIDGE_RESULT_END");
