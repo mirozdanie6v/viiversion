@@ -1,9 +1,17 @@
 {
-  "id": "multi-site-batch-live-20261013",
-  "operation": "batch",
-  "urls": [
-    "https://example.com/",
-    "https://www.python.org/",
-    "https://react.dev/"
+  "id": "uniq-rent-20261013-1957",
+  "operation": "explore",
+  "url": "https://uniqmoto.com/ru",
+  "steps": [
+    {
+      "type": "read"
+    },
+    {
+      "type": "scroll",
+      "pixels": 1300
+    },
+    {
+      "type": "read"
+    }
   ]
 }
