@@ -9,6 +9,7 @@ import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy
 import { readRenderedPage, extractFields, type PageDocument } from "./extract";
 import { explorePublicPage } from "./explore";
 import { batchReadPublic } from "./batch";
+import { normalizeActionPlan, digestPlan, summaryPlan } from "./action-gate";
 
 interface Env {
   BROWSER: Fetcher;
@@ -53,6 +54,17 @@ async function authorized(request: Request, env: Env, path: string): Promise<boo
   // administration API, credential management, or browser click/fill actions.
   if (!oauthReadOnlyPaths.has(path)) return false;
   return verifyOAuth(request, env);
+}
+
+async function ownerApproval(env: Env, operation: string, data: unknown): Promise<Record<string, any>> {
+  const id = env.VAULT.idFromName("private-personal-web-owner");
+  const response = await env.VAULT.get(id).fetch("https://vault.internal/action/" + operation, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  const result = await response.json() as Record<string, any>;
+  if (!response.ok) throw new InputError(result.error ?? "Approval unavailable", response.status);
+  return result;
 }
 
 async function parseBody(request: Request): Promise<Record<string, any>> {
@@ -270,7 +282,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
   if (request.method !== "POST") return json({ ok: false, error: "POST required" }, 405);
   if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot",
-    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/session/explore", "/v1/explore", "/v1/batch"].includes(pathname)) {
+    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/session/explore", "/v1/explore", "/v1/batch", "/v1/action/propose", "/v1/action/approve", "/v1/action/execute"].includes(pathname)) {
     return json({ ok: false, error: "Unknown operation" }, 404);
   }
 
@@ -285,6 +297,29 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (pathname === "/v1/session/revoke") return json(await revokeBrowserLogin(env, data.url));
     if (pathname === "/v1/session/scrape") return json(await scrapeWithSavedLogin(env, data.url));
     if (pathname === "/v1/session/explore") return json(await exploreWithSavedLogin(env, data.url, data.steps));
+    if (pathname === "/v1/action/propose") {
+      const plan = normalizeActionPlan(data, env.ALLOWED_HOSTS);
+      const digest = await digestPlan(plan);
+      const result = await ownerApproval(env, "propose", {
+        digest, origin: new URL(plan.url).origin
+      });
+      return json({ ...result, summary: summaryPlan(plan), url: plan.url });
+    }
+    if (pathname === "/v1/action/approve") {
+      if (typeof data.planId !== "string" || !/^[0-9a-f-]{36}$/i.test(data.planId)) {
+        throw new InputError("Invalid planId");
+      }
+      return json(await ownerApproval(env, "approve", { planId: data.planId }));
+    }
+    if (pathname === "/v1/action/execute") {
+      if (env.ENABLE_INTERACT !== "true") throw new InputError("Owner actions are disabled", 403);
+      const plan = normalizeActionPlan(data, env.ALLOWED_HOSTS);
+      const digest = await digestPlan(plan);
+      await ownerApproval(env, "consume", { planId: data.planId,
+        digest, origin: new URL(plan.url).origin });
+      return await withBrowser(env, page => interact(page, env, plan));
+    }
+
     // Public read operations may visit any validated public HTTPS host. The
     // explicit allowlist still applies to login/session APIs and interactions.
     // Never reuse this broader policy for credentialed browser actions.
@@ -293,8 +328,8 @@ async function handle(request: Request, env: Env): Promise<Response> {
       ? { ...env, ALLOWED_HOSTS: "" }
       : env;
     const target = pathname === "/v1/batch" ? "" : publicUrl(data.url, opEnv.ALLOWED_HOSTS);
-    if (pathname === "/v1/interact" && env.ENABLE_INTERACT !== "true") {
-      throw new InputError("Interactive mode is disabled", 403);
+    if (pathname === "/v1/interact") {
+      throw new InputError("Direct interactive access is disabled; use a one-time approved action", 403);
     }
     return await withBrowser(opEnv, async page => {
       if (pathname === "/v1/batch") return json(await batchReadPublic(page, data.urls, opEnv.ALLOWED_HOSTS));
