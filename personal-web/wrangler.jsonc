@@ -14,13 +14,18 @@
     "MAX_CRAWL_PAGES": "8",
     "ENABLE_INTERACT": "false",
     "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com",
-    "ENABLE_SAVED_SESSIONS": "true"
+    "ENABLE_SAVED_SESSIONS": "true",
+    "ENABLE_OAUTH": "true"
   },
   "durable_objects": {
     "bindings": [
       {
         "name": "VAULT",
         "class_name": "PersonalWebVault"
+      },
+      {
+        "name": "OAUTH",
+        "class_name": "PersonalWebOAuth"
       }
     ]
   },
@@ -29,6 +34,12 @@
       "tag": "v1",
       "new_sqlite_classes": [
         "PersonalWebVault"
+      ]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "PersonalWebOAuth"
       ]
     }
   ]
