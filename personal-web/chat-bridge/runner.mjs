@@ -12,7 +12,8 @@ const tools = {
   map: "web_map",
   crawl: "web_crawl",
   extract: "web_extract",
-  explore: "web_explore"
+  explore: "web_explore",
+  batch: "web_batch"
 };
 
 function checkRequest(data) {
@@ -24,6 +25,15 @@ function checkRequest(data) {
   }
   const toolName = tools[data.operation];
   if (!toolName) throw new Error("Operation must be scrape/map/crawl/extract");
+  if (data.operation === "batch") {
+    if (!Array.isArray(data.urls) || data.urls.length < 1 || data.urls.length > 3) {
+      throw new Error("Batch requires 1–3 public HTTPS URLs");
+    }
+    const urls = data.urls.map(url => checkRequest({
+      id: data.id, operation: "scrape", url
+    }).payload.url);
+    return { id: data.id, operation: data.operation, toolName, payload: { urls } };
+  }
   if (typeof data.url !== "string" || data.url.length > 1024) {
     throw new Error("Missing/oversized URL");
   }
