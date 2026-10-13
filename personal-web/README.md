@@ -1,5 +1,12 @@
 # VIIVERSION Personal Web
 
+**Product decision (13 October 2026): The owner operates this browser exclusively
+through ordinary ChatGPT Chat, not Work.** Use connected GitHub as the established
+Chat-to-Cloudflare transport; do not suggest switching to Work for owner flows.
+Any new authenticated-app bridge must remain private, require explicit approval
+for writes, and must never put account content into this public repository.
+
+
 An **isolated, owner-only** web reading and automation service, designed to reuse the existing
 VIIVERSION Cloudflare Browser Run/Playwright experience without modifying `integration-service`,
 WhatsApp, production landing, ZL Web Agent or VIIVERSION AI Engineer.
