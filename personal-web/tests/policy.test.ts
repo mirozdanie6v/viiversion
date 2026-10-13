@@ -7,7 +7,10 @@ describe("URL safety", () => {
     "https://169.254.169.254", "https://[::1]",
     "https://admin:pass@example.com", "https://example.com:8080",
     "file:///etc/passwd", "https://server.internal", "https://host.local",
-    "https://example.com.evil.local"
+    "https://example.com.evil.local",
+    "https://127.0.0.1.nip.io",
+    "https://10.0.0.1.sslip.io",
+    "https://localtest.me"
   ])("rejects unsafe target %s", value => {
     expect(() => publicUrl(value)).toThrow();
   });
