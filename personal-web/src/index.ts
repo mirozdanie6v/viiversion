@@ -7,6 +7,7 @@ export { PersonalWebVault } from "./session-vault";
 export { PersonalWebOAuth } from "./oauth-vault";
 import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy";
 import { readRenderedPage, extractFields, type PageDocument } from "./extract";
+import { explorePublicPage } from "./explore";
 
 interface Env {
   BROWSER: Fetcher;
@@ -40,7 +41,7 @@ function errorResponse(error: unknown): Response {
 
 const oauthReadOnlyPaths = new Set([
   "/mcp", "/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract",
-  "/v1/screenshot", "/v1/session/scrape"
+  "/v1/screenshot", "/v1/explore", "/v1/session/scrape"
 ]);
 
 async function authorized(request: Request, env: Env, path: string): Promise<boolean> {
@@ -268,7 +269,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
   if (request.method !== "POST") return json({ ok: false, error: "POST required" }, 405);
   if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot",
-    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape"].includes(pathname)) {
+    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/explore"].includes(pathname)) {
     return json({ ok: false, error: "Unknown operation" }, 404);
   }
 
@@ -285,7 +286,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
     // Public read operations may visit any validated public HTTPS host. The
     // explicit allowlist still applies to login/session APIs and interactions.
     // Never reuse this broader policy for credentialed browser actions.
-    const readOnly = ["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/screenshot"].includes(pathname);
+    const readOnly = ["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/screenshot", "/v1/explore"].includes(pathname);
     const opEnv: Env = readOnly && env.ENABLE_PUBLIC_SITE_READS === "true"
       ? { ...env, ALLOWED_HOSTS: "" }
       : env;
@@ -294,6 +295,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       throw new InputError("Interactive mode is disabled", 403);
     }
     return await withBrowser(opEnv, async page => {
+      if (pathname === "/v1/explore") return json(await explorePublicPage(page, data, opEnv.ALLOWED_HOSTS));
       if (pathname === "/v1/map" || pathname === "/v1/crawl") {
         return json(await walkSite(page, opEnv, target, pathname === "/v1/map" ? "map" : "crawl",
           Number(data.limit ?? (pathname === "/v1/map" ? 5 : 3)),
