@@ -110,11 +110,6 @@ async function ownerMatches(input: string, expected: string | undefined): Promis
   return diff === 0;
 }
 
-export function oauthChallenge(request: Request): Response {
-  const origin = new URL(request.url).origin;
-  const resourceUrl = origin + "/.well-known/oauth-protected-resource";
-  return json({ ok: false, error: "Unauthorized; connect VIIVERSION Personal Web using OAuth." }, 401,);
-}
 export function oauthUnauthorized(request: Request): Response {
   const resourceUrl = new URL(request.url).origin + "/.well-known/oauth-protected-resource";
   return new Response(JSON.stringify({ ok: false, error: "OAuth authentication required" }), {
@@ -148,6 +143,7 @@ export async function oauthRoute(request: Request, env: OAuthEnv): Promise<Respo
       return json({ issuer: origin,
         authorization_endpoint: origin + "/oauth/authorize",
         token_endpoint: origin + "/oauth/token",
+        revocation_endpoint: origin + "/oauth/revoke",
         registration_endpoint: origin + "/oauth/register",
         response_types_supported: ["code"],
         grant_types_supported: ["authorization_code", "refresh_token"],
@@ -200,6 +196,11 @@ export async function oauthRoute(request: Request, env: OAuthEnv): Promise<Respo
         "cache-control": "no-store",
         "referrer-policy": "no-referrer"
       } });
+    }
+    if (path === "/oauth/revoke" && request.method === "POST") {
+      const params = await bodyForm(request);
+      await vault(env, "/revoke", { token: params.get("token") });
+      return new Response(null, { status: 200, headers: { "cache-control": "no-store" } });
     }
     if (path === "/oauth/token" && request.method === "POST") {
       const params = await bodyForm(request);
