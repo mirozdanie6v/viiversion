@@ -40,6 +40,7 @@ button:hover,.button:hover{background:#38526e}button:disabled{opacity:.4;cursor:
 <section><h2>3. Управление</h2>
 <button id="list" type="button">Показать сохранённые сессии</button>
 <button id="scrape" type="button">Прочитать сайт с сохранённой сессией</button>
+<button id="inspect" type="button">Осмотреть страницу</button>
 <button id="revoke" type="button">Удалить сессию этого сайта</button>
 <p id="status" role="status" aria-live="polite">Готово к подключению.</p>
 </section>
@@ -92,6 +93,10 @@ export const ownerJs = `(() => {
   $("scrape").addEventListener("click", () => run(async () => {
     const r = await call("/v1/session/scrape", { url: $("url").value });
     status("Успешно прочитано: " + r.document.title + " — " + r.document.url);
+  }));
+  $("inspect").addEventListener("click", () => run(async () => {
+    const r = await call("/v1/session/explore", { url: $("url").value, steps: [] });
+    status("Осмотрена страница: " + r.document.title + ". Форм: " + (r.pageControls?.forms?.length ?? 0) + ". Элементов: " + (r.pageControls?.controls?.length ?? 0));
   }));
   $("revoke").addEventListener("click", () => run(async () => {
     if (!confirm("Удалить локально сохранённую сессию для указанного сайта?")) return;
