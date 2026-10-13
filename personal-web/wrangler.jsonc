@@ -12,7 +12,7 @@
   },
   "vars": {
     "MAX_CRAWL_PAGES": "8",
-    "ENABLE_INTERACT": "false",
+    "ENABLE_INTERACT": "true",
     "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com,github.com,dash.cloudflare.com",
     "ENABLE_SAVED_SESSIONS": "true",
     "ENABLE_OAUTH": "true",
