@@ -2,6 +2,7 @@ import { launch } from "@cloudflare/playwright";
 import { InputError, publicUrl } from "./policy";
 import { openSession, sealSession, filterStorageState } from "./session-crypto";
 import { readRenderedPage } from "./extract";
+import { explorePublicPage } from "./explore";
 
 interface SessionEnv {
   BROWSER: Fetcher;
@@ -121,6 +122,46 @@ export async function scrapeWithSavedLogin(env: SessionEnv, input: unknown) {
     } satisfies Saved });
 
     return { ok: true, document, sessionOrigin: origin, authenticated: "session-reused" };
+  } finally {
+    if (context) await context.close().catch(() => {});
+    await browser.close().catch(() => {});
+  }
+}
+
+/**
+ * Inspect or navigate an existing saved session without submitting forms.
+ * Owner API only. Never send authenticated page output through the public
+ * GitHub Actions bridge; saved credentials remain scoped to their origin.
+ */
+export async function exploreWithSavedLogin(
+  env: SessionEnv, input: unknown, steps: unknown
+) {
+  const key = requireVault(env);
+  const target = publicUrl(input, env.ALLOWED_HOSTS);
+  const origin = new URL(target).origin;
+  const { session } = await vault<{ session: Saved }>(env, "/state/get", { origin });
+  const state = filterStorageState(JSON.parse(await openSession(session, origin, key)), origin);
+  const browser = await launch(env.BROWSER);
+  let context: any;
+  try {
+    context = await browser.newContext({
+      storageState: state, viewport: { width: 1280, height: 900 }, locale: "en-US"
+    });
+    await protectContext(context);
+    const page = await context.newPage();
+    const result = await explorePublicPage(page, {
+      url: target, steps, stayOnOrigin: true, inspect: true
+    }, env.ALLOWED_HOSTS);
+    if (new URL(String(result.finalUrl)).origin !== origin) {
+      throw new InputError("Authenticated navigation changed site origin", 409);
+    }
+    const rotated = filterStorageState(await context.storageState({ indexedDB: true }), origin);
+    const sealed = await sealSession(JSON.stringify(rotated), origin, key);
+    await vault(env, "/state/put", { value: {
+      ...sealed, origin, createdAt: session.createdAt, expiresAt: session.expiresAt,
+      cookieCount: rotated.cookies.length
+    } satisfies Saved });
+    return { ...result, sessionOrigin: origin, sessionReused: true };
   } finally {
     if (context) await context.close().catch(() => {});
     await browser.close().catch(() => {});
