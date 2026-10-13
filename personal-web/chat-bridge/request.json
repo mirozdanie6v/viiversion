@@ -1,7 +1,5 @@
 {
-  "id": "viiversion-bridge-map-20261013",
-  "operation": "map",
-  "url": "https://viiversion.com/",
-  "limit": 1,
-  "depth": 0
+  "id": "viiversion-mcp-chat-20261013",
+  "operation": "scrape",
+  "url": "https://viiversion.com/"
 }
