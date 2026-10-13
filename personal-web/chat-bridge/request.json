@@ -1,5 +1,5 @@
 {
-  "id": "external-site-smoke-20261013",
+  "id": "external-example-com-20261013-r2",
   "operation": "scrape",
   "url": "https://example.com/"
 }
