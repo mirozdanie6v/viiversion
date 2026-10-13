@@ -28,6 +28,13 @@ export function publicUrl(input: unknown, allowedHosts = ""): string {
     throw new InputError("Private, non-public, IP-literal, or invalid host is prohibited");
   }
 
+  // DNS services that resolve a hostname to an embedded IP must not make
+  // an internal target appear to be a normal public domain.
+  const ipAliasDomains = ["nip.io", "sslip.io", "localtest.me", "lvh.me", "localhost.direct"];
+  if (ipAliasDomains.some(domain => host === domain || host.endsWith("." + domain))) {
+    throw new InputError("IP-mapped DNS alias hosts are prohibited");
+  }
+
   if (allowedHosts.trim()) {
     const allowed = allowedHosts.split(",").map(h => h.trim().toLowerCase()).filter(Boolean);
     if (!allowed.some(h => host === h || (h.startsWith("*.") && host.endsWith(h.slice(1))))) {
