@@ -1,5 +1,7 @@
 {
-  "id": "viiversion-bridge-smoke-20261013",
-  "operation": "scrape",
-  "url": "https://viiversion.com/"
+  "id": "viiversion-bridge-map-20261013",
+  "operation": "map",
+  "url": "https://viiversion.com/",
+  "limit": 1,
+  "depth": 0
 }
