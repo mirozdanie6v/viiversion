@@ -17,6 +17,7 @@ interface Env {
   ENABLE_SAVED_SESSIONS?: string;
   WEB_API_TOKEN?: string;
   ALLOWED_HOSTS?: string;
+  ENABLE_PUBLIC_SITE_READS?: string;
   MAX_CRAWL_PAGES?: string;
   ENABLE_INTERACT?: string;
 }
@@ -281,18 +282,25 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (pathname === "/v1/session/list") return json(await listBrowserLogins(env));
     if (pathname === "/v1/session/revoke") return json(await revokeBrowserLogin(env, data.url));
     if (pathname === "/v1/session/scrape") return json(await scrapeWithSavedLogin(env, data.url));
-    const target = publicUrl(data.url, env.ALLOWED_HOSTS);
+    // Public read operations may visit any validated public HTTPS host. The
+    // explicit allowlist still applies to login/session APIs and interactions.
+    // Never reuse this broader policy for credentialed browser actions.
+    const readOnly = ["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/screenshot"].includes(pathname);
+    const opEnv: Env = readOnly && env.ENABLE_PUBLIC_SITE_READS === "true"
+      ? { ...env, ALLOWED_HOSTS: "" }
+      : env;
+    const target = publicUrl(data.url, opEnv.ALLOWED_HOSTS);
     if (pathname === "/v1/interact" && env.ENABLE_INTERACT !== "true") {
       throw new InputError("Interactive mode is disabled", 403);
     }
-    return await withBrowser(env, async page => {
+    return await withBrowser(opEnv, async page => {
       if (pathname === "/v1/map" || pathname === "/v1/crawl") {
-        return json(await walkSite(page, env, target, pathname === "/v1/map" ? "map" : "crawl",
+        return json(await walkSite(page, opEnv, target, pathname === "/v1/map" ? "map" : "crawl",
           Number(data.limit ?? (pathname === "/v1/map" ? 5 : 3)),
           Number(data.depth ?? 1)));
       }
-      if (pathname === "/v1/interact") return json(await interact(page, env, data));
-      const final = await visit(page, target, env);
+      if (pathname === "/v1/interact") return json(await interact(page, opEnv, data));
+      const final = await visit(page, target, opEnv);
       if (pathname === "/v1/screenshot") {
         const bytes = await page.screenshot({ fullPage: data.fullPage !== false, timeout: 15000 });
         return new Response(bytes, { headers: {
