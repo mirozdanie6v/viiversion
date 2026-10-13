@@ -40,6 +40,27 @@ jobs:
           test -s public/enterprise/index.html
           test -s public/privacy/index.html
           test -s public/en/privacy/index.html
+          # Every direction has an RU/EN detail page and can be opened from the hero.
+          for slug in customer-systems business-operations process-automation ai-systems integrations-payments data-enterprise; do
+            test -s "public/solutions/$slug/index.html"
+            test -s "public/en/solutions/$slug/index.html"
+            grep -Fq "href=\"/solutions/$slug/\"" public/index.html
+            grep -Fq "href=\"/en/solutions/$slug/\"" public/en/index.html
+          done
+          for key in a b c d e f; do
+            grep -Fq "data-direction-tab=\"$key\"" public/index.html
+            grep -Fq "data-direction-panel=\"$key\"" public/index.html
+            grep -Fq "aria-controls=\"direction-panel-$key\"" public/index.html
+          done
+          grep -Fq 'const directionPanels=' public/assets/viiversion.js
+          grep -Fq 'scrollIntoView' public/assets/viiversion.js
+          grep -Fq "Клиентская база" public/solutions/business-operations/index.html
+          grep -Fq "AI-разбор входящей информации" public/solutions/ai-systems/index.html
+          grep -Fq "Подключение оплаты" public/solutions/integrations-payments/index.html
+          ! grep -Fq "P11" public/solutions/business-operations/index.html
+          ! grep -Fq "P13" public/solutions/business-operations/index.html
+          python3 -m py_compile scripts/site_directions.py scripts/build-product-site.py
+          python3 -c "import sys; sys.path.insert(0, 'scripts'); from site_directions import validate_direction_catalog; validate_direction_catalog()"
           test -s public/assets/team/dmitrii.webp
           test -s public/assets/team/olga.webp
           test -s public/assets/cases/max-tour.webp
