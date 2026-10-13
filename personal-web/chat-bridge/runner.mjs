@@ -31,11 +31,18 @@ function checkRequest(data) {
       target.port || target.hash || target.search) {
     throw new Error("Only public HTTPS URLs without query/fragment/credentials are accepted");
   }
-  // Exact public sites only: do not put client dashboards, credentials,
-  // unpublished staging content or authenticated sessions in GitHub logs.
-  if (target.hostname !== "viiversion.com" &&
-      !(target.hostname === "github.com" && /^\/mirozdanie6v(?:\/|$)/.test(target.pathname))) {
-    throw new Error("Only public viiversion.com and github.com/mirozdanie6v pages are enabled");
+  // Read only anonymous pages on public DNS names.
+  const host = target.hostname.toLowerCase();
+  const labels = host.split(".");
+  const reserved = new Set(["local","internal","localhost","test","invalid","onion","lan"]);
+  if (labels.length < 2 || labels.some(x=>!x || x.length>63) ||
+      reserved.has(labels[labels.length-1]) ||
+      !/^[a-z0-9.-]+$/.test(host) || /^[0-9.]+$/.test(host)) {
+    throw new Error("A valid public HTTPS hostname is required");
+  }
+  const accountSections = new Set(["login","signin","account","dashboard","admin","billing","inbox","oauth"]);
+  if (target.pathname.toLowerCase().split("/").some(section=>accountSections.has(section))) {
+    throw new Error("Private account pages are excluded from public logs");
   }
   const payload = { url: target.href };
   if (data.operation === "map" || data.operation === "crawl") {
