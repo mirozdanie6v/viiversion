@@ -2,7 +2,7 @@ import { InputError, publicUrl } from "./policy";
 
 export interface ActionPlan {
   url: string;
-  actions: Array<Record<string, string | number>>;
+  actions: Array<Record<string, string | number | undefined>>;
 }
 
 /** Strictly bounded actions require a separate one-time user approval. */
