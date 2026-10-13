@@ -40,6 +40,11 @@ function checkRequest(data) {
       !/^[a-z0-9.-]+$/.test(host) || /^[0-9.]+$/.test(host)) {
     throw new Error("A valid public HTTPS hostname is required");
   }
+  // Exclude hostnames dynamically resolving to embedded local IP addresses.
+  const ipAliasDomains = ["nip.io", "sslip.io", "localtest.me", "lvh.me", "localhost.direct"];
+  if (ipAliasDomains.some(d => host === d || host.endsWith("." + d))) {
+    throw new Error("IP-mapped DNS aliases are prohibited");
+  }
   const accountSections = new Set(["login","signin","account","dashboard","admin","billing","inbox","oauth"]);
   if (target.pathname.toLowerCase().split("/").some(section=>accountSections.has(section))) {
     throw new Error("Private account pages are excluded from public logs");
