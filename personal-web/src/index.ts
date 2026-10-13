@@ -236,7 +236,15 @@ async function interact(page: any, env: Env, data: Record<string, any>) {
         if (typeof (action as any).value !== "string" || (action as any).value.length > 4000) {
           throw new InputError("Invalid field value");
         }
-        if (action.type === "fill") await target.fill((action as any).value, { timeout: 5000 });
+        if (action.type === "fill") {
+          const type = String(await target.getAttribute("type") ?? "").toLowerCase();
+          const autocomplete = String(await target.getAttribute("autocomplete") ?? "").toLowerCase();
+          if (type === "password" || autocomplete.includes("one-time-code") ||
+              autocomplete.includes("current-password") || autocomplete.includes("new-password")) {
+            throw new InputError("Enter passwords and verification codes manually in Live View", 403);
+          }
+          await target.fill((action as any).value, { timeout: 5000 });
+        }
         else await target.selectOption((action as any).value, { timeout: 5000 });
       }
     } else throw new InputError("Unsupported browser action");
