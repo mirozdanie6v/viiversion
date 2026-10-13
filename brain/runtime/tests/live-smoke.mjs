@@ -24,6 +24,17 @@ for (let i = 0; i < 30; i++) {
 assert.ok(healthy, "new Worker version must serve /health before state tests");
 const unauthorized = await fetch(new URL("/state", base));
 assert.equal(unauthorized.status, 401, "unauthorized state must be denied");
+// Health might be served from the previous deployed version after credential rotation.
+// Continue only once the version accepting this run's protected credential is live.
+let authenticated = false;
+for (let i = 0; i < 30; i++) {
+  try {
+    const state = await call("/state");
+    if (state.status === 200) { authenticated = true; break; }
+  } catch { /* retry until protected version has propagated */ }
+  await new Promise(resolve => setTimeout(resolve, 2000));
+}
+assert.ok(authenticated, "new Worker must accept the current deploy credential");
 const initialized = await call("/bootstrap", "POST");
 assert.equal(initialized.status, 201, "bootstrap");
 const first = await call("/state");
