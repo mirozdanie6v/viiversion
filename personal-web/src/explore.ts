@@ -61,6 +61,7 @@ export async function explorePublicPage(
   const response = await page.goto(start, { waitUntil: "domcontentloaded", timeout: 20000 });
   if (!response || response.status() >= 400) throw new InputError("Page returned HTTP " + (response?.status() ?? "no response"), 502);
   let current = publicUrl(page.url(), allowedHosts);
+  if (restrictedToOrigin && new URL(current).origin !== initialOrigin) throw new InputError("Navigation left saved origin", 409);
   const history: Array<{ step: string; url: string; title: string }> = [];
   const readings: Array<{ url: string; title: string; markdown: string }> = [];
   for (const step of steps) {
