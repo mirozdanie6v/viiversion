@@ -221,6 +221,30 @@ jobs:
             -H "content-type: application/json" \
             -d '{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"web_batch","arguments":{"urls":["https://viiversion.com/","https://example.com/"]}}}' > /tmp/pw-batch-mcp.json
           jq -e '.result.isError == false and ((.result.content[0].text | fromjson).completed) == 2' /tmp/pw-batch-mcp.json >/dev/null
+          curl --fail --silent --show-error --max-time 30 -X POST "$WORKER_URL/v1/action/propose" \
+            -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+            -d '{"url":"https://viiversion.com/","actions":[{"type":"scroll","pixels":100}]}' > /tmp/pw-action-plan.json
+          PLAN_ID="$(jq -r '.planId' /tmp/pw-action-plan.json)"
+          test "${#PLAN_ID}" = 36
+          denied="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/action/execute" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d "{\"planId\":\"$PLAN_ID\",\"url\":\"https://viiversion.com/\",\"actions\":[{\"type\":\"scroll\",\"pixels\":100}]}")"
+          test "$denied" = 403
+          curl --fail --silent --show-error --max-time 15 -X POST "$WORKER_URL/v1/action/approve" \
+            -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+            -d "{\"planId\":\"$PLAN_ID\"}" > /tmp/pw-action-approved.json
+          jq -e '.ok == true' /tmp/pw-action-approved.json >/dev/null
+          curl --fail --silent --show-error --max-time 100 -X POST "$WORKER_URL/v1/action/execute" \
+            -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+            -d "{\"planId\":\"$PLAN_ID\",\"url\":\"https://viiversion.com/\",\"actions\":[{\"type\":\"scroll\",\"pixels\":100}]}" > /tmp/pw-action-executed.json
+          jq -e '.ok == true and (.actions | length == 1)' /tmp/pw-action-executed.json >/dev/null
+          replay="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 \
+            -X POST "$WORKER_URL/v1/action/execute" -H "authorization: Bearer $SMOKE_TOKEN" \
+            -H "content-type: application/json" \
+            -d "{\"planId\":\"$PLAN_ID\",\"url\":\"https://viiversion.com/\",\"actions\":[{\"type\":\"scroll\",\"pixels\":100}]}")"
+          test "$replay" = 403
+          echo "Owner-only action approval, single use and replay denial PASSED"
           echo "Stateful Durable Object browser handoff, encrypted save, reuse and revoke passed"
           echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
           if [ "${PERMANENT_OWNER_ACCESS:-false}" = "true" ]; then
