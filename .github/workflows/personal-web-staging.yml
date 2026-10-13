@@ -221,7 +221,53 @@ jobs:
             -H "content-type: application/json" \
             -d '{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"web_batch","arguments":{"urls":["https://viiversion.com/","https://example.com/"]}}}' > /tmp/pw-batch-mcp.json
           jq -e '.result.isError == false and ((.result.content[0].text | fromjson).completed) == 2' /tmp/pw-batch-mcp.json >/dev/null
-          echo "Owner actions remain disabled pending credential rotation; one-time approval workflow was previously verified."
+          # Interactive-mode checks are conditional, so the same workflow
+          # verifies both a locked deployment and an explicitly enabled one.
+          if [ "$(jq -r '.vars.ENABLE_INTERACT' wrangler.jsonc)" = "true" ]; then
+            test "${PERMANENT_OWNER_ACCESS:-false}" = "true"
+            curl --fail --silent --show-error --max-time 25 \
+              -X POST "$WORKER_URL/v1/action/propose" \
+              -H "authorization: Bearer $SMOKE_TOKEN" \
+              -H "content-type: application/json" \
+              -d '{"url":"https://viiversion.com/","actions":[{"type":"scroll","pixels":120}]}' > /tmp/pw-plan.json
+            PLAN_ID="$(jq -r '.planId' /tmp/pw-plan.json)"
+            test "${#PLAN_ID}" = 36
+            jq -n --arg id "$PLAN_ID" '{planId:$id, url:"https://viiversion.com/", actions:[{type:"scroll", pixels:120}]}' > /tmp/pw-execute.json
+            jq -n --arg id "$PLAN_ID" '{planId:$id, url:"https://viiversion.com/", actions:[{type:"scroll", pixels:121}]}' > /tmp/pw-tampered.json
+            unapproved="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 \
+              -X POST "$WORKER_URL/v1/action/execute" \
+              -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+              --data-binary @/tmp/pw-execute.json)"
+            test "$unapproved" = 403
+            curl --fail --silent --show-error --max-time 20 \
+              -X POST "$WORKER_URL/v1/action/approve" \
+              -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+              -d "{\"planId\":\"$PLAN_ID\"}" > /tmp/pw-approved.json
+            jq -e '.ok == true' /tmp/pw-approved.json >/dev/null
+            tampered="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 \
+              -X POST "$WORKER_URL/v1/action/execute" \
+              -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+              --data-binary @/tmp/pw-tampered.json)"
+            test "$tampered" = 403
+            curl --fail --silent --show-error --max-time 100 \
+              -X POST "$WORKER_URL/v1/action/execute" \
+              -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+              --data-binary @/tmp/pw-execute.json > /tmp/pw-executed.json
+            jq -e '.ok == true and (.actions | length == 1) and .actions[0].type == "scroll"' /tmp/pw-executed.json >/dev/null
+            replay="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 \
+              -X POST "$WORKER_URL/v1/action/execute" \
+              -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+              --data-binary @/tmp/pw-execute.json)"
+            test "$replay" = 403
+            echo "One-time owner action gate: unapproved DENIED, tampered DENIED, approved scroll PASSED, replay DENIED"
+          else
+            denied="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 \
+              -X POST "$WORKER_URL/v1/action/execute" \
+              -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+              -d '{"url":"https://viiversion.com/","actions":[{"type":"scroll","pixels":120}]}' )"
+            test "$denied" = 403
+            echo "Owner action execution remains disabled"
+          fi
           echo "Stateful Durable Object browser handoff, encrypted save, reuse and revoke passed"
           echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
           if [ "${PERMANENT_OWNER_ACCESS:-false}" = "true" ]; then
