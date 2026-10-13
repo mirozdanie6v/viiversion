@@ -107,6 +107,32 @@ export const ownerJs = `(() => {
     const r = await call("/v1/session/explore", { url: $("url").value, steps: [] });
     status("Осмотрена страница: " + r.document.title + ". Форм: " + (r.pageControls?.forms?.length ?? 0) + ". Элементов: " + (r.pageControls?.controls?.length ?? 0));
   }));
+  let actionPlanId = null;
+  $("propose").addEventListener("click", () => run(async () => {
+    actionPlanId = null;
+    const r = await call("/v1/action/propose", {
+      url: $("url").value, actions: JSON.parse($("actions").value)
+    });
+    actionPlanId = r.planId;
+    $("approvalStatus").textContent = "План готов до " + r.expiresAt +
+      ". Проверьте действия: " + JSON.stringify(r.summary);
+  }));
+  $("approve").addEventListener("click", () => run(async () => {
+    if (!actionPlanId) throw new Error("Сначала подготовьте план.");
+    if (!confirm("Подтвердить эти действия на сайте? Кнопки могут отправлять данные.")) return;
+    const r = await call("/v1/action/approve", { planId: actionPlanId });
+    $("approvalStatus").textContent = "Одобрено до " + r.expiresAt;
+  }));
+  $("execute").addEventListener("click", () => run(async () => {
+    if (!actionPlanId) throw new Error("Сначала подготовьте план.");
+    const r = await call("/v1/action/execute", {
+      planId: actionPlanId, url: $("url").value,
+      actions: JSON.parse($("actions").value)
+    });
+    actionPlanId = null;
+    $("approvalStatus").textContent = "Выполнено " + r.actions.length +
+      " действий. Страница: " + r.document.title;
+  }));
   $("revoke").addEventListener("click", () => run(async () => {
     if (!confirm("Удалить локально сохранённую сессию для указанного сайта?")) return;
     const r = await call("/v1/session/revoke", { url: $("url").value });
