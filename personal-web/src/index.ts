@@ -325,7 +325,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       const digest = await digestPlan(plan);
       await ownerApproval(env, "consume", { planId: data.planId,
         digest, origin: new URL(plan.url).origin });
-      return await withBrowser(env, page => interact(page, env, plan));
+      return json(await withBrowser(env, page => interact(page, env, plan)));
     }
 
     // Public read operations may visit any validated public HTTPS host. The
