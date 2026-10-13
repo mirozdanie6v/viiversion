@@ -1,5 +1,6 @@
 import { D1BrainRepository, type D1 } from "./d1-repository.ts";
 import { day0State } from "./day0.ts";
+import { canonicalDecision001 } from "./decision-seed.ts";
 import { resume } from "./loop.ts";
 import { isAuthorized } from "./auth.ts";
 import type { Run } from "./contracts.ts";
@@ -22,9 +23,11 @@ export default {
     const repo = new D1BrainRepository(env.BRAIN_DB);
     if (req.method === "POST" && url.pathname === "/bootstrap") {
       await repo.seedState(day0State());
+      await repo.appendDecision(canonicalDecision001());
       return json(await resume(repo), 201);
     }
     if (req.method === "GET" && url.pathname === "/state") return json(await resume(repo));
+    if (req.method === "GET" && url.pathname === "/context") return json({ ...(await resume(repo)), decisions: await repo.loadDecisions() });
     if (req.method === "POST" && url.pathname === "/runs") {
       let body: { idempotencyKey?: string };
       try {

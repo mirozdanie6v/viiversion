@@ -24,6 +24,8 @@ for (let i = 0; i < 30; i++) {
 assert.ok(healthy, "new Worker version must serve /health before state tests");
 const unauthorized = await fetch(new URL("/state", base));
 assert.equal(unauthorized.status, 401, "unauthorized state must be denied");
+const deniedContext = await fetch(new URL("/context", base));
+assert.equal(deniedContext.status, 401, "unauthorized decision context must be denied");
 // Health might be served from the previous deployed version after credential rotation.
 // Continue only once the version accepting this run's protected credential is live.
 let authenticated = false;
@@ -41,6 +43,9 @@ const first = await call("/state");
 assert.equal(first.status, 200, "authorized state fetch");
 assert.equal(first.data.state.activeObjectiveId, "OBJ-MARK-BOOTSTRAP");
 assert.deepEqual(first.data.state.openLoops.map(x => x.id).sort(), ["OL-CLOSURE", "OL-COMPANY-STATE"]);
+const context = await call("/context");
+assert.equal(context.status, 200);
+assert.ok(context.data.decisions.some(d => d.id === "DJ-001" && d.evidenceClass === "verified_fact"), "canonical decision persisted");
 
 const key = "live-smoke-" + process.env.GITHUB_RUN_ID + "-" + process.env.GITHUB_RUN_ATTEMPT;
 const started = await call("/runs", "POST", { idempotencyKey: key });
@@ -66,4 +71,8 @@ assert.ok(persisted, "Workflow must checkpoint audit->diagnose and fresh request
 assert.equal(persisted.state.activeObjectiveId, "OBJ-MARK-BOOTSTRAP");
 assert.equal(persisted.checkpoint.stateVersion, persisted.state.version);
 assert.deepEqual(persisted.checkpoint.openLoopIds.sort(), ["OL-CLOSURE", "OL-COMPANY-STATE"]);
-console.log("PASS: protected Brain API, durable objective, idempotent run, and fresh-session D1 checkpoint resume");
+if (process.env.GITHUB_ENV) {
+  const { appendFileSync } = await import("node:fs");
+  appendFileSync(process.env.GITHUB_ENV, "BRAIN_EXPECTED_RUN_ID=" + runId + "\n");
+}
+console.log("PASS: protected Brain API, persistent canonical decision, durable objective, idempotent run, and D1 checkpoint resume");
