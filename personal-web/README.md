@@ -6,6 +6,43 @@ WhatsApp, production landing, ZL Web Agent or VIIVERSION AI Engineer.
 
 This is an independent implementation of a **subset** of Firecrawl features, not a Firecrawl fork.
 
+## New staged capabilities — 13 October 2026
+
+The existing normal-ChatGPT → connected GitHub → GitHub Actions → Cloudflare
+MCP bridge remains available for anonymous/public research. New capabilities:
+
+- `web_explore`: preserve one anonymous browser context within an MCP call;
+  inspect links and form structure, scroll, wait, follow existing anchor links,
+  and read intermediate pages. It does **not** submit forms or click buttons.
+- `web_batch`: render up to four public URLs inside one browser invocation;
+  the public GitHub bridge limits this to three sites per request to bound time.
+- `web_session_explore`: read-only exploration of a saved browser login,
+  restricted to the saved site origin. The owner UI `/owner` can inspect a
+  session's page and form structure without reading form field values.
+- Owner-only HTTP endpoints `/v1/action/propose`,
+  `/v1/action/approve`, and `/v1/action/execute` support a redacted
+  action plan, explicit human confirmation and a three-minute single-use
+  approval. Old `/v1/interact` is **always forbidden**, including when
+  interactive support is enabled. Approved operations are currently only
+  reachable using the owner's secure panel/API, never via the public bridge.
+  Credentials/MFA must be entered manually in Live View.
+- Actions and session contents **must never be passed through the public
+  GitHub Actions logs**. Private-session chat orchestration is not deployed.
+
+Validated GitHub Actions:
+- [Read-only multi-step navigation](https://github.com/mirozdanie6v/viiversion/actions/runs/38403294888)
+- [Three-site batch via actual MCP](https://github.com/mirozdanie6v/viiversion/actions/runs/38404068149)
+- [Session inspection, owner action approval / single-use enforcement](https://github.com/mirozdanie6v/viiversion/actions/runs/38405760730)
+
+Latency: `web_explore` and `web_batch` avoid separate GitHub Actions
+executions for each read/navigation step, but do NOT eliminate the Action
+startup time. Direct calls from ChatGPT require an approved direct plugin/tool
+connection; no such connection is currently installed for Personal Web.
+
+Security prerequisite before any real account use: **rotate the original
+owner API token that appeared in a past chat**. The simulated session smoke
+is not evidence that a real login/MFA flow works.
+
 ## Implemented in this MVP
 
 | Capability | HTTP | MCP tool |
@@ -15,7 +52,7 @@ This is an independent implementation of a **subset** of Firecrawl features, not
 | Crawl up to 8 pages, depth 0–2, respecting robots.txt | `POST /v1/crawl` | `web_crawl` |
 | Structured extraction with named CSS selectors | `POST /v1/extract` | `web_extract` |
 | PNG screenshot of a rendered page | `POST /v1/screenshot` | `web_screenshot` |
-| Explicit click, fill, select, scroll, wait actions | `POST /v1/interact` | `web_interact` (disabled by default) |
+| Explicit click, fill, select, scroll, wait actions | `POST /v1/interact` (direct route always forbidden) | —; use owner-approved actions |
 | Health endpoint | `GET /health` | — |
 | Manual remote login through time-limited Cloudflare Live View | `POST /v1/session/start` + `/v1/session/commit` | API-only |
 | Encrypted saved sessions: list and revoke | `POST /v1/session/list` + `/v1/session/revoke` | API-only |
