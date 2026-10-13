@@ -79,6 +79,8 @@ jobs:
             printf "%s" "$PERSONAL_WEB_API_TOKEN" | npx wrangler secret put WEB_API_TOKEN --name viiversion-personal-web-staging
             echo "SMOKE_TOKEN=$PERSONAL_WEB_API_TOKEN" >> "$GITHUB_ENV"
             echo "SMOKE_TOKEN_AVAILABLE=true" >> "$GITHUB_ENV"
+            echo "PERMANENT_OWNER_ACCESS=true" >> "$GITHUB_ENV"
+            echo "::notice::Permanent Personal Web owner credential installed; authenticated live verification enabled."
           fi
       - name: Provision encryption key once or preserve existing stable key
         run: |
@@ -206,6 +208,11 @@ jobs:
           jq -e '.ok == true and .revoked == true' /tmp/pw-session-revoke.json > /dev/null
           echo "Stateful Durable Object browser handoff, encrypted save, reuse and revoke passed"
           echo "Live scrape, extract, map, crawl, screenshot, MCP and authorization smoke passed on $WORKER_URL"
+          if [ "${PERMANENT_OWNER_ACCESS:-false}" = "true" ]; then
+            echo "Permanent owner credential: PRESENT; authenticated browser/MCP/session smoke: PASSED"
+          else
+            echo "::notice::Only a temporary smoke credential was used; permanent owner access is not configured."
+          fi
       - name: Remove temporary staging access credential
         if: always()
         run: |
