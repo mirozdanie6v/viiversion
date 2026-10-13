@@ -22,6 +22,13 @@ const descriptors = [
           href: { type: "string" }, pixels: { type: "integer" }, milliseconds: { type: "integer" } },
         required: ["type"], additionalProperties: false } }
     }, required: ["url"], additionalProperties: false } },
+  { name: "web_session_explore", description: "Inspect and navigate a saved login on the same site without clicking or submitting forms. Owner approval is required to save the login.",
+    inputSchema: { type: "object", properties: { url: { type: "string" },
+      steps: { type: "array", maxItems: 6, items: { type: "object",
+        properties: { type: { type: "string", enum: ["follow","scroll","wait","read"] },
+          href: { type: "string" }, pixels: { type: "integer" }, milliseconds: { type: "integer" } },
+        required: ["type"], additionalProperties: false } }
+    }, required: ["url"], additionalProperties: false } },
   { name: "web_session_scrape", description: "Render a URL using a previously saved, encrypted owner-only browser login. The site must match the saved session's origin.",
     inputSchema: { type: "object", properties: { url: { type: "string" } }, required: ["url"], additionalProperties: false } }
 ] as const;
@@ -40,6 +47,7 @@ const tools = new Map<string, string>([
   ["web_screenshot", "/v1/screenshot"],
   ["web_batch", "/v1/batch"],
   ["web_explore", "/v1/explore"],
+  ["web_session_explore", "/v1/session/explore"],
   ["web_session_scrape", "/v1/session/scrape"]
 ]);
 
