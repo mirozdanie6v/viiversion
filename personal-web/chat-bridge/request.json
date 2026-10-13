@@ -1,5 +1,5 @@
 {
-  "id": "external-example-com-20261013-r2",
+  "id": "external-python-org-20261013",
   "operation": "scrape",
-  "url": "https://example.com/"
+  "url": "https://www.python.org/"
 }
