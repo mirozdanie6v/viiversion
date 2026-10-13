@@ -4,7 +4,12 @@ on:
   push:
     branches: [feat/personal-web-firecrawl-mvp]
     paths:
-      - "personal-web/**"
+      - "personal-web/src/**"
+      - "personal-web/tests/**"
+      - "personal-web/package.json"
+      - "personal-web/package-lock.json"
+      - "personal-web/wrangler.jsonc"
+      - "personal-web/tsconfig.json"
       - ".github/workflows/personal-web-staging.yml"
   workflow_dispatch:
 
