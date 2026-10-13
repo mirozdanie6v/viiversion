@@ -12,8 +12,16 @@ async function call(path, method = "GET", body) {
   const data = await response.json();
   return { status: response.status, data };
 }
-const health = await fetch(new URL("/health", base));
-assert.equal(health.status, 200, "health endpoint");
+// A new Worker version may take a short time to propagate to all edges.
+let healthy = false;
+for (let i = 0; i < 30; i++) {
+  try {
+    const health = await fetch(new URL("/health", base));
+    if (health.status === 200) { healthy = true; break; }
+  } catch { /* retry during deployment propagation */ }
+  await new Promise(resolve => setTimeout(resolve, 2000));
+}
+assert.ok(healthy, "new Worker version must serve /health before state tests");
 const unauthorized = await fetch(new URL("/state", base));
 assert.equal(unauthorized.status, 401, "unauthorized state must be denied");
 const initialized = await call("/bootstrap", "POST");
