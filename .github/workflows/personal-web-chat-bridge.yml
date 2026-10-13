@@ -27,5 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Check browser bridge JavaScript syntax
+        run: node --check personal-web/chat-bridge/runner.mjs
       - name: Read a public website with VIIVERSION Personal Web
         run: node personal-web/chat-bridge/runner.mjs
