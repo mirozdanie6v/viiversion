@@ -26,6 +26,62 @@ It does **not** yet provide: web-wide search, AI-inferred JSON schemas, PDFs,
 fully verified live authenticated sessions, async long-running crawl queues,
 browser history, or a registered ChatGPT App. These are later development steps.
 
+## ChatGPT custom MCP plugin (private, OAuth)
+
+**Live staging endpoint:** `https://viiversion-personal-web-staging.viiversion.workers.dev/mcp`
+
+The server now supports OAuth 2.1 authorization-code + S256 PKCE, one-owner consent,
+DCR for approved ChatGPT callback URLs, OAuth resource/issuer discovery, access and
+rotating refresh tokens, revocation, and read-only tool scopes. Browser click/fill
+is intentionally **not exposed to ChatGPT**. OAuth access cannot use the login/admin
+API, even when a user guesses the URL.
+
+Live tests on Cloudflare exercise: unauthorized request denial, OAuth metadata,
+client registration, owner consent, PKCE authorization code exchange, MCP tool
+inventory, denial of admin API access to OAuth access tokens, refresh rotation,
+replay rejection and token revocation.
+
+### Connect in ChatGPT
+
+1. Use **chatgpt.com** in a browser (not the Android client for creation).
+2. Open **Plugins** → **Add** → **Add custom MCP server**.
+3. Name: `VIIVERSION Personal Web`.
+4. Server URL: `https://viiversion-personal-web-staging.viiversion.workers.dev/mcp`
+5. Authentication: **OAuth**; prefer **Dynamic Client Registration (DCR)** when
+   prompted, letting the server register the ChatGPT redirect.
+6. Create the private plugin, install it and select it in a new **Work** chat with `@`.
+7. On first usage, ChatGPT opens the owner's consent page on the Worker domain.
+   Enter `PERSONAL_WEB_API_TOKEN` **there only**, not into a ChatGPT message.
+   Consent issues a separate, revocable OAuth token to ChatGPT.
+8. Try `@VIIVERSION Personal Web — read https://viiversion.com using web_scrape`.
+
+This project has no integration that can create or install a plugin inside an
+owner's ChatGPT account programmatically; that UI approval is user-controlled.
+
+### Secure owner-assisted manual login
+
+Open `https://viiversion-personal-web-staging.viiversion.workers.dev/owner`.
+Paste the **rotated** personal bearer credential into the page (not the login
+password for a target site), choose `https://github.com` or
+`https://dash.cloudflare.com`, then:
+
+1. Click **Открыть Chrome / Live View** and follow the short-lived private link.
+2. Sign in manually at the legitimate target website, including MFA. No password
+   is sent to our API.
+3. Return the live Chrome tab to the same website and click **Сохранить
+   браузерную сессию** before expiry (~8 min).
+4. Click **Прочитать сайт с сохранённой сессией** to validate that the site can
+   be read again in a fresh browser context.
+5. In a Work chat with the personal plugin connected, call `web_session_scrape`
+   for that site to verify that ChatGPT can read its authorized pages.
+
+Warning: the first owner credential used in this project appeared in an earlier
+chat response. **Rotate it in GitHub Actions Secrets and rerun the staging
+workflow before signing into personal accounts.** Do not paste any secrets into
+chat, GitHub issues, workflow logs or URLs. Only sign in at websites you own or
+are expressly authorized to access. The session is encrypted at rest but this
+does not neutralize risks from malicious or compromised target web pages.
+
 ## Current validated status
 
 - **Stage 1:** deployed and live-tested on VIIVERSION: scrape, extract, map, crawl,
@@ -36,7 +92,10 @@ browser history, or a registered ChatGPT App. These are later development steps.
   separate-request commit, encrypted storage, a fresh-browser read and revocation.
   **A genuine manual login with MFA has not yet been performed by the owner**;
   this is still required before relying on saved account sessions.
-- **Stage 3:** autonomous reasoning/actions and ChatGPT registration are not deployed.
+- **Stage 3 (OAuth-ready, user connection pending):** ChatGPT-compatible OAuth 2.1
+  transport and tooling are deployed and live-tested. Installing the personal
+  plugin from the ChatGPT Plugins UI is not yet completed. TinyFish-like
+  autonomous write/click workflows are deliberately not enabled.
 
 ## Local checks
 
