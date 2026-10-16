@@ -167,3 +167,23 @@ export async function exploreWithSavedLogin(
     await browser.close().catch(() => {});
   }
 }
+
+/**
+ * Owner-only draft handoff. This is intentionally not added to OAuth/MCP's
+ * read-only tool list or to the PUBLIC GitHub bridge.
+ */
+export async function ownerDraftOperation(
+  env: SessionEnv, action: "start" | "fill" | "status" | "close",
+  data: Record<string, any>
+) {
+  requireVault(env);
+  if (action === "start") {
+    const url = publicUrl(data.url, env.ALLOWED_HOSTS);
+    return vault(env, "/draft/start", { url, useSavedSession: data.useSavedSession === true });
+  }
+  if (typeof data.draftId !== "string" || !/^[0-9a-f-]{36}$/i.test(data.draftId)) {
+    throw new InputError("Invalid draft session ID");
+  }
+  if (action === "fill") return vault(env, "/draft/fill", { draftId: data.draftId, fields: data.fields });
+  return vault(env, "/draft/" + action, { draftId: data.draftId });
+}
