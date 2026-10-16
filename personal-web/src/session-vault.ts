@@ -131,7 +131,7 @@ export class PersonalWebVault {
     if (this.activeDraftId !== saved.id || !this.page) {
       return Response.json({ error: "Live draft browser disconnected. Start a new draft" }, { status: 409 });
     }
-    if (saved.filled > 0) return Response.json({ error: "Draft has already been filled" }, { status: 409 });
+    if (saved.filled !== 0) return Response.json({ error: "Draft was already used; open another session" }, { status: 409 });
     try {
       if (new URL(draftTarget(this.page.url(), this.env.ALLOWED_HOSTS)).origin !== saved.origin) {
         return Response.json({ error: "Draft left its original site" }, { status: 409 });
