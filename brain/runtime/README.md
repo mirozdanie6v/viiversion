@@ -35,3 +35,7 @@ A plan is a faithful reconstruction of recorded commitments, not autonomous reas
 Safety: bearer token required for every endpoint, append-only versions; no client system,
 production secrets, billing, ad budget or external task is modified. Concurrent conflicting
 revisions fail under a DB unique constraint. D1 migration 0002 is additive.
+
+### Approval-token provisioning
+
+The deploy workflow configures `BRAIN_APPROVAL_TOKEN` independently of `BRAIN_API_TOKEN`. If the separately administered GitHub Actions secret `BRAIN_APPROVAL_TOKEN` is absent, the runner generates and masks a random bootstrap approval token, writes it to the Cloudflare Worker, tests that normal Brain credentials **cannot** approve decisions, then discards its local copy. Real client contracts are **not** sent by this deployment smoke. The bootstrap approval token rotates at redeploy; future authorized importers need their own secure credential distribution, not public source code. GitHub workflows must never echo tokens or approval payloads.
