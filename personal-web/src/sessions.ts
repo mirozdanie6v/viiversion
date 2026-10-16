@@ -173,7 +173,7 @@ export async function exploreWithSavedLogin(
  * read-only tool list or to the PUBLIC GitHub bridge.
  */
 export async function ownerDraftOperation(
-  env: SessionEnv, action: "start" | "fill" | "status" | "close",
+  env: SessionEnv, action: "start" | "fill" | "status" | "inspect" | "close",
   data: Record<string, any>
 ) {
   requireVault(env);
