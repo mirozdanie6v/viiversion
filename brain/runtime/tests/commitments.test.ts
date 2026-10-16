@@ -50,7 +50,7 @@ test("unapproved/invented claims cannot be imported as approved decisions",()=>{
   assert.throws(()=>validateCommitment(record({actions:[{id:"x",description:"Task",order:1,status:"invented"}]})),/INVALID_ACTION/);
 });
 test("unknown precondition blocks planning rather than being silently considered done",()=>{
-  const r=validateCommitment(record({actions:[{id:"ad",description:"Start",status:"open",order:1,dependsOn:["not-approved"]}]}));
+  const r=validateCommitment(record({actions:[{id:"ad1",description:"Start",status:"open",order:1,dependsOn:["not-approved"]}]}));
   assert.throws(()=>buildExecutionPlan([r]),/MISSING_APPROVED_DEPENDENCY/);
 });
 test("duplicate active action IDs across decisions are rejected",()=>{
