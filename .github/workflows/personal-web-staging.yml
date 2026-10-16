@@ -275,6 +275,7 @@ jobs:
             -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
             -d '{"url":"https://viiversion.com/","useSavedSession":false}' > /tmp/pw-draft-start.json
           jq -e '.ok == true and (.draftId | type == "string") and (.liveViewUrl | startswith("https://live.browser.run/"))' /tmp/pw-draft-start.json >/dev/null
+          echo DRAFT_STAGE_START_OK
           DRAFT_ID="$(jq -r '.draftId' /tmp/pw-draft-start.json)"
           jq -n --arg id "$DRAFT_ID" '{draftId:$id,fields:[{selector:"input[name=name]",value:"VIIVERSION unsaved draft test"}]}' > /tmp/pw-draft-fill.json
           curl --fail --silent --show-error --max-time 100 \
@@ -282,6 +283,7 @@ jobs:
             -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
             --data-binary @/tmp/pw-draft-fill.json > /tmp/pw-draft-result.json
           jq -e '.ok == true and .filled == 1 and .noSaveClicked == true and (.selectors[0] == "input[name=name]")' /tmp/pw-draft-result.json >/dev/null
+          echo DRAFT_STAGE_FILLED_OK
           if jq -e '.values? != null or .fields? != null' /tmp/pw-draft-result.json >/dev/null; then
             echo "::error::Draft API leaked form values"
             exit 1
@@ -291,6 +293,7 @@ jobs:
             -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
             -d "{\"draftId\":\"$DRAFT_ID\"}" > /tmp/pw-draft-status.json
           jq -e '.ok == true and .filled == 1' /tmp/pw-draft-status.json >/dev/null
+          echo DRAFT_STAGE_STATUS_OK
           curl --fail --silent --show-error --max-time 30 \
             -X POST "$WORKER_URL/v1/draft/close" \
             -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
