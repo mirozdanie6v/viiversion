@@ -3,11 +3,13 @@ import { day0State } from "./day0.ts";
 import { canonicalDecision001 } from "./decision-seed.ts";
 import { resume } from "./loop.ts";
 import { isAuthorized } from "./auth.ts";
+import { CommitmentStore } from "./commitment-store.ts";
 import type { Run } from "./contracts.ts";
 
 interface Env {
   BRAIN_DB: D1;
   BRAIN_API_TOKEN?: string;
+  BRAIN_APPROVAL_TOKEN?: string;
   CEO_WORKFLOW?: { create(o: { id: string; params: { runId: string } }): Promise<unknown> };
 }
 const json = (x: unknown, status = 200) =>
@@ -18,7 +20,11 @@ export default {
     const url = new URL(req.url);
     if (req.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
     // State, bootstrap and run endpoints all handle company state: never expose them publicly.
-    if (!(await isAuthorized(req, env.BRAIN_API_TOKEN))) return json({ error: "unauthorized" }, 401);
+    // Models and read-only clients must never acquire founder-approval privileges.
+    // Approval writes require an independently configured bearer secret.
+    const approvalWrite = req.method === "POST" && url.pathname === "/approved-commitments";
+    if (!(await isAuthorized(req, approvalWrite ? env.BRAIN_APPROVAL_TOKEN : env.BRAIN_API_TOKEN)))
+      return json({ error: "unauthorized" }, 401);
 
     const repo = new D1BrainRepository(env.BRAIN_DB);
     if (req.method === "POST" && url.pathname === "/bootstrap") {
@@ -28,6 +34,38 @@ export default {
     }
     if (req.method === "GET" && url.pathname === "/state") return json(await resume(repo));
     if (req.method === "GET" && url.pathname === "/context") return json({ ...(await resume(repo)), decisions: await repo.loadDecisions() });
+    const commitments = new CommitmentStore(env.BRAIN_DB);
+    if (req.method === "GET" && url.pathname === "/approved-commitments") {
+      return json({records: await commitments.list()});
+    }
+    if (req.method === "POST" && url.pathname === "/approved-commitments") {
+      if (Number(req.headers.get("content-length") || 0) > 16384) return json({error:"payload_too_large"},413);
+      let payload: unknown;
+      try { payload = await req.json(); } catch { return json({error:"invalid_json"},400); }
+      try {
+        const result = await commitments.append(payload);
+        return json(result, result.replayed ? 200 : 201);
+      } catch (err) {
+        const cause = err instanceof Error ? err.message : "RECORD_REJECTED";
+        return json({error:cause}, cause.startsWith("INVALID") ? 400 : 409);
+      }
+    }
+    if (req.method === "POST" && url.pathname === "/execution-plans") {
+      try {
+        const result = await commitments.createPlan();
+        return json(result, result.replayed ? 200 : 201);
+      } catch (err) {
+        return json({error:err instanceof Error ? err.message : "PLAN_FAILED"},422);
+      }
+    }
+    if (req.method === "GET" && url.pathname === "/execution-plans") {
+      const id = url.searchParams.get("id");
+      if (!id) return json({error:"plan_id_required"},400);
+      try {
+        const plan = await commitments.loadPlan(id);
+        return plan ? json({id,plan}) : json({error:"not_found"},404);
+      } catch { return json({error:"invalid_plan_id"},400); }
+    }
     if (req.method === "POST" && url.pathname === "/runs") {
       let body: { idempotencyKey?: string };
       try {

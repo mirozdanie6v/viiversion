@@ -24,6 +24,10 @@ for (let i = 0; i < 30; i++) {
 assert.ok(healthy, "new Worker version must serve /health before state tests");
 const unauthorized = await fetch(new URL("/state", base));
 assert.equal(unauthorized.status, 401, "unauthorized state must be denied");
+const deniedCommitments = await fetch(new URL("/approved-commitments", base));
+assert.equal(deniedCommitments.status, 401, "client commitment history must not be public");
+const deniedPlans = await fetch(new URL("/execution-plans", base), {method:"POST"});
+assert.equal(deniedPlans.status, 401, "creating execution plans requires authorization");
 const deniedContext = await fetch(new URL("/context", base));
 assert.equal(deniedContext.status, 401, "unauthorized decision context must be denied");
 // Health might be served from the previous deployed version after credential rotation.
@@ -46,6 +50,22 @@ assert.deepEqual(first.data.state.openLoops.map(x => x.id).sort(), ["OL-CLOSURE"
 const context = await call("/context");
 assert.equal(context.status, 200);
 assert.ok(context.data.decisions.some(d => d.id === "DJ-001" && d.evidenceClass === "verified_fact"), "canonical decision persisted");
+
+// Persist a safe content-addressed snapshot of approved commitments only.
+ // No sensitive client agreements are seeded from this public test.
+const approved = await call("/approved-commitments");
+assert.equal(approved.status, 200);
+assert.ok(Array.isArray(approved.data.records));
+const planned = await call("/execution-plans", "POST");
+assert.ok([200, 201].includes(planned.status));
+assert.ok(planned.data.id.startsWith("PLAN-"));
+const reread = await call("/execution-plans?id=" + planned.data.id);
+assert.equal(reread.status, 200);
+assert.deepEqual(reread.data.plan, planned.data.plan);
+if (process.env.GITHUB_ENV) {
+  const {appendFileSync} = await import("node:fs");
+  appendFileSync(process.env.GITHUB_ENV, "BRAIN_EXPECTED_PLAN_ID=" + planned.data.id + "\n");
+}
 
 const key = "live-smoke-" + process.env.GITHUB_RUN_ID + "-" + process.env.GITHUB_RUN_ATTEMPT;
 const started = await call("/runs", "POST", { idempotencyKey: key });

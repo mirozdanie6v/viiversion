@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-const { BRAIN_TEST_BASE: base, BRAIN_TEST_TOKEN: token, BRAIN_EXPECTED_RUN_ID: runId } = process.env;
-if (!base || !token || !runId) throw Error("Independent-process context check missing configuration");
+const { BRAIN_TEST_BASE: base, BRAIN_TEST_TOKEN: token, BRAIN_EXPECTED_RUN_ID: runId, BRAIN_EXPECTED_PLAN_ID: planId } = process.env;
+if (!base || !token || !runId || !planId) throw Error("Independent-process context check missing configuration");
 const r = await fetch(new URL("/context", base), {
   headers: { authorization: "Bearer " + token },
 });
@@ -11,4 +11,14 @@ assert.deepEqual(data.state.openLoops.map(x => x.id).sort(), ["OL-CLOSURE", "OL-
 assert.ok(data.decisions.some(x => x.id === "DJ-001" && x.evidenceClass === "verified_fact"));
 assert.equal(data.checkpoint?.runId, runId);
 assert.equal(data.checkpoint?.stage, "diagnose");
+const planRes = await fetch(new URL("/execution-plans?id=" + planId, base), {
+  headers: {authorization: "Bearer " + token},
+});
+assert.equal(planRes.status, 200);
+const plan = await planRes.json();
+assert.equal(plan.id, planId);
+assert.equal(plan.plan.schemaVersion, 1);
+assert.ok(Array.isArray(plan.plan.actions));
+assert.ok(Array.isArray(plan.plan.commitments));
+console.log("PASS: fresh independent Node process recovered persisted execution-plan snapshot from D1");
 console.log("PASS: independent Node process restored Brain objective, open loops, canonical decision, and checkpoint directly from remote D1");
