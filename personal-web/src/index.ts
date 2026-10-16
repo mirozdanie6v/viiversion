@@ -290,7 +290,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
   if (request.method !== "POST") return json({ ok: false, error: "POST required" }, 405);
   if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot",
-    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/session/explore", "/v1/explore", "/v1/batch", "/v1/action/propose", "/v1/action/approve", "/v1/action/execute", "/v1/draft/start", "/v1/draft/fill", "/v1/draft/status", "/v1/draft/close"].includes(pathname)) {
+    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/session/explore", "/v1/explore", "/v1/batch", "/v1/action/propose", "/v1/action/approve", "/v1/action/execute", "/v1/draft/start", "/v1/draft/fill", "/v1/draft/status", "/v1/draft/inspect", "/v1/draft/close"].includes(pathname)) {
     return json({ ok: false, error: "Unknown operation" }, 404);
   }
 
@@ -302,8 +302,8 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (pathname.startsWith("/v1/draft/")) {
       if (env.ENABLE_INTERACT !== "true") throw new InputError("Draft editing is disabled", 403);
       const name = pathname.slice("/v1/draft/".length);
-      if (!["start","fill","status","close"].includes(name)) throw new InputError("Unknown draft operation");
-      return json(await ownerDraftOperation(env, name as "start"|"fill"|"status"|"close", data));
+      if (!["start","fill","status","inspect","close"].includes(name)) throw new InputError("Unknown draft operation");
+      return json(await ownerDraftOperation(env, name as "start"|"fill"|"status"|"inspect"|"close", data));
     }
     if (pathname === "/v1/session/start") return json(await beginBrowserLogin(env, data.url));
     if (pathname === "/v1/session/commit") return json(await finishBrowserLogin(env, data.loginId));
