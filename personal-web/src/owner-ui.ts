@@ -53,6 +53,20 @@ button:hover,.button:hover{background:#38526e}button:disabled{opacity:.4;cursor:
 <button id="execute" type="button">Выполнить план</button>
 <p id="approvalStatus" role="status" aria-live="polite">План ещё не подготовлен.</p>
 </section>
+<section><h2>5. Черновик: заполнить, но не сохранять</h2>
+<p>Для сайтов, допускающих автоматическое заполнение. Открывается удалённый Chrome с той же страницей, что заполняется. Сохранение и публикация остаются за вами. Некоторые сайты автоматически сохраняют изменения уже при вводе.</p>
+<label><input id="useSaved" type="checkbox" checked style="width:auto"> Использовать сохранённую авторизацию, если она есть</label>
+<button id="draftStart" type="button">Открыть черновик и Live View</button>
+<div id="draftLive" style="display:none">
+<a id="draftLink" class="button" target="_blank" rel="noopener noreferrer">Посмотреть заполненную форму</a>
+<label for="draftFields">Поля для заполнения (JSON, не более пяти)</label>
+<textarea id="draftFields" rows="5" style="box-sizing:border-box;width:100%;background:#0b1018;color:white;border:1px solid #56657b">[{"selector":"input[name=name]","value":"Черновик без отправки"}]</textarea>
+<button id="draftFill" type="button">Заполнить поля без сохранения</button>
+<button id="draftStatus" type="button">Проверить черновик</button>
+<button id="draftClose" type="button">Закрыть без дополнительного сохранения</button>
+</div>
+<p id="draftMessage" role="status" aria-live="polite">Нет открытого черновика.</p>
+</section>
 </main><script src="/owner.js" defer></script></body></html>`;
 
 export const ownerJs = `(() => {
@@ -106,6 +120,41 @@ export const ownerJs = `(() => {
   $("inspect").addEventListener("click", () => run(async () => {
     const r = await call("/v1/session/explore", { url: $("url").value, steps: [] });
     status("Осмотрена страница: " + r.document.title + ". Форм: " + (r.pageControls?.forms?.length ?? 0) + ". Элементов: " + (r.pageControls?.controls?.length ?? 0));
+  }));
+  let activeDraft = null;
+  const draftInfo = message => { $("draftMessage").textContent = message; };
+  $("draftStart").addEventListener("click", () => run(async () => {
+    activeDraft = null;
+    $("draftLive").style.display = "none";
+    const r = await call("/v1/draft/start", {
+      url: $("url").value, useSavedSession: $("useSaved").checked
+    });
+    activeDraft = r.draftId;
+    const link = new URL(r.liveViewUrl);
+    if (link.protocol !== "https:" || link.hostname !== "live.browser.run") throw new Error("Invalid Live View link");
+    $("draftLink").href = r.liveViewUrl;
+    $("draftLive").style.display = "block";
+    draftInfo("Браузер открыт до " + r.expiresAt + ". Сохранённая сессия: " +
+      (r.savedLoginUsed ? "да" : "нет") + ". " + r.notice);
+  }));
+  $("draftFill").addEventListener("click", () => run(async () => {
+    if (!activeDraft) throw new Error("Open a draft first");
+    const r = await call("/v1/draft/fill", {
+      draftId: activeDraft, fields: JSON.parse($("draftFields").value)
+    });
+    draftInfo("Заполнено " + r.filled + " полей. Посмотрите страницу через Live View. " + r.warning);
+  }));
+  $("draftStatus").addEventListener("click", () => run(async () => {
+    if (!activeDraft) throw new Error("Open a draft first");
+    const r = await call("/v1/draft/status", { draftId: activeDraft });
+    draftInfo("Открыто: " + r.url + ". Заполнено полей: " + r.filled + ". Сессия до " + r.expiresAt);
+  }));
+  $("draftClose").addEventListener("click", () => run(async () => {
+    if (!activeDraft) throw new Error("No open draft");
+    const r = await call("/v1/draft/close", { draftId: activeDraft });
+    activeDraft = null;
+    $("draftLive").style.display = "none";
+    draftInfo(r.warning);
   }));
   let actionPlanId = null;
   $("propose").addEventListener("click", () => run(async () => {
