@@ -9,6 +9,7 @@ import type { Run } from "./contracts.ts";
 interface Env {
   BRAIN_DB: D1;
   BRAIN_API_TOKEN?: string;
+  BRAIN_APPROVAL_TOKEN?: string;
   CEO_WORKFLOW?: { create(o: { id: string; params: { runId: string } }): Promise<unknown> };
 }
 const json = (x: unknown, status = 200) =>
@@ -19,7 +20,11 @@ export default {
     const url = new URL(req.url);
     if (req.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
     // State, bootstrap and run endpoints all handle company state: never expose them publicly.
-    if (!(await isAuthorized(req, env.BRAIN_API_TOKEN))) return json({ error: "unauthorized" }, 401);
+    // Models and read-only clients must never acquire founder-approval privileges.
+    // Approval writes require an independently configured bearer secret.
+    const approvalWrite = req.method === "POST" && url.pathname === "/approved-commitments";
+    if (!(await isAuthorized(req, approvalWrite ? env.BRAIN_APPROVAL_TOKEN : env.BRAIN_API_TOKEN)))
+      return json({ error: "unauthorized" }, 401);
 
     const repo = new D1BrainRepository(env.BRAIN_DB);
     if (req.method === "POST" && url.pathname === "/bootstrap") {
