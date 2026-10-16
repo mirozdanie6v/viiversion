@@ -303,7 +303,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       if (env.ENABLE_INTERACT !== "true") throw new InputError("Draft editing is disabled", 403);
       const name = pathname.slice("/v1/draft/".length);
       if (!["start","fill","status","close"].includes(name)) throw new InputError("Unknown draft operation");
-      return json({ ...await ownerDraftOperation(env, name as "start"|"fill"|"status"|"close", data) });
+      return json(await ownerDraftOperation(env, name as "start"|"fill"|"status"|"close", data));
     }
     if (pathname === "/v1/session/start") return json(await beginBrowserLogin(env, data.url));
     if (pathname === "/v1/session/commit") return json(await finishBrowserLogin(env, data.loginId));
