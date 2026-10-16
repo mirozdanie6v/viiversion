@@ -2,7 +2,8 @@ import type { D1 } from "./d1-repository.ts";
 import { buildExecutionPlan, validateCommitment, verifyRevision, type ApprovedCommitment } from "./commitments.ts";
 
 export class CommitmentStore {
-  constructor(private readonly db: D1) {}
+  private readonly db: D1;
+  constructor(db: D1) { this.db = db; }
 
   async list(): Promise<ApprovedCommitment[]> {
     const rows = await this.db.prepare(
