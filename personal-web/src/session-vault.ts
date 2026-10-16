@@ -163,6 +163,37 @@ export class PersonalWebVault {
       expiresAt: new Date(saved.expiresAt).toISOString(), noSaveClicked: true });
   }
 
+  private async inspectDraft(data: Record<string, any>): Promise<Response> {
+    const saved = await this.state.storage.get<PendingDraft>("pending:draft");
+    if (!saved || saved.id !== data.draftId || saved.expiresAt <= Date.now()) {
+      return Response.json({ error: "No active draft" }, { status: 404 });
+    }
+    if (!this.page || this.activeDraftId !== saved.id) {
+      return Response.json({ error: "Live draft browser disconnected" }, { status: 409 });
+    }
+    if (new URL(draftTarget(this.page.url(), this.env.ALLOWED_HOSTS)).origin !== saved.origin) {
+      return Response.json({ error: "Draft left its permitted website" }, { status: 409 });
+    }
+    // Selectors/labels only. Never inspect input.value, form text, cookies, or auth tokens.
+    const fields = await this.page.locator("input,textarea,[contenteditable=true]").evaluateAll((elements: Element[]) =>
+      elements.slice(0, 50).map((el) => {
+        const input = el as HTMLInputElement;
+        const tag = el.tagName.toLowerCase();
+        const type = String(input.type ?? "").toLowerCase();
+        const id = String(el.id ?? "");
+        const name = String(input.name ?? "");
+        const label = String(el.getAttribute("aria-label") ?? el.getAttribute("placeholder") ?? "").slice(0, 100);
+        const sensitive = /(password|one.time|otp|token|secret|card)/i.test([id,name,label,type].join(" "));
+        return { tag, type, name: sensitive ? "" : name,
+          id: sensitive ? "" : id,
+          label: sensitive ? "[sensitive field]" : label,
+          supported: !sensitive && (tag === "textarea" || (tag === "input" &&
+            ["", "text", "email", "search", "url", "tel"].includes(type)) || el.getAttribute("contenteditable") === "true")
+        };
+      }));
+    return Response.json({ ok: true, draftId: saved.id, url: this.page.url(), fields });
+  }
+
   private async closeDraft(data: Record<string, any>): Promise<Response> {
     const saved = await this.state.storage.get<PendingDraft>("pending:draft");
     if (!saved || saved.id !== data.draftId) return Response.json({ error: "No matching draft" }, { status: 404 });
@@ -298,6 +329,7 @@ export class PersonalWebVault {
     if (action === "/draft/start") return this.startDraft(data);
     if (action === "/draft/fill") return this.fillDraft(data);
     if (action === "/draft/status") return this.draftStatus(data);
+    if (action === "/draft/inspect") return this.inspectDraft(data);
     if (action === "/draft/close") return this.closeDraft(data);
     if (action === "/login/commit") return this.commitLogin(data.loginId);
 
