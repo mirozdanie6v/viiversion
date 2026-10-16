@@ -41,6 +41,21 @@ for (let i = 0; i < 30; i++) {
   await new Promise(resolve => setTimeout(resolve, 2000));
 }
 assert.ok(authenticated, "new Worker must accept the current deploy credential");
+// An ordinary Brain read/run credential must never be able to assert founder approval.
+const deniedWithNormalToken = await call("/approved-commitments", "POST", {anything:"unapproved"});
+assert.equal(deniedWithNormalToken.status, 401, "ordinary token must not approve commitments");
+const approvalToken = process.env.BRAIN_TEST_APPROVAL_TOKEN;
+assert.ok(approvalToken && approvalToken.length >= 32, "independent approval token is configured");
+const rejectedInvalidPayload = await fetch(new URL("/approved-commitments", base), {
+  method: "POST",
+  headers: {
+    authorization: "Bearer " + approvalToken,
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({notAnApprovedDecision:true}),
+});
+assert.equal(rejectedInvalidPayload.status, 400, "separate approval token must reach validated write endpoint without writing data");
+
 const initialized = await call("/bootstrap", "POST");
 assert.equal(initialized.status, 201, "bootstrap");
 const first = await call("/state");
