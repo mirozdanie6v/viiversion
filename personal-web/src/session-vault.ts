@@ -1,6 +1,7 @@
 import { launch } from "@cloudflare/playwright";
 import { InputError, publicUrl } from "./policy";
-import { filterStorageState, sealSession } from "./session-crypto";
+import { filterStorageState, sealSession, openSession } from "./session-crypto";
+import { fillWithoutSubmit, draftTarget } from "./draft";
 
 interface VaultEnv {
   BROWSER: Fetcher;
@@ -22,30 +23,153 @@ type Stored = {
   cookieCount: number;
 };
 type Pending = { id: string; origin: string; createdAt: number; expiresAt: number };
+type PendingDraft = Pending & { url: string; filled: number };
 
 export class PersonalWebVault {
   private browser: any = null;
   private context: any = null;
   private page: any = null;
   private activeLoginId: string | null = null;
+  private activeDraftId: string | null = null;
   constructor(private readonly state: DurableObjectState, private readonly env: VaultEnv) {}
 
   private async closeLogin(): Promise<void> {
     const browser = this.browser;
     const context = this.context;
-    this.browser = null; this.context = null; this.page = null; this.activeLoginId = null;
+    this.browser = null; this.context = null; this.page = null; this.activeLoginId = null; this.activeDraftId = null;
     if (context) await context.close().catch(() => {});
     if (browser) await browser.close().catch(() => {});
   }
 
   async alarm(): Promise<void> {
-    const pending = await this.state.storage.get<Pending>("pending:active");
-    if (!pending || pending.expiresAt <= Date.now()) {
-      await this.closeLogin();
-      await this.state.storage.delete("pending:active");
-    } else {
-      await this.state.storage.setAlarm(pending.expiresAt);
+    const login = await this.state.storage.get<Pending>("pending:active");
+    const draft = await this.state.storage.get<PendingDraft>("pending:draft");
+    const now = Date.now();
+    if (login && login.expiresAt <= now) await this.state.storage.delete("pending:active");
+    if (draft && draft.expiresAt <= now) await this.state.storage.delete("pending:draft");
+    const active = [login, draft].filter((x): x is Pending => Boolean(x && x.expiresAt > now));
+    if (!active.length) await this.closeLogin();
+    else await this.state.storage.setAlarm(Math.min(...active.map(x => x.expiresAt)));
+  }
+
+  private async startDraft(data: Record<string, any>): Promise<Response> {
+    if (!this.env.SESSION_VAULT_KEY || !/^[a-f0-9]{64}$/i.test(this.env.SESSION_VAULT_KEY)) {
+      return Response.json({ error: "Draft session encryption is unavailable" }, { status: 503 });
     }
+    const url = draftTarget(data.url, this.env.ALLOWED_HOSTS);
+    const origin = new URL(url).origin;
+    // Never mix manual sign-in and draft editing in the same browser.
+    const login = await this.state.storage.get<Pending>("pending:active");
+    const active = await this.state.storage.get<PendingDraft>("pending:draft");
+    if ((login && login.expiresAt > Date.now()) || (active && active.expiresAt > Date.now())) {
+      return Response.json({ error: "Finish the active browser session first" }, { status: 409 });
+    }
+    await this.closeLogin();
+    await this.state.storage.delete("pending:draft");
+    await this.state.storage.delete("pending:active");
+    try {
+      let state: {cookies: any[]; origins: any[]} | undefined;
+      if (data.useSavedSession === true) {
+        const record = await this.state.storage.get<Stored>("state:" + origin);
+        if (!record || record.expiresAt <= Date.now()) {
+          throw new InputError("No saved login for this site", 404);
+        }
+        const decrypted = await openSession(record, origin, this.env.SESSION_VAULT_KEY);
+        state = filterStorageState(JSON.parse(decrypted), origin);
+      }
+      this.browser = await launch(this.env.BROWSER, { keep_alive: 600000 });
+      this.context = await this.browser.newContext({
+        ...(state ? { storageState: state } : {}),
+        viewport: { width: 1365, height: 900 }, locale: "en-US"
+      });
+      await this.context.route("**/*", async (route: any) => {
+        try { publicUrl(route.request().url()); await route.continue(); }
+        catch { await route.abort(); }
+      });
+      this.page = await this.context.newPage();
+      const result = await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
+      if (!result || result.status() >= 400) throw new InputError("Draft page cannot be opened", 502);
+      if (new URL(draftTarget(this.page.url(), this.env.ALLOWED_HOSTS)).origin !== origin) {
+        throw new InputError("Draft page redirected to another site", 409);
+      }
+      const cdp = await this.context.newCDPSession(this.page);
+      let liveViewUrl = "";
+      try {
+        const view = await cdp.send("Cloudflare.getLiveView", { mode: "tab", expiresInMs: 300000 });
+        liveViewUrl = String(view.devtoolsFrontendUrl ?? "");
+      } finally {
+        await cdp.detach().catch(() => {});
+      }
+      if (!liveViewUrl.startsWith("https://live.browser.run/")) {
+        throw new InputError("Private Live View unavailable", 502);
+      }
+      const now = Date.now();
+      const draft: PendingDraft = {
+        id: crypto.randomUUID(), origin, url, filled: 0,
+        createdAt: now, expiresAt: now + 5 * 60_000
+      };
+      this.activeDraftId = draft.id;
+      await this.state.storage.put("pending:draft", draft);
+      await this.state.storage.setAlarm(draft.expiresAt);
+      return Response.json({ ok: true, draftId: draft.id, origin, url,
+        liveViewUrl, expiresAt: new Date(draft.expiresAt).toISOString(),
+        savedLoginUsed: Boolean(state),
+        notice: "Draft editor never presses Save. Websites with autosave may still persist changes on input." });
+    } catch (error) {
+      await this.closeLogin();
+      await this.state.storage.delete("pending:draft");
+      if (error instanceof InputError) return Response.json({ error: error.message }, { status: error.status });
+      return Response.json({ error: "Could not open private draft session" }, { status: 502 });
+    }
+  }
+
+  private async fillDraft(data: Record<string, any>): Promise<Response> {
+    const saved = await this.state.storage.get<PendingDraft>("pending:draft");
+    if (!saved || data.draftId !== saved.id || saved.expiresAt <= Date.now()) {
+      return Response.json({ error: "Draft session expired or not found" }, { status: 410 });
+    }
+    if (this.activeDraftId !== saved.id || !this.page) {
+      return Response.json({ error: "Live draft browser disconnected. Start a new draft" }, { status: 409 });
+    }
+    if (saved.filled > 0) return Response.json({ error: "Draft has already been filled" }, { status: 409 });
+    try {
+      if (new URL(draftTarget(this.page.url(), this.env.ALLOWED_HOSTS)).origin !== saved.origin) {
+        return Response.json({ error: "Draft left its original site" }, { status: 409 });
+      }
+      // Limit to one fill request per draft: retrying could cause duplicate autosaves.
+      await this.state.storage.put("pending:draft", { ...saved, filled: -1 });
+      const result = await fillWithoutSubmit(this.page, data.fields, saved.origin);
+      await this.state.storage.put("pending:draft", { ...saved, filled: result.filled });
+      return Response.json({ ok: true, draftId: saved.id,
+        filled: result.filled, selectors: result.selectors, url: this.page.url(),
+        noSaveClicked: true,
+        warning: "Some sites autosave immediately after typing. Inspect the Live View before closing." });
+    } catch (error) {
+      if (error instanceof InputError) return Response.json({ error: error.message }, { status: error.status });
+      return Response.json({ error: "Draft fill failed; some fields may have changed" }, { status: 502 });
+    }
+  }
+
+  private async draftStatus(data: Record<string, any>): Promise<Response> {
+    const saved = await this.state.storage.get<PendingDraft>("pending:draft");
+    if (!saved || saved.id !== data.draftId || saved.expiresAt <= Date.now()) {
+      return Response.json({ error: "No active draft" }, { status: 404 });
+    }
+    if (!this.page || this.activeDraftId !== saved.id) {
+      return Response.json({ error: "Draft browser was interrupted" }, { status: 409 });
+    }
+    return Response.json({ ok: true, draftId: saved.id,
+      url: this.page.url(), filled: saved.filled > 0 ? saved.filled : 0,
+      expiresAt: new Date(saved.expiresAt).toISOString(), noSaveClicked: true });
+  }
+
+  private async closeDraft(data: Record<string, any>): Promise<Response> {
+    const saved = await this.state.storage.get<PendingDraft>("pending:draft");
+    if (!saved || saved.id !== data.draftId) return Response.json({ error: "No matching draft" }, { status: 404 });
+    await this.state.storage.delete("pending:draft");
+    await this.closeLogin();
+    return Response.json({ ok: true, closed: true,
+      warning: "Any edits not saved by the site may be lost." });
   }
 
   private async startLogin(target: unknown): Promise<Response> {
@@ -55,6 +179,8 @@ export class PersonalWebVault {
     const url = publicUrl(target, this.env.ALLOWED_HOSTS);
     const origin = new URL(url).origin;
     const current = await this.state.storage.get<Pending>("pending:active");
+    const draft = await this.state.storage.get<PendingDraft>("pending:draft");
+    if (draft && draft.expiresAt > Date.now()) return Response.json({ error: "Finish the open draft first" }, { status: 409 });
     if (current && current.expiresAt > Date.now()) {
       return Response.json({ error: "A manual browser login is already active" }, { status: 409 });
     }
@@ -169,6 +295,10 @@ export class PersonalWebVault {
     const storage = this.state.storage;
 
     if (action === "/login/start") return this.startLogin(data.url);
+    if (action === "/draft/start") return this.startDraft(data);
+    if (action === "/draft/fill") return this.fillDraft(data);
+    if (action === "/draft/status") return this.draftStatus(data);
+    if (action === "/draft/close") return this.closeDraft(data);
     if (action === "/login/commit") return this.commitLogin(data.loginId);
 
     // Action plans persist only a SHA-256 digest, never submitted form values.
