@@ -1,0 +1,27 @@
+name: Validate Brain commitments
+
+on:
+  pull_request:
+    branches: [brain-v0.1-bootstrap]
+    paths:
+      - 'brain/runtime/**'
+      - '.github/workflows/brain-commitments-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: brain/runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-fund --no-audit
+      - run: npm test
+      - run: npx tsc --noEmit --module nodenext --moduleResolution nodenext --target ES2022 --allowImportingTsExtensions --skipLibCheck --types node src/commitments.ts src/commitment-store.ts tests/commitments.test.ts
