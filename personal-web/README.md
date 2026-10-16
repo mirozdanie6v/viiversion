@@ -53,6 +53,49 @@ Security prerequisite before any real account use: **rotate the original
 owner API token that appeared in a past chat**. The simulated session smoke
 is not evidence that a real login/MFA flow works.
 
+## Persistent unsaved form drafts (October 17, 2026)
+
+Implemented on the existing staging Worker, for explicitly permitted domains
+in `ALLOWED_HOSTS`. Owner-bearer-only endpoints; **no OAuth or public GitHub
+bridge grants draft/write access**:
+
+- `POST /v1/draft/start` — body `{"url":"https://viiversion.com/","useSavedSession":false}`.
+  Starts a five-minute live Chromium context; optionally restores an encrypted
+  saved login for that same origin. Returns private Live View handoff URL and draft ID.
+- `POST /v1/draft/inspect` — `{"draftId":"..."}`.
+  Reports input labels, types and identifiers, **never form values**.
+- `POST /v1/draft/fill` — `{"draftId":"...","fields":[{"selector":"input[name=name]","value":"test"}]}`.
+  Fills up to five unambiguous supported text fields, never clicks Save or
+  Submit, and leaves Chromium alive for the owner. One fill attempt per draft.
+- `POST /v1/draft/status` and `POST /v1/draft/close` allow limited checking
+  and intentional teardown; expiry closes the session.
+- The owner UI at `/owner` provides buttons for these operations and a
+  separate Live View link.
+
+**Not equivalent to guaranteed unsaved changes:** Some websites automatically
+transmit data on `input` or `change`. Use only where authorized and where the
+site's saving behavior is understood. LinkedIn's profile interface is NOT in
+the allowed-host list and its automation has not been implemented or approved.
+
+Live Cloudflare smoke verified opening the site, filling a nonsensitive field,
+keeping and inspecting the draft and closing without triggering Submit:
+https://github.com/mirozdanie6v/viiversion/actions/runs/38968804308
+
+### Ordinary Chat transport (private)
+
+A private request runner is available on branch
+`feat/personal-web-chat-private-profile` in the existing PRIVATE repository
+`mirozdanie6v/mini-app-factory`. It accepts `status`, `start`, `inspect`,
+`fill`, `state`, and `close` and never prints field contents. It currently
+needs the owner to set the identical `PERSONAL_WEB_API_TOKEN` as an Actions
+secret **in that private repository**, too. A `status` check currently
+reports `ready:false`; never claim Chat-controlled form filling is live
+until the second secret is set and its end-to-end tests pass.
+
+The private GitHub request file records draft text in Git history; do not use
+this for passwords, MFA, banking details or data requiring non-persistence.
+Private Live View URLs must never appear in the public repo/logs.
+
 ## Implemented in this MVP
 
 | Capability | HTTP | MCP tool |
