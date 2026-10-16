@@ -61,6 +61,7 @@ button:hover,.button:hover{background:#38526e}button:disabled{opacity:.4;cursor:
 <a id="draftLink" class="button" target="_blank" rel="noopener noreferrer">Посмотреть заполненную форму</a>
 <label for="draftFields">Поля для заполнения (JSON, не более пяти)</label>
 <textarea id="draftFields" rows="5" style="box-sizing:border-box;width:100%;background:#0b1018;color:white;border:1px solid #56657b">[{"selector":"input[name=name]","value":"Черновик без отправки"}]</textarea>
+<button id="draftInspect" type="button">Показать доступные поля</button>
 <button id="draftFill" type="button">Заполнить поля без сохранения</button>
 <button id="draftStatus" type="button">Проверить черновик</button>
 <button id="draftClose" type="button">Закрыть без дополнительного сохранения</button>
@@ -136,6 +137,11 @@ export const ownerJs = `(() => {
     $("draftLive").style.display = "block";
     draftInfo("Браузер открыт до " + r.expiresAt + ". Сохранённая сессия: " +
       (r.savedLoginUsed ? "да" : "нет") + ". " + r.notice);
+  }));
+  $("draftInspect").addEventListener("click", () => run(async () => {
+    if (!activeDraft) throw new Error("Open a draft first");
+    const r = await call("/v1/draft/inspect", { draftId: activeDraft });
+    draftInfo("Поля: " + JSON.stringify(r.fields, null, 2));
   }));
   $("draftFill").addEventListener("click", () => run(async () => {
     if (!activeDraft) throw new Error("Open a draft first");
