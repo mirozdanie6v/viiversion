@@ -277,6 +277,12 @@ jobs:
           jq -e '.ok == true and (.draftId | type == "string") and (.liveViewUrl | startswith("https://live.browser.run/"))' /tmp/pw-draft-start.json >/dev/null
           echo DRAFT_STAGE_START_OK
           DRAFT_ID="$(jq -r '.draftId' /tmp/pw-draft-start.json)"
+          curl --fail --silent --show-error --max-time 25 \
+            -X POST "$WORKER_URL/v1/draft/inspect" \
+            -H "authorization: Bearer $SMOKE_TOKEN" -H "content-type: application/json" \
+            -d "{\"draftId\":\"$DRAFT_ID\"}" > /tmp/pw-draft-inspect.json
+          jq -e '.ok == true and (.fields | type == "array") and (.fields | length > 0) and (.fields | any(.name == "name"))' /tmp/pw-draft-inspect.json >/dev/null
+          echo DRAFT_STAGE_INSPECT_OK
           jq -n --arg id "$DRAFT_ID" '{draftId:$id,fields:[{selector:"input[name=name]",value:"VIIVERSION unsaved draft test"}]}' > /tmp/pw-draft-fill.json
           curl --fail --silent --show-error --max-time 100 \
             -X POST "$WORKER_URL/v1/draft/fill" \
