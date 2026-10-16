@@ -16,7 +16,7 @@ This is **only v0.1 persistence**. It does not prove a completed autonomous CEO 
 
 No commercial/client records are committed to the **public** source repository. All private
 approved agreements must be imported to the protected D1 through authenticated API calls.
-The caller must cite the approved source and the human attesting it. The API cannot verify
+The import endpoint requires a **separate** Worker secret `BRAIN_APPROVAL_TOKEN` (minimum 32 characters), not the read/run `BRAIN_API_TOKEN`. Until this new secret is configured, imports intentionally return HTTP 401. The caller must cite the approved source and the human attesting it. The API cannot verify
 that a founder truly approved a statement; do not let an AI model possess its write token.
 
 - `POST /approved-commitments`: append one explicit founder-attested, source-linked
