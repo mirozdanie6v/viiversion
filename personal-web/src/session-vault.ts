@@ -326,6 +326,11 @@ export class PersonalWebVault {
     const storage = this.state.storage;
 
     if (action === "/login/start") return this.startLogin(data.url);
+    if (action === "/login/cancel") {
+      await this.closeLogin();
+      await storage.delete("pending:active");
+      return Response.json({ ok: true, cancelled: true });
+    }
     if (action === "/draft/start") return this.startDraft(data);
     if (action === "/draft/fill") return this.fillDraft(data);
     if (action === "/draft/status") return this.draftStatus(data);
