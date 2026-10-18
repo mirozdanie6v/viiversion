@@ -26,6 +26,11 @@ describe("draft handoff: fill without any Save click", () => {
     await expect(fillWithoutSubmit(fakePage("text",2).p, [{ selector: "input", value: "test" }], "https://viiversion.com")).rejects.toThrow();
     expect(() => draftTarget("https://other-site.com/", "viiversion.com")).toThrow();
     expect(() => draftTarget("https://viiversion.com/", "")).toThrow();
+    const approved = "viiversion.com,*.viiversion.com,github.com,dash.cloudflare.com,linkedin.com,www.linkedin.com";
+    expect(draftTarget("https://www.linkedin.com/", approved)).toBe("https://www.linkedin.com/");
+    expect(draftTarget("https://linkedin.com/", approved)).toBe("https://linkedin.com/");
+    expect(() => draftTarget("https://evil-linkedin.com/", approved)).toThrow();
+    expect(() => draftTarget("https://www.linkedin.com.evil.com/", approved)).toThrow();
     expect(() => checkDraftFields(Array(6).fill({ selector: "#name", value: "x" }))).toThrow();
   });
   it("does not accept duplicate selectors or a different page origin", async () => {
