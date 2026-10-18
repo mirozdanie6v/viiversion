@@ -2,7 +2,7 @@ import { launch } from "@cloudflare/playwright";
 import { handleMcp } from "./mcp";
 import { ownerHtml, ownerJs } from "./owner-ui";
 import { oauthRoute, verifyOAuth, oauthUnauthorized } from "./oauth";
-import { beginBrowserLogin, finishBrowserLogin, listBrowserLogins, revokeBrowserLogin, scrapeWithSavedLogin, exploreWithSavedLogin, ownerDraftOperation } from "./sessions";
+import { beginBrowserLogin, finishBrowserLogin, cancelBrowserLogin, listBrowserLogins, revokeBrowserLogin, scrapeWithSavedLogin, exploreWithSavedLogin, ownerDraftOperation } from "./sessions";
 export { PersonalWebVault } from "./session-vault";
 export { PersonalWebOAuth } from "./oauth-vault";
 import { InputError, publicUrl, canonicalSiteLink, robotsAllows } from "./policy";
@@ -290,7 +290,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   }
   if (request.method !== "POST") return json({ ok: false, error: "POST required" }, 405);
   if (!["/v1/scrape", "/v1/map", "/v1/crawl", "/v1/extract", "/v1/interact", "/v1/screenshot",
-    "/v1/session/start", "/v1/session/commit", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/session/explore", "/v1/explore", "/v1/batch", "/v1/action/propose", "/v1/action/approve", "/v1/action/execute", "/v1/draft/start", "/v1/draft/fill", "/v1/draft/status", "/v1/draft/inspect", "/v1/draft/close"].includes(pathname)) {
+    "/v1/session/start", "/v1/session/commit", "/v1/session/cancel", "/v1/session/list", "/v1/session/revoke", "/v1/session/scrape", "/v1/session/explore", "/v1/explore", "/v1/batch", "/v1/action/propose", "/v1/action/approve", "/v1/action/execute", "/v1/draft/start", "/v1/draft/fill", "/v1/draft/status", "/v1/draft/inspect", "/v1/draft/close"].includes(pathname)) {
     return json({ ok: false, error: "Unknown operation" }, 404);
   }
 
@@ -307,6 +307,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
     }
     if (pathname === "/v1/session/start") return json(await beginBrowserLogin(env, data.url));
     if (pathname === "/v1/session/commit") return json(await finishBrowserLogin(env, data.loginId));
+    if (pathname === "/v1/session/cancel") return json(await cancelBrowserLogin(env));
     if (pathname === "/v1/session/list") return json(await listBrowserLogins(env));
     if (pathname === "/v1/session/revoke") return json(await revokeBrowserLogin(env, data.url));
     if (pathname === "/v1/session/scrape") return json(await scrapeWithSavedLogin(env, data.url));
