@@ -73,6 +73,11 @@ export async function finishBrowserLogin(env: SessionEnv, loginId: unknown) {
   return vault(env, "/login/commit", { loginId });
 }
 
+export async function cancelBrowserLogin(env: SessionEnv) {
+  requireVault(env);
+  return vault(env, "/login/cancel", {});
+}
+
 export async function listBrowserLogins(env: SessionEnv) {
   requireVault(env);
   return vault(env, "/state/list", {});
