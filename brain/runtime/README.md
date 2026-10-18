@@ -39,3 +39,33 @@ revisions fail under a DB unique constraint. D1 migration 0002 is additive.
 ### Approval-token provisioning
 
 The deploy workflow configures `BRAIN_APPROVAL_TOKEN` independently of `BRAIN_API_TOKEN`. If the separately administered GitHub Actions secret `BRAIN_APPROVAL_TOKEN` is absent, the runner generates and masks a random bootstrap approval token, writes it to the Cloudflare Worker, tests that normal Brain credentials **cannot** approve decisions, then discards its local copy. Real client contracts are **not** sent by this deployment smoke. The bootstrap approval token rotates at redeploy; future authorized importers need their own secure credential distribution, not public source code. GitHub workflows must never echo tokens or approval payloads.
+
+## One-time private import of real approved client decisions
+
+This is intentionally separate from the public Git repository. A founder adds the prepared
+base64-encoded UTF-8 JSON package as a temporary Actions repository secret named
+`BRAIN_COMMITMENTS_IMPORT_B64`. Base64 is **only an encoding, not encryption**.
+The commercial package is protected by GitHub's Actions secret storage; never commit it
+or put its contents in workflow inputs, issues, PRs or logs.
+
+1. Founder records must already exist in the canonical closed company Decision Journal.
+   The package must be an object `{"schemaVersion":1,"records":[...]}` using the
+   `ApprovedCommitment` schema. Import cannot attest to a client's contractual acceptance
+   on its own; preserve explicit distinctions between sent offers and signed contracts.
+2. In repository Settings > Secrets and variables > Actions, add temporary
+   `BRAIN_COMMITMENTS_IMPORT_B64` with the **entire single-line file contents**.
+3. Run the existing **Deploy VIIVERSION Brain** workflow manually on
+   `brain-v0.1-bootstrap` (or push code to that branch). The runner obtains separate,
+   masked, transient read and founder-approval tokens using the existing deploy setup.
+4. The importer verifies schema/dependencies, checks **all** conflicts before writing,
+   appends only missing records (re-runs are idempotent), then reads back all imported records,
+   builds a content-addressed execution plan and verifies its exact content. A **separate
+   Node process** independently fetches records and the saved plan from Cloudflare D1 and
+   verifies SHA-256 digests. Logs contain only counts and PASS/FAIL markers.
+5. Once the action reports PASS, **delete the temporary import secret** in GitHub UI.
+   Re-running ordinary deployments afterward does not delete company decisions from D1.
+
+If the import secret is missing, deployment remains functional but logs SKIP (not PASS).
+If any source record is changed, the importer must stop on a conflict instead of rewriting
+it silently. Changes require explicit new `revision` and `supersedes` (handled via
+reviewed import workflow changes); no automatic marketing spend or client notification is made.
