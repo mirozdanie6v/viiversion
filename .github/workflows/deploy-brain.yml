@@ -85,3 +85,20 @@ jobs:
         env:
           BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
         run: node tests/live-resume.mjs
+      - name: Import private founder-approved commitments when temporary secret is present
+        shell: bash
+        env:
+          BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
+          BRAIN_COMMITMENTS_IMPORT_B64: ${{ secrets.BRAIN_COMMITMENTS_IMPORT_B64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BRAIN_COMMITMENTS_IMPORT_B64:-}" ]; then
+            echo "SKIP: one-time private import not configured; real commercial agreements are NOT verified in D1."
+          else
+            node tests/import-private-commitments.mjs
+          fi
+      - name: Independent process restores private client decisions and saved plan
+        if: ${{ env.BRAIN_PRIVATE_IMPORT_DONE == 'true' }}
+        env:
+          BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
+        run: node tests/private-commitments-resume.mjs
