@@ -12,12 +12,12 @@ export function parsePayload(base64) {
   // a prepared text file. Base64 whitespace is formatting, not data; reject
   // every other unexpected character rather than guessing or decoding loosely.
   if (typeof base64!=="string") throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
-  const canonical = base64.replace(/[ \t\r\n]/g,"");
-  if(canonical.length<12 || canonical.length>60000 ||
-     !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(canonical))
+  const encoded = base64.replace(/[ \t\r\n]/g,"");
+  if(encoded.length<12 || encoded.length>60000 ||
+     !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded))
     throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
-  const raw=Buffer.from(canonical,"base64");
-  if(raw.toString("base64")!==canonical || raw.byteLength>45000)
+  const raw=Buffer.from(encoded,"base64");
+  if(raw.toString("base64")!==encoded || raw.byteLength>45000)
     throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
   let payload;
   try{payload=JSON.parse(raw.toString("utf8"))}catch{throw Error("INVALID_PRIVATE_IMPORT_JSON")}
