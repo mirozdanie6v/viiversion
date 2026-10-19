@@ -1,0 +1,38 @@
+version: "1.0"
+id: canon_guard
+
+protected_fields:
+  - canonical_name
+  - canonical_definition
+  - entity_type
+  - direction_id
+  - parent_id
+
+authorities:
+  L1:
+    source: "Corporate Strategy + Commercial Matrix/Entity_Registry"
+  L2:
+    source: "Commercial Matrix"
+  proof:
+    source: "Commercial Matrix/Assets"
+  L3:
+    source: "Global Brand & Market Strategy"
+  L4:
+    source: "Channel Profiles + channel-specific projection documents"
+
+rules:
+  - "Agents may read all upstream layers required by their workflow."
+  - "Agents may write only fields owned by their workflow/layer."
+  - "A projection may create display_name/headline/cta but may not overwrite canonical fields."
+  - "A commercial workflow may update operational status but may not redefine entity identity."
+  - "A website workflow may create implementation output but may not create a new canonical entity."
+  - "If a required upstream fact is missing or conflicting, stop the affected step and create a change request or exception record."
+
+change_request_required_for:
+  - principal_direction_change
+  - engineering_category_change
+  - canonical_name_or_definition_change
+  - entity_type_change_with_semantic_effect
+  - strategic_parent_change
+  - global_positioning_change
+  - projection_precedence_change
