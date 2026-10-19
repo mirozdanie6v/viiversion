@@ -23,3 +23,10 @@ test("private import refuses unapproved assertions and missing dependencies befo
  assert.throws(()=>parsePayload(serialize([record({status:"proposal"})])),/INVALID_COMMITMENT/);
  assert.throws(()=>parsePayload(serialize([record({actions:[{id:"demo-start",description:"Start",order:1,status:"open",dependsOn:["not-verified"]}]})])),/MISSING_APPROVED_DEPENDENCY/);
 });
+
+test("canceled decisions cannot be imported with executable actions",()=>{
+ assert.throws(()=>parsePayload(serialize([record({status:"canceled"})])),/INVALID_ACTIONS/);
+});
+test("private batch rejects oversized data before any network write",()=>{
+ assert.throws(()=>parsePayload("A".repeat(64000)),/INVALID_PRIVATE_IMPORT_ENCODING/);
+});
