@@ -1,17 +1,21 @@
 {
-  "id": "uniq-rent-20261013-1957",
+  "id": "true-surf-instagram-20261019",
   "operation": "explore",
-  "url": "https://uniqmoto.com/ru",
+  "url": "https://www.instagram.com/true.surf.mafia/",
   "steps": [
     {
       "type": "read"
     },
     {
       "type": "scroll",
-      "pixels": 1300
+      "pixels": 1100
     },
     {
       "type": "read"
+    },
+    {
+      "type": "scroll",
+      "pixels": 1100
     }
   ]
 }
