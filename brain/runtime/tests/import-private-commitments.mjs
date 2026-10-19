@@ -8,11 +8,16 @@ const digest = (v) => createHash("sha256").update(JSON.stringify(v)).digest("hex
 const canonical = (x) => validateCommitment(x);
 const byId = (a,b) => a.id.localeCompare(b.id);
 export function parsePayload(base64) {
-  if(typeof base64!=="string" || base64.length<12 || base64.length>60000 ||
-     !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(base64))
+  // GitHub's web UI can preserve line wrapping/newlines when a founder pastes
+  // a prepared text file. Base64 whitespace is formatting, not data; reject
+  // every other unexpected character rather than guessing or decoding loosely.
+  if (typeof base64!=="string") throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
+  const canonical = base64.replace(/[ \\t\\r\\n]/g,"");
+  if(canonical.length<12 || canonical.length>60000 ||
+     !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(canonical))
     throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
-  const raw=Buffer.from(base64,"base64");
-  if(raw.toString("base64")!==base64 || raw.byteLength>45000)
+  const raw=Buffer.from(canonical,"base64");
+  if(raw.toString("base64")!==canonical || raw.byteLength>45000)
     throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
   let payload;
   try{payload=JSON.parse(raw.toString("utf8"))}catch{throw Error("INVALID_PRIVATE_IMPORT_JSON")}
