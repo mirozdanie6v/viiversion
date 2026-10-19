@@ -13,7 +13,7 @@
   "vars": {
     "MAX_CRAWL_PAGES": "8",
     "ENABLE_INTERACT": "true",
-    "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com,github.com,dash.cloudflare.com,linkedin.com,www.linkedin.com",
+    "ALLOWED_HOSTS": "viiversion.com,*.viiversion.com,github.com,dash.cloudflare.com,linkedin.com,www.linkedin.com,instagram.com,www.instagram.com",
     "ENABLE_SAVED_SESSIONS": "true",
     "ENABLE_OAUTH": "true",
     "ENABLE_PUBLIC_SITE_READS": "true"
