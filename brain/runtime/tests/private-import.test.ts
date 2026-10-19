@@ -30,3 +30,9 @@ test("canceled decisions cannot be imported with executable actions",()=>{
 test("private batch rejects oversized data before any network write",()=>{
  assert.throws(()=>parsePayload("A".repeat(64000)),/INVALID_PRIVATE_IMPORT_ENCODING/);
 });
+
+test("base64 payload accepts clipboard newlines and spacing without changing decoded data",()=>{
+ const encoded=serialize([record()]);
+ const wrapped="  "+encoded.slice(0,40)+"\\n"+encoded.slice(40)+"\\r\\n";
+ assert.deepEqual(parsePayload(wrapped),parsePayload(encoded));
+});
