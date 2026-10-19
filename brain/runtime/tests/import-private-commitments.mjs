@@ -12,7 +12,7 @@ export function parsePayload(base64) {
   // a prepared text file. Base64 whitespace is formatting, not data; reject
   // every other unexpected character rather than guessing or decoding loosely.
   if (typeof base64!=="string") throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
-  const canonical = base64.replace(/[ \\t\\r\\n]/g,"");
+  const canonical = base64.replace(/[ \t\r\n]/g,"");
   if(canonical.length<12 || canonical.length>60000 ||
      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(canonical))
     throw Error("INVALID_PRIVATE_IMPORT_ENCODING");
