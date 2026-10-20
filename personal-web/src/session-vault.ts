@@ -220,7 +220,7 @@ export class PersonalWebVault {
     try {
       // Keep the connected Playwright browser in the DO for both requests.
       // browser.close() is called only after commit/expiry, never after start.
-      const browser = await launch(this.env.BROWSER, { keep_alive: 600000 });
+      const browser = await launch(this.env.BROWSER, { keep_alive: 1200000 });
       this.browser = browser;
       const context = await browser.newContext({ viewport: { width: 1365, height: 900 } });
       this.context = context;
@@ -237,7 +237,7 @@ export class PersonalWebVault {
       const cdp = await context.newCDPSession(page);
       let liveViewUrl: string;
       try {
-        const view = await cdp.send("Cloudflare.getLiveView", { mode: "tab", expiresInMs: 300000 });
+        const view = await cdp.send("Cloudflare.getLiveView", { mode: "tab", expiresInMs: 1200000 });
         liveViewUrl = view.devtoolsFrontendUrl;
       } finally {
         await cdp.detach().catch(() => {});
@@ -247,7 +247,7 @@ export class PersonalWebVault {
       }
       const now = Date.now();
       const pending: Pending = {
-        id: crypto.randomUUID(), origin, createdAt: now, expiresAt: now + 8 * 60_000
+        id: crypto.randomUUID(), origin, createdAt: now, expiresAt: now + 20 * 60_000
       };
       this.activeLoginId = pending.id;
       await this.state.storage.put("pending:active", pending);
