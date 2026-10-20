@@ -1,0 +1,9 @@
+export type EvidenceClass="verified_fact"|"strong_inference"|"working_hypothesis"|"unknown";
+export type LoopStage="audit"|"diagnose"|"decide"|"assign"|"check"|"learn"|"complete";
+export interface Objective{id:string;title:string;status:"active"|"blocked"|"done";owner?:string;expectedResult?:string}
+export interface OpenLoop{id:string;title:string;status:"open"|"blocked"|"closed";owner?:string}
+export interface CompanyState{version:number;updatedAt:string;activeObjectiveId?:string;objectives:Objective[];openLoops:OpenLoop[]}
+export interface BrainEvent{id:string;at:string;type:string;source:string;payload:unknown}
+export interface Decision{id:string;at:string;question:string;decision:string;rationale:string;evidenceClass:EvidenceClass;expectedOutcome?:string;override?:{by:string;reason:string}}
+export interface Checkpoint{runId:string;stage:LoopStage;stateVersion:number;at:string;activeObjectiveId?:string;openLoopIds:string[];pendingApprovals:string[]}
+export interface Run{runId:string;stage:LoopStage;status:"running"|"waiting_approval"|"blocked"|"completed";idempotencyKey:string;startedAt:string;updatedAt:string}
