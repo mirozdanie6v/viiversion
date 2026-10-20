@@ -9,6 +9,15 @@ const data = await r.json();
 assert.equal(data.state.activeObjectiveId, "OBJ-MARK-BOOTSTRAP");
 assert.deepEqual(data.state.openLoops.map(x => x.id).sort(), ["OL-CLOSURE", "OL-COMPANY-STATE"]);
 assert.ok(data.decisions.some(x => x.id === "DJ-001" && x.evidenceClass === "verified_fact"));
+const commitmentsResponse=await fetch(new URL("/approved-commitments",base),{
+ headers:{authorization:"Bearer "+token},
+});
+assert.equal(commitmentsResponse.status,200);
+const approved=await commitmentsResponse.json();
+assert.deepEqual(data.approvedCommitments,approved.records,
+  "independent session must restore entire persisted commercial memory in normal CEO context");
+assert.equal(data.readiness.ready,false,
+  "independent process cannot claim complete Brain when source refresh and CEO loop are absent");
 assert.equal(data.checkpoint?.runId, runId);
 assert.equal(data.checkpoint?.stage, "diagnose");
 const planRes = await fetch(new URL("/execution-plans?id=" + planId, base), {

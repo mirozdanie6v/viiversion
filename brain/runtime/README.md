@@ -69,3 +69,21 @@ If the import secret is missing, deployment remains functional but logs SKIP (no
 If any source record is changed, the importer must stop on a conflict instead of rewriting
 it silently. Changes require explicit new `revision` and `supersedes` (handled via
 reviewed import workflow changes); no automatic marketing spend or client notification is made.
+
+## Unified read context and explicit acceptance gate
+
+The protected `GET /context` endpoint now returns the persisted CEO state/checkpoint,
+legacy decision log, **all append-only approved commitments** stored separately in D1,
+and a deterministic execution plan. The endpoint never edits decisions, changes
+commercial terms, or interprets unverified observations as approval. The same
+source data is recoverable across independent processes.
+
+Protected `GET /readiness` reports acceptance checks and record counts. Its
+`ready` field remains **false** until the unimplemented capabilities are actually
+integrated: Company Registry hydration, authoritative GitHub/Linear/Drive source
+reconciliation, full CEO operating loop, and chat-startup hydration. A successful
+deployment, bootstrap checkpoint, or four restored client records cannot turn
+`ready` true. End-to-end smoke checks this invariant.
+
+This is an **incremental repair to the existing Brain**, not a new company
+inventory, claim of company-wide coverage, or independent autonomous CEO.

@@ -4,6 +4,7 @@ import { canonicalDecision001 } from "./decision-seed.ts";
 import { resume } from "./loop.ts";
 import { isAuthorized } from "./auth.ts";
 import { CommitmentStore } from "./commitment-store.ts";
+import { loadUnifiedContext } from "./context.ts";
 import type { Run } from "./contracts.ts";
 
 interface Env {
@@ -33,8 +34,21 @@ export default {
       return json(await resume(repo), 201);
     }
     if (req.method === "GET" && url.pathname === "/state") return json(await resume(repo));
-    if (req.method === "GET" && url.pathname === "/context") return json({ ...(await resume(repo)), decisions: await repo.loadDecisions() });
     const commitments = new CommitmentStore(env.BRAIN_DB);
+    if (req.method === "GET" && (url.pathname === "/context" || url.pathname === "/readiness")) {
+      const full = await loadUnifiedContext(repo, {
+        loadDecisions: () => repo.loadDecisions(),
+        loadApprovedCommitments: () => commitments.list(),
+      });
+      return url.pathname === "/context" ? json(full) : json({
+        readiness: full.readiness,
+        counts: {
+          decisions: full.decisions.length,
+          approvedCommitments: full.approvedCommitments.length,
+          activeCommitments: full.executionPlan.commitments.length,
+        },
+      });
+    }
     if (req.method === "GET" && url.pathname === "/approved-commitments") {
       return json({records: await commitments.list()});
     }
