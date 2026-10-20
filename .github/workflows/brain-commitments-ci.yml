@@ -24,4 +24,4 @@ jobs:
           node-version: '22'
       - run: npm install --no-fund --no-audit
       - run: npm test
-      - run: npx tsc --noEmit --module nodenext --moduleResolution nodenext --target ES2022 --allowImportingTsExtensions --skipLibCheck --types node src/commitments.ts src/commitment-store.ts tests/commitments.test.ts
+      - run: npx tsc --noEmit --module nodenext --moduleResolution nodenext --target ES2022 --allowImportingTsExtensions --skipLibCheck --types node src/commitments.ts src/commitment-store.ts src/context.ts tests/commitments.test.ts tests/context.test.ts
