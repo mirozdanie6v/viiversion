@@ -71,6 +71,17 @@ assert.ok(context.data.decisions.some(d => d.id === "DJ-001" && d.evidenceClass 
 const approved = await call("/approved-commitments");
 assert.equal(approved.status, 200);
 assert.ok(Array.isArray(approved.data.records));
+const unified = await call("/context");
+assert.equal(unified.status,200);
+assert.deepEqual(unified.data.approvedCommitments,approved.data.records, "CEO context must include all stored commitments");
+assert.ok(Array.isArray(unified.data.executionPlan.commitments));
+assert.ok(Array.isArray(unified.data.executionPlan.actions));
+assert.equal(unified.data.readiness.ready,false, "bootstrap MUST NOT claim full AI CEO readiness");
+assert.ok(unified.data.readiness.blockedBy.includes("company_registry_not_hydrated"));
+const readiness = await call("/readiness");
+assert.equal(readiness.status,200);
+assert.equal(readiness.data.counts.approvedCommitments,approved.data.records.length);
+assert.equal(readiness.data.readiness.ready,false);
 const planned = await call("/execution-plans", "POST");
 assert.ok([200, 201].includes(planned.status));
 assert.ok(planned.data.id.startsWith("PLAN-"));
