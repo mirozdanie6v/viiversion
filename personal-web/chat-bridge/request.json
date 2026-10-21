@@ -1,21 +1,5 @@
 {
-  "id": "true-surf-instagram-20261019",
-  "operation": "explore",
-  "url": "https://www.instagram.com/true.surf.mafia/",
-  "steps": [
-    {
-      "type": "read"
-    },
-    {
-      "type": "scroll",
-      "pixels": 1100
-    },
-    {
-      "type": "read"
-    },
-    {
-      "type": "scroll",
-      "pixels": 1100
-    }
-  ]
+  "id": "avito-home-20261021-a",
+  "operation": "scrape",
+  "url": "https://www.avito.ru/"
 }
