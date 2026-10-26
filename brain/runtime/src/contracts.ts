@@ -6,4 +6,4 @@ export interface CompanyState{version:number;updatedAt:string;activeObjectiveId?
 export interface BrainEvent{id:string;at:string;type:string;source:string;payload:unknown}
 export interface Decision{id:string;at:string;question:string;decision:string;rationale:string;evidenceClass:EvidenceClass;expectedOutcome?:string;override?:{by:string;reason:string}}
 export interface Checkpoint{runId:string;stage:LoopStage;stateVersion:number;at:string;activeObjectiveId?:string;openLoopIds:string[];pendingApprovals:string[]}
-export interface Run{runId:string;stage:LoopStage;status:"running"|"waiting_approval"|"blocked"|"completed";idempotencyKey:string;startedAt:string;updatedAt:string}
+export interface Run{runId:string;stage:LoopStage;status:"running"|"waiting_approval"|"blocked"|"completed";idempotencyKey:string;startedAt:string;updatedAt:string;blockedReason?:string}

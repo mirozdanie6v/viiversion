@@ -6,12 +6,13 @@ import { isAuthorized } from "./auth.ts";
 import { CommitmentStore } from "./commitment-store.ts";
 import { loadUnifiedContext } from "./context.ts";
 import type { Run } from "./contracts.ts";
+import { ensureRunQueued, type BrainWorkflowQueue } from "./run-queue.ts";
 
 interface Env {
   BRAIN_DB: D1;
   BRAIN_API_TOKEN?: string;
   BRAIN_APPROVAL_TOKEN?: string;
-  CEO_WORKFLOW?: { create(o: { id: string; params: { runId: string } }): Promise<unknown> };
+  CEO_WORKFLOW?: BrainWorkflowQueue;
 }
 const json = (x: unknown, status = 200) =>
   new Response(JSON.stringify(x), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -80,38 +81,57 @@ export default {
         return plan ? json({id,plan}) : json({error:"not_found"},404);
       } catch { return json({error:"invalid_plan_id"},400); }
     }
+    if (req.method === "GET" && url.pathname === "/runs") {
+      const key = url.searchParams.get("idempotencyKey");
+      if (!key || !/^[A-Za-z0-9:_-]{1,128}$/.test(key)) return json({error:"invalid idempotencyKey"},400);
+      let run = await repo.findRunByIdempotencyKey("request:" + key);
+      if (!run) {
+        const legacy = await env.BRAIN_DB.prepare("SELECT payload_json FROM brain_events WHERE id=?")
+          .bind("request:" + key).first<{payload_json:string}>();
+        if (legacy) run = await repo.findRunById(JSON.parse(legacy.payload_json).runId);
+      }
+      return run ? json({run}) : json({error:"not_found"},404);
+    }
     if (req.method === "POST" && url.pathname === "/runs") {
       let body: { idempotencyKey?: string };
-      try {
-        body = await req.json() as { idempotencyKey?: string };
-      } catch {
-        return json({ error: "invalid json" }, 400);
-      }
+      try { body = await req.json() as {idempotencyKey?:string}; }
+      catch { return json({error:"invalid json"},400); }
       if (typeof body?.idempotencyKey !== "string" || !/^[A-Za-z0-9:_-]{1,128}$/.test(body.idempotencyKey))
-        return json({ error: "invalid idempotencyKey" }, 400);
+        return json({error:"invalid idempotencyKey"},400);
+      if (!env.CEO_WORKFLOW) return json({error:"workflow_unavailable"},503);
 
+      // Compatibility with requests recorded before the atomic claim protocol.
       const receiptId = "request:" + body.idempotencyKey;
-      const receipt = await env.BRAIN_DB.prepare("SELECT payload_json FROM brain_events WHERE id=?")
-        .bind(receiptId).first<{ payload_json: string }>();
-      if (receipt) {
-        const { runId } = JSON.parse(receipt.payload_json);
-        const old = await repo.findRunByIdempotencyKey("ceo:" + runId);
-        if (old) return json({ replayed: true, run: old });
-        return json({ error: "run_pending_recovery" }, 409);
+      const legacy = await env.BRAIN_DB.prepare("SELECT payload_json FROM brain_events WHERE id=?")
+        .bind(receiptId).first<{payload_json:string}>();
+      let run: Run;
+      let replayed: boolean;
+      if (legacy) {
+        run = await repo.findRunById(JSON.parse(legacy.payload_json).runId) as Run;
+        if (!run) return json({error:"legacy_run_missing"},409);
+        replayed = true;
+      } else {
+        const now = new Date().toISOString();
+        const proposed: Run = {
+          runId: crypto.randomUUID(), stage:"audit", status:"running",
+          idempotencyKey:"request:" + body.idempotencyKey, startedAt:now, updatedAt:now,
+        };
+        // Unique D1 constraint is the linearization point; competing requests receive the same run.
+        const claimed = await repo.claimRunRequest(body.idempotencyKey, proposed);
+        run = claimed.run;
+        replayed = claimed.replayed;
       }
-      const now = new Date().toISOString();
-      const runId = crypto.randomUUID();
-      const run: Run = {
-        runId, stage: "audit", status: "running", idempotencyKey: "ceo:" + runId,
-        startedAt: now, updatedAt: now,
-      };
-      await repo.saveRun(run);
-      await repo.appendEvent({
-        id: receiptId, at: now, type: "run_requested", source: "brain-api",
-        payload: { runId, idempotencyKey: body.idempotencyKey },
-      });
-      if (env.CEO_WORKFLOW) await env.CEO_WORKFLOW.create({ id: runId, params: { runId } });
-      return json({ replayed: false, run }, 202);
+      try {
+        await repo.appendEvent({
+          id:receiptId, at:run.startedAt, type:"run_requested", source:"brain-api",
+          payload:{runId:run.runId,idempotencyKey:body.idempotencyKey},
+        });
+        // Replaying a request also retries dispatch after a transient enqueue failure.
+        await ensureRunQueued(env.CEO_WORKFLOW, run);
+      } catch {
+        return json({error:"run_dispatch_retryable",runId:run.runId},503);
+      }
+      return json({replayed,run},replayed?200:202);
     }
     return json({ error: "not found" }, 404);
   },

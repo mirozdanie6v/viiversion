@@ -102,6 +102,8 @@ const replay = await call("/runs", "POST", { idempotencyKey: key });
 assert.equal(replay.status, 200, "same request replayed");
 assert.equal(replay.data.replayed, true);
 assert.equal(replay.data.run.runId, runId);
+const concurrent = await Promise.all(Array.from({length:5},()=>call("/runs","POST",{idempotencyKey:key})));
+assert.ok(concurrent.every(x=>x.status===200 && x.data.run.runId===runId),"concurrent replay must reuse one run");
 
 let persisted;
 for (let i = 0; i < 20; i++) {
@@ -117,6 +119,14 @@ assert.ok(persisted, "Workflow must checkpoint audit->diagnose and fresh request
 assert.equal(persisted.state.activeObjectiveId, "OBJ-MARK-BOOTSTRAP");
 assert.equal(persisted.checkpoint.stateVersion, persisted.state.version);
 assert.deepEqual(persisted.checkpoint.openLoopIds.sort(), ["OL-CLOSURE", "OL-COMPANY-STATE"]);
+let finalStatus;
+for(let i=0;i<20;i++){
+  const status=await call("/runs?idempotencyKey="+encodeURIComponent(key));
+  if(status.status===200 && status.data.run.status==="blocked"){finalStatus=status.data.run;break;}
+  await new Promise(resolve=>setTimeout(resolve,500));
+}
+assert.equal(finalStatus?.stage,"diagnose");
+assert.equal(finalStatus?.blockedReason,"CEO_LOOP_NOT_IMPLEMENTED");
 if (process.env.GITHUB_ENV) {
   const { appendFileSync } = await import("node:fs");
   appendFileSync(process.env.GITHUB_ENV, "BRAIN_EXPECTED_RUN_ID=" + runId + "\n");
