@@ -35,7 +35,7 @@ test("duplicate workflow instances do not run twice; retry can recover transient
   if(failOnce){failOnce=false;throw Error("temporary outage");}
   if(seen.has(id))return {created:[],errors:[{code:10405,message:"exists"}]};
   seen.add(id);created++;return {created:[{id}],errors:[]};
- }};
+ },async get(){return {async status(){return {status:"running"};}}}};
  await assert.rejects(()=>ensureRunQueued(queue,proposed("r1")),/temporary outage/);
  await ensureRunQueued(queue,proposed("r1"));
  await ensureRunQueued(queue,proposed("r1"));
@@ -46,4 +46,10 @@ test("duplicate workflow instances do not run twice; retry can recover transient
 test("unrecognized Workflow error fails closed",async()=>{
  const queue={async createBatch(){return {created:[],errors:[{code:10999,message:"unavailable"}]}}};
  await assert.rejects(()=>ensureRunQueued(queue,proposed("r1")),/WORKFLOW_ENQUEUE_FAILED/);
+});
+
+test("retained failed workflow is never counted as successfully resumed",async()=>{
+ const queue={async createBatch(){return {created:[],errors:[{code:10405,message:"exists"}]};},
+   async get(){return {async status(){return {status:"errored"};}}}};
+ await assert.rejects(()=>ensureRunQueued(queue,proposed("r1")),/WORKFLOW_TERMINAL_REQUIRES_RECONCILIATION/);
 });
