@@ -53,6 +53,15 @@ jobs:
                           expected=['WEB_API_TOKEN','PROPOSAL_READ_TOKEN','SESSION_VAULT_KEY'] if key=='browser_staging' else ['PERSONAL_WEB_READ_TOKEN']
                           out[key+'_secret_names']={k:k in names for k in expected}
                       except:out[key+'_secrets_read_error']=True
+          for host,label in [('viiversion-personal-web-staging.viiversion.workers.dev','personal_web_staging'),('viiversion-personal-web.viiversion.workers.dev','personal_web_production')]:
+              try:
+                  req=urllib.request.Request('https://'+host+'/health',headers={'Accept':'application/json'})
+                  with urllib.request.urlopen(req,timeout=15) as resp:
+                      data=json.loads(resp.read(8000))
+                      out[label+'_health']={'http':resp.status,'version':data.get('version'),'build_sha':data.get('buildSha'),'owner_token_configured':data.get('configured')}
+              except Exception as err:out[label+'_health_error']=str(err)[:110]
+          code,_=status('https://api.cloudflare.com/client/v4/user/tokens')
+          out['token_management_list_http']=code
           r,_=status('https://api.github.com/repos/mirozdanie6v/viiversion-personal-web',os.getenv('GH_TOKEN',''))
           out['github_token_can_checkout_private_browser_http']=r
           print(json.dumps(out,sort_keys=True))
