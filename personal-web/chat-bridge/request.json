@@ -1,5 +1,9 @@
 {
-  "id": "bridge-live-20261026-reconnect",
-  "operation": "scrape",
-  "url": "https://viiversion.com/"
+  "id": "browser-live-3-companies-20261026",
+  "operation": "batch",
+  "urls": [
+    "https://seayoutravel.vn/",
+    "https://annamtourist.com/",
+    "https://www.nhatrangtour.com/"
+  ]
 }
