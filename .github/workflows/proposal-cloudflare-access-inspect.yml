@@ -1,0 +1,59 @@
+name: Inspect Proposal Cloudflare runtime access
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/proposal-cloudflare-access-inspect.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify Cloudflare account and Personal Web worker (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,json,urllib.request,urllib.error
+          token=os.getenv('CLOUDFLARE_API_TOKEN','')
+          account=os.getenv('CLOUDFLARE_ACCOUNT_ID','')
+          out={'token_present':bool(token),'account_id_present':bool(account)}
+          if not token or len(account)!=32:
+              print(json.dumps(out));raise SystemExit(1)
+          out['account_matches_known_viiversion']=(account=='f493882b22e1a86496c69baf2ee88b68')
+          out['account_matches_other_record']=(account=='3972de85ae8b3d2ee3e0d35ecf7ca358')
+          def status(url,key=token):
+              req=urllib.request.Request(url,headers={'Authorization':'Bearer '+key,'Accept':'application/json'})
+              try:
+                  with urllib.request.urlopen(req,timeout=15) as res:return res.status,res.read(64000)
+              except urllib.error.HTTPError as err:return err.code,err.read(1000)
+              except Exception:return 0,b''
+          code,data=status('https://api.cloudflare.com/client/v4/user/tokens/verify')
+          out['token_verify_http']=code
+          if code==200:
+              try:out['token_status']=json.loads(data)['result']['status']
+              except:out['token_status']='UNKNOWN'
+          for script,key in [('viiversion-personal-web-staging','browser_staging'),('viiversion-proposal-staging','proposal_staging')]:
+              base='https://api.cloudflare.com/client/v4/accounts/'+account+'/workers/scripts/'+script
+              code,_=status(base)
+              out[key+'_http']=code
+              if code==200:
+                  s,data=status(base+'/secrets')
+                  out[key+'_secrets_http']=s
+                  if s==200:
+                      try:
+                          names={x.get('name') for x in json.loads(data).get('result',[])}
+                          expected=['WEB_API_TOKEN','PROPOSAL_READ_TOKEN','SESSION_VAULT_KEY'] if key=='browser_staging' else ['PERSONAL_WEB_READ_TOKEN']
+                          out[key+'_secret_names']={k:k in names for k in expected}
+                      except:out[key+'_secrets_read_error']=True
+          r,_=status('https://api.github.com/repos/mirozdanie6v/viiversion-personal-web',os.getenv('GH_TOKEN',''))
+          out['github_token_can_checkout_private_browser_http']=r
+          print(json.dumps(out,sort_keys=True))
+          PY
