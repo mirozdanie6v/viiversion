@@ -20,6 +20,7 @@ assert.equal(data.readiness.ready,false,
   "independent process cannot claim complete Brain when source refresh and CEO loop are absent");
 assert.equal(data.checkpoint?.runId, runId);
 assert.equal(data.checkpoint?.stage, "diagnose");
+assert.equal(data.readiness.ready,false);
 const planRes = await fetch(new URL("/execution-plans?id=" + planId, base), {
   headers: {authorization: "Bearer " + token},
 });

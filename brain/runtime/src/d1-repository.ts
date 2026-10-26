@@ -8,7 +8,23 @@ async appendEvent(e:BrainEvent){await this.db.prepare("INSERT OR IGNORE INTO bra
 async appendDecision(d:Decision){await this.db.prepare("INSERT OR IGNORE INTO decisions(id,at,record_json) VALUES(?,?,?)").bind(d.id,d.at,JSON.stringify(d)).run()}
 async loadDecisions():Promise<Decision[]>{const r=await this.db.prepare("SELECT record_json FROM decisions ORDER BY at, id LIMIT 100").all<{record_json:string}>();return r.results.map(row=>JSON.parse(row.record_json) as Decision)}
 async loadCheckpoint(){const r=await this.db.prepare("SELECT snapshot_json FROM checkpoints WHERE id=1").first<{snapshot_json:string}>();return r?JSON.parse(r.snapshot_json):null}
-async saveCheckpoint(c:Checkpoint,e:number){const s=await this.loadState();if(!s||s.version!==e)throw new Error("CHECKPOINT_STATE_VERSION_CONFLICT");await this.db.prepare("INSERT INTO checkpoints(id,run_id,stage,state_version,snapshot_json,at) VALUES(1,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET run_id=excluded.run_id,stage=excluded.stage,state_version=excluded.state_version,snapshot_json=excluded.snapshot_json,at=excluded.at").bind(c.runId,c.stage,c.stateVersion,JSON.stringify(c),c.at).run()}
+async saveCheckpoint(c:Checkpoint,e:number){
+ const result=await this.db.prepare("INSERT INTO checkpoints(id,run_id,stage,state_version,snapshot_json,at) SELECT 1,?,?,?,?,? FROM company_state WHERE id=1 AND version=? ON CONFLICT(id) DO UPDATE SET run_id=excluded.run_id,stage=excluded.stage,state_version=excluded.state_version,snapshot_json=excluded.snapshot_json,at=excluded.at")
+  .bind(c.runId,c.stage,c.stateVersion,JSON.stringify(c),c.at,e).run();
+ if(result.meta?.changes!==1)throw Error("CHECKPOINT_STATE_VERSION_CONFLICT");
+}
+async claimRunRequest(requestKey:string,proposed:Run):Promise<{run:Run;replayed:boolean}>{
+ const idempotencyKey="request:"+requestKey;
+ const result=await this.db.prepare("INSERT OR IGNORE INTO runs(run_id,idempotency_key,stage,status,snapshot_json,started_at,updated_at) VALUES(?,?,?,?,?,?,?)")
+  .bind(proposed.runId,idempotencyKey,proposed.stage,proposed.status,JSON.stringify({...proposed,idempotencyKey}),proposed.startedAt,proposed.updatedAt).run();
+ const run=await this.findRunByIdempotencyKey(idempotencyKey);
+ if(!run)throw Error("RUN_REQUEST_CLAIM_CONFLICT");
+ return {run,replayed:result.meta?.changes!==1};
+}
+async findRunById(runId:string){
+ const row=await this.db.prepare("SELECT snapshot_json FROM runs WHERE run_id=?").bind(runId).first<{snapshot_json:string}>();
+ return row?JSON.parse(row.snapshot_json) as Run:null;
+}
 async findRunByIdempotencyKey(k:string){const r=await this.db.prepare("SELECT snapshot_json FROM runs WHERE idempotency_key=?").bind(k).first<{snapshot_json:string}>();return r?JSON.parse(r.snapshot_json):null}
 async saveRun(r:Run){await this.db.prepare("INSERT INTO runs(run_id,idempotency_key,stage,status,snapshot_json,started_at,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(run_id) DO UPDATE SET stage=excluded.stage,status=excluded.status,snapshot_json=excluded.snapshot_json,updated_at=excluded.updated_at").bind(r.runId,r.idempotencyKey,r.stage,r.status,JSON.stringify(r),r.startedAt,r.updatedAt).run()}
 }
