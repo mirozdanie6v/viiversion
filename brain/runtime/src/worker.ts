@@ -20,7 +20,7 @@ const json = (x: unknown, status = 200) =>
 export default {
   async fetch(req: Request, env: Env) {
     const url = new URL(req.url);
-    if (req.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
+    if (req.method === "GET" && url.pathname === "/health") return json({ status: "ok", revision: "brain-stage1-secure-retention-20261027" });
     // State, bootstrap and run endpoints all handle company state: never expose them publicly.
     // Models and read-only clients must never acquire founder-approval privileges.
     // Approval writes require an independently configured bearer secret.
