@@ -3,13 +3,15 @@ import {D1BrainRepository,type D1} from "./d1-repository.ts";
 import {checkpoint} from "./loop.ts";
 import type {Run} from "./contracts.ts";
 import {runProductionAcceptance} from "./production-acceptance.ts";
+import {parseWorkflowPayload} from "./workflow-payload.ts";
 interface Env{BRAIN_DB:D1;BRAIN_API_TOKEN?:string;BRAIN_APPROVAL_TOKEN?:string}
 export class CeoWorkflow extends WorkflowEntrypoint<Env,{runId:string;kind?:"owner_production_acceptance"}>{
  async run(event:Readonly<WorkflowEvent<{runId:string;kind?:"owner_production_acceptance"}>>,step:WorkflowStep){
-  const repo=new D1BrainRepository(this.env.BRAIN_DB),runId=event.payload.runId;
+  const parsed=parseWorkflowPayload(event.payload as unknown);
+  const repo=new D1BrainRepository(this.env.BRAIN_DB),runId=parsed.runId;
   // This control-plane-only mode cannot be reached through the public HTTP API:
   // /runs constructs Workflow params with only runId.
-  if(event.payload.kind==="owner_production_acceptance"){
+  if(parsed.kind==="owner_production_acceptance"){
    if(!/^acceptance-20261027-[A-Za-z0-9_-]{1,50}$/.test(runId)) throw Error("INVALID_ACCEPTANCE_INSTANCE_ID");
    const recovered=await step.do("test-transient-failure-and-durable-workflow-retry",
     {retries:{limit:2,delay:"1 second"}},async()=>{
