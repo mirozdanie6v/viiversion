@@ -6,7 +6,7 @@ Dedicated Cloudflare Worker with independent D1 `viiversion-brain` and CEO Workf
 
 D1 was provisioned once and its UUID is pinned in `wrangler.jsonc`. Normal GitHub Actions deployment never calls `wrangler d1 list` or `wrangler d1 create`: it runs tests, verifies Cloudflare credentials, applies existing migrations, deploys, then checks the remote Worker/Workflow with a fresh-session D1 checkpoint smoke test.
 
-**Authorization:** All company-state endpoints (`/state`, `/context`, `/bootstrap`, `/runs`) require a Cloudflare `BRAIN_API_TOKEN` Worker secret (Bearer token, minimum 32 characters). Without it they fail closed with HTTP 401. Public `GET /health` does not disclose state. **Stage-1 hardening:** deployment now fails before touching production if either stable GitHub Actions secret `BRAIN_API_TOKEN` or independent `BRAIN_APPROVAL_TOKEN` is absent/weak/equal. There is no random per-deploy credential fallback. Existing Cloudflare secrets are not retrievable via GitHub and must be provisioned securely by an administrator.
+**Authorization:** All company-state endpoints (`/state`, `/context`, `/bootstrap`, `/runs`) require a Cloudflare `BRAIN_API_TOKEN` Worker secret (Bearer token, minimum 32 characters). Without it they fail closed with HTTP 401. Public `GET /health` does not disclose state. **Stage-1 Cloudflare-owned secrets:** existing `BRAIN_API_TOKEN` and independent `BRAIN_APPROVAL_TOKEN` remain on the Cloudflare Worker. GitHub Actions checks their names using Wrangler before deployment and never reads, replaces, or rotates their values. Cloudflare documents that Wrangler deployments preserve existing Worker secrets. GitHub Actions secrets with the same names are optional and used solely for full authenticated remote smoke tests; they are not prerequisites for deployment. When those credentials are absent, a public revision/negative-auth smoke and direct D1 inventory must be recorded, while authenticated end-to-end verification remains outstanding. There is no random token fallback.
 
 The live smoke proof covers: denied unauthenticated read; bootstrap and canonical approved decision DJ-001 import from brain/DECISION_JOURNAL.md; read objective/open loops/decisions; idempotent run replay; Workflow audit-to-diagnose persistence; and a **separate Node.js process** restoring the objective, decision, open loops, and checkpoint from D1 without chat history. `/context` returns the protected persisted context, including up to 100 chronological decisions; it is not yet integrated into ChatGPT chat startup.
 
@@ -38,7 +38,7 @@ revisions fail under a DB unique constraint. D1 migration 0002 is additive.
 
 ### Approval-token provisioning
 
-The deploy workflow requires a permanent `BRAIN_APPROVAL_TOKEN` distinct from the permanent `BRAIN_API_TOKEN`. It rejects missing, short or identical values **before** changing Worker secrets or applying migrations. Real client contracts are not sent by smoke tests. GitHub workflows must never echo tokens or approval payloads.
+The deploy workflow requires both secret *names* on the Cloudflare Worker, checks for them before applying migrations, and never overwrites their values. Wrangler cannot read existing secret values. Their independence and length must be attested by the administrator or confirmed with separately authorized API tests. Real client contracts are not sent by smoke tests. GitHub workflows must never echo tokens or approval payloads.
 
 ## One-time private import of real approved client decisions
 
@@ -95,3 +95,10 @@ inventory, claim of company-wide coverage, or independent autonomous CEO.
 - `GET /runs?idempotencyKey=...` returns the persisted run, including its stage/status. The currently implemented audit-to-diagnose Workflow records `status=blocked` and `blockedReason=CEO_LOOP_NOT_IMPLEMENTED`, not fictitious completion.
 - The singleton `checkpoints` record represents the latest checkpoint, not a per-run history. Do not interpret concurrent independent runs as an independently verified multi-run CEO orchestration system. Full CEO cycle, registry hydration and chat connector are outside stage 1.
 - Production deployment requires persistent GitHub Action secrets; if absent, the **existing deployed Worker remains unchanged**. A passing PR CI is not a production rollout.
+
+## 27 Oct 2026 — live deployment with Cloudflare-managed secrets
+
+- GitHub Actions no longer requires duplicates of existing Cloudflare secrets: Wrangler verifies required binding names, then deploys without writing Worker secrets.
+- Public smoke checks health revision `brain-stage1-secure-retention-20261027`, unauthenticated denial on every protected route, and wrong-token denial.
+- Authenticated smoke tests and private import run **only when two independent valid GitHub Actions test credentials are supplied**. A public-only green deployment does not prove authenticated read/run or full CEO acceptance.
+- Remote D1 inventory via authorized Cloudflare API is a separate read-only check. Data in D1 is not deleted or reseeded by this deploy workflow unless an explicitly enabled smoke/import step performs its documented idempotent writes.
