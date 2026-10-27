@@ -22,3 +22,20 @@ export async function ensureRunQueued(workflow:BrainWorkflowQueue,run:Run):Promi
       throw Error("WORKFLOW_UNEXPECTED_STATUS");
   }
 }
+
+/**
+ * A duplicate Workflow may have completed while this HTTP request still holds
+ * an old "running" snapshot. Re-read D1 before treating the replay as failed.
+ * Never infer successful completion from Workflow status alone.
+ */
+export async function waitForPersistedNonrunningRun(
+ load:()=>Promise<Run|null>, expectedRunId:string,
+ attempts=6, delayMs=150,
+):Promise<Run|null>{
+ for(let i=0;i<attempts;i++){
+  const saved=await load();
+  if(saved && saved.runId===expectedRunId && saved.status!=="running")return saved;
+  if(i+1<attempts)await new Promise(resolve=>setTimeout(resolve,delayMs));
+ }
+ return null;
+}

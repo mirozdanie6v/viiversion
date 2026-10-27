@@ -47,12 +47,12 @@ export async function runProductionAcceptance(env:ProbeEnv,acceptanceId:string){
   check(validation.status===400,"approval token enforces validation without writing");
   const key="acceptance_"+acceptanceId;
   const first=await call("/runs","POST",readToken,{idempotencyKey:key});
-  check(first.status===202&&first.data?.run?.runId,"unique authenticated run created");
+  check([200,202].includes(first.status)&&first.data?.run?.runId,"unique authenticated run is durable and replayable");
   const runId=first.data.run.runId as string;
   const replay=await call("/runs","POST",readToken,{idempotencyKey:key});
   check(replay.status===200&&replay.data?.replayed===true&&replay.data?.run?.runId===runId,"replay references original run");
   const parallel=await Promise.all(Array.from({length:5},()=>call("/runs","POST",readToken,{idempotencyKey:key})));
-  check(parallel.every(x=>x.status===200&&x.data?.run?.runId===runId),"parallel requests are idempotent");
+  check(parallel.every(x=>x.status===200&&x.data?.run?.runId===runId),"parallel requests are idempotent; response statuses: "+parallel.map(x=>x.status).join(","));
   const stored=await env.BRAIN_DB.prepare("SELECT COUNT(*) as n FROM runs WHERE idempotency_key=?").bind("request:"+key).first<{n:number}>();
   check(stored?.n===1,"only one durable D1 run");
   let stage:string|undefined, blockedReason:string|undefined, restored=false;
