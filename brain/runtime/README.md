@@ -1,3 +1,5 @@
+> **2026-10-27 DOC ACCURACY NOTICE:** canonical target for Mark is [the unified architecture](../architecture/MARK_ARCHITECTURE.md), which is not implemented in this v0.1 runtime. Existing deploy Github Actions verifies Cloudflare Worker secret names; without separately supplied GitHub test credentials it **skips authenticated Actions smoke**, even though the separately initiated Cloudflare administrator production acceptance was successful (see [audit](../audits/2026-10-27-stage1-production-acceptance.md)). This runtime currently has one **global** checkpoint, not isolated per-run. All "would"/"must" statements below are design intent unless backed by current evidence. The earlier statement that normal deployment always runs a fresh authenticated remote checkpoint smoke is **superseded** by this notice and the Oct 27 deploy description.
+
 # Mark Brain Runtime v0.1
 
 Dedicated Cloudflare Worker with independent D1 `viiversion-brain` and CEO Workflow. Source products remain untouched.
