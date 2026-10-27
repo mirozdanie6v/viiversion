@@ -72,3 +72,7 @@ The Brain must preserve the difference between:
 - what the Brain recommends after critique and broader company evidence.
 
 The purpose is cognitive fidelity plus augmentation, not stylistic imitation.
+
+## 2026-10-27 — область применимости и Self-Model (архитектурное уточнение)
+
+Это специализированный документ о моделях *основателей* и типах знаний Марка, а не сама защищённая сущность Марка и не оперативный контекст подключённых чатов. Identity Core Марка и его развивающийся Self-Model описаны в [единой архитектуре](architecture/MARK_ARCHITECTURE.md); их обновления обязаны соблюдать Конституцию. Типы Semantic/Episodic/Procedural/Decision относятся **внутри постоянной памяти**, не являются четырьмя отдельными хранилищами. Оперативная память хранит контекст дня, чатов и задач. Степень реализованности каждого механизма проверяется отдельно; это описание не означает, что они уже работают.
