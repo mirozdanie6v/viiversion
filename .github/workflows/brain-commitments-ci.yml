@@ -25,4 +25,4 @@ jobs:
       - run: npm install --no-fund --no-audit
       - run: npm test
       - run: npx wrangler deploy --dry-run --config wrangler.jsonc
-      - run: npx tsc --noEmit --module nodenext --moduleResolution nodenext --target ES2022 --allowImportingTsExtensions --skipLibCheck --types node src/commitments.ts src/commitment-store.ts src/context.ts src/invocation-context.ts tests/commitments.test.ts tests/context.test.ts tests/invocation-context.test.ts
+      - run: npx tsc --noEmit --module nodenext --moduleResolution nodenext --target ES2022 --allowImportingTsExtensions --skipLibCheck --types node src/commitments.ts src/commitment-store.ts src/context.ts src/invocation-context.ts src/mcp.ts src/mcp-oauth.ts tests/mcp-oauth.test.ts tests/commitments.test.ts tests/context.test.ts tests/invocation-context.test.ts
