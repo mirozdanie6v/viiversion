@@ -2,10 +2,28 @@ import {WorkflowEntrypoint,WorkflowEvent,WorkflowStep} from "cloudflare:workers"
 import {D1BrainRepository,type D1} from "./d1-repository.ts";
 import {checkpoint} from "./loop.ts";
 import type {Run} from "./contracts.ts";
-interface Env{BRAIN_DB:D1}
-export class CeoWorkflow extends WorkflowEntrypoint<Env,{runId:string}>{
- async run(event:Readonly<WorkflowEvent<{runId:string}>>,step:WorkflowStep){
+import {runProductionAcceptance} from "./production-acceptance.ts";
+interface Env{BRAIN_DB:D1;BRAIN_API_TOKEN?:string;BRAIN_APPROVAL_TOKEN?:string}
+export class CeoWorkflow extends WorkflowEntrypoint<Env,{runId:string;kind?:"owner_production_acceptance"}>{
+ async run(event:Readonly<WorkflowEvent<{runId:string;kind?:"owner_production_acceptance"}>>,step:WorkflowStep){
   const repo=new D1BrainRepository(this.env.BRAIN_DB),runId=event.payload.runId;
+  // This control-plane-only mode cannot be reached through the public HTTP API:
+  // /runs constructs Workflow params with only runId.
+  if(event.payload.kind==="owner_production_acceptance"){
+   if(!/^acceptance-20261027-[A-Za-z0-9_-]{1,50}$/.test(runId)) throw Error("INVALID_ACCEPTANCE_INSTANCE_ID");
+   const recovered=await step.do("test-transient-failure-and-durable-workflow-retry",
+    {retries:{limit:2,delay:"1 second"}},async()=>{
+     const now=new Date().toISOString();
+     const claim=await this.env.BRAIN_DB.prepare(
+      "INSERT OR IGNORE INTO brain_events(id,at,type,source,payload_json) VALUES(?,?,?,?,?)")
+      .bind("acceptance-retry:"+runId,now,"acceptance_retry_probe","cloudflare-admin-workflow",
+       JSON.stringify({runId,classification:"isolated_test"})).run();
+     if(claim.meta?.changes===1)throw Error("EXPECTED_ONCE_TRANSIENT_ACCEPTANCE_TEST");
+     return true;
+    });
+   const result=await step.do("test-real-authorized-http-operations",()=>runProductionAcceptance(this.env,runId));
+   return {...result,recoveredAfterInjectedTransientFailure:recovered};
+  }
   const loaded=await step.do("load-state",async()=>{
    const state=await repo.loadState();
    if(!state)throw Error("BRAIN_NOT_BOOTSTRAPPED");
