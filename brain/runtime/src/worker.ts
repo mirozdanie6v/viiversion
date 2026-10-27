@@ -41,6 +41,12 @@ export default {
       const full = await loadUnifiedContext(repo, {
         loadDecisions: () => repo.loadDecisions(),
         loadApprovedCommitments: () => commitments.list(),
+        // One protected Mark context endpoint now includes invocation-time
+        // working-memory receipts. This remains raw/unprocessed context, NOT
+        // a claim of full ChatGPT history or of autonomous semantic memory.
+        ...(url.pathname === "/context"
+          ? { loadInvocationContexts: () => new InvocationContextStore(env.BRAIN_DB).recent(undefined, 10) }
+          : {}),
       });
       return url.pathname === "/context" ? json(full) : json({
         readiness: full.readiness,
