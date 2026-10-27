@@ -1,4 +1,6 @@
-# Day-0 Company Audit — Executive Brief
+# Day-0 Company Audit — исторический Executive Brief
+
+**Архитектурная коррекция 2026-10-27:** этот исторический аудит и проверка повторного использования остаются полезными, но не являются предпосылкой для утверждения единой архитектуры Марка или запуска механизма поступления информации. Его требование «No canonical Brain Runtime architecture may be accepted before this comparison is complete» **превзойдено утверждённым ADR-0001** для технической целевой модели: нельзя вновь подменять механизм памяти разовой полной инвентаризацией. Открытые сущности пополняются живым реестром после реализации событийного входа; выбор нового runtime по-прежнему требует отдельной проверки реиспользования. См. [ADR](architecture/ADR-0001-unified-mark.md) и [аудит противоречий](architecture/ARCHITECTURE_RECONCILIATION_AUDIT.md).
 
 ## Assignment
 Conduct a full factual audit of VIIVERSION.
