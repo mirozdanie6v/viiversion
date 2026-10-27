@@ -5,7 +5,7 @@
 | ID | Severity | Contradiction / evidence | Resolution | Actual implemented status |
 | --- | --- | --- | --- | --- |
 | A01 | CRITICAL | CONSTITUTION defines Mark identity, but production runtime only seeds Day-0 state; it does not hydrate and enforce a verified Identity Core as durable versioned memory | Architecture §2; identity versions and independent permission gate; no self-modification of Constitution | M1 NOT IMPLEMENTED |
-| A02 | CRITICAL | Original proposal assumed chat-connected autonomous receipt, while official ChatGPT custom MCP docs say app selection applies per message rather than an entire chat | Architecture §7; feasibility M0B, acceptance M3; forbid treating a one-message MCP call as persistent subscription | M0B BLOCKED |
+| A02 | CRITICAL | Original proposal assumed chat-connected autonomous receipt, while official ChatGPT custom MCP docs say app selection applies per message rather than an entire chat | Architecture §7 revised: invoke-time handoff of actually available context; do not claim full transcript without proof; see CHAT_CONTEXT_HANDOFF_CONTRACT | M0B PENDING VERIFICATION |
 | A03 | HIGH | COMPANY_REGISTRY_SCHEMA calls its subject a canonical inventory, but code has no always-current entity registry; DAY_0_AUDIT_BRIEF mandates wholesale audit before architecture | Schema is desired contract, not existing hydrated registry. Event-driven updates first; Day-0 audit now historical/baseline and cannot block this architectural decision | M4 NOT IMPLEMENTED |
 | A04 | CRITICAL | CEO_OPERATING_LOOP.md describes 8-stage CEO behavior; runtime executes only audit→diagnose and truthfully returns CEO_LOOP_NOT_IMPLEMENTED | CEO doc labeled TARGET, runtime evidence cited, no claims full loop in acceptance | M5 NOT IMPLEMENTED |
 | A05 | HIGH | Global singleton checkpoints(id=1) represents only latest run. Original registry schema describes richer run checkpoints; multiple chats/runs not isolated | Architecture §6; per-run/per-session checkpoint after safe migration; preserve existing checkpoint and evidence | M2/M6 NOT IMPLEMENTED |
@@ -23,8 +23,8 @@
 
 1. Adopt [MARK_ARCHITECTURE.md](MARK_ARCHITECTURE.md) and [MARK_ROADMAP.md](MARK_ROADMAP.md) as the technically reconciled **target**, under existing Constitution.
 2. Ratify ADR-0001 on the founder's explicit direction to audit, correct and approve the final unified architecture; do not interpret this as blanket authorization to change policy, copy whole conversations, or deploy features.
-3. Add a Decision Journal record linking the approved architecture, with ChatGPT passive message intake explicitly UNVERIFIED.
-4. Do not require another full product inventory before implementing the mechanism of information transfer. Historical Day-0 inventory can be used as selective evidence once streaming/incremental reconciliation is real.
+3. Add a Decision Journal record linking the approved architecture, with ChatGPT invocation-time handoff pending real-world verification (passive intake not required).
+4. Do not require another full product inventory before implementing the mechanism of information transfer. Historical Day-0 inventory can be used as selective evidence once reliable invocation-time intake / incremental reconciliation is real.
 5. No separate services or new repositories are justified by this audit.
 6. Document boundaries before source access: default to corporate opt-in scopes, least privilege, source freshness, and evidence-backed state updates.
 
@@ -36,4 +36,10 @@
 
 ## Requirements before calling Mark production ready
 
-An actual supported chat integration, versioned identity, reliable intake/working context, live registry, independently isolated checkpoints, authority/retention controls and a full validated cognition–action–learning cycle. Missing any is reported as a limitation, never represented as complete.
+Verified invocation-time context handoff, versioned identity, reliable intake/working context, live registry, independently isolated checkpoints, authority/retention controls and a full validated cognition–action–learning cycle. Missing any is reported as a limitation, never represented as complete.
+
+## Дополнение 2026-10-27 — исправление постановки интеграции из чатов
+
+По уточнённому решению основателя **Марк вызывается в чате, получает фактически предоставленный ему контекст и сохраняет его как оперативную память**. Самостоятельный анализ/решения происходят в Brain вне чата. Из архитектурных обязательств исключено пассивное наблюдение за каждым сообщением. Предыдущие формулировки о непрерывном перехвате признаны ошибочной постановкой; **реальный блокер теперь лишь проверяемость передачи, полноты фактического payload и сохранения в Brain**. См. [контракт передачи](CHAT_CONTEXT_HANDOFF_CONTRACT.md), [M0B/M3](MARK_ROADMAP.md) и [ADR](ADR-0001-unified-mark.md).
+
+Старое доказательство OpenAI о выборе MCP на отдельное сообщение остаётся верным, но **не запрещает архитектуру по вызову**. Исторические выводы об отсутствии непрерывной подписки сохранены только как свидетельство неверно выбранной ранее цели.
