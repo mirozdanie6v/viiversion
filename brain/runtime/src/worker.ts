@@ -6,7 +6,7 @@ import { isAuthorized } from "./auth.ts";
 import { CommitmentStore } from "./commitment-store.ts";
 import { loadUnifiedContext } from "./context.ts";
 import type { Run } from "./contracts.ts";
-import { ensureRunQueued, type BrainWorkflowQueue } from "./run-queue.ts";
+import { ensureRunQueued, waitForPersistedNonrunningRun, type BrainWorkflowQueue } from "./run-queue.ts";
 
 interface Env {
   BRAIN_DB: D1;
@@ -127,8 +127,17 @@ export default {
           payload:{runId:run.runId,idempotencyKey:body.idempotencyKey},
         });
         // Replaying a request also retries dispatch after a transient enqueue failure.
+        if(replayed) {
+          const latest=await repo.findRunById(run.runId);
+          if(latest && latest.status!=="running")return json({replayed:true,run:latest},200);
+        }
         await ensureRunQueued(env.CEO_WORKFLOW, run);
       } catch {
+        if(replayed) {
+          const terminal=await waitForPersistedNonrunningRun(
+            ()=>repo.findRunById(run.runId),run.runId);
+          if(terminal)return json({replayed:true,run:terminal},200);
+        }
         return json({error:"run_dispatch_retryable",runId:run.runId},503);
       }
       return json({replayed,run},replayed?200:202);
