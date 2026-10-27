@@ -38,3 +38,12 @@ Sources: [DJ-006](../DECISION_JOURNAL.md), [handoff contract](../architecture/CH
 Source changes are isolated to Brain runtime and additive D1 table; reverting Worker to prior commit does not require deleting the new table or changing existing company data/secrets. Preserve historic receipts if real data is later ingested; deletion/retention only after an approved data policy.
 
 **Conclusion:** The first working context persistence interface exists and is deployed. **M0B cannot be declared complete until a real native ChatGPT tool invocation and a trusted readback demonstrate the intended path.**
+
+## M0B second backend slice: unified context hydration (same date)
+
+- [PR #39](https://github.com/mirozdanie6v/viiversion/pull/39) merged, commit `82383c1f8680059a03934602e936b151c92bf678`. `GET /context` now carries `invocationContexts` from the 10 latest D1 receipts, visible to the same authorized Brain reader that restores other persisted knowledge. Older receipts can still be fetched explicitly; the field is a limited recent view, **not comprehensive working-memory reasoning**.
+- [Pull-request CI 40513691012](https://github.com/mirozdanie6v/viiversion/actions/runs/40513691012): **PASS 41/41 tests**, including the unified-context hydration regression, Wrangler dry-run and static TypeScript checks.
+- [Production deployment 40513791412](https://github.com/mirozdanie6v/viiversion/actions/runs/40513791412): **SUCCESS**, including D1 migration and negative-auth public smoke. Authenticated Actions smoke again skipped due unavailable approved testing credential; no claim of real authenticated `GET /context` E2E from Cloudflare Worker.
+- Independent Cloudflare D1 read after deploy: 1 decision, 4 approved commitments, 2 plans, 10 runs, 0 invocation receipts (synthetic test cleaned up; no real ChatGPT content uploaded).
+
+**Current conclusion:** Both protected HTTP endpoints for context receipt/readback **and the unified Brain context read model** are implemented, CI-tested and deployed. **M0B still PARTIAL** until an authorized real ChatGPT invocation transfers its actual context and a second chat can recover it through an authenticated tool. This is NOT passive chat monitoring, not whole-chat transcript completeness, and not autonomous semantic interpretation.
