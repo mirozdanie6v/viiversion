@@ -1,6 +1,6 @@
 # Company Registry Schema v0.1
 
-Canonical inventory of what exists in VIIVERSION.
+**Целевая схема** живого реестра VIIVERSION, а не утверждение, что он уже заполнен или синхронизируется. См. [утверждённую архитектуру](architecture/MARK_ARCHITECTURE.md), [ADR](architecture/ADR-0001-unified-mark.md). Заполнение по событиям и прицельная сверка заменяют многократную ручную инвентаризацию. Реестровые данные — внутренний источник Марка, не самостоятельный агент/продукт.
 
 ## Entity types
 Person, Role, Department, Product, Repository, Domain, InfrastructureService, Integration, Client, Lead, Vendor, Document, FinancialObligation, CommercialOpportunity, Experiment, Project, Risk, Dependency, Decision, Asset.
@@ -81,6 +81,8 @@ Append-only:
 - idempotency_key
 
 ### Checkpoint
+**TARGET CONTRACT — not yet delivered.** Существующий runtime v0.1 имеет global singleton checkpoint(id=1), непригодный для независимых параллельных задач/чатов; новый контракт требует отдельного checkpoint на run/session, с миграцией старого без удаления истории.
+
 - checkpoint_id / previous_checkpoint_id
 - created_at / run_id
 - active_objective
