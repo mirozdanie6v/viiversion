@@ -131,3 +131,21 @@ No live client/transcript content is committed to public GitHub or used in GitHu
 ### Unified /context now includes received invocation memory (M0B second slice)
 
 Protected `GET /context` includes `invocationContexts`, the **10 most recent D1 receipts** (across project keys accessible to this single-company token) alongside previously existing state, decisions, approvals and execution plan. The receipts preserve exactly the originally supplied `contextText`, `captureKind` and honest `coverage=unknown`; they are not autonomously classified as approved founder decisions. `GET /readiness` omits the private receipt list, still reports `ready=false` and `chatStartupHydrationIntegrated=false` because no actual ChatGPT tool was connected. Large archives/older receipts must be queried separately with authorized `GET /invocation-context` and are not implicitly lost. This is an implementation step toward Mark's working memory, not proof of continuous listening or true semantic processing.
+
+## ChatGPT MCP interface (M0B — OAuth deployment)
+
+The same Worker now offers an owner-scoped, authenticated remote MCP endpoint:
+
+**Server URL:** `https://viiversion-brain.viiversion.workers.dev/mcp`
+
+Tools:
+- `mark_capture_context`: store the caller's *actually available* conversation context as a durable invocation receipt. Only explicit calls; no passive transcript access.
+- `mark_recall_context`: return saved context from prior invocations, with `coverage=unknown` unless separately verified.
+
+**Security:** ChatGPT must use OAuth authorization code + S256 PKCE and dynamic client registration at this Worker's own `/.well-known/oauth-authorization-server`. The owner authorizes through a secured HTTPS form hosted at the **verified Brain Worker origin**, using the **existing Brain API credential from their own password manager**. Never paste that credential into ChatGPT, GitHub files, tool arguments or OAuth redirect URLs. ChatGPT receives only random scoped short-lived OAuth tokens, stored as SHA-256 digests in the existing D1 table. The commercial `BRAIN_APPROVAL_TOKEN` is never accessible to ChatGPT. Authentication is required even for MCP `initialize` and `tools/list` calls; unauthorized calls yield a Bearer OAuth resource challenge. OAuth registrations accept only expected ChatGPT callback origins/paths.
+
+**Manual account binding:** The ChatGPT account owner must explicitly add the custom MCP server at ChatGPT web → Plugins → Add custom MCP server, enter the URL above, select OAuth, authorize on the verified Brain site and install. This action is **not performed merely by deploying the Worker**, and custom ChatGPT app installation cannot be done by GitHub commits. If the owner does not possess the previously provisioned Brain API credential, a separate approved owner-authentication method is required: do not read, copy or rotate Cloudflare secrets just to complete the demo.
+
+**Acceptance limitation:** Tests simulate MCP/A→B calls with synthetic data, not actual ChatGPT. M0B remains IN PROGRESS until the personal plugin is installed and a real native invocation passes a known fixture, reads it in another ChatGPT chat, and verifies actual model context coverage. Registration permissions/plan can block the manual installation; report such blocks truthfully.
+
+OAuth code hashes expire in five minutes, access tokens after one hour, refresh tokens after 30 days. Token refresh rotates the refresh token; owner can revoke individual tokens via standard `/oauth/revoke`. D1 migration `0004_mark_oauth.sql` is additive. No new Cloudflare components or source-repository storage for private chat text are introduced.
