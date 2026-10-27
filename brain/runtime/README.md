@@ -104,3 +104,26 @@ inventory, claim of company-wide coverage, or independent autonomous CEO.
 - Public smoke checks health revision `brain-stage1-secure-retention-20261027`, unauthenticated denial on every protected route, and wrong-token denial.
 - Authenticated smoke tests and private import run **only when two independent valid GitHub Actions test credentials are supplied**. A public-only green deployment does not prove authenticated read/run or full CEO acceptance.
 - Remote D1 inventory via authorized Cloudflare API is a separate read-only check. Data in D1 is not deleted or reseeded by this deploy workflow unless an explicitly enabled smoke/import step performs its documented idempotent writes.
+
+## M0B — invocation-time ChatGPT context receipt (2026-10-27)
+
+**Implementation scope:** protected `POST /invocation-context` (accept actual supplied context), protected `GET /invocation-context?invocationId=...` (exact durable readback), and `GET /invocation-context?projectKey=viiversion&limit=10` (recent company/project receipts). The data lives in the existing Brain D1 table `invocation_context_receipts` (migration `0003_invocation_contexts.sql`). No new secrets, queues, databases or background services. Existing `BRAIN_API_TOKEN` grants access; external callers without that token are rejected. This is **not** a founder approval channel.
+
+Example **synthetic-only** POST payload:
+
+```json
+{
+  "invocationId":"demo-invocation-0001",
+  "projectKey":"viiversion",
+  "sourceChatRef":"sample-chat-A",
+  "captureKind":"model_summary",
+  "declaredWindow":"caller selected messages; completeness unknown",
+  "contextText":"Synthetic decision: review the test workflow; no real client data."
+}
+```
+
+On success the Worker returns a durable receipt ID, SHA-256, persisted timestamp, coverage `unknown` and replay status. POST response omits raw `contextText`; authenticated GET returns exactly what was saved. Same invocation ID and same payload is an idempotent replay; same ID with different content returns `409 INVOCATION_ID_CONFLICT`.
+
+**Do not mistake this HTTP API for a connected ChatGPT invocation.** A ChatGPT tool/connector still needs to pass the model-accessible context on explicit Mark invocation, and its real payload scope must be compared to a known fixture. A user-supplied `sourceChatRef` is **not** a verified native ChatGPT conversation ID. The server never claims that a receipt contains the entire conversation. An unknown/partial scope remains unknown/partial, not `verified_complete`.
+
+No live client/transcript content is committed to public GitHub or used in GitHub CI. M0B is accepted only after a native ordinary-ChatGPT call with known context successfully reaches this protected API and is later independently retrieved. See [contract](../architecture/CHAT_CONTEXT_HANDOFF_CONTRACT.md). Until then: **backend implementation exists; native integration is PENDING VERIFICATION.**
