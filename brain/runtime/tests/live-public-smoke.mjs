@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 const base=process.env.BRAIN_TEST_BASE;
 if(!base)throw Error("BRAIN_TEST_BASE required");
-const expectedRevision="brain-stage1-secure-retention-20261027";
+const expectedRevision="brain-m0b-mcp-oauth-20261027";
 let revisionSeen=false;
 for(let attempt=0;attempt<30;attempt++){
   try {
