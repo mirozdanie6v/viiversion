@@ -1,3 +1,5 @@
+> **ARCHITECTURE STATUS — 2026-10-27.** Целевая единая архитектура Марка утверждена в [ADR-0001](architecture/ADR-0001-unified-mark.md), [MARK_ARCHITECTURE.md](architecture/MARK_ARCHITECTURE.md) и [MARK_ROADMAP.md](architecture/MARK_ROADMAP.md). Нижеследующие описания «bootstrap architecture», извлечений и исторического Day-0 являются исходной исследовательской историей, **не актуальным производственным планом**. Реальная готовность runtime ограничена [производственной приёмкой v0.1](audits/2026-10-27-stage1-production-acceptance.md), автоматическое поступление событий из обычных выбранных чатов ChatGPT **не подтверждено**. Source-of-truth при конфликте: Constitution → ADR → Unified Architecture → Roadmap → специализированные документы → исторический README.
+
 # VIIVERSION Brain
 
 VIIVERSION Brain is the canonical AI CEO and management intelligence layer of VIIVERSION.
