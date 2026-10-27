@@ -3,7 +3,7 @@
 **Status: ACCEPTED (target architecture)**
 **Decision date:** 2026-10-27
 **Authority:** Founder instruction in the Brain project discussion to critically audit the proposed unified architecture, resolve contradictions and adopt the final version. This is a technical architecture decision; it does not alter the authority limits in the Constitution.
-**Implementation maturity:** NOT IMPLEMENTED AS A WHOLE. ChatGPT passive chat intake: BLOCKED / NOT VERIFIED.
+**Implementation maturity:** NOT IMPLEMENTED AS A WHOLE. Invocation-time ChatGPT context handoff: PENDING VERIFICATION. Continuous passive intake is NOT A REQUIREMENT.
 
 ## Context
 
@@ -22,12 +22,15 @@ Adopt the target described in [MARK_ARCHITECTURE.md](MARK_ARCHITECTURE.md) with 
 - One modular Brain runtime, existing Cloudflare Worker and D1, existing Workflows where justified. No speculative microservices.
 - Authority and authenticity remain under [CONSTITUTION.md](../CONSTITUTION.md), with explicit rights for approvals and sensitive writes.
 
-## Non-negotiable ChatGPT interface constraint
+## Уточнение решения 2026-10-27 — контекст чата при вызове
 
-Official ChatGPT custom MCP documentation states that app selection applies to a message, not an entire conversation, and may require another app mention for another action:
-https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt
+Основатель определил необходимый пользовательский контракт: **Марк вызывается в выбранном обычном чате → ChatGPT передаёт реально доступный для вызова контекст → внешний Mark Brain сохраняет его как оперативную память → самостоятельно осмысляет и отбирает важное → при следующем вызове из другого разрешённого чата использует эту память**.
 
-Therefore **automatic continuous passive intake from specifically attached ordinary ChatGPT chats is not proven available**. Acceptance of this architecture does not accept an unimplemented interface. Keep milestone M0B and M3 blocked until tested and supported. No silent custom browser interception or replacement of the user's required ChatGPT UX with another product. No misleading pass/fail from MCP calls in a single message.
+**Пассивное получение каждого сообщения и подписка на целую беседу исключены из требований**. Ранее заявленный BLOCKER на пассивную подписку относился к неверно поставленной задаче и superseded этим решением. MCP/GitHub-мост используется только как разрешённый транспорт вызова, сам по себе не «видит» весь чат и не служит местом хранения личной переписки.
+
+**Ограничение, которое остаётся:** ChatGPT может передать не весь transcript, а только выбранную часть или модельное изложение доступного контекста. Доступность полного текста не предполагается, capture scope фиксируется фактически. Интеграция остаётся PENDING VERIFICATION до реального теста payload → receipt → D1 → другой вызов, а не до доказательства невозможной/ненужной пассивной синхронизации.
+
+Окончательный интерфейс и метод проверки: [CHAT_CONTEXT_HANDOFF_CONTRACT.md](CHAT_CONTEXT_HANDOFF_CONTRACT.md), этапы [M0B и M3](MARK_ROADMAP.md).
 
 ## Alternatives evaluated
 
@@ -35,7 +38,7 @@ Therefore **automatic continuous passive intake from specifically attached ordin
 | --- | --- | --- |
 | Periodic full import of products/docs/chats | REJECT as primary | Does not solve fresh continuous context and becomes stale |
 | Set of independent memory/ingestion/decision microservices | REJECT at this stage | More failure, duplicated state, added reconciliation cost |
-| Treat MCP tool access as subscription to entire conversation | REJECT | Not supported by current published capabilities |
+| Treat MCP tool access as subscription to entire conversation | REJECT | Not required; invoking the tool sends only the context actually provided |
 | Versioned memory + operational context within modular Brain | ACCEPT | Meets conceptual model while preserving one durable state authority |
 | Automatically grant Mark right to redefine Constitution | REJECT | Violates founder final approval and role separation |
 
@@ -51,7 +54,7 @@ Therefore **automatic continuous passive intake from specifically attached ordin
 
 ## Consequences and controlled implementation
 
-Implement the capability stages in [MARK_ROADMAP.md](MARK_ROADMAP.md). M0A design/decision is accepted. M0B automatic ordinary ChatGPT chat ingestion has a documented externally controlled capability blocker. M1–M6 are separately evaluated through real evidence and not accepted yet.
+Implement the capability stages in [MARK_ROADMAP.md](MARK_ROADMAP.md). M0A design/decision is accepted. M0B invocation-time ChatGPT context transfer is a pending integration test; passive full-chat monitoring is not required. M1–M6 are separately evaluated through real evidence and not accepted yet.
 
 Approval of this ADR gives **no authorization** to alter production secrets, merge unrelated product code, import personal chats, change financial/legal commitments, or release incomplete Brain capabilities. Future changes to target architecture need a new ADR and decision journal entry; changes to Constitution require its original founder approval process.
 
