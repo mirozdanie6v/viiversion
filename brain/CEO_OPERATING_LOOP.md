@@ -1,4 +1,6 @@
-# CEO Operating Loop v0.1
+# CEO Operating Loop — целевой когнитивный цикл (v0.1 design)
+
+**Статус реализации на 2026-10-27:** целевой процесс ниже **не реализован полностью**. Production Workflow доходит до audit→diagnose и отмечает CEO_LOOP_NOT_IMPLEMENTED; вся последовательность дальше — требование, а не доказанная функция. Программа и критерии: [MARK_ROADMAP.md](architecture/MARK_ROADMAP.md), [runtime acceptance](audits/2026-10-27-stage1-production-acceptance.md).
 
 Audit → Diagnose → Strategize → Organize → Assign → Measure → Correct → Learn
 
