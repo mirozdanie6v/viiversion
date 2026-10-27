@@ -44,3 +44,23 @@ test("approved decision backend failure is not silently treated as empty memory"
    loadDecisions:async()=>[],loadApprovedCommitments:async()=>{throw Error("D1 unavailable");},
  }),/D1 unavailable/);
 });
+
+test("unified Mark context hydrates durable invocation receipts when supplied",async()=>{
+ const sample = [{
+   invocationId:"demo-chat-called-Mark",projectKey:"viiversion",sourceChatRef:"caller-claimed-chat-A",
+   captureKind:"model_summary" as const,coverage:"unknown" as const,
+   contextText:"Synthetic discussion: decision to test readback; actual platform window unknown.",
+   declaredWindow:null,payloadSha256:"a".repeat(64),receivedAt:"2026-10-27T13:35:00Z",
+ }];
+ const result=await loadUnifiedContext({
+   loadState:async()=>day0State("2026-10-27T13:35:00Z"),
+   loadCheckpoint:async()=>null,
+ } as any,{
+   loadDecisions:async()=>[],loadApprovedCommitments:async()=>[],
+   loadInvocationContexts:async()=>sample,
+ });
+ assert.deepEqual(result.invocationContexts,sample);
+ assert.equal(result.invocationContexts[0].coverage,"unknown");
+ assert.equal(result.readiness.checks.chatStartupHydrationIntegrated,false,
+   "backend hydration is not evidence of ChatGPT tool invocation");
+});
