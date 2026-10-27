@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {D1BrainRepository} from "../src/d1-repository.ts";
-import {ensureRunQueued} from "../src/run-queue.ts";
+import {ensureRunQueued,waitForPersistedNonrunningRun} from "../src/run-queue.ts";
 import type {Run} from "../src/contracts.ts";
 
 function harness(){
@@ -53,3 +53,6 @@ test("retained failed workflow is never counted as successfully resumed",async()
    async get(){return {async status(){return {status:"errored"};}}}};
  await assert.rejects(()=>ensureRunQueued(queue,proposed("r1")),/WORKFLOW_TERMINAL_REQUIRES_RECONCILIATION/);
 });
+
+test("replay waits for a matching durable nonrunning run",async()=>{let n=0;const row=await waitForPersistedNonrunningRun(async()=>({...proposed("r1"),status:++n===3?"blocked":"running"}),"r1",3,0);assert.equal(n,3);assert.equal(row?.status,"blocked");});
+test("replay does not treat unrelated row as completed",async()=>{const row=await waitForPersistedNonrunningRun(async()=>({...proposed("r2"),status:"blocked"}),"r1",2,0);assert.equal(row,null);});
