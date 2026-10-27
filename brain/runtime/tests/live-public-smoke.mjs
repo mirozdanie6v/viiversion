@@ -33,5 +33,15 @@ const intake=await fetch(new URL("/invocation-context",base),{
   body:JSON.stringify({invocationId:"DEMO-intake-blocked",projectKey:"viiversion",contextText:"Synthetic test",captureKind:"model_summary"}),
 });
 assert.equal(intake.status,401,"invalid bearer must not write invocation contexts");
+const oauthDiscovery=await fetch(new URL("/.well-known/oauth-protected-resource",base),{cache:"no-store"});
+assert.equal(oauthDiscovery.status,200,"OAuth resource discovery must be available without secrets");
+const metadata=await oauthDiscovery.json();
+assert.equal(metadata.resource,new URL("/mcp",base).href,"OAuth resource audience must be the Mark MCP endpoint");
+const rpcAttempt=await fetch(new URL("/mcp",base),{
+ method:"POST",headers:{"content-type":"application/json"},
+ body:JSON.stringify({jsonrpc:"2.0",id:1,method:"tools/list"}),
+});
+assert.equal(rpcAttempt.status,401,"private Mark MCP tool descriptions must require OAuth");
+assert.match(rpcAttempt.headers.get("www-authenticate")??"",/oauth-protected-resource/);
 console.log("PASS: deployed revision "+expectedRevision+" responds; protected routes reject anonymous and invalid credentials");
 console.log("LIMITATION: authenticated read/run/commitment writes and workflow persistence remain unverified without a valid test credential");
