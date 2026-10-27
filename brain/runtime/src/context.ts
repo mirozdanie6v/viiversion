@@ -1,5 +1,6 @@
 import type { BrainRepository } from "./repository.ts";
 import type { Decision } from "./contracts.ts";
+import type { InvocationReceipt } from "./invocation-context.ts";
 import type { ApprovedCommitment } from "./commitments.ts";
 import { buildExecutionPlan } from "./commitments.ts";
 
@@ -8,11 +9,13 @@ import { buildExecutionPlan } from "./commitments.ts";
 export interface UnifiedContextSources {
   loadDecisions(): Promise<Decision[]>;
   loadApprovedCommitments(): Promise<ApprovedCommitment[]>;
+  loadInvocationContexts?(): Promise<InvocationReceipt[]>;
 }
 
 export async function loadUnifiedContext(repo: BrainRepository, sources: UnifiedContextSources) {
-  const [state, checkpoint, decisions, approvedCommitments] = await Promise.all([
+  const [state, checkpoint, decisions, approvedCommitments, invocationContexts] = await Promise.all([
     repo.loadState(), repo.loadCheckpoint(), sources.loadDecisions(), sources.loadApprovedCommitments(),
+    sources.loadInvocationContexts ? sources.loadInvocationContexts() : Promise.resolve([] as InvocationReceipt[]),
   ]);
   const executionPlan = buildExecutionPlan(approvedCommitments);
   const readiness = {
@@ -35,6 +38,6 @@ export async function loadUnifiedContext(repo: BrainRepository, sources: Unified
     scope: "partial_verified_memory_only" as const,
   };
   return {
-    state, checkpoint, decisions, approvedCommitments, executionPlan, readiness,
+    state, checkpoint, decisions, approvedCommitments, invocationContexts, executionPlan, readiness,
   };
 }
