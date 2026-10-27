@@ -1,42 +1,65 @@
-# ADR-0001 — Unified Mark Architecture (draft)
+# ADR-0001 — Unified Mark cognitive/memory architecture
 
-**Status:** PROPOSED — Founder review required
-**Date:** 2026-10-27
-**Decision owner:** Founders VIIVERSION
-**Scope:** VIIVERSION Brain; does not alter other product production runtimes.
+**Status: ACCEPTED (target architecture)**
+**Decision date:** 2026-10-27
+**Authority:** Founder instruction in the Brain project discussion to critically audit the proposed unified architecture, resolve contradictions and adopt the final version. This is a technical architecture decision; it does not alter the authority limits in the Constitution.
+**Implementation maturity:** NOT IMPLEMENTED AS A WHOLE. ChatGPT passive chat intake: BLOCKED / NOT VERIFIED.
 
 ## Context
 
-Previous Brain work concentrated on D1, HTTP auth, deployment, run persistence, private commitments and restoration. Scoped v0.1 verification was successful, but did **not** build the intended autonomous Mark capable of keeping a shared live work context across connected ChatGPT chats and authoritative internal sources.
+Brain v0.1 was deployed and production-tested with a separate Worker/D1/Workflow, historical-run correction, protected context and narrowly tested commitment reads. But it lacks company-wide working memory, living registry, continuous meaningful intake from selected chats and the full autonomous CEO cognitive/action cycle. Original Brain documents intermix product intent, past decisions and implementation speculation.
 
-Several existing documents already describe the CEO mandate, cognitive memory types, registry, decision journal and operating loop. They are not a single approved implementation contract and contain assumptions about the runtime that have not been proven, in particular active chat integration and global checkpoint isolation.
+The founders require Mark as a single evolving logical entity, not several integrations or independent products. The existing memory/infrastructure can be reused but must not define the product by accident.
 
-## Decision proposed
+## Accepted decision
 
-Adopt [MARK_ARCHITECTURE_PROPOSAL.md](MARK_ARCHITECTURE_PROPOSAL.md) and [MARK_ROADMAP_PROPOSAL.md](MARK_ROADMAP_PROPOSAL.md) as the canonical *proposed* unified Mark target. Architecture is one modular system with five functional parts: long-term memory including Mark identity; working context; cognition/processing/learning/action; internal sources and living registry; external sources including explicitly connected chats and the internet.
+Adopt the target described in [MARK_ARCHITECTURE.md](MARK_ARCHITECTURE.md) with five functional parts of **one** Mark: (1) permanent memory including identity, (2) operational context, (3) cognition, learning, decision and action, (4) internal sources including living registry/GitHub/Linear/Drive, (5) external sources including connected chats and internet.
 
-Reuse currently deployed Brain Worker/D1; introduce no independent new platform, database or queue without a demonstrated gap. Protect core identity and explicit founder authority; allow Mark to revise evidence-backed knowledge. Maintain provenance and ordered, recoverable changes. Detailed source information is queried on demand, not bulk mirrored to permanent memory.
+- **Identity Core** is subject to founder-approved change control and cannot be autonomously rewritten. **Self-Model** and evidence-backed knowledge are versioned and may evolve according to policy.
+- Working context is persistent, scoped by company/project/chat/task, and shared only across consented connected corporate sessions.
+- Durable event receipt precedes interpretation; read, classification, update and external action have explicit evidence and idempotency rules. Technical event history is not a competing separate "memory product".
+- Live registry changes incrementally. GitHub/Linear/Drive detailed records are retrieved selectively; wholesale recurring inventory is NOT the memory mechanism.
+- One modular Brain runtime, existing Cloudflare Worker and D1, existing Workflows where justified. No speculative microservices.
+- Authority and authenticity remain under [CONSTITUTION.md](../CONSTITUTION.md), with explicit rights for approvals and sensitive writes.
 
-M0 proves whether automatic context intake from **ordinary selected ChatGPT chats** is technically supported before promising functionality or scaling data ingestion. No manual inventory or one-off import substitutes for a verified live intake mechanism.
+## Non-negotiable ChatGPT interface constraint
 
-## Alternatives
+Official ChatGPT custom MCP documentation states that app selection applies to a message, not an entire conversation, and may require another app mention for another action:
+https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt
 
-- **Periodic wholesale registry import** — REJECT as primary method: stale immediately and does not solve context intake.
-- **Many autonomous agents, services and databases** — NOT JUSTIFIED: more coordination, deployment and state-consistency failure modes.
-- **Only a tool-enabled chatbot with no independent memory** — REJECT: fails cross-session identity and memory continuity.
-- **Claim existing MCP plugin grants passive full-chat access** — REJECT until live product proof: tool availability does not imply observing every message.
+Therefore **automatic continuous passive intake from specifically attached ordinary ChatGPT chats is not proven available**. Acceptance of this architecture does not accept an unimplemented interface. Keep milestone M0B and M3 blocked until tested and supported. No silent custom browser interception or replacement of the user's required ChatGPT UX with another product. No misleading pass/fail from MCP calls in a single message.
 
-## Consequences / risks
+## Alternatives evaluated
 
-Advantages: single ownership of state, interpretable evidence and permissions, one cognitive flow, minimal new failure surfaces. Trade-offs: modularity and migrations must be disciplined; genuine chat integration feasibility is a blocking external dependency. Historical stage-1 acceptance remains valid only for verified v0.1 scope.
+| Alternative | Decision | Reason |
+| --- | --- | --- |
+| Periodic full import of products/docs/chats | REJECT as primary | Does not solve fresh continuous context and becomes stale |
+| Set of independent memory/ingestion/decision microservices | REJECT at this stage | More failure, duplicated state, added reconciliation cost |
+| Treat MCP tool access as subscription to entire conversation | REJECT | Not supported by current published capabilities |
+| Versioned memory + operational context within modular Brain | ACCEPT | Meets conceptual model while preserving one durable state authority |
+| Automatically grant Mark right to redefine Constitution | REJECT | Violates founder final approval and role separation |
 
-## Approval protocol
+## Relationship to existing approved documents
 
-This ADR does not become **ACCEPTED** merely because the PR is merged or a build passes. Required:
-1. Founder explicitly accepts the five-part architecture and scope.
-2. Founder accepts controlled identity change and action authority principles.
-3. M0 feasibility evidence for automatic intake in ordinary selected chats is recorded; if still unresolved, mark the specific capability blocked, without making false claims.
-4. Founder approves phased acceptance contract and target integration path into the GitHub canonical branch.
-5. Decision entered into `../DECISION_JOURNAL.md` and links added to the Brain entrypoint.
+- Constitution and older Decision Journal records **remain intact**; this ADR changes technical architecture, not previously delegated business rights.
+- Old Brain README, company Day-0 audit brief and early reusable runtime topology are historical provenance, not superior current technical standards. Their specific incompatible prescriptions are superseded by this ADR.
+- COGNITIVE_MODEL founder profiles remain hypotheses/evidence only; Mark's own Self-Model is independent.
+- COMPANY_REGISTRY_SCHEMA is a schema **contract**, not proof the registry is populated or updating.
+- CEO_OPERATING_LOOP is target behavior, not proof the cycle has been coded.
+- stage-1 acceptance evidence remains valid **only for the scoped tested behaviors**, not for live chat/registry/cognition.
+- Reconciliation findings and status: [ARCHITECTURE_RECONCILIATION_AUDIT.md](ARCHITECTURE_RECONCILIATION_AUDIT.md).
 
-Upon approval, change status to ACCEPTED with dated approval reference, without deleting pre-existing records. Historical assumptions superseded by this ADR must be identified explicitly. Until then, this PR is documentation for review only, **not a deployment authorization**.
+## Consequences and controlled implementation
+
+Implement the capability stages in [MARK_ROADMAP.md](MARK_ROADMAP.md). M0A design/decision is accepted. M0B automatic ordinary ChatGPT chat ingestion has a documented externally controlled capability blocker. M1–M6 are separately evaluated through real evidence and not accepted yet.
+
+Approval of this ADR gives **no authorization** to alter production secrets, merge unrelated product code, import personal chats, change financial/legal commitments, or release incomplete Brain capabilities. Future changes to target architecture need a new ADR and decision journal entry; changes to Constitution require its original founder approval process.
+
+## Evidence
+
+- Founder explicit decision dated 2026-10-27: assess proposed architecture, resolve conflicts, approve final model.
+- Earlier owner definition: permanent memory (including Mark himself), operational memory, mechanisms of learning/action, internal sources, external chats and internet as parts of the one Mark.
+- Existing technical facts: [stage-1 production acceptance](../audits/2026-10-27-stage1-production-acceptance.md).
+- GitHub PR #36 links accepted architecture/roadmap and systematic conflict audit.
+
+**Final interpretation:** ACCEPTED = approved *target architecture*; NOT VERIFIED = capabilities still missing or blocked. A healthy Worker is not evidence of a fully operating Mark.
