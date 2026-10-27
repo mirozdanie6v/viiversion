@@ -23,7 +23,7 @@ const json = (x: unknown, status = 200) =>
 export default {
   async fetch(req: Request, env: Env) {
     const url = new URL(req.url);
-    if (req.method === "GET" && url.pathname === "/health") return json({ status: "ok", revision: "brain-stage1-secure-retention-20261027" });
+    if (req.method === "GET" && url.pathname === "/health") return json({ status: "ok", revision: "brain-m0b-mcp-oauth-20261027" });
     // ChatGPT uses a separate, owner-approved OAuth2.1 token; neither the
     // existing Brain API secret nor the founder-approval token are given to
     // ChatGPT. All OAuth tokens are hashed, scoped and verified in D1.
