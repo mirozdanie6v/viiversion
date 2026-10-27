@@ -96,7 +96,8 @@ function toReceipt(row: ReceiptRow): InvocationReceipt {
 }
 
 export class InvocationContextStore {
-  constructor(private readonly db: D1) {}
+  private readonly db: D1;
+  constructor(db: D1) { this.db = db; }
 
   async ingest(input: unknown): Promise<{ replayed: boolean; receipt: InvocationReceipt }> {
     const value = validateHandoff(input);
