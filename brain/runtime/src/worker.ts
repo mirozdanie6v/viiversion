@@ -6,6 +6,8 @@ import { isAuthorized } from "./auth.ts";
 import { CommitmentStore } from "./commitment-store.ts";
 import { loadUnifiedContext } from "./context.ts";
 import { InvocationContextStore, readBoundedJson } from "./invocation-context.ts";
+import { handleBrainMcp } from "./mcp.ts";
+import { brainOAuthRoutes, oauthChallenge, verifyBrainOAuth } from "./mcp-oauth.ts";
 import type { Run } from "./contracts.ts";
 import { ensureRunQueued, waitForPersistedNonrunningRun, type BrainWorkflowQueue } from "./run-queue.ts";
 
@@ -22,6 +24,15 @@ export default {
   async fetch(req: Request, env: Env) {
     const url = new URL(req.url);
     if (req.method === "GET" && url.pathname === "/health") return json({ status: "ok", revision: "brain-stage1-secure-retention-20261027" });
+    // ChatGPT uses a separate, owner-approved OAuth2.1 token; neither the
+    // existing Brain API secret nor the founder-approval token are given to
+    // ChatGPT. All OAuth tokens are hashed, scoped and verified in D1.
+    const oauth = await brainOAuthRoutes(req, env);
+    if (oauth) return oauth;
+    if (url.pathname === "/mcp") {
+      if (!await verifyBrainOAuth(req, env.BRAIN_DB)) return oauthChallenge();
+      return handleBrainMcp(req, env.BRAIN_DB);
+    }
     // State, bootstrap and run endpoints all handle company state: never expose them publicly.
     // Models and read-only clients must never acquire founder-approval privileges.
     // Approval writes require an independently configured bearer secret.
