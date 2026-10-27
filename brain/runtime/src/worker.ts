@@ -5,6 +5,7 @@ import { resume } from "./loop.ts";
 import { isAuthorized } from "./auth.ts";
 import { CommitmentStore } from "./commitment-store.ts";
 import { loadUnifiedContext } from "./context.ts";
+import { InvocationContextStore, readBoundedJson } from "./invocation-context.ts";
 import type { Run } from "./contracts.ts";
 import { ensureRunQueued, waitForPersistedNonrunningRun, type BrainWorkflowQueue } from "./run-queue.ts";
 
@@ -49,6 +50,46 @@ export default {
           activeCommitments: full.executionPlan.commitments.length,
         },
       });
+    }
+    // M0B: explicitly invoked ChatGPT adapter can persist only the context
+    // actually sent by the caller. This endpoint does NOT read other chat turns
+    // or automatically verify the source conversation ID / transcript coverage.
+    if (url.pathname === "/invocation-context" && req.method === "POST") {
+      let body: unknown;
+      try { body = await readBoundedJson(req); }
+      catch (err) {
+        const reason = err instanceof Error ? err.message : "INVALID_JSON";
+        return json({error:reason}, reason === "CONTEXT_PAYLOAD_TOO_LARGE" ? 413 : 400);
+      }
+      try {
+        const result = await new InvocationContextStore(env.BRAIN_DB).ingest(body);
+        // Do not echo raw context text in HTTP success responses or deployment logs.
+        const { contextText: _redacted, ...receipt } = result.receipt;
+        return json({replayed:result.replayed,receipt},result.replayed ? 200 : 201);
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : "CONTEXT_WRITE_FAILED";
+        if (reason.startsWith("INVALID_")) return json({error:reason},400);
+        if (reason === "INVOCATION_ID_CONFLICT") return json({error:reason},409);
+        // Never expose SQL or private payload in unexpected errors.
+        return json({error:"CONTEXT_WRITE_FAILED"},503);
+      }
+    }
+    if (url.pathname === "/invocation-context" && req.method === "GET") {
+      const store = new InvocationContextStore(env.BRAIN_DB);
+      try {
+        const invocationId = url.searchParams.get("invocationId");
+        if (invocationId) {
+          const receipt = await store.get(invocationId);
+          return receipt ? json({receipt}) : json({error:"not_found"},404);
+        }
+        const projectKey = url.searchParams.get("projectKey") ?? undefined;
+        const count = url.searchParams.has("limit") ? Number(url.searchParams.get("limit")) : 10;
+        return json({records:await store.recent(projectKey,count)});
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : "CONTEXT_READ_FAILED";
+        return json({error:reason.startsWith("INVALID_") ? reason : "CONTEXT_READ_FAILED"},
+          reason.startsWith("INVALID_") ? 400 : 503);
+      }
     }
     if (req.method === "GET" && url.pathname === "/approved-commitments") {
       return json({records: await commitments.list()});

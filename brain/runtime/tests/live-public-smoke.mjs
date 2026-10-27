@@ -13,7 +13,7 @@ for(let attempt=0;attempt<30;attempt++){
   await new Promise(resolve=>setTimeout(resolve,2000));
 }
 assert.ok(revisionSeen,"new Worker revision must be served before testing access control");
-const protectedPaths=["/state","/context","/readiness","/approved-commitments","/execution-plans?id=TEST","/runs?idempotencyKey=TEST"];
+const protectedPaths=["/state","/context","/readiness","/approved-commitments","/execution-plans?id=TEST","/runs?idempotencyKey=TEST","/invocation-context?invocationId=TEST","/invocation-context?projectKey=viiversion"];
 for(const path of protectedPaths){
   const response=await fetch(new URL(path,base),{cache:"no-store"});
   assert.equal(response.status,401,"anonymous access refused: "+path);
@@ -28,5 +28,10 @@ const approval=await fetch(new URL("/approved-commitments",base),{
   body:JSON.stringify({}),
 });
 assert.equal(approval.status,401,"invalid bearer must not write approvals");
+const intake=await fetch(new URL("/invocation-context",base),{
+  method:"POST",headers:{"content-type":"application/json",authorization:"Bearer untrusted"},
+  body:JSON.stringify({invocationId:"DEMO-intake-blocked",projectKey:"viiversion",contextText:"Synthetic test",captureKind:"model_summary"}),
+});
+assert.equal(intake.status,401,"invalid bearer must not write invocation contexts");
 console.log("PASS: deployed revision "+expectedRevision+" responds; protected routes reject anonymous and invalid credentials");
 console.log("LIMITATION: authenticated read/run/commitment writes and workflow persistence remain unverified without a valid test credential");
