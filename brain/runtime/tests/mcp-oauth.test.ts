@@ -121,7 +121,7 @@ test("M0B OAuth: consent, PKCE, scoped access, refresh rotation, revoked access"
 test("M0B MCP E2E: synthetic chat A capture, independent chat B recall via issued OAuth bearer",async()=>{
  const h=harness();
  try{
-   const auth=await authenticate(h.send);
+   const auth=await authenticate(h.send,h.db);
    const invoke=async(id:number,name:string,args:Record<string,unknown>)=>{
     const r=await h.send("/mcp","POST",{jsonrpc:"2.0",id,method:"tools/call",params:{name,arguments:args}},auth.access_token);
     assert.equal(r.status,200);
