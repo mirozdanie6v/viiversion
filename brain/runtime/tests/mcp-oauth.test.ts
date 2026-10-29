@@ -13,6 +13,7 @@ function harness(){
  const sqlite=new DatabaseSync(":memory:");
  sqlite.exec(readFileSync(new URL("../migrations/0003_invocation_contexts.sql",import.meta.url),"utf8"));
  sqlite.exec(readFileSync(new URL("../migrations/0004_mark_oauth.sql",import.meta.url),"utf8"));
+ sqlite.exec(readFileSync(new URL("../migrations/0005_owner_pairing.sql",import.meta.url),"utf8"));
  const db={prepare(sql:string){
    const stmt=sqlite.prepare(sql);let args:any[]=[];
    return {bind(...values:unknown[]){args=values;return this;},
@@ -43,7 +44,7 @@ async function challenge(){
  return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
 }
 const form=(obj:Record<string,string>)=>new URLSearchParams(obj).toString();
-async function authenticate(send:ReturnType<typeof harness>["send"]){
+async function authenticate(send:ReturnType<typeof harness>["send"],db:ReturnType<typeof harness>["db"]){
  const response=await send("/oauth/register","POST",{redirect_uris:[callback],token_endpoint_auth_method:"none"});
  assert.equal(response.status,201);
  const {client_id}=await response.json() as {client_id:string};
@@ -51,11 +52,25 @@ async function authenticate(send:ReturnType<typeof harness>["send"]){
    resource:base+"/mcp",state:"synthetic-state",code_challenge:await challenge(),code_challenge_method:"S256"});
  const consent=await send("/oauth/authorize?"+u.toString());
  assert.equal(consent.status,200);
- assert.match(await consent.text(),/Разрешить ChatGPT/);
+ const page=await consent.text();
+ assert.match(page,/Подключение Марка/);
+ assert.doesNotMatch(page,/type="password"|Секрет владельца Brain|BRAIN_API_TOKEN/);
  const wrong=await send("/oauth/authorize","POST",form({...Object.fromEntries(u),owner_token:"wrong"}));
- assert.equal(wrong.status,403);
- const grant=await send("/oauth/authorize","POST",form({...Object.fromEntries(u),owner_token:secret}));
+ assert.equal(wrong.status,400,"old password entry must be disabled");
+ const unapproved=await send("/oauth/authorize","POST",form(Object.fromEntries(u)));
+ assert.equal(unapproved.status,403,"public visitor cannot approve their own OAuth request");
+ assert.equal((await unapproved.json() as any).error,"owner_pairing_approval_required");
+ const pair=await db.prepare("SELECT pairing_id FROM mark_oauth_pairing WHERE client_id=?")
+   .bind(client_id).first() as {pairing_id:string}|null;
+ assert.match(pair?.pairing_id??"",/^pair_[a-f0-9]{64}$/);
+ // Simulate owner verification by a separately authorized Cloudflare admin,
+ // not by a form field, public URL or other untrusted client data.
+ await db.prepare("UPDATE mark_oauth_pairing SET approved_at=? WHERE pairing_id=?")
+   .bind(now(),pair!.pairing_id).run();
+ const grant=await send("/oauth/authorize","POST",form(Object.fromEntries(u)));
  assert.equal(grant.status,302);
+ assert.equal((await send("/oauth/authorize","POST",form(Object.fromEntries(u)))).status,403,
+   "owner grant is one-use only");
  const redirect=new URL(grant.headers.get("location")!);
  assert.equal(redirect.origin,"https://chatgpt.com");
  assert.equal(redirect.searchParams.get("state"),"synthetic-state");
@@ -86,7 +101,7 @@ test("M0B MCP: OAuth metadata, no anonymous access, DCR redirect restrictions",a
 test("M0B OAuth: consent, PKCE, scoped access, refresh rotation, revoked access",async()=>{
  const h=harness();
  try{
-   const result=await authenticate(h.send);
+   const result=await authenticate(h.send,h.db);
    const req=new Request(base+"/mcp",{headers:{authorization:"Bearer "+result.access_token}});
    assert.equal(await verifyBrainOAuth(req,h.db as any),true);
    const refresh=await h.send("/oauth/token","POST",form({
