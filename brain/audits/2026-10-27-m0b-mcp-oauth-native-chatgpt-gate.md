@@ -34,3 +34,13 @@ A standalone synthetic-only script `brain/runtime/tests/live-mcp-oauth-smoke.mjs
 ## Decision
 
 M0B remains **IN PROGRESS** until native ChatGPT invocation and authenticated recovery, despite validated backend protocols, production deployment and local synthetic A→B tests. GitHub is documentation/code/CI; Brain D1 is memory. No private transcripts are committed to GitHub.
+
+## 2026-10-29 update — native ChatGPT invocation failed, OAuth approval stalled
+
+Owner invoked VIIVERSION Mark Brain from an ordinary ChatGPT conversation, but the model reported that no Mark tools were exposed and **no direct D1 read occurred**; it answered from ChatGPT project history. This is a failed *native MCP action* test, not a success.
+
+Cloudflare D1 inspection: one registered OAuth client, one previously approved pairing, **consumed=0**, **access tokens=0**, **refresh tokens=0**, **invocation receipts=0**. The pairing had expired. Root cause confirmed for the stalled OAuth flow: the owner confirmed a pairing out of band but the old browser form required manually submitting again before a 10-minute expiry. A registered personal plugin is not equivalent to an authorized app connection.
+
+[PR #42](https://github.com/mirozdanie6v/viiversion/pull/42), merge commit `ff882d121097d450ab8a50e348b64369c1fbce15`: while OAuth consent page is open, it refreshes every 3s; on approved GET it atomically consumes the specific pairing and redirects with a PKCE-bound authorization code, with no passwords or technical token fields. Expired pairings return HTTP 410. The old expired pairing **cannot** be revived. [CI 40872050895](https://github.com/mirozdanie6v/viiversion/actions/runs/40872050895) passed; [production deploy 40872146597](https://github.com/mirozdanie6v/viiversion/actions/runs/40872146597) passed (migration, Worker deployment and public-auth-negative smoke).
+
+**Remaining gate:** The user must be able to initiate a **fresh OAuth authorization request from ChatGPT** for the existing Mark plugin. Once ChatGPT opens a new pending pairing page, the already authorized Cloudflare management connection can approve that exact request, with no manual credentials; the page will auto-complete authorization while open. A native ChatGPT chat A invoke/readback in chat B is then still required. A disabled connect button or missing tools must not be treated as successful connection; an account-specific UI/plan limitation might require resolving the plugin install/connect state. Do not publish memory endpoints anonymously as a workaround.
