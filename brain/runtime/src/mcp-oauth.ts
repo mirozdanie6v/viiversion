@@ -60,14 +60,14 @@ async function pairingFor(db:D1,c:Client,p:URLSearchParams):Promise<Pairing>{
 }
 function html(c:Client,p:URLSearchParams,pairing:Pairing){
  const item=(key:string)=>'<input type="hidden" name="'+key+'" value="'+safe(p.get(key)??"")+'">';
- const body=`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VIIVERSION Mark — подключение</title>
+ const body=`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta http-equiv="refresh" content="3"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VIIVERSION Mark — подключение</title>
 <style>body{font-family:system-ui;color:#eef;background:#0b1420;margin:auto;padding:24px;max-width:560px}main{border:1px solid #4b5670;border-radius:14px;padding:25px;background:#182537}button{padding:12px 22px;font-weight:bold;border:0;border-radius:8px}code{overflow-wrap:anywhere}</style></head><body><main><h1>Подключение Марка к ChatGPT</h1>
 <p>Вводить пароли, API-токены или другие технические секреты <strong>не требуется</strong>.</p>
 <p>Для защиты корпоративной памяти подтвердите именно это подключение через уже подключённый Cloudflare в рабочем чате. Запрос действует 10 минут.</p>
 <p>Номер запроса: <code>${safe(pairing.pairing_id)}</code></p>
 <form method="POST" action="/oauth/authorize">${["client_id","redirect_uri","response_type","scope","state","code_challenge","code_challenge_method","resource"].map(item).join("")}
 <button type="submit">Продолжить подключение</button></form>
-<p>После подтверждения подключения вернитесь на эту страницу и нажмите «Продолжить подключение». Никакие ключи вручную вводить не нужно.</p></main></body></html>`;
+<p>Страница автоматически завершит подключение после подтверждения. Оставь её открытой — обновление происходит каждые 3 секунды.</p></main></body></html>`;
  return new Response(body,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","referrer-policy":"no-referrer","x-frame-options":"DENY","x-content-type-options":"nosniff","content-security-policy":"default-src 'none'; form-action 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'"}});
 }
 async function insertToken(db:D1,clientId:string,kind:"access"|"refresh",value:string,ttl:number){
@@ -125,7 +125,12 @@ export async function brainOAuthRoutes(req:Request, env:Env):Promise<Response|nu
   try{p=req.method==="GET"?u.searchParams:await params(req)}catch{return fail("invalid_request")}
   const c=await validRequest(db,p);if(!c)return fail("invalid_request");
   const pair=await pairingFor(db,c,p);
-  if(req.method==="GET")return html(c,p,pair);
+  if(pair.expires_at<=now())return fail("pairing_expired_restart_connection",410);
+  if(req.method==="GET"&&!pair.approved_at)return html(c,p,pair);
+  // After out-of-band approval, the original OAuth page finalizes automatically
+  // on its next GET refresh. The request is bound to PKCE/state/client/redirect,
+  // and the pairing is consumed atomically only once.
+
   // Important: accepting a submitted form is not enough for granting access.
   // Only a separate owner-authorized Cloudflare action can approve the exact
   // pairing_id in D1. A forged public request has no authority.
