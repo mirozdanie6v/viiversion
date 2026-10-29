@@ -1,0 +1,108 @@
+name: Deploy VIIVERSION Brain
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - brain-v0.1-bootstrap
+    paths:
+      - 'brain/runtime/**'
+      - '.github/workflows/deploy-brain.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: brain/runtime
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: brain-v0.1-bootstrap
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: npm install --no-fund --no-audit
+      - run: npm test
+      - name: Verify Cloudflare authentication
+        run: npx wrangler whoami
+      - name: Verify Cloudflare-managed Worker secrets without reading or rotating values
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Names only; secret values never leave Cloudflare.
+          npx wrangler secret list --config wrangler.jsonc --format json |
+            node --input-type=module -e '
+              let input="";
+              for await (const part of process.stdin) input+=part;
+              const rows=JSON.parse(input);
+              if(!Array.isArray(rows))throw Error("Cloudflare secret inventory invalid");
+              const names=new Set(rows.map(row=>row.name));
+              for(const required of ["BRAIN_API_TOKEN","BRAIN_APPROVAL_TOKEN"])
+                if(!names.has(required))throw Error("Missing Cloudflare Worker secret: "+required);
+              console.log("PASS: existing independent Brain secrets are present on the target Cloudflare Worker");
+            '
+      - name: Select optional authenticated smoke verification
+        shell: bash
+        env:
+          CONFIGURED_BRAIN_API_TOKEN: ${{ secrets.BRAIN_API_TOKEN }}
+          CONFIGURED_BRAIN_APPROVAL_TOKEN: ${{ secrets.BRAIN_APPROVAL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${#CONFIGURED_BRAIN_API_TOKEN}" -ge 32 ] &&
+             [ "${#CONFIGURED_BRAIN_APPROVAL_TOKEN}" -ge 32 ] &&
+             [ "$CONFIGURED_BRAIN_API_TOKEN" != "$CONFIGURED_BRAIN_APPROVAL_TOKEN" ]; then
+            echo "::add-mask::$CONFIGURED_BRAIN_API_TOKEN"
+            echo "::add-mask::$CONFIGURED_BRAIN_APPROVAL_TOKEN"
+            echo "BRAIN_TEST_TOKEN=$CONFIGURED_BRAIN_API_TOKEN" >> "$GITHUB_ENV"
+            echo "BRAIN_TEST_APPROVAL_TOKEN=$CONFIGURED_BRAIN_APPROVAL_TOKEN" >> "$GITHUB_ENV"
+            echo "BRAIN_AUTH_SMOKE=true" >> "$GITHUB_ENV"
+          else
+            echo "BRAIN_AUTH_SMOKE=false" >> "$GITHUB_ENV"
+            echo "INFO: GitHub has no approved smoke credentials; preserve Cloudflare secrets and run public negative-auth smoke instead."
+          fi
+      - name: Apply existing D1 migrations
+        run: npx wrangler d1 migrations apply viiversion-brain --remote --config wrangler.jsonc
+      - name: Deploy Worker and Workflow
+        run: npx wrangler deploy --config wrangler.jsonc
+      - name: Verify deployed revision and protected endpoints deny anonymous requests
+        env:
+          BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
+        run: node tests/live-public-smoke.mjs
+      - name: Remote fresh-session checkpoint E2E
+        if: ${{ env.BRAIN_AUTH_SMOKE == 'true' }}
+        env:
+          BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
+        run: node tests/live-smoke.mjs
+      - name: Independent process restores persisted CEO context
+        if: ${{ env.BRAIN_AUTH_SMOKE == 'true' }}
+        env:
+          BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
+        run: node tests/live-resume.mjs
+      - name: Import private founder-approved commitments when temporary secret is present
+        shell: bash
+        env:
+          BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
+          BRAIN_COMMITMENTS_IMPORT_B64: ${{ secrets.BRAIN_COMMITMENTS_IMPORT_B64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BRAIN_COMMITMENTS_IMPORT_B64:-}" ]; then
+            echo "SKIP: no one-time import requested. Existing D1 records are preserved."
+          elif [ "${BRAIN_AUTH_SMOKE:-false}" != "true" ]; then
+            echo "::error::Import requested but stable founder-approval test credentials are unavailable to this GitHub workflow."
+            exit 1
+          else
+            node tests/import-private-commitments.mjs
+          fi
+      - name: Independent process restores private client decisions and saved plan
+        if: ${{ env.BRAIN_PRIVATE_IMPORT_DONE == 'true' && env.BRAIN_AUTH_SMOKE == 'true' }}
+        env:
+          BRAIN_TEST_BASE: https://viiversion-brain.viiversion.workers.dev
+        run: node tests/private-commitments-resume.mjs
