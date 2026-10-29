@@ -1,5 +1,4 @@
 import type { D1 } from "./d1-repository.ts";
-import { isAuthorized } from "./auth.ts";
 
 const issuer="https://viiversion-brain.viiversion.workers.dev";
 const resource=issuer+"/mcp";
@@ -7,10 +6,11 @@ const scope="brain:memory";
 const tokenTtl=3600;
 const refreshTtl=30*24*3600;
 const redirectPattern=/^https:\/\/chatgpt\.com\/(?:connector_platform_oauth_redirect|connector\/oauth\/[A-Za-z0-9_-]+)$/;
-type Env={ BRAIN_DB:D1; BRAIN_API_TOKEN?:string };
+type Env={ BRAIN_DB:D1 };
 type Client={client_id:string;redirect_uri:string;created_at:number};
 type Code={code_hash:string;client_id:string;redirect_uri:string;pkce_challenge:string;resource:string;expires_at:number};
 type Token={token_hash:string;client_id:string;token_kind:"access"|"refresh";resource:string;scope:string;expires_at:number};
+type Pairing={pairing_id:string;request_hash:string;client_id:string;redirect_uri:string;expires_at:number;approved_at:number|null;consumed_at:number|null};
 
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json","cache-control":"no-store","x-content-type-options":"nosniff"}});
 const fail=(error:string,status=400)=>json({error},status);
@@ -47,12 +47,27 @@ async function validRequest(db:D1,p:URLSearchParams):Promise<Client|null>{
  const c=await getClient(db,p.get("client_id")??"");
  return c&&c.redirect_uri===p.get("redirect_uri")?c:null;
 }
-function html(c:Client,p:URLSearchParams){
+// The owner's *existing authenticated Cloudflare connection* approves the exact
+// short-lived pairing record. There is no user-entered password or API token.
+async function pairingFor(db:D1,c:Client,p:URLSearchParams):Promise<Pairing>{
+ const fingerprint=await digest([c.client_id,c.redirect_uri,p.get("code_challenge")??"",p.get("state")??"",resource].join("|"));
+ await db.prepare("INSERT OR IGNORE INTO mark_oauth_pairing(pairing_id,request_hash,client_id,redirect_uri,expires_at,approved_at,consumed_at) VALUES(?,?,?,?,?,NULL,NULL)")
+   .bind("pair_"+random(),fingerprint,c.client_id,c.redirect_uri,now()+600).run();
+ const record=await db.prepare("SELECT pairing_id,request_hash,client_id,redirect_uri,expires_at,approved_at,consumed_at FROM mark_oauth_pairing WHERE request_hash=?")
+   .bind(fingerprint).first<Pairing>();
+ if(!record)throw Error("PAIRING_CREATE_FAILED");
+ return record;
+}
+function html(c:Client,p:URLSearchParams,pairing:Pairing){
  const item=(key:string)=>'<input type="hidden" name="'+key+'" value="'+safe(p.get(key)??"")+'">';
- const body=`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VIIVERSION Mark — OAuth</title>
-<style>body{font-family:system-ui;color:#eef;background:#0b1420;margin:auto;padding:24px;max-width:560px}main{border:1px solid #4b5670;border-radius:14px;padding:25px;background:#182537}input{width:100%;box-sizing:border-box;padding:11px;border-radius:8px;margin:8px 0;background:#101b2a;color:white;border:1px solid #70809a}button{padding:12px 22px;font-weight:bold;border:0;border-radius:8px}</style></head><body><main><h1>Разрешить ChatGPT доступ к памяти Марка</h1><p>Доступ: читать корпоративный контекст и сохранять только тот контекст чата, который явно передан при вызове Марка. Это НЕ право изменять коммерческие обязательства.</p><p>Для подтверждения владельца введите секрет Brain API из личного хранилища в форму на защищённом сайте VIIVERSION. <strong>Никогда не вставляйте этот секрет в чат.</strong></p>
+ const body=`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VIIVERSION Mark — подключение</title>
+<style>body{font-family:system-ui;color:#eef;background:#0b1420;margin:auto;padding:24px;max-width:560px}main{border:1px solid #4b5670;border-radius:14px;padding:25px;background:#182537}button{padding:12px 22px;font-weight:bold;border:0;border-radius:8px}code{overflow-wrap:anywhere}</style></head><body><main><h1>Подключение Марка к ChatGPT</h1>
+<p>Вводить пароли, API-токены или другие технические секреты <strong>не требуется</strong>.</p>
+<p>Для защиты корпоративной памяти подтвердите именно это подключение через уже подключённый Cloudflare в рабочем чате. Запрос действует 10 минут.</p>
+<p>Номер запроса: <code>${safe(pairing.pairing_id)}</code></p>
 <form method="POST" action="/oauth/authorize">${["client_id","redirect_uri","response_type","scope","state","code_challenge","code_challenge_method","resource"].map(item).join("")}
-<label>Секрет владельца Brain</label><input type="password" name="owner_token" required autocomplete="off"><button type="submit">Разрешить доступ</button></form></main></body></html>`;
+<button type="submit">Продолжить подключение</button></form>
+<p>После подтверждения подключения вернитесь на эту страницу и нажмите «Продолжить подключение». Никакие ключи вручную вводить не нужно.</p></main></body></html>`;
  return new Response(body,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","referrer-policy":"no-referrer","x-frame-options":"DENY","x-content-type-options":"nosniff","content-security-policy":"default-src 'none'; form-action 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'"}});
 }
 async function insertToken(db:D1,clientId:string,kind:"access"|"refresh",value:string,ttl:number){
@@ -109,12 +124,17 @@ export async function brainOAuthRoutes(req:Request, env:Env):Promise<Response|nu
   let p:URLSearchParams;
   try{p=req.method==="GET"?u.searchParams:await params(req)}catch{return fail("invalid_request")}
   const c=await validRequest(db,p);if(!c)return fail("invalid_request");
-  if(req.method==="GET")return html(c,p);
-  // Existing secret is never returned or stored in OAuth records, and user
-  // enters it only on this Worker-hosted HTTPS form (never in ChatGPT).
-  const credential=p.get("owner_token")??"";
-  const owner=new Request(issuer+"/context",{headers:{authorization:"Bearer "+credential}});
-  if(!await isAuthorized(owner,env.BRAIN_API_TOKEN))return new Response("Owner credential not accepted.",{status:403,headers:{"content-type":"text/plain","cache-control":"no-store"}});
+  const pair=await pairingFor(db,c,p);
+  if(req.method==="GET")return html(c,p,pair);
+  // Important: accepting a submitted form is not enough for granting access.
+  // Only a separate owner-authorized Cloudflare action can approve the exact
+  // pairing_id in D1. A forged public request has no authority.
+  if(p.has("owner_token"))return fail("technical_secret_login_disabled",400);
+  if(pair.expires_at<=now())return fail("pairing_expired_restart_connection",403);
+  const claim=await db.prepare(
+   "UPDATE mark_oauth_pairing SET consumed_at=? WHERE pairing_id=? AND request_hash=? AND client_id=? AND approved_at IS NOT NULL AND consumed_at IS NULL AND expires_at>?"
+  ).bind(now(),pair.pairing_id,pair.request_hash,c.client_id,now()).run();
+  if(claim.meta?.changes!==1)return fail("owner_pairing_approval_required",403);
   const code=random();
   await db.prepare("INSERT INTO mark_oauth_codes(code_hash,client_id,redirect_uri,pkce_challenge,resource,expires_at) VALUES(?,?,?,?,?,?)")
    .bind(await digest(code),c.client_id,c.redirect_uri,p.get("code_challenge"),resource,now()+300).run();
