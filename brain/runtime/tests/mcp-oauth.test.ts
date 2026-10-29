@@ -55,6 +55,7 @@ async function authenticate(send:ReturnType<typeof harness>["send"],db:ReturnTyp
  const page=await consent.text();
  assert.match(page,/Подключение Марка/);
  assert.doesNotMatch(page,/type="password"|Секрет владельца Brain|BRAIN_API_TOKEN/);
+ assert.match(page,/http-equiv="refresh" content="3"/,"pending OAuth page must poll automatically");
  const wrong=await send("/oauth/authorize","POST",form({...Object.fromEntries(u),owner_token:"wrong"}));
  assert.equal(wrong.status,400,"old password entry must be disabled");
  const unapproved=await send("/oauth/authorize","POST",form(Object.fromEntries(u)));
@@ -67,9 +68,9 @@ async function authenticate(send:ReturnType<typeof harness>["send"],db:ReturnTyp
  // not by a form field, public URL or other untrusted client data.
  await db.prepare("UPDATE mark_oauth_pairing SET approved_at=? WHERE pairing_id=?")
    .bind(now(),pair!.pairing_id).run();
- const grant=await send("/oauth/authorize","POST",form(Object.fromEntries(u)));
- assert.equal(grant.status,302);
- assert.equal((await send("/oauth/authorize","POST",form(Object.fromEntries(u)))).status,403,
+ const grant=await send("/oauth/authorize?"+u.toString(),"GET");
+ assert.equal(grant.status,302,"approved pairing must finish from automatic page refresh");
+ assert.equal((await send("/oauth/authorize?"+u.toString(),"GET")).status,403,
    "owner grant is one-use only");
  const redirect=new URL(grant.headers.get("location")!);
  assert.equal(redirect.origin,"https://chatgpt.com");
