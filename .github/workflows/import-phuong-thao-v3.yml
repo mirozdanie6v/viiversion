@@ -83,7 +83,7 @@ jobs:
               msg='Ảnh tạo bằng AI · Изображения созданы ИИ, не реальные фото блюд'
               d.rectangle((25,im.height-32,im.width-25,im.height-5),fill=(250,238,218))
               d.text((im.width/2,im.height-18),msg,font=font,fill=(67,70,54),anchor='mm')
-              im.save(out/('menu-%02d.png'%i),optimize=True)
+              im.save(out/('menu-%02d.png'%i),compress_level=4)
               pages.append(im)
           W,H=A4
           def photo_pdf(path, images):
@@ -194,9 +194,14 @@ jobs:
           (out/'materials.html').write_text(material)
           for name,count in [('Phuong-Thao-illustrated-menu.pdf',4),('Menu-VI-RU.pdf',4),('Menu-VI-EN.pdf',4),('Proposal-RU.pdf',1)]:
               p=PdfReader(out/name);assert len(p.pages)==count,(name,len(p.pages));assert all(abs(float(q.mediabox.width)-W)<1 and abs(float(q.mediabox.height)-H)<1 for q in p.pages)
-          result=BeautifulSoup((out/'index.html').read_text(),'html.parser')
+          serialized=(out/'index.html').read_text()
           for l in langs:
-              assert len(result.select('#tpl-'+l+' .dish-photo'))==24
+              pattern=r'<template[^>]*id="tpl-'+l+r'"[^>]*>(.*?)</template>'
+              block=re.search(pattern,serialized,re.S)
+              assert block is not None,l
+              actual=re.findall(r'photos/(\d\d)\.webp',block.group(1))
+              expected=['%02d'%i for i in range(1,25)]
+              assert actual==expected,(l,actual)
           assert len(list(photos.glob('[0-9][0-9].webp')))==24
           print('PASS: 24 matched photos, 5 language templates, 4 A4 PDFs, public materials links.')
           PY
