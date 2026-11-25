@@ -14,7 +14,7 @@ jobs:
           ref: viiversion
       - name: Prepare renderers
         run: |
-          python3 -m pip install --quiet weasyprint pypdf pillow playwright
+          python3 -m pip install --quiet weasyprint pypdf pillow playwright pypdfium2
           if ! fc-list :lang=zh | grep -q . || ! fc-list :lang=ko | grep -q .; then
             sudo apt-get update -qq
             sudo apt-get install -y -qq fonts-noto-cjk
@@ -76,8 +76,11 @@ jobs:
               norm=lambda s:re.sub(r'\s+','',s)
               for dish in langs[l]['items']:assert norm(dish) in norm(raw),(l,dish,raw[:150])
           shutil.copyfile(out/'Menu-VI-RU.pdf',out/'Phuong-Thao-illustrated-menu.pdf')
+          import pypdfium2 as pdfium
+          rendered=pdfium.PdfDocument(str(out/'Menu-VI-RU.pdf'))
           for i in range(1,5):
-              subprocess.run(['pdftoppm','-f',str(i),'-l',str(i),'-r','150','-png','-singlefile',str(out/'Menu-VI-RU.pdf'),str(out/f'menu-{i:02}')],check=True)
+              rendered[i-1].render(scale=150/72).to_pil().save(out/f'menu-{i:02}.png')
+          rendered.close()
           imgs=[Image.open(out/f'menu-{i:02}.png').convert('RGB') for i in range(1,5)]
           w=490;h=round(w*imgs[0].height/imgs[0].width);preview=Image.new('RGB',(2*w+60,2*h+60),(246,235,214))
           for i,im in enumerate(imgs):preview.paste(im.resize((w,h),Image.Resampling.LANCZOS),(20+i%2*(w+20),20+i//2*(h+20)))
@@ -102,9 +105,9 @@ jobs:
           path.write_text(m)
           # Real browser test: every locale, 24 names and photos, all localized link labels, no page duplicates.
           chrome=shutil.which('google-chrome') or shutil.which('chromium') or shutil.which('google-chrome-stable')
-          assert chrome,'Chrome unavailable'
+          if not chrome: subprocess.run(['python3','-m','playwright','install','chromium'],check=True)
           with sync_playwright() as p:
-              browser=p.chromium.launch(executable_path=chrome,headless=True,args=['--no-sandbox'])
+              browser=p.chromium.launch(executable_path=chrome or None,headless=True,args=['--no-sandbox'])
               page=browser.new_page(viewport={'width':390,'height':844})
               page.goto((out/'index.html').as_uri(),wait_until='load')
               for l,d in langs.items():
