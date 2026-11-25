@@ -1,0 +1,131 @@
+name: Audit and publish Phuong Thao translations
+on:
+  push:
+    branches: [viiversion]
+    paths: ['.github/workflows/audit-phuong-thao-translations.yml']
+permissions:
+  contents: write
+jobs:
+  localized-menu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: viiversion
+      - name: Prepare renderers
+        run: |
+          python3 -m pip install --quiet weasyprint pypdf pillow playwright
+          if ! fc-list :lang=zh | grep -q . || ! fc-list :lang=ko | grep -q .; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq fonts-noto-cjk
+          fi
+      - name: Build the reviewed menus and verify all five locales
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,html,shutil,subprocess,re
+          from pathlib import Path
+          from weasyprint import HTML
+          from pypdf import PdfReader
+          from PIL import Image
+          from playwright.sync_api import sync_playwright
+          out=Path('site_assets/demo/phuong-thao-v2').resolve()
+          langs=json.loads('''{"vi":{"lang":"Tiếng Việt","subtitle":"Ẩm thực Việt Nam · Nha Trang","menu":"Thực đơn","concept":"Bản thiết kế minh họa · Giá tham khảo","note":"Giá tính bằng VND · Vui lòng xác nhận với nhà hàng","ai":"Hình ảnh do AI tạo, không phải ảnh món ăn thực tế.","proposal":"Đề xuất thiết kế","pdf":"Thực đơn PDF","sections":["Hải sản","Món nóng","Trái cây và sinh tố"],"groups":["Cá thu","Mực","Pelmeni (bánh bao kiểu Nga)","Canh","Mì, nui và đậu hũ","Trái cây","Sinh tố · 650 ml"],"items":["Cá thu sốt thơm","Cá thu sốt nước mắm tỏi","Cá thu sốt chanh dây","Cá thu sốt cà chua","Mực nướng","Mực xào thơm","Mực xào chua ngọt","Mực chiên giòn","Pelmeni luộc","Pelmeni chiên","Canh chua cá bớp","Canh chua nghêu","Canh bí đao nấu tôm","Canh cà chua trứng","Nui xào hải sản","Mì xào rau","Đậu hũ chiên","Đậu hũ sốt cà chua","Đĩa trái cây","Sinh tố xoài","Sinh tố chuối","Sinh tố xoài chanh dây","Sinh tố dâu tây","Sinh tố bơ"]},"en":{"lang":"English","subtitle":"Vietnamese cuisine · Nha Trang","menu":"Menu","concept":"Design concept · Reference prices","note":"Prices in VND · Please confirm with the restaurant","ai":"AI-generated images; not actual photographs of the restaurant's dishes.","proposal":"Design proposal (Russian)","pdf":"PDF menu","sections":["Seafood","Hot dishes","Fruit and smoothies"],"groups":["Mackerel","Squid","Russian pelmeni","Soups","Noodles, pasta and tofu","Fruit","Smoothies · 650 ml"],"items":["Mackerel in pineapple sauce","Mackerel in garlic and fish sauce","Mackerel in passion fruit sauce","Mackerel in tomato sauce","Grilled squid","Stir-fried squid with pineapple","Sweet-and-sour stir-fried squid","Crispy fried squid","Boiled Russian pelmeni","Fried Russian pelmeni","Vietnamese sour cobia soup","Vietnamese sour clam soup","Winter melon and shrimp soup","Tomato and egg soup","Stir-fried pasta with seafood","Stir-fried noodles with vegetables","Fried tofu","Tofu in tomato sauce","Fresh fruit platter","Mango smoothie","Banana smoothie","Mango and passion fruit smoothie","Strawberry smoothie","Avocado smoothie"]},"ru":{"lang":"Русский","subtitle":"Вьетнамская кухня · Нячанг","menu":"Меню","concept":"Демонстрационный дизайн · Справочные цены","note":"Цены в донгах (VND) · Уточняйте в ресторане","ai":"Изображения созданы ИИ и не являются реальными фотографиями блюд ресторана.","proposal":"Коммерческое предложение","pdf":"Меню в PDF","sections":["Морепродукты","Горячие блюда","Фрукты и смузи"],"groups":["Скумбрия","Кальмар","Пельмени","Супы","Лапша, макароны и тофу","Фрукты","Смузи · 650 мл"],"items":["Скумбрия в ананасовом соусе","Скумбрия в рыбном соусе с чесноком","Скумбрия в соусе из маракуйи","Скумбрия в томатном соусе","Кальмар на гриле","Кальмар, жаренный с ананасом","Кальмар в кисло-сладком соусе","Кальмар в хрустящей панировке","Отварные пельмени","Жареные пельмени","Вьетнамский кислый суп с кобией","Вьетнамский кислый суп с моллюсками","Суп с восковой тыквой и креветками","Томатный суп с яйцом","Жареные макароны с морепродуктами","Жареная лапша с овощами","Жареный тофу","Тофу в томатном соусе","Ассорти свежих фруктов","Смузи из манго","Банановый смузи","Смузи из манго и маракуйи","Клубничный смузи","Смузи из авокадо"]},"zh":{"lang":"简体中文","subtitle":"越南菜 · 芽庄","menu":"菜单","concept":"设计示意 · 参考价格","note":"价格以越南盾（VND）计 · 请向餐厅确认","ai":"图片由人工智能生成，并非餐厅菜品实拍。","proposal":"设计方案（俄语）","pdf":"PDF 菜单","sections":["海鲜","热菜","水果与冰沙"],"groups":["鲭鱼","鱿鱼","俄式饺子","汤类","面食与豆腐","水果","冰沙 · 650 毫升"],"items":["菠萝酱汁鲭鱼","蒜香鱼露鲭鱼","百香果酱汁鲭鱼","番茄酱汁鲭鱼","烤鱿鱼","菠萝炒鱿鱼","糖醋炒鱿鱼","香酥炸鱿鱼","水煮俄式饺子","煎俄式饺子","越式军曹鱼酸汤","越式蛤蜊酸汤","冬瓜鲜虾汤","番茄蛋汤","海鲜炒通心粉","蔬菜炒面","炸豆腐","番茄酱汁豆腐","鲜果拼盘","芒果冰沙","香蕉冰沙","芒果百香果冰沙","草莓冰沙","牛油果冰沙"]},"ko":{"lang":"한국어","subtitle":"베트남 요리 · 나트랑","menu":"메뉴","concept":"디자인 시안 · 참고 가격","note":"가격은 베트남 동(VND) 기준이며 식당에 확인해 주세요.","ai":"AI로 생성한 이미지이며 실제 음식 사진이 아닙니다.","proposal":"디자인 제안서 (러시아어)","pdf":"PDF 메뉴","sections":["해산물","따뜻한 요리","과일과 스무디"],"groups":["고등어","오징어","러시아식 만두","국물 요리","면 요리와 두부","과일","스무디 · 650mL"],"items":["파인애플 소스 고등어","마늘 피시소스 고등어","패션프루트 소스 고등어","토마토 소스 고등어","오징어 구이","파인애플 오징어 볶음","새콤달콤한 오징어 볶음","바삭한 오징어 튀김","러시아식 물만두","러시아식 군만두","베트남식 코비아 생선 새콤한 국","베트남식 조개 새콤한 국","동과 새우국","토마토 달걀국","해산물 마카로니 볶음","채소 볶음면","두부 튀김","토마토 소스 두부","신선한 과일 모둠","망고 스무디","바나나 스무디","망고 패션프루트 스무디","딸기 스무디","아보카도 스무디"]}}'''.replace("restaurant's","restaurant's"))
+          prices=[120000]*4+[180000]*4+[60000,60000,130000,80000,70000,60000,65000,40000,40000,50000,60000,25000,25000,27000,30000,27000]
+          groups=[(0,4),(4,8),(8,10),(10,14),(14,18),(18,19),(19,24)]
+          sections=[(0,2),(2,5),(5,7)]
+          esc=html.escape
+          for l,d in langs.items():
+              assert len(d['items'])==24 and len(d['groups'])==7 and len(d['sections'])==3,l
+          for i in range(1,25):assert (out/'photos'/('%02d.webp'%i)).is_file(),i
+          (out/'translations.json').write_text(json.dumps(langs,ensure_ascii=False,indent=2))
+          css="""*{box-sizing:border-box}body{margin:0;background:#eee7dc;color:#26392e;font-family:'Noto Sans','Noto Sans CJK SC','Noto Sans CJK KR',Arial,sans-serif;line-height:1.35}h1,h2,h3,p{margin:0}h1,h2{font-family:'Noto Serif','Noto Serif CJK SC','Noto Serif CJK KR',Georgia,serif;line-height:1.12;color:#244D42}main{max-width:760px;margin:auto;padding:10px}.page{background:#fbefdc;border-top:7px solid #b4452b;margin-bottom:12px;padding:26px 30px}.brand{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #d3a34d;padding-bottom:10px;font-size:11px;font-weight:bold;letter-spacing:.08em;color:#244d42}.brand span:last-child{color:#b4452b}.cover{text-align:center}.cover h1{font-size:clamp(38px,8vw,66px);margin:32px 0 8px}.wordmark{font-weight:bold;letter-spacing:.24em;color:#b4452b;font-size:20px;margin-bottom:13px}.hero{width:100%;display:block;margin:18px auto;max-height:490px;object-fit:cover}.cover h2{font-size:36px;color:#b4452b;margin-bottom:12px}.cover .address{margin-bottom:9px}.note,.ai{font-size:11px;color:#62594c}.label{color:#b4452b;font-size:11px;letter-spacing:.13em;font-weight:bold;margin-top:15px}.section-title{font-size:clamp(30px,6vw,47px);margin:5px 0 11px}.secondary-title{font-size:17px;font-weight:400;color:#62594c;margin-bottom:8px}.group h3{font-size:13px;letter-spacing:.03em;color:#244d42;border-bottom:1px solid #d3a34d;margin:11px 0 2px;padding-bottom:3px}.item{display:grid;grid-template-columns:clamp(86px,28%,155px) minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #e2cfab}.dish-photo{width:100%;height:auto;max-height:88px;object-fit:contain;display:block}.name{font-size:16px;font-weight:650;overflow-wrap:anywhere}.subname{display:block;font-size:12px;font-weight:400;color:#62594c;margin-top:3px}.price{font-weight:bold;color:#b4452b;font-size:15px;white-space:nowrap}.foot{border-top:1px solid #d3a34d;margin-top:14px;padding-top:8px}.foot p+p{margin-top:3px}.nav{position:sticky;top:0;z-index:5;background:#244d42;display:flex;gap:5px;justify-content:center;padding:9px;flex-wrap:wrap}.nav button{font:inherit;color:white;border:1px solid #a3b6a7;background:transparent;padding:7px 10px;border-radius:4px;cursor:pointer}.nav button[aria-pressed=true]{background:#fbefdc;color:#244d42}.demo-links{display:flex;justify-content:center;gap:15px;flex-wrap:wrap;padding:12px 10px 22px;font-size:13px}.demo-links a{color:#244d42;font-weight:bold}@media(max-width:450px){.page{padding:20px 12px}.item{grid-template-columns:84px minmax(0,1fr) auto;gap:7px}.name{font-size:14px}.price{font-size:13px}.dish-photo{max-height:65px}.cover h1{font-size:44px}}"""
+          printcss="""@page{size:A4;margin:0}body{background:#fbefdc}main{max-width:none;padding:0}.page{width:210mm;height:297mm;margin:0;border-top:3mm solid #b4452b;padding:12mm 13mm 10mm;break-after:page;position:relative}.page:last-child{break-after:auto}.brand{font-size:10pt;padding-bottom:3mm}.cover h1{font-size:43pt;margin:18mm 0 4mm}.wordmark{font-size:18pt}.cover .hero{height:132mm;max-height:none;margin:8mm 0 7mm;object-fit:cover}.cover h2{font-size:30pt}.cover .note,.cover .ai{font-size:9pt}.label{font-size:9pt;margin-top:5mm}.section-title{font-size:28pt;margin:2mm 0 1mm}.secondary-title{font-size:13pt;margin:0 0 2mm}.group h3{font-size:10pt;margin:2mm 0 0;padding-bottom:1mm}.item{display:table;width:100%;table-layout:fixed;padding:0;border-bottom:0.25mm solid #e2cfab;height:var(--row-height)}.item>div,.item>span{display:table-cell;vertical-align:middle}.photo-cell{width:47mm;padding:1mm 3mm 1mm 0}.dish-photo{width:44mm;height:var(--photo-height);max-height:none;object-fit:contain}.name{font-size:12pt;font-weight:700;line-height:1.22;padding-right:2mm}.subname{font-size:10pt;margin-top:1mm;line-height:1.18}.price{width:34mm;text-align:right;font-size:12pt}.foot{position:absolute;left:13mm;right:13mm;bottom:8mm;margin:0;padding-top:2mm}.foot .note,.foot .ai{font-size:8pt}.nav,.demo-links{display:none}"""
+          def pages(l,primary=None):
+              d=langs[l];v=langs['vi'];bilingual=primary is not None
+              def brand(n):return f'<div class="brand"><span>PHƯƠNG THẢO · КОСТЯ</span><span>NHA TRANG / {n:02}</span></div>'
+              def foot():return '<div class="foot"><p class="note">'+esc(d['note'])+'</p><p class="ai">'+esc(d['ai'])+'</p></div>'
+              cover=f'<section class="page cover">{brand(0)}<h1>Phương Thảo</h1><div class="wordmark">КОСТЯ</div><p>{esc(d["subtitle"])}</p><img class="hero" src="photos/hero.webp" alt=""><h2>{esc(v["menu"]+" / "+d["menu"] if bilingual else d["menu"])}</h2><p class="address">15 Tôn Đản · Nha Trang</p><p class="note">{esc(d["concept"])}</p><p class="ai">{esc(d["ai"])}</p></section>'
+              result=[cover]
+              for pg,(a,b) in enumerate(sections,1):
+                  rowh=[22,19,29][pg-1]
+                  p=[f'<section class="page" style="--row-height:{rowh}mm;--photo-height:{rowh-2}mm">{brand(pg)}<div class="label">{pg:02} / 03</div><h2 class="section-title">{esc(v["sections"][pg-1] if bilingual else d["sections"][pg-1])}</h2>']
+                  if bilingual:p.append(f'<div class="secondary-title" lang="{l}">{esc(d["sections"][pg-1])}</div>')
+                  for g in range(a,b):
+                      head=v['groups'][g]+' / '+d['groups'][g] if bilingual else d['groups'][g]
+                      p.append(f'<div class="group"><h3>{esc(head)}</h3>')
+                      for i in range(*groups[g]):
+                          price=f'{prices[i]:,}'.replace(',','.')+' ₫'
+                          name=v['items'][i] if bilingual else d['items'][i]
+                          sub=f'<span class="subname" lang="{l}">{esc(d["items"][i])}</span>' if bilingual else ''
+                          p.append(f'<div class="item"><div class="photo-cell"><img class="dish-photo" src="photos/{i+1:02}.webp" alt="{esc(name)}"></div><div class="name">{esc(name)}{sub}</div><span class="price">{price}</span></div>')
+                      p.append('</div>')
+                  p.append(foot()+'</section>');result.append(''.join(p))
+              return ''.join(result)
+          def doc(l,content,extra=''):
+              return '<!doctype html><html lang="'+l+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="menu-version" content="translation-v4"><title>Phương Thảo · Костя</title><style>'+css+extra+'</style></head><body>'+content+'</body></html>'
+          pdfnames={'vi':'Menu-VI.pdf','en':'Menu-VI-EN.pdf','ru':'Menu-VI-RU.pdf','zh':'Menu-VI-ZH.pdf','ko':'Menu-VI-KO.pdf'}
+          for l in langs:
+              name=pdfnames[l];markup=doc(l,'<main>'+pages(l,l if l!='vi' else None)+'</main>',printcss)
+              HTML(string=markup,base_url=str(out)+'/').write_pdf(out/name)
+              reader=PdfReader(out/name);assert len(reader.pages)==4,(l,len(reader.pages))
+              assert all(abs(float(p.mediabox.width)-595.28)<1 and abs(float(p.mediabox.height)-841.89)<1 for p in reader.pages)
+              # Validate all names through PDF text extraction after normalizing whitespace.
+              raw=' '.join(p.extract_text() or '' for p in reader.pages)
+              norm=lambda s:re.sub(r'\s+','',s)
+              for dish in langs[l]['items']:assert norm(dish) in norm(raw),(l,dish,raw[:150])
+          shutil.copyfile(out/'Menu-VI-RU.pdf',out/'Phuong-Thao-illustrated-menu.pdf')
+          for i in range(1,5):
+              subprocess.run(['pdftoppm','-f',str(i),'-l',str(i),'-r','150','-png','-singlefile',str(out/'Menu-VI-RU.pdf'),str(out/f'menu-{i:02}')],check=True)
+          imgs=[Image.open(out/f'menu-{i:02}.png').convert('RGB') for i in range(1,5)]
+          w=490;h=round(w*imgs[0].height/imgs[0].width);preview=Image.new('RGB',(2*w+60,2*h+60),(246,235,214))
+          for i,im in enumerate(imgs):preview.paste(im.resize((w,h),Image.Resampling.LANCZOS),(20+i%2*(w+20),20+i//2*(h+20)))
+          preview.save(out/'preview.jpg',quality=92)
+          nav='<nav class="nav" aria-label="Language">'+''.join(f'<button type="button" data-lang="{l}" aria-pressed="{str(l=="vi").lower()}" lang="{l}">{esc(d["lang"])}</button>' for l,d in langs.items())+'</nav>'
+          templates=''.join(f'<template id="tpl-{l}">{pages(l)}</template>' for l in langs)
+          footer='<footer class="demo-links"><a id="pdf" href="Menu-VI.pdf">Thực đơn PDF</a><a id="proposal" href="materials.html">Đề xuất thiết kế</a></footer>'
+          meta=json.dumps({l:dict(pdf=d['pdf'],proposal=d['proposal'],url=pdfnames[l]) for l,d in langs.items()},ensure_ascii=False)
+          script="""<script>const labels=__META__;const main=document.querySelector('main');function show(l){if(!Object.hasOwn(labels,l))l='vi';document.documentElement.lang=l;main.replaceChildren(document.querySelector('#tpl-'+l).content.cloneNode(true));document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===l)));const pdf=document.querySelector('#pdf');pdf.textContent=labels[l].pdf;pdf.href=labels[l].url;document.querySelector('#proposal').textContent=labels[l].proposal;try{localStorage.setItem('phuong-lang',l)}catch(e){}}document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.lang)));let l=new URLSearchParams(location.search).get('lang');if(!l){try{l=localStorage.getItem('phuong-lang')}catch(e){}}show(l||'vi');</script>""".replace('__META__',meta)
+          (out/'index.html').write_text(doc('vi',nav+'<main>'+pages('vi')+'</main>'+footer+templates+script))
+          # Keep the Russian commercial proposal aligned with the revised PDF preview.
+          prcss="""@page{size:A4;margin:0}body{background:#fbefdc;color:#244d42;font-family:'Noto Sans',sans-serif;font-size:11pt}.sheet{padding:13mm;border-top:3mm solid #b4452b}.sheet h1{font-size:29pt;margin:6mm 0 2mm}.sheet h2{font-size:15pt;margin:4mm 0}.pr-row{display:table;width:100%;margin:5mm 0}.pr-row>div{display:table-cell;vertical-align:top;width:50%}.pr-row img{width:100%}.pr-row .details{padding-left:6mm}.pr-row .qr{width:27mm;margin-top:3mm}.tariff{display:table;width:100%;border-top:1px solid #d3a34d;padding:3mm 0}.tariff span{display:table-cell}.tariff span:last-child{text-align:right;color:#b4452b;font-weight:bold;white-space:nowrap}.pr-note{font-size:9pt;margin-top:6mm}.sheet a{color:#244d42}"""
+          tariffs=[('Редизайн ресторанного меню','1 500 000'),('Электронное меню на пяти языках с QR-кодом','2 000 000'),('Оформление профиля Google Maps','1 000 000'),('Подготовка макетов для печати','500 000')]
+          pr='<article class="sheet"><p>VIIVERSION · NHA TRANG</p><h1>Phương Thảo · Костя</h1><p>Предложение по оформлению ресторана</p><div class="pr-row"><div><img src="preview.jpg" alt=""></div><div class="details"><h2>Новый дизайн меню</h2><p>24 позиции с индивидуальными изображениями. Пять языков, PDF для печати, электронное меню и QR-код.</p><img class="qr" src="qr-menu.png" alt="QR-код"><p>Открыть меню</p></div></div>'+''.join('<div class="tariff"><span>'+t+'</span><span>от '+p+' ₫</span></div>' for t,p in tariffs)+'<p class="pr-note">Демонстрационный проект. Изображения созданы ИИ. Состав, цены и подача блюд требуют согласования с рестораном.</p><p class="pr-note"><a href="https://viiversion.com/demo/phuong-thao/materials.html">https://viiversion.com/demo/phuong-thao/materials.html</a></p><p class="pr-note">VIIVERSION · <a href="https://viiversion.com/">viiversion.com</a></p></article>'
+          HTML(string=doc('ru',pr,prcss),base_url=str(out)+'/').write_pdf(out/'Proposal-RU.pdf')
+          assert len(PdfReader(out/'Proposal-RU.pdf').pages)==1
+          # Update the public materials page with every reviewed language.
+          path=out/'materials.html';m=path.read_text()
+          m=m.replace('photo-v3','translation-v4').replace('24 позиции, отдельное изображение каждого блюда и напитка.','24 позиции, отдельное изображение каждого блюда и напитка. Переводы проверены и приведены к естественной ресторанной терминологии.')
+          m=m.replace('<a href="Menu-VI-RU.pdf">PDF: вьетнамский / русский</a> · <a href="Menu-VI-EN.pdf">PDF: вьетнамский / английский</a>','<a href="Menu-VI.pdf">PDF: вьетнамский</a> · <a href="Menu-VI-RU.pdf">PDF: вьетнамский / русский</a> · <a href="Menu-VI-EN.pdf">PDF: вьетнамский / английский</a> · <a href="Menu-VI-ZH.pdf">PDF: вьетнамский / китайский</a> · <a href="Menu-VI-KO.pdf">PDF: вьетнамский / корейский</a>')
+          assert all(n in m for n in pdfnames.values())
+          path.write_text(m)
+          # Real browser test: every locale, 24 names and photos, all localized link labels, no page duplicates.
+          chrome=shutil.which('google-chrome') or shutil.which('chromium') or shutil.which('google-chrome-stable')
+          assert chrome,'Chrome unavailable'
+          with sync_playwright() as p:
+              browser=p.chromium.launch(executable_path=chrome,headless=True,args=['--no-sandbox'])
+              page=browser.new_page(viewport={'width':390,'height':844})
+              page.goto((out/'index.html').as_uri(),wait_until='load')
+              for l,d in langs.items():
+                  page.locator(f'button[data-lang="{l}"]').click()
+                  assert page.locator('html').get_attribute('lang')==l
+                  assert page.locator('main .page').count()==4
+                  assert page.locator('main .item .name').all_text_contents()==d['items'],l
+                  assert page.locator('main .dish-photo').count()==24
+                  assert page.locator('#pdf').inner_text()==d['pdf']
+                  assert page.locator('#proposal').inner_text()==d['proposal']
+                  assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),l
+                  page.locator('main .dish-photo').last.scroll_into_view_if_needed()
+                  page.wait_for_function("Array.from(document.querySelectorAll('main .dish-photo')).every(i=>i.complete && i.naturalWidth>0)")
+              page.locator('button[data-lang="ru"]').click();page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(out/'mobile-preview.png'))
+              browser.close()
+          print('PASS: 120 names, 120 photo associations, five language switches, five four-page PDFs, proposal and mobile layout.')
+          PY
+      - name: Commit only Phuong Thao assets
+        run: |
+          git config user.name "VIIVERSION deployment"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site_assets/demo/phuong-thao-v2
+          git commit -m "Publish reviewed Phuong Thao translations and five PDF editions"
+          git push origin HEAD:viiversion
