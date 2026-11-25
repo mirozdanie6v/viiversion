@@ -1,0 +1,211 @@
+name: Publish Phuong Thao photo menu
+on:
+  push:
+    branches: [viiversion]
+    paths: ['.github/workflows/import-phuong-thao-v3.yml']
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: viiversion
+      - name: Fetch and validate the four generated pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/phuong
+          download() {
+            local share="$1" id="$2" name="$3" hash="$4"
+            url=$(curl --retry 2 -fsS -X POST "https://api.firestorage.ai/dev/file/shares/$share/files/$id/download" -H 'Content-Type: application/json' -d '{}' | jq -er '.downloadUrl')
+            curl --retry 2 -fsSL "$url" -o "/tmp/phuong/$name"
+            echo "$hash  /tmp/phuong/$name" | sha256sum -c -
+          }
+          download FpYyVXwEVcUU 01a212eafd5d761fb43fe816cd0d0ae0 01.png e4c78c46adec2f4e108a007e8a7a22cd7b9aed8b834aef2573bd52c519bcd652
+          download cLOy2K2onw2- 01a212eb127a73ec9c60a446597b75c6 02.png c1d6abd60770f95e8d4ee9157169fb8bc13b2976beda5994d7776f8a3e3d9530
+          download VfAHaGKA5w0X 01a212eb252e76cb827ae9f323d8ac95 03.png b079c3be001170ea7d98f793e994d78eb7877346bf5743d05127f6a082af5dd8
+          download oGjRvmQZp365 01a212eb3e3772ad8ef8c46bac21e1ae 04.png a5134f865ab987de4d19075cc96d7e109ec79623d27c1837a4d511cf36a1286e
+          python3 -m pip install --quiet pillow beautifulsoup4 reportlab qrcode pypdf
+      - name: Rebuild all photo menu assets and translations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageFont
+          from bs4 import BeautifulSoup
+          from reportlab.pdfgen import canvas
+          from reportlab.lib.pagesizes import A4
+          from reportlab.lib.utils import ImageReader
+          from reportlab.pdfbase import pdfmetrics
+          from reportlab.pdfbase.ttfonts import TTFont
+          from reportlab.lib.colors import HexColor
+          from pypdf import PdfReader
+          import qrcode, re, json
+          out=Path('site_assets/demo/phuong-thao-v2')
+          old=(out/'index.html').read_text()
+          soup=BeautifulSoup(old,'html.parser')
+          langs=['vi','en','ru','zh','ko']
+          data={}
+          for l in langs:
+              tpl=soup.select_one('#tpl-'+l)
+              assert tpl is not None, l
+              rows=tpl.select('.item')
+              assert len(rows)==24, (l,len(rows))
+              data[l]=[(r.select_one('.name').get_text(' ',strip=True),r.select_one('.price').get_text(' ',strip=True)) for r in rows]
+          fontpath='/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+          boldpath='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+          assert Path(fontpath).exists()
+          pdfmetrics.registerFont(TTFont('MenuSans',fontpath))
+          pdfmetrics.registerFont(TTFont('MenuBold',boldpath))
+          photos=out/'photos';photos.mkdir(exist_ok=True)
+          src=[Image.open('/tmp/phuong/%02d.png'%i).convert('RGB') for i in range(1,5)]
+          def crop(im, box):
+              w,h=im.size
+              return im.crop(tuple(round(v*(w/1024 if i%2==0 else h/1447)) for i,v in enumerate(box)))
+          # The generated pages are the source; each thumbnail is cropped only from its own row.
+          groups=[(src[1],[314,461,588,715,842,961,1081,1206,1361]),(src[2],[294,408,517,623,729,829,929,1029,1132,1240,1361]),(src[3],[312,489,661,829,1001,1174,1363])]
+          n=0
+          for im,edges in groups:
+              for a,b in zip(edges,edges[1:]):
+                  n+=1
+                  photo=crop(im,(47,a+3,344,b-3))
+                  photo.save(photos/('%02d.webp'%n),'WEBP',quality=90,method=6)
+          assert n==24
+          crop(src[0],(0,437,1024,1200)).save(photos/'hero.webp','WEBP',quality=91,method=6)
+          # Keep the approved layout and append the explicit AI-image disclosure in the lower margin.
+          pages=[]
+          for i,im in enumerate(src,1):
+              d=ImageDraw.Draw(im)
+              font=ImageFont.truetype(fontpath,15)
+              msg='Ảnh tạo bằng AI · Изображения созданы ИИ, не реальные фото блюд'
+              d.rectangle((25,im.height-32,im.width-25,im.height-5),fill=(250,238,218))
+              d.text((im.width/2,im.height-18),msg,font=font,fill=(67,70,54),anchor='mm')
+              im.save(out/('menu-%02d.png'%i),optimize=True)
+              pages.append(im)
+          W,H=A4
+          def photo_pdf(path, images):
+              c=canvas.Canvas(str(path),pagesize=A4)
+              for im in images:
+                  c.drawImage(ImageReader(im),0,0,width=W,height=H)
+                  c.showPage()
+              c.save()
+          photo_pdf(out/'Phuong-Thao-illustrated-menu.pdf',pages)
+          import shutil
+          shutil.copyfile(out/'Phuong-Thao-illustrated-menu.pdf',out/'Menu-VI-RU.pdf')
+          # English edition from the original reviewed translations, with the same 24 image assets.
+          cream='#F9EEDB';green='#164737';red='#B4452B';gold='#D3A34D'
+          def fill(c, color):c.setFillColor(HexColor(color))
+          c=canvas.Canvas(str(out/'Menu-VI-EN.pdf'),pagesize=A4)
+          def base(c):
+              fill(c,cream);c.rect(0,0,W,H,fill=1,stroke=0)
+              fill(c,red);c.rect(22,H-28,W-44,6,fill=1,stroke=0)
+          def text(c,x,y,s,sz=12,bold=False,color=green,right=False):
+              fill(c,color);c.setFont('MenuBold' if bold else 'MenuSans',sz)
+              (c.drawRightString if right else c.drawString)(x,y,s)
+          def fittext(c,x,y,s,maxw,sz,bold=False,color=green):
+              f='MenuBold' if bold else 'MenuSans'
+              while pdfmetrics.stringWidth(s,f,sz)>maxw and sz>7:sz-=0.3
+              text(c,x,y,s,sz,bold,color)
+          base(c)
+          text(c,42,H-64,'PHƯƠNG THẢO · КОСТЯ',12,True)
+          text(c,42,H-150,'Phương Thảo',47,True)
+          text(c,42,H-186,'КОСТЯ · Vietnamese kitchen',18,True)
+          c.drawImage(ImageReader(Image.open(photos/'hero.webp')),28,180,width=W-56,height=420,preserveAspectRatio=True,anchor='c')
+          text(c,42,125,'Thực đơn / Menu',29,True,red)
+          text(c,42,98,'15 Tôn Đản · Nha Trang',13)
+          text(c,42,70,'AI-generated imagery · Reference prices · Design concept',9)
+          c.showPage()
+          for pg,(start,end,titlevi,titleen) in enumerate([(0,8,'Hải sản','Seafood'),(8,18,'Món nóng','Hot dishes'),(18,24,'Trái cây & sinh tố','Fruit & smoothies')],1):
+              base(c);text(c,36,H-55,'PHƯƠNG THẢO · КОСТЯ',10,True)
+              text(c,W-36,H-55,'NHA TRANG / %02d'%pg,10,True,red,True)
+              fittext(c,36,H-101,titlevi,W-72,32,True);text(c,38,H-122,titleen,16)
+              rowh=min(98,(H-185)/(end-start))
+              for k,i in enumerate(range(start,end)):
+                  y=H-143-k*rowh
+                  c.setStrokeColor(HexColor(gold));c.setLineWidth(.5);c.line(33,y,W-33,y)
+                  im=Image.open(photos/('%02d.webp'%(i+1)))
+                  c.drawImage(ImageReader(im),35,y-rowh+3,width=144,height=rowh-6,preserveAspectRatio=True,anchor='c')
+                  fittext(c,190,y-rowh*.40,data['vi'][i][0],W-190-115,14,True)
+                  fittext(c,190,y-rowh*.67,data['en'][i][0],W-190-115,11)
+                  text(c,W-34,y-rowh*.48,data['vi'][i][1],12,True,red,True)
+              text(c,35,33,'AI-generated images · Prices in VND; confirm with restaurant.',9)
+              c.showPage()
+          c.save()
+          # Retain five language templates and original verified text, enrich every dish with its matched photo.
+          for root in [soup.select_one('main')]+[soup.select_one('#tpl-'+l) for l in langs]:
+              rows=root.select('.item')
+              assert len(rows)==24,len(rows)
+              for i,r in enumerate(rows,1):
+                  img=soup.new_tag('img',src='photos/%02d.webp'%i,alt=r.select_one('.name').get_text(' ',strip=True),loading='lazy',width='300',height='150')
+                  img['class']='dish-photo'
+                  r.insert(0,img)
+              for h in root.select('.heroart'):
+                  h.clear()
+                  img=soup.new_tag('img',src='photos/hero.webp',alt='Phương Thảo — AI-generated food imagery',width='1024',height='763')
+                  h.append(img)
+          style=soup.new_tag('style')
+          style.string='.heroart img{display:block;width:100%;height:auto;border-radius:8px}.item{grid-template-columns:clamp(82px,23%,146px) minmax(0,1fr) auto;align-items:center;column-gap:12px;padding:8px 0}.dish-photo{width:100%;height:auto;max-height:88px;object-fit:contain;display:block;border-radius:6px}.section-heading svg{max-height:95px}.demo-links{text-align:center;padding:14px;line-height:2}.demo-links a{color:#244D42;font-weight:700;margin:0 8px}@media(max-width:450px){.item{column-gap:7px;grid-template-columns:82px minmax(0,1fr) auto}.name{font-size:14px;overflow-wrap:anywhere}.price{font-size:13px}.dish-photo{max-height:68px}.page{padding:19px 12px}}'
+          soup.head.append(style)
+          script=soup.find('script')
+          s=script.string
+          a=s.index('const footer='); b=s.index(';function show',a)
+          notes=['Ảnh tạo bằng AI, không phải ảnh món ăn thực tế.','AI-generated images, not actual photos of dishes.','Изображения созданы ИИ; это не реальные фотографии блюд.','AI生成图像，非餐厅实际菜品照片。','AI 생성 이미지이며 실제 음식 사진이 아닙니다.']
+          script.string=s[:a]+'const footer='+json.dumps(notes,ensure_ascii=False)+s[b:]
+          soup.head.append(soup.new_tag('meta',attrs={'name':'menu-version','content':'photo-v3'}))
+          footer=soup.find_all('footer')[-1];footer.clear();footer['class']='demo-links'
+          for href,label in [('Phuong-Thao-illustrated-menu.pdf','PDF · VI/RU'),('Menu-VI-EN.pdf','PDF · VI/EN'),('materials.html','VIIVERSION · Предложение / Proposal')]:
+              a=soup.new_tag('a',href=href);a.string=label;footer.append(a)
+          (out/'index.html').write_text(str(soup))
+          # Updated overview for the materials page.
+          thumbw=490;thumbh=round(thumbw*pages[0].height/pages[0].width)
+          preview=Image.new('RGB',(thumbw*2+60,thumbh*2+60),(246,235,214))
+          for i,p in enumerate(pages):
+              preview.paste(p.resize((thumbw,thumbh),Image.Resampling.LANCZOS),(20+(i%2)*(thumbw+20),20+(i//2)*(thumbh+20)))
+          preview.save(out/'preview.jpg',quality=92,optimize=True)
+          # Mobile preview of the approved print pages, not an actual browser screenshot.
+          pages[1].resize((450,round(450*pages[1].height/pages[1].width)),Image.Resampling.LANCZOS).save(out/'mobile-preview.png')
+          qrcode.make('https://viiversion.com/demo/phuong-thao/').save(out/'qr-menu.png')
+          # Russian commercial proposal, separate from guest-facing menu.
+          c=canvas.Canvas(str(out/'Proposal-RU.pdf'),pagesize=A4);base(c)
+          text(c,34,H-60,'VIIVERSION  /  NHA TRANG',11,True,red)
+          text(c,34,H-104,'Phương Thảo · Костя',30,True)
+          text(c,34,H-129,'Предложение по оформлению ресторана',15)
+          c.drawImage(ImageReader(preview),34, H-391, width=230,height=245,preserveAspectRatio=True,anchor='c')
+          text(c,284,H-163,'Новый дизайн меню',17,True)
+          for k,t in enumerate(['24 блюда и напитка','Отдельное изображение каждого','PDF для печати','Электронная версия: 5 языков','QR-код и материалы Google Maps']):
+              text(c,284,H-190-k*21,t,10)
+          c.drawImage(str(out/'qr-menu.png'),321,H-370,97,97)
+          text(c,284,H-384,'Откройте электронное меню',9)
+          for j,(t,price) in enumerate([('Редизайн ресторанного меню','от 1 500 000 ₫'),('Электронное меню на пяти языках + QR','от 2 000 000 ₫'),('Оформление профиля Google Maps','от 1 000 000 ₫'),('Подготовка макетов для печати','от 500 000 ₫')]):
+              y=H-435-j*38;c.setStrokeColor(HexColor(gold));c.line(34,y+17,W-34,y+17)
+              text(c,34,y,t,11,True);text(c,W-34,y,price,11,True,red,True)
+          text(c,34,190,'Демонстрационный проект. Изображения созданы ИИ.',10)
+          text(c,34,173,'Состав, цены и внешний вид блюд подтверждаются рестораном.',10)
+          text(c,34,135,'Посмотреть меню и материалы:',11,True)
+          url='https://viiversion.com/demo/phuong-thao/materials.html'
+          text(c,34,113,url,11,color=green);c.linkURL(url,(34,108,W-34,125))
+          text(c,34,65,'VIIVERSION · viiversion.com',12,True);c.showPage();c.save()
+          # Retire the old Vietnamese proposal to avoid serving the stale design.
+          (out/'Proposal-VI.pdf').unlink(missing_ok=True)
+          material='''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="menu-version" content="photo-v3"><title>Phương Thảo · Костя | VIIVERSION</title><style>*{box-sizing:border-box}body{margin:0;background:#F6EBD6;color:#302820;font:16px/1.55 Arial,sans-serif}main{max-width:900px;margin:auto;padding:24px}h1,h2{font-family:Georgia,serif;color:#244D42;line-height:1.2}h1{font-size:clamp(32px,6vw,52px)}.eyebrow{border-top:6px solid #B4452B;padding-top:16px;color:#B4452B;letter-spacing:.13em;font-weight:bold;font-size:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}img{width:100%;display:block}.links{display:flex;flex-wrap:wrap;gap:12px}.links a{border:1px solid #D3A34D;padding:10px 13px;text-decoration:none;font-weight:bold}a{color:#244D42}section{padding:14px 0;border-bottom:1px solid #D3A34D}.qr{max-width:180px}@media(max-width:480px){main{padding:15px}.grid{grid-template-columns:1fr}}</style></head><body><main><p class="eyebrow">VIIVERSION · NHA TRANG</p><h1>Phương Thảo · Костя</h1><p>Индивидуальный дизайн меню для вашего ресторана. 24 позиции, отдельное изображение каждого блюда и напитка. Изображения созданы ИИ; фактическую подачу, состав и цены необходимо согласовать с рестораном.</p><div class="links"><a href="./">Электронное меню · 5 языков</a><a href="Phuong-Thao-illustrated-menu.pdf">Единый PDF меню</a><a href="Proposal-RU.pdf">Коммерческое предложение на русском</a></div><section><h2>Дизайн меню</h2><div class="grid">'''+''.join('<a href="menu-%02d.png"><img src="menu-%02d.png" alt="Страница меню %d" loading="lazy"></a>'%(i,i,i) for i in range(1,5))+'''</div><p><a href="Menu-VI-RU.pdf">PDF: вьетнамский / русский</a> · <a href="Menu-VI-EN.pdf">PDF: вьетнамский / английский</a> · <a href="preview.jpg">Общий вид</a></p></section><section><h2>Материалы Google Maps</h2><p>Готовые страницы меню для согласования и загрузки в профиль. Сгенерированные фотографии предназначены для демонстрации, а не для публикации как реальные фотографии ресторана.</p><a href="logo-concept.png"><img src="logo-concept.png" style="max-width:180px" alt="Концепция логотипа"></a><p><a href="logo-concept.svg">Логотип SVG</a> · <a href="preview.jpg">Превью меню</a></p></section><section><h2>QR-код электронного меню</h2><a href="qr-menu.png"><img class="qr" src="qr-menu.png" alt="QR-код меню"></a><p><a href="qr-menu.png" download>PNG</a> · <a href="qr-menu.svg" download>SVG</a></p></section><p>VIIVERSION · <a href="https://viiversion.com/">viiversion.com</a></p></main></body></html>'''
+          (out/'materials.html').write_text(material)
+          for name,count in [('Phuong-Thao-illustrated-menu.pdf',4),('Menu-VI-RU.pdf',4),('Menu-VI-EN.pdf',4),('Proposal-RU.pdf',1)]:
+              p=PdfReader(out/name);assert len(p.pages)==count,(name,len(p.pages));assert all(abs(float(q.mediabox.width)-W)<1 and abs(float(q.mediabox.height)-H)<1 for q in p.pages)
+          result=BeautifulSoup((out/'index.html').read_text(),'html.parser')
+          for l in langs:
+              assert len(result.select('#tpl-'+l+' .dish-photo'))==24
+          assert len(list(photos.glob('[0-9][0-9].webp')))==24
+          print('PASS: 24 matched photos, 5 language templates, 4 A4 PDFs, public materials links.')
+          PY
+      - name: Verify the existing site build and commit only demo files
+        shell: bash
+        run: |
+          git config user.name "VIIVERSION deployment"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site_assets/demo/phuong-thao-v2
+          git diff --cached --stat
+          git commit -m "Publish Phuong Thao photo menu v3 and Russian proposal"
+          git push origin HEAD:viiversion
