@@ -60,7 +60,7 @@ jobs:
               pdf=PdfReader(io.BytesIO(data))
               assert len(pdf.pages)==1,(l,len(pdf.pages))
               assert set(urls)<=uri_set(pdf.pages[0]),(l,uri_set(pdf.pages[0]))
-              assert 'VIIVERSION' in (pdf.pages[0].extract_text() or '')
+              assert 'VIIVERSION' in re.sub(r'\s+','',pdf.pages[0].extract_text() or ''),(l,pdf.pages[0].extract_text())
               return data
           names={'vi':'Menu-VI.pdf','en':'Menu-VI-EN.pdf','ru':'Menu-VI-RU.pdf','zh':'Menu-VI-ZH.pdf','ko':'Menu-VI-KO.pdf'}
           def append(path, data, count):
