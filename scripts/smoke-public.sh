@@ -65,7 +65,10 @@ check_absent "$BASE/sitemap.xml" "/offers/"
 check "$BASE/assets/cases/max-tour.webp" ""
 check "$BASE/assets/cases/uniq-smart-rent.webp" ""
 check "$BASE/assets/cases/pet-nika.webp" ""
-check "$BASE/prototypes.html" "PET NIKA"
+check "$BASE/prototypes" "PET NIKA"
+check "$BASE/cases/uniq-smart-rent/" "Вся аренда начинается в одном приложении"
+check "$BASE/cases/uniq-smart-rent/" "Инженерия за интерфейсом"
+check "$BASE/en/cases/uniq-smart-rent/" "Engineering behind the interface"
 
 # Server-side lead storage must be live.
 check "$BASE/api/leads/health" '"version":"canonical-v3"'
