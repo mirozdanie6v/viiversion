@@ -837,6 +837,9 @@ def cases_index(lang):
     return hero(lang,COPY[lang]["cases"],title,lead,"/cases/")+f'<section class="section"><div class="wrap"><div class="case-grid">{cards}</div></div></section>'
 
 def case_page(lang,slug):
+    if slug == "uniq-smart-rent":
+        from uniq_case import render_uniq_case
+        return render_uniq_case(lang)
     c=COPY[lang]; d=CASES[slug][lang]
     return hero(lang,d["status_label"],f'{d["name"]} — {d["summary"]}',d["summary"],"/cases/"+slug+"/",(c["cases"],"/cases/"))+f'''<section class="section"><div class="wrap two-col"><div><div class="eyebrow">{c["product_use"]}</div><h2>{c["product_use"]}</h2>{badges(d["shows"])}<p style="margin-top:20px">{c["case_disclaimer"]}</p></div><div class="scope-box"><div class="eyebrow">{c["status"]}</div><h3><span class="status {d["status"]}">{escape(d["status_label"])}</span></h3><p>{escape(d["summary"])}</p><a class="btn btn-primary" href="{escape(d["demo"])}" target="_blank" rel="noopener">{c["view_demo"]} →</a></div></div></section><section class="section soft"><div class="wrap"><div class="section-head"><div><div class="eyebrow">{c["similar"]}</div><h2>{c["similar"]}</h2></div></div><a class="btn btn-primary" href="#contact" data-interest="{escape(d["name"])}" data-cta="case">{c["contact"]} →</a></div></section>'''
 
