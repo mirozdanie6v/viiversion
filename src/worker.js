@@ -142,6 +142,12 @@ export class LeadStore {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    // Yandex API Gateway can normalize a trailing slash before forwarding the path.
+    // Serve this standalone demo from its canonical asset without an external redirect.
+    if ((request.method === "GET" || request.method === "HEAD") && ["/yet-feti", "/yet-feti/", "/yet-feti/index.html"].includes(url.pathname)) {
+      url.pathname = "/yet-feti/";
+      return env.ASSETS.fetch(new Request(url, request));
+    }
     if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads", version:"canonical-v4-verified-inboxes" });
 
     if (url.pathname === "/api/leads" && request.method === "POST") {
