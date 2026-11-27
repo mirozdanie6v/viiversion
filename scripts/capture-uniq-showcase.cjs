@@ -14,11 +14,11 @@ const url='https://uniq-smart-rent.mirozdanie6v.workers.dev/';
  await page.route('https://dashboard.viiversion.com/**',route=>route.abort());
  await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
  await page.locator('[data-role="client"]').waitFor();
- const ids=await page.evaluate(()=>window.UNIQ_FLEET.slice(0,3).map(v=>v.id));
+ const ids=await page.evaluate(()=>window.UNIQ_FLEET.slice(0,3).map(v=>({id:v.id,estimate:Number(v.dailyVnd||0)*3})));
  if(ids.length!==3)throw Error('Missing fleet');
  await page.evaluate(ids=>{
   localStorage.setItem('uniq-language-v1','ru');
-  localStorage.setItem('uniq-data-requests-v3',JSON.stringify(ids.map((id,i)=>({id:'DEMO-'+(i+1),vehicleId:id,client:'Demo Rider '+(i+1),contact:'demo-'+(i+1)+'@example.invalid',from:'2026-12-10',to:'2026-12-13',status:['new','confirmed','active'][i],estimate:0,estimatedTotalVnd:0,createdAt:'2026-11-28T10:00:00Z',persistence:'local'}))));
+  localStorage.setItem('uniq-data-requests-v3',JSON.stringify(ids.map((v,i)=>({id:'DEMO-'+(i+1),vehicleId:v.id,client:'Demo Rider '+(i+1),contact:'demo-'+(i+1)+'@example.invalid',from:'2026-12-10',to:'2026-12-13',status:['new','confirmed','active'][i],estimate:v.estimate,estimatedTotalVnd:v.estimate,createdAt:'2026-11-28T10:00:00Z',persistence:'local'}))));
   sessionStorage.setItem('uniq-role-v2','client');
  },ids);
  await page.reload({waitUntil:'domcontentloaded'});
@@ -27,7 +27,7 @@ const url='https://uniq-smart-rent.mirozdanie6v.workers.dev/';
  const nav=async id=>{await page.locator('.bottom-nav [data-go="'+id+'"]').click();await page.waitForTimeout(350);};
  const role=async id=>{await page.locator('[data-role="'+id+'"]').click();await page.waitForTimeout(350);};
  const snap=async(name,selector)=>{
-  if(selector){const el=page.locator(selector).first();await el.waitFor();await el.scroll_into_view_if_needed();}
+  if(selector){const el=page.locator(selector).first();await el.waitFor();await el.scrollIntoViewIfNeeded();}
   await page.waitForTimeout(500);
   await page.evaluate(async()=>{await document.fonts.ready;const visible=[...document.images].filter(i=>{const r=i.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight});await Promise.all(visible.map(i=>Promise.race([i.decode().catch(()=>{}),new Promise(r=>setTimeout(r,3500))])));});
   const broken=await page.evaluate(()=>[...document.images].filter(i=>{const r=i.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight&&i.complete&&i.naturalWidth===0}).length);
