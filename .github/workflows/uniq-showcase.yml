@@ -4,6 +4,7 @@ on:
     branches: [viiversion]
     paths:
       - '.github/workflows/uniq-showcase.yml'
+      - 'scripts/capture-uniq-showcase.cjs'
   workflow_dispatch:
 permissions:
   contents: write
