@@ -23,8 +23,61 @@ function allowedOrigin(request) {
   } catch { return false; }
 }
 
+const MAIL_PREFIX = "mail:";
+const MAIL_TO = ["info@viiversion.com", "olga.nogtich@viiversion.com"];
+
 export class LeadStore {
   constructor(ctx, env) { this.ctx = ctx; this.env = env; }
+  async alarm() {
+    const storage = this.ctx.storage;
+    const pending = await storage.list({ prefix: MAIL_PREFIX });
+    let delay = Infinity;
+    let attempted = 0;
+    for (const [key, job] of pending) {
+      if (job.nextAttempt > Date.now()) {
+        delay = Math.min(delay, job.nextAttempt - Date.now());
+        continue;
+      }
+      if (attempted++ >= 20) {
+        delay = Math.min(delay, 1_000);
+        break;
+      }
+      try {
+        const lead = await storage.get(job.leadKey);
+        if (!lead) throw new Error("Stored enquiry missing");
+        const result = await this.env.LEAD_EMAIL.send({
+          from: "leads@viiversion.com",
+          to: job.to,
+          subject: "Новая заявка VIIVERSION — " + lead.id,
+          text: [
+            "Имя: " + lead.name,
+            "Контакт: " + lead.contact,
+            "Компания: " + lead.company,
+            "Интерес: " + lead.interest,
+            "Задача: " + lead.task,
+            "Страница: " + lead.page,
+            "Получена: " + lead.createdAt,
+          ].join("\n"),
+        });
+        if (!result.delivered?.includes(job.to) && !result.queued?.includes(job.to)) {
+          throw new Error("Email service did not accept the recipient");
+        }
+        await storage.delete(key);
+      } catch {
+        job.attempts++;
+        const retryDelay = Math.min(60 * 60_000, 30_000 * 2 ** Math.min(job.attempts - 1, 7));
+        job.nextAttempt = Date.now() + retryDelay;
+        await storage.put(key, job);
+        delay = Math.min(delay, retryDelay);
+        console.error("Lead email pending retry", key, job.attempts);
+      }
+    }
+    if (Number.isFinite(delay)) {
+      const nextAlarm = Date.now() + Math.max(delay, 1_000);
+      const current = await storage.getAlarm();
+      if (current === null || current > nextAlarm) await storage.setAlarm(nextAlarm);
+    }
+  }
   async fetch(request) {
     const url = new URL(request.url);
     if (request.method === "POST" && url.pathname === "/store") {
@@ -36,8 +89,8 @@ export class LeadStore {
       if (count > 8) return json({ ok:false, error:"rate_limited" }, 429);
       const id = payload.id || crypto.randomUUID();
       const key = "lead:" + payload.createdAt + ":" + id;
-      await this.ctx.storage.put(key, payload);
       if (payload.isTest) {
+        await this.ctx.storage.put(key, payload);
         const stored = await this.ctx.storage.get(key);
         await this.ctx.storage.delete(key);
         const recent = (await this.ctx.storage.get("recent")) || [];
@@ -50,10 +103,18 @@ export class LeadStore {
         await this.ctx.storage.put("recent", cleaned);
         return json({ ok:Boolean(stored), id, probe:true });
       }
-      const recent = (await this.ctx.storage.get("recent")) || [];
-      recent.unshift({ key, id, createdAt:payload.createdAt, interest:payload.interest, contact:payload.contact });
-      if (recent.length > 250) recent.length = 250;
-      await this.ctx.storage.put("recent", recent);
+      await this.ctx.storage.transaction(async (txn) => {
+        await txn.put(key, payload);
+        const recent = (await txn.get("recent")) || [];
+        recent.unshift({ key, id, createdAt:payload.createdAt, interest:payload.interest, contact:payload.contact });
+        await txn.put("recent", recent.slice(0, 250));
+        for (const to of MAIL_TO) {
+          await txn.put(MAIL_PREFIX + id + ":" + to, { leadKey: key, to, attempts: 0, nextAttempt: 0 });
+        }
+        const nextAlarm = Date.now() + 1_000;
+        const current = await txn.getAlarm();
+        if (current === null || current > nextAlarm) await txn.setAlarm(nextAlarm);
+      });
       return json({ ok:true, id });
     }
     if (request.method === "GET" && url.pathname === "/list") {
