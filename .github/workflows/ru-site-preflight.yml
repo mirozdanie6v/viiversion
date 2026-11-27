@@ -1,0 +1,59 @@
+name: RU site preflight
+on:
+  pull_request:
+    branches: [viiversion]
+    paths:
+      - 'scripts/**'
+      - 'src/**'
+      - 'site_assets/**'
+      - 'site.xz.b64.*'
+      - 'package.json'
+      - '.github/workflows/ru-site-preflight.yml'
+      - 'docs/RU_SITE_DEPLOYMENT_PREFLIGHT.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build RU staging site
+        run: |
+          npm install --no-audit --no-fund
+          VIIVERSION_RU_STAGING=1 npm run build
+          if grep -rEl 'dashboard\.viiversion\.com/(api/collect|tracker\.js)|telegram\.org/js/telegram-web-app\.js' --include='*.html' --include='*.js' public; then
+            exit 1
+          fi
+          if grep -Fq '<form class="lead-form"' public/index.html public/en/index.html; then
+            exit 1
+          fi
+          grep -Fq "В тестовой версии отправка заявок отключена." public/index.html
+          grep -Fq "Enquiries are disabled on the staging site." public/en/index.html
+      - name: Inventory external references
+        run: python3 scripts/ru-site-preflight.py public --output /tmp/ru-site-inventory.json
+      - name: Upload inventory for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: ru-site-inventory
+          path: /tmp/ru-site-inventory.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Package staging build
+        run: |
+          tar -czf "$RUNNER_TEMP/ru-site-staging.tar.gz" -C public .
+          cd "$RUNNER_TEMP"
+          sha256sum ru-site-staging.tar.gz > ru-site-staging.tar.gz.sha256
+      - name: Upload staging artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ru-site-staging-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/ru-site-staging.tar.gz
+            ${{ runner.temp }}/ru-site-staging.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7

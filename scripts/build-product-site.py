@@ -2,6 +2,7 @@ from pathlib import Path
 from html import escape
 from urllib.parse import quote
 import json
+import os
 import re
 import sys
 import shutil
@@ -38,6 +39,7 @@ if footer_match:
 CONTACTS = CONTACTS[:4]
 
 BASE = "https://viiversion.com"
+RU_STAGING = os.environ.get("VIIVERSION_RU_STAGING") == "1"
 
 COPY = {
     "ru": {
@@ -261,6 +263,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   }catch(_){}
 
   const analytics=(logicalType,detail={})=>{
+    if(!ANALYTICS_ENDPOINT)return;
     const storage=(name)=>{try{return window[name]}catch(_){return null}};
     const getId=(store,key)=>{
       try{
@@ -472,14 +475,14 @@ def contact(lang, default_interest=""):
     c = COPY[lang]
     channels = "".join(f'<a class="btn btn-secondary" href="{escape(u)}" rel="noopener">{escape(n)}</a>' for u,n in CONTACTS)
     target = escape(contact_target())
-    return f'''<section class="contact-bar" id="contact"><div class="wrap contact-layout">
-      <div>
-        <div class="eyebrow">{c["contact"]}</div>
-        <h2>{BRAND[lang]["final_title"]}</h2>
-        <p>{BRAND[lang]["final_lead"]}</p>
-        <div class="contact-links">{channels}</div>
-      </div>
-      <form class="lead-form" data-contact="{target}" data-default-interest="{escape(default_interest)}">
+    if RU_STAGING:
+        message = (
+            "В тестовой версии отправка заявок отключена."
+            if lang == "ru" else "Enquiries are disabled on the staging site."
+        )
+        form = f'<p class="form-note">{message}</p>'
+    else:
+        form = f'''<form class="lead-form" data-contact="{target}" data-default-interest="{escape(default_interest)}">
         <div class="form-grid">
           <div><label>{c["form_name"]}</label><input name="name" autocomplete="name"></div>
           <div><label>{c["form_contact"]}</label><input name="contact" required autocomplete="email"></div>
@@ -490,7 +493,15 @@ def contact(lang, default_interest=""):
         <div class="form-actions"><button class="btn btn-primary" type="submit">{c["form_submit"]} →</button></div>
         <div class="form-note">{c["form_note"]}</div>
         <div class="form-status" hidden>{c["form_done"]}</div>
-      </form>
+      </form>'''
+    return f'''<section class="contact-bar" id="contact"><div class="wrap contact-layout">
+      <div>
+        <div class="eyebrow">{c["contact"]}</div>
+        <h2>{BRAND[lang]["final_title"]}</h2>
+        <p>{BRAND[lang]["final_lead"]}</p>
+        <div class="contact-links">{channels}</div>
+      </div>
+      {form}
     </div></section>'''
 
 def structured_data(lang, title, path, page_type="WebPage"):
@@ -1011,6 +1022,8 @@ if case_src.exists():
     for screenshot in case_src.glob("*.webp"):
         shutil.copy2(screenshot,case_dst/screenshot.name)
 (assets/"viiversion.css").write_text(CSS,encoding="utf-8")
+if RU_STAGING:
+    JS = JS.replace('"https://dashboard.viiversion.com/api/collect"', '""', 1)
 (assets/"viiversion.js").write_text(JS,encoding="utf-8")
 for rel,html in pages.items():
     write(rel,html)
