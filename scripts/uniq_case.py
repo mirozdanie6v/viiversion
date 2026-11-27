@@ -22,6 +22,7 @@ COPY = {
 ("Карточка техники","Фотогалерея, год, характеристики, дневной, недельный и месячный тарифы, депозит и информация о подтверждении наличия. Условия видны до обращения к менеджеру.","client-detail"),
 ("Заявка на аренду","Из карточки открывается компактная форма: даты, имя и контакт. Приложение рассчитывает предварительную стоимость по опубликованным тарифам и передаёт контекст выбранной техники в сценарий заявки.","client-booking"),
 ("MY UNIQ — мои заявки","Пользователь видит выбранную технику, период и статус заявки в демонстрационном интерфейсе, не повторяя весь путь с начала.","client-requests"),
+("Демонстрационная оплата","В исходном коде предусмотрен сценарий выбора способа оплаты и локальной отметки о платеже. Это демонстрация, без реального списания средств.","client-payment"),
 ("Контакты и выдача","Телефон, Telegram, Zalo, WhatsApp, адреса двух точек в Нячанге и ссылки на Google Maps. Если нужна консультация, связь с менеджером остаётся доступной.","client-contacts")],
 "Потенциальный эффект: меньше однотипных вопросов, более подготовленные обращения и понятный путь от просмотра до заявки."),
 ("employee","02 / Сотрудник","От входящей заявки до возврата техники","Вместо отдельного клиентского сайта и несвязанного рабочего интерфейса — операционный сценарий, продолжающий путь клиента.",[
@@ -29,7 +30,7 @@ COPY = {
 ("Заявки клиентов","Карточка обращения содержит контакт, выбранную технику, сроки и предварительную сумму. Сотрудник может менять статус от первого контакта до завершения или отмены.","employee-requests"),
 ("Парк техники","Список транспорта с фотографиями, характеристиками и изменяемым рабочим состоянием: подтверждение менеджером, готов к выдаче, резерв, сервис. Это основа оперативной координации.","employee-fleet"),
 ("Выдачи и возвраты","В отдельном разделе собраны подтверждённые обращения и последующие стадии аренды. Не нужно вручную искать их среди новых заявок.","employee-handover"),
-("Отметка оплаты","Демонстрационный интерфейс позволяет фиксировать состояние оплаты заявки. Это учётная отметка, а не приём платежей или интеграция с эквайрингом.","employee-payment")],
+("Статус оплаты","В исходном коде предусмотрена демонстрационная отметка оплаты, доступная сотруднику для просмотра. Это не приём платежей и не интеграция с эквайрингом.","employee-payment")],
 "Потенциальный эффект: единый контекст обращения, меньше повторного ввода и прозрачный операционный процесс."),
 ("owner","03 / Владелец","Пульс бизнеса — со смартфона","Управленческий интерфейс превращает данные заявок и парка в сводку, не перегружая владельца операционными деталями.",[
 ("Обзор бизнеса","Общее количество техники, клиентов, открытых и подтверждённых заявок, потенциальная сумма обращений по тарифам. Сумма заявок не равна выручке.","owner-overview"),
@@ -68,6 +69,7 @@ COPY = {
 ("Vehicle details","Photo gallery, year, specifications, daily, weekly and monthly rates, deposit and manager-confirmation notice.","client-detail"),
 ("Rental request","A compact form captures dates, name and contact. The application calculates an indicative tariff and carries the selected vehicle into the request flow.","client-booking"),
 ("MY UNIQ — my requests","See vehicle, dates and request status in the demo rather than restarting the selection journey.","client-requests"),
+("Demo checkout","The source includes payment method selection and a local payment marker. No real money is charged.","client-payment"),
 ("Contact and pickup","Phone, Telegram, Zalo, WhatsApp, two pickup locations and Google Maps links keep manager assistance accessible.","client-contacts")],
 "Potential benefit: fewer repetitive enquiries, better prepared requests and a clear path to booking."),
 ("employee","02 / Employee","From enquiry to vehicle return","An operational interface continues the customer journey instead of leaving the team with disconnected tools.",[
@@ -75,7 +77,7 @@ COPY = {
 ("Customer requests","Contact, vehicle, rental dates, indicative amount and editable lifecycle status from initial contact to completion or cancellation.","employee-requests"),
 ("Fleet","Vehicle list with photos, specifications and editable states: manager confirmation, ready, reserved and service.","employee-fleet"),
 ("Handover and returns","A dedicated view brings confirmed requests and subsequent rental stages together.","employee-handover"),
-("Payment record","The demo can record payment status. This is an accounting indicator, not payment processing or acquiring integration.","employee-payment")],
+("Payment status","The source includes a demo payment indicator for staff to review. It is not payment processing or acquiring integration.","employee-payment")],
 "Potential benefit: shared request context, less repeated entry and clearer operations."),
 ("owner","03 / Owner","The pulse of the business on a phone","An overview turns request and fleet data into useful operational signals without overwhelming the owner.",[
 ("Business overview","Fleet size, customers, open and confirmed requests, and potential request value at current tariffs. Request value is not revenue.","owner-overview"),
