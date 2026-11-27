@@ -25,59 +25,65 @@ function allowedOrigin(request) {
 
 const MAIL_PREFIX = "mail:";
 const MAIL_TO = ["info@viiversion.com", "olga.nogtich@viiversion.com"];
+// Corporate aliases forward to these already-verified destination addresses.
+const MAIL_DESTINATIONS = Object.freeze({"info@viiversion.com":"dmitrii.v.vladimirov@gmail.com","olga.nogtich@viiversion.com":"mirozdanie6v@gmail.com"});
 
 export class LeadStore {
-  constructor(ctx, env) { this.ctx = ctx; this.env = env; }
+  constructor(ctx, env) { this.ctx = ctx; this.env = env; this.inflight = new Set(); }
+  async deliver(key, job) {
+    if (this.inflight.has(key)) return false;
+    this.inflight.add(key);
+    const storage = this.ctx.storage;
+    try {
+      // Recheck after snapshot: another event may have already completed this job.
+      const current = await storage.get(key);
+      if (!current) return true;
+      job = current;
+      const destination = MAIL_DESTINATIONS[job.to];
+      if (!destination) throw new Error("Unrecognized notification route");
+      const lead = await storage.get(job.leadKey);
+      if (!lead) throw new Error("Stored enquiry missing");
+      const result = await this.env.LEAD_EMAIL.send({
+        from:"leads@viiversion.com", to:destination,
+        subject:"Новая заявка VIIVERSION — " + lead.id,
+        text:["Имя: " + lead.name,"Контакт: " + lead.contact,"Компания: " + lead.company,
+          "Интерес: " + lead.interest,"Задача: " + lead.task,"Страница: " + lead.page,
+          "Получена: " + lead.createdAt,"Маршрут: " + job.to].join("\n")
+      });
+      if (!(typeof result?.messageId === "string" && result.messageId.trim()) && !result?.delivered?.includes(destination) && !result?.queued?.includes(destination)) throw new Error("Email service did not acknowledge the message");
+      await storage.transaction(async txn => {
+        await txn.put("receipt:" + key, {messageId:result.messageId||null, acceptedAt:new Date().toISOString(), route:job.to});
+        await txn.delete(key);
+      });
+      return true;
+    } catch (error) {
+      job.attempts = (job.attempts || 0) + 1;
+      const retryDelay = Math.min(60 * 60_000, 30_000 * 2 ** Math.min(job.attempts - 1, 7));
+      job.nextAttempt = Date.now() + retryDelay;
+      await storage.put(key,job);
+      console.error("Lead email pending retry",key,job.attempts,error?.code||"send_failed");
+      return false;
+    } finally { this.inflight.delete(key); }
+  }
   async alarm() {
     const storage = this.ctx.storage;
-    const pending = await storage.list({ prefix: MAIL_PREFIX });
-    let delay = Infinity;
-    let attempted = 0;
-    for (const [key, job] of pending) {
-      if (job.nextAttempt > Date.now()) {
-        delay = Math.min(delay, job.nextAttempt - Date.now());
-        continue;
-      }
-      if (attempted++ >= 20) {
-        delay = Math.min(delay, 1_000);
-        break;
-      }
-      try {
-        const lead = await storage.get(job.leadKey);
-        if (!lead) throw new Error("Stored enquiry missing");
-        const result = await this.env.LEAD_EMAIL.send({
-          from: "leads@viiversion.com",
-          to: job.to,
-          subject: "Новая заявка VIIVERSION — " + lead.id,
-          text: [
-            "Имя: " + lead.name,
-            "Контакт: " + lead.contact,
-            "Компания: " + lead.company,
-            "Интерес: " + lead.interest,
-            "Задача: " + lead.task,
-            "Страница: " + lead.page,
-            "Получена: " + lead.createdAt,
-          ].join("\n"),
-        });
-        // Workers Email binding returns messageId, unlike the REST Email Sending API.
-        // A resolved send with a messageId means the provider accepted the message.
-        if (!(typeof result?.messageId === "string" && result.messageId.trim()) && !result?.delivered?.includes(job.to) && !result?.queued?.includes(job.to)) {
-          throw new Error("Email service did not acknowledge the message");
-        }
-        await storage.delete(key);
-      } catch {
-        job.attempts++;
-        const retryDelay = Math.min(60 * 60_000, 30_000 * 2 ** Math.min(job.attempts - 1, 7));
-        job.nextAttempt = Date.now() + retryDelay;
-        await storage.put(key, job);
-        delay = Math.min(delay, retryDelay);
-        console.error("Lead email pending retry", key, job.attempts);
-      }
+    const pending = await storage.list({prefix:MAIL_PREFIX});
+    let attempted=0;
+    for (const [key,job] of pending) {
+      if (job.nextAttempt > Date.now()) continue;
+      if (attempted++ >= 20) break;
+      await this.deliver(key,job);
     }
-    if (Number.isFinite(delay)) {
-      const nextAlarm = Date.now() + Math.max(delay, 1_000);
-      const current = await storage.getAlarm();
-      if (current === null || current > nextAlarm) await storage.setAlarm(nextAlarm);
+    await this.rearm();
+  }
+  async rearm() {
+    const storage=this.ctx.storage;
+    const pending=await storage.list({prefix:MAIL_PREFIX});
+    let next=Infinity;
+    for(const [key,job] of pending) next=Math.min(next,this.inflight.has(key)?Date.now()+5000:Math.max(Date.now()+1000,job.nextAttempt||0));
+    if(Number.isFinite(next)) {
+      const current=await storage.getAlarm();
+      if(current===null||current>next) await storage.setAlarm(next);
     }
   }
   async fetch(request) {
@@ -117,7 +123,10 @@ export class LeadStore {
         const current = await txn.getAlarm();
         if (current === null || current > nextAlarm) await txn.setAlarm(nextAlarm);
       });
-      return json({ ok:true, id });
+      // Prioritize the newly saved enquiry; older retries must not delay it.
+      const results=await Promise.all(MAIL_TO.map(to=>this.deliver(MAIL_PREFIX+id+":"+to,{leadKey:key,to,attempts:0,nextAttempt:0})));
+      await this.rearm();
+      return json({ ok:true,id, notification:results.every(Boolean)?"accepted":results.some(Boolean)?"partial":"pending" });
     }
     if (request.method === "GET" && url.pathname === "/list") {
       const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 50), 1), 200);
@@ -133,7 +142,7 @@ export class LeadStore {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads", version:"canonical-v3" });
+    if (url.pathname === "/api/leads/health") return json({ ok:true, storage:"durable-object", service:"viiversion-leads", version:"canonical-v4-verified-inboxes" });
 
     if (url.pathname === "/api/leads" && request.method === "POST") {
       if (!allowedOrigin(request)) return json({ ok:false, error:"origin_not_allowed" }, 403);
@@ -162,7 +171,7 @@ export default {
       if (env.LEADS_WEBHOOK_URL) {
         ctx.waitUntil(fetch(env.LEADS_WEBHOOK_URL, { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ type:"viiversion_lead", lead:{ id:lead.id, createdAt:lead.createdAt, name:lead.name, contact:lead.contact, company:lead.company, interest:lead.interest, task:lead.task, page:lead.page, source:lead.source, campaign:lead.campaign } }) }).catch(() => {}));
       }
-      return json({ ok:true, id:result.id, probe:Boolean(result.probe) }, 201);
+      return json({ ok:true, id:result.id, probe:Boolean(result.probe), notification:result.notification||"pending" }, 201);
     }
 
     if (url.pathname === "/api/leads" && request.method === "GET") {
