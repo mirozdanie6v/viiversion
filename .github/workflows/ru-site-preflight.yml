@@ -26,8 +26,12 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           VIIVERSION_RU_STAGING=1 npm run build
-          ! grep -Fq dashboard.viiversion.com/api/collect public/assets/viiversion.js
-          ! grep -Fq '<form class="lead-form"' public/index.html
+          if grep -rEl 'dashboard\.viiversion\.com/(api/collect|tracker\.js)|telegram\.org/js/telegram-web-app\.js' --include='*.html' --include='*.js' public; then
+            exit 1
+          fi
+          if grep -Fq '<form class="lead-form"' public/index.html public/en/index.html; then
+            exit 1
+          fi
           grep -Fq "В тестовой версии отправка заявок отключена." public/index.html
           grep -Fq "Enquiries are disabled on the staging site." public/en/index.html
       - name: Inventory external references
@@ -37,5 +41,19 @@ jobs:
         with:
           name: ru-site-inventory
           path: /tmp/ru-site-inventory.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Package staging build
+        run: |
+          tar -czf "$RUNNER_TEMP/ru-site-staging.tar.gz" -C public .
+          cd "$RUNNER_TEMP"
+          sha256sum ru-site-staging.tar.gz > ru-site-staging.tar.gz.sha256
+      - name: Upload staging artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ru-site-staging-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/ru-site-staging.tar.gz
+            ${{ runner.temp }}/ru-site-staging.tar.gz.sha256
           if-no-files-found: error
           retention-days: 7
