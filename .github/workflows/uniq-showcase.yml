@@ -6,6 +6,9 @@ on:
       - '.github/workflows/uniq-showcase.yml'
       - 'scripts/capture-uniq-showcase.cjs'
   workflow_dispatch:
+concurrency:
+  group: uniq-showcase-proof
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
@@ -47,6 +50,36 @@ jobs:
               assert len(p.proofs)>=16, p.proofs
               assert all(Path('public'+img).is_file() for img in p.proofs)
           PY
+      - name: Responsive and image QA on both generated pages
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory public >/tmp/uniq-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          node <<'JS'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try{
+              for(const prefix of ['','en/']){
+                for(const width of [360,390,430,768,1440]){
+                  const page=await browser.newPage({viewport:{width,height:900}});
+                  await page.route('https://dashboard.viiversion.com/**',r=>r.abort());
+                  await page.goto('http://127.0.0.1:8765/'+prefix+'cases/uniq-smart-rent/',{waitUntil:'domcontentloaded'});
+                  if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw Error(prefix+width+' horizontal overflow');
+                  if(await page.locator('.uniq-case h1').count()!==1)throw Error('Missing H1');
+                  const imgs=page.locator('.uniq-case figure img');
+                  for(let i=0;i<await imgs.count();i++){
+                    const img=imgs.nth(i);
+                    await img.scrollIntoViewIfNeeded();
+                    if(!await img.evaluate(async i=>{try{await i.decode();return i.naturalWidth>0}catch{return false}}))throw Error('Broken image '+i+' '+prefix+width);
+                  }
+                  console.log('PASS',prefix||'ru',width,await imgs.count(),'proof images');
+                  await page.close();
+                }
+              }
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exitCode=1});
+          JS
       - name: Commit verified real screenshots
         run: |
           git config user.name "viiversion-bot"
@@ -54,4 +87,5 @@ jobs:
           git add site_assets/cases/uniq-*.webp
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Add verified UNIQ workflow screenshots"
+          git pull --rebase origin viiversion
           git push origin HEAD:viiversion
