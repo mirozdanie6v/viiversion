@@ -71,6 +71,11 @@ check "$BASE/cases/uniq-smart-rent/" "Инженерия за интерфейс
 check "$BASE/en/cases/uniq-smart-rent/" "Engineering behind the interface"
 
 # Server-side lead storage must be live.
-check "$BASE/api/leads/health" '"version":"canonical-v3"'
+check "$BASE/api/leads/health" '"version":"canonical-v4-verified-inboxes"'
+
+# Standalone YETI FETI demo: confirm the expected HTML, not a fallback or redirect.
+check "$BASE/yet-feti/" "Йети ФЭТИ — островные подарки"
+check "https://viiversion.com/yet-feti/" "Йети ФЭТИ — островные подарки"
+check "https://ru.viiversion.com/yet-feti/" "Йети ФЭТИ — островные подарки"
 
 echo "PUBLIC QA PASS: system-first presentation, canonical building blocks, legacy noindex routes, proof assets and lead API are reachable."
