@@ -30,8 +30,8 @@
     {
       "name": "LEAD_EMAIL",
       "allowed_destination_addresses": [
-        "info@viiversion.com",
-        "olga.nogtich@viiversion.com"
+        "dmitrii.v.vladimirov@gmail.com",
+        "mirozdanie6v@gmail.com"
       ],
       "allowed_sender_addresses": [
         "leads@viiversion.com"
