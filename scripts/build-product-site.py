@@ -191,7 +191,7 @@ CSS = r'''
 .scope-box{border-radius:22px;padding:26px;background:#f0f4fa;border:1px solid #d7e0eb}.scope-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}.scope-meta div{background:#fff;border-radius:13px;padding:15px}.scope-meta small{display:block;color:#778598;text-transform:uppercase;letter-spacing:.08em;font-size:10px}.scope-meta strong{display:block;margin-top:4px;font-size:16px}.scope-list{padding-left:20px}.scope-list li{margin-bottom:8px}
 .industry-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.industry-step{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff;font-size:13px;font-weight:750;position:relative}.industry-step:not(:last-child):after{content:"→";position:absolute;right:-9px;top:50%;z-index:2;color:#75869a}
 .special-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.special-box{border-radius:24px;padding:29px;background:#0d2138;color:#fff}.special-box.alt{background:#edf3ff;color:var(--ink)}.special-box p{color:#bbcadb}.special-box.alt p{color:var(--muted)}
-.contact-bar{padding:62px 0;background:#eef4ff}.contact-layout{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:38px}.contact-layout h2{font-size:38px;line-height:1.04;letter-spacing:-.04em;margin:8px 0 12px}.contact-layout p{color:var(--muted)}.lead-form{background:#fff;border:1px solid #d8e1ec;border-radius:22px;padding:22px;box-shadow:var(--shadow)}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.lead-form label{display:block;font-size:11px;color:#667588;font-weight:750;margin-bottom:5px}.lead-form input,.lead-form textarea{width:100%;border:1px solid #ccd7e4;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink)}.lead-form textarea{min-height:112px;resize:vertical}.form-full{grid-column:1/-1}.form-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:13px}.form-note,.form-status{font-size:11px;color:#718095;margin-top:11px}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.contact-bar{padding:62px 0;background:#eef4ff}.contact-layout{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:38px}.contact-layout h2{font-size:38px;line-height:1.04;letter-spacing:-.04em;margin:8px 0 12px}.contact-layout p{color:var(--muted)}.lead-form{background:#fff;border:1px solid #d8e1ec;border-radius:22px;padding:22px;box-shadow:var(--shadow)}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.lead-form label{display:block;font-size:11px;color:#667588;font-weight:750;margin-bottom:5px}.lead-form input,.lead-form textarea{width:100%;border:1px solid #ccd7e4;border-radius:10px;padding:11px 12px;background:#fff;color:var(--ink)}.lead-form textarea{min-height:112px;resize:vertical}.form-full{grid-column:1/-1}.form-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:13px}.form-note{font-size:11px;color:#718095;margin-top:11px}.form-status{font-size:14px;font-weight:650;line-height:1.4;margin:0;color:#334155;flex:1 1 180px}.form-status:empty{display:none}.form-status[data-state="success"]{color:#166534}.form-status[data-state="error"]{color:#b91c1c}.form-status[data-state="pending"]{color:#334155}.lead-form button:disabled{opacity:.75;cursor:wait}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .footer{padding:32px 0;background:#06111f;color:#aab9ca}.footer-row{display:flex;justify-content:space-between;gap:25px}.footer-links{display:flex;gap:16px;flex-wrap:wrap;font-size:12px}
 .systems-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.system-card{min-width:0;border:1px solid var(--line);border-radius:24px;padding:28px;background:#fff;position:relative;overflow:hidden}.system-card:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--blue)}.system-index{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:900;color:var(--blue)}.system-card h3{font-size:29px;line-height:1.05;letter-spacing:-.035em;margin:10px 0}.system-card p{color:var(--muted);margin:0 0 18px}.system-components{display:flex;gap:7px;flex-wrap:wrap}.system-pill{display:inline-flex;padding:7px 9px;border-radius:999px;background:var(--soft2);font-size:11px;font-weight:750;color:#44546a}.architecture-stack{display:grid;gap:10px}.architecture-layer{border:1px solid rgba(255,255,255,.14);border-radius:15px;padding:15px 16px;background:rgba(255,255,255,.065)}.architecture-layer b{display:block;font-size:14px;margin-bottom:4px}.architecture-layer span{display:block;color:#9fb7d1;font-size:12px}.architecture-connector{text-align:center;color:#7091b4;font-size:14px;line-height:1}.component-card{min-width:0;border:1px solid var(--line);border-radius:18px;padding:22px;background:#fff;display:flex;flex-direction:column}.component-card h3{font-size:21px;line-height:1.12;margin:7px 0 9px}.component-card p{font-size:14px;color:var(--muted);margin:0 0 16px}.component-card .text-link{margin-top:auto}.flow-track{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0}.flow-node{display:inline-flex;align-items:center;border:1px solid #d2dce8;border-radius:12px;background:#fff;padding:10px 12px;font-size:12px;font-weight:800}.flow-arrow{color:#8294a9;font-size:13px}.industry-components{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.industry-component{display:inline-flex;border-radius:999px;padding:8px 10px;background:#eef3f8;color:#405167;font-size:12px;font-weight:750}.industry-component:hover{color:var(--blue);background:#e8f0ff}.system-note{border:1px solid #cad9fb;background:#f1f6ff;border-radius:20px;padding:22px}.system-note h3{margin:0 0 8px;font-size:21px}.system-note p{margin:0;color:var(--muted)}
 @media(max-width:1050px){.systems-grid{grid-template-columns:1fr}.module-buy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.trust-team{grid-template-columns:1fr}.buy-steps,.module-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.nav{display:none}.mobile-toggle{display:block}.nav.open{display:flex;position:absolute;left:20px;right:20px;top:66px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.hero-grid{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(2,minmax(0,1fr))}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.offer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.matrix-wrap{grid-template-columns:1fr}.matrix-tabs{flex-direction:row;overflow:auto}.matrix-results{grid-template-columns:repeat(2,minmax(0,1fr))}.industry-flow{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -340,21 +340,35 @@ document.addEventListener("DOMContentLoaded",()=>{
     if(interest) interest.value=storedInterest;
     if(context) context.value=JSON.stringify(campaign);
 
+    const submitButton=form.querySelector('button[type="submit"]');
+    const status=form.querySelector(".form-status");
+    const buttonLabel=submitButton.textContent;
+    const isRu=document.documentElement.lang.startsWith("ru");
+    const showStatus=(state,message)=>{status.dataset.state=state;status.textContent=message;};
+    form.addEventListener("invalid",()=>{
+      showStatus("error",isRu?"Заполните обязательные поля: контакт и задача.":"Please complete the required contact and task fields.");
+    },true);
     form.addEventListener("submit",async e=>{
       e.preventDefault();
       const data=Object.fromEntries(new FormData(form).entries());
       let camp=campaign;
       try{camp=JSON.parse(sessionStorage.getItem("viiversion_campaign")||"{}")}catch(_){}
-      const submitButton=form.querySelector('button[type="submit"]');
-      const status=form.querySelector(".form-status");
       if(submitButton.disabled)return;
+      if(!String(data.contact||"").trim()||!String(data.task||"").trim()){
+        showStatus("error",isRu?"Заполните обязательные поля: контакт и задача.":"Please complete the required contact and task fields.");
+        return;
+      }
       submitButton.disabled=true;
-      status.textContent=status.dataset.pending;
-
-      let stored=false, leadId="";
+      submitButton.textContent=status.dataset.pending;
+      form.setAttribute("aria-busy","true");
+      showStatus("pending",status.dataset.pending);
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),20000);
+      let stored=false, leadId="", responseStatus=0;
       try{
         const leadResponse=await fetch("/api/leads",{
           method:"POST",
+          signal:controller.signal,
           headers:{"content-type":"application/json"},
           body:JSON.stringify({
             name:data.name||"",
@@ -372,17 +386,21 @@ document.addEventListener("DOMContentLoaded",()=>{
             locale:document.documentElement.lang||""
           })
         });
+        responseStatus=leadResponse.status;
         const leadResult=await leadResponse.json().catch(()=>({}));
         stored=leadResponse.status===201&&leadResult.ok===true&&Boolean(leadResult.id);
         leadId=leadResult.id||"";
-      }catch(_){}
-      status.textContent=stored?status.dataset.success:status.dataset.error;
+      }catch(_){}finally{clearTimeout(timeout);}
+      const failure=responseStatus===429?(isRu?"Слишком много попыток. Попробуйте позже или свяжитесь с нами напрямую.":"Too many attempts. Please try later or contact us directly."):status.dataset.error;
+      showStatus(stored?"success":"error",stored?status.dataset.success:failure);
       if(stored){
         form.reset();
         if(interest)interest.value=data.interest||"";
         if(context)context.value=JSON.stringify(campaign);
       }
       submitButton.disabled=false;
+      submitButton.textContent=buttonLabel;
+      form.removeAttribute("aria-busy");
 
       let cta="form";
       try{cta=sessionStorage.getItem("viiversion_cta")||cta}catch(_){}
@@ -452,7 +470,7 @@ def contact(lang, default_interest=""):
         <p>{BRAND[lang]["final_lead"]}</p>
         <div class="contact-links">{channels}</div>
       </div>
-      <form class="lead-form" data-default-interest="{escape(default_interest)}">
+      <form class="lead-form" method="post" action="/api/leads" data-default-interest="{escape(default_interest)}">
         <div class="form-grid">
           <div><label>{c["form_name"]}</label><input name="name" autocomplete="name"></div>
           <div><label>{c["form_contact"]}</label><input name="contact" required autocomplete="email"></div>
@@ -460,9 +478,10 @@ def contact(lang, default_interest=""):
           <div class="form-full"><label>{c["form_task"]}</label><textarea name="task" required></textarea></div>
         </div>
         <input type="hidden" name="interest"><input type="hidden" name="page_context"><input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none;clip-path:inset(50%)">
-        <div class="form-actions"><button class="btn btn-primary" type="submit">{c["form_submit"]} →</button></div>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">{c["form_submit"]} →</button>
+        <div class="form-status" role="status" aria-live="polite" aria-atomic="true" data-pending="{escape(c["form_pending"])}" data-success="{escape(c["form_done"])}" data-error="{escape(c["form_error"])}"></div></div>
         <div class="form-note">{c["form_note"]}</div>
-        <div class="form-status" role="status" data-pending="{escape(c["form_pending"])}" data-success="{escape(c["form_done"])}" data-error="{escape(c["form_error"])}"></div>
+        <noscript>{("Для отправки заявки включите JavaScript или свяжитесь с нами по указанным контактам." if lang=="ru" else "Enable JavaScript to send an enquiry, or use our direct contact details.")}</noscript>
       </form>
     </div></section>'''
 
