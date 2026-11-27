@@ -1,7 +1,11 @@
+import os
 from pathlib import Path
 
 TELEGRAM = '<script src="https://telegram.org/js/telegram-web-app.js?63"></script>'
 TRACKER = '<script defer src="https://dashboard.viiversion.com/tracker.js" data-project="VIIVERSION"></script>'
+
+if os.environ.get("VIIVERSION_RU_STAGING") == "1":
+    raise SystemExit(0)
 
 updated = 0
 for path in Path('public').rglob('*.html'):

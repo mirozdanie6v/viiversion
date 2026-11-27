@@ -22,10 +22,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Build existing site
+      - name: Build RU staging site
         run: |
           npm install --no-audit --no-fund
-          npm run build
+          VIIVERSION_RU_STAGING=1 npm run build
+          ! grep -Fq dashboard.viiversion.com/api/collect public/assets/viiversion.js
+          ! grep -Fq '<form class="lead-form"' public/index.html
+          grep -Fq "В тестовой версии отправка заявок отключена." public/index.html
+          grep -Fq "Enquiries are disabled on the staging site." public/en/index.html
       - name: Inventory external references
         run: python3 scripts/ru-site-preflight.py public --output /tmp/ru-site-inventory.json
       - name: Upload inventory for review
