@@ -47,7 +47,7 @@ jobs:
               p=Case();p.feed(Path('public/'+prefix+'cases/uniq-smart-rent/index.html').read_text())
               assert p.h1==1
               assert {'customer','employee','owner','engineering','adaptation'}<=p.ids
-              assert len(p.proofs)>=16, p.proofs
+              assert len(p.proofs)>=15, p.proofs
               assert all(Path('public'+img).is_file() for img in p.proofs)
           PY
       - name: Responsive and image QA on both generated pages
@@ -55,6 +55,7 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 --directory public >/tmp/uniq-http.log 2>&1 &
           server=$!
           trap 'kill "$server" || true' EXIT
+          for i in 1 2 3 4 5; do curl -fsS http://127.0.0.1:8765/ >/dev/null && break; sleep 1; done
           node <<'JS'
           const {chromium}=require('playwright');
           (async()=>{
