@@ -551,11 +551,15 @@ def badges(items):
 def case_card(lang, slug):
     c = CASES[slug][lang]
     img=f"/assets/cases/{slug}.webp"
+    case_href = "/cases/autoworld-georgia/" if slug == "autoworld-georgia" else loc(lang, "/cases/"+slug+"/")
+    case_label = "View case (RU)" if slug == "autoworld-georgia" and lang == "en" else COPY[lang]["view_case"]
+    if slug == "autoworld-georgia":
+        img = "/assets/cases/autoworld-georgia.svg"
     return f'''<article class="card case-card">
       <div class="case-media"><img src="{img}" alt="{escape(c["name"])}" loading="lazy" onerror="this.parentElement.hidden=true"></div>
       <div class="case-top"><div><div class="kicker">{escape(c["industry"])}</div><h3>{escape(c["name"])}</h3></div><span class="status {c["status"]}">{escape(c["status_label"])}</span></div>
       <p>{escape(c["summary"])}</p>{badges(c["shows"])}
-      <div class="actions"><a class="btn btn-primary" href="{loc(lang,'/cases/'+slug+'/')}">{COPY[lang]["view_case"]}</a><a class="btn btn-secondary" href="{escape(c["demo"])}" target="_blank" rel="noopener">{COPY[lang]["view_demo"]}</a></div>
+      <div class="actions"><a class="btn btn-primary" href="{case_href}">{case_label}</a><a class="btn btn-secondary" href="{escape(c["demo"])}" target="_blank" rel="noopener">{COPY[lang]["view_demo"]}</a></div>
     </article>'''
 
 def product_card(lang, slug):
@@ -681,7 +685,7 @@ def team_trust(lang):
 
 def home(lang):
     b=BRAND[lang]; c=COPY[lang]
-    top_cases="".join(case_card(lang,s) for s in ("max-tour","uniq-smart-rent","pet-nika"))
+    top_cases="".join(case_card(lang,s) for s in ("autoworld-georgia","max-tour","uniq-smart-rent"))
     if lang=="ru":
         architecture=[
             ("Клиентский слой","Сайт · Mini App · каталог · бронирование"),
@@ -978,6 +982,10 @@ for lang in LANGS:
 
     pages[base_dir+"cases/index.html"] = page(lang, ("Примеры — VIIVERSION" if lang=="ru" else "Cases — VIIVERSION"), ("Интерактивные демо, публичные прототипы и клиентские концепции." if lang=="ru" else "Interactive demos, public prototypes and client concepts."), cases_index(lang), "/cases/")
     for slug in CASES:
+        if slug == "autoworld-georgia":
+            if lang == "ru":
+                pages["cases/autoworld-georgia/index.html"] = (ROOT/"site_assets"/"cases"/"autoworld-georgia.html").read_text(encoding="utf-8")
+            continue
         d=CASES[slug][lang]
         pages[base_dir+f"cases/{slug}/index.html"] = page(lang, f'{d["name"]} — VIIVERSION', d["summary"], case_page(lang,slug), f"/cases/{slug}/", interest=d["name"])
 
@@ -1008,7 +1016,7 @@ case_src=ROOT/"site_assets"/"cases"
 case_dst=assets/"cases"
 case_dst.mkdir(parents=True,exist_ok=True)
 if case_src.exists():
-    for screenshot in case_src.glob("*.webp"):
+    for screenshot in [*case_src.glob("*.webp"), *case_src.glob("*.svg")]:
         shutil.copy2(screenshot,case_dst/screenshot.name)
 (assets/"viiversion.css").write_text(CSS,encoding="utf-8")
 (assets/"viiversion.js").write_text(JS,encoding="utf-8")

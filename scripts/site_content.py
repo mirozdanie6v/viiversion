@@ -53,6 +53,10 @@ BRAND = {
 # This file keeps brand, proof, team and navigation content.
 
 CASES = {
+    "autoworld-georgia": {
+        "ru": {"name": "АвтоМир Грузия", "industry": "Автобизнес", "status": "working-demo", "status_label": "КОММЕРЧЕСКИЙ ПРОЕКТ", "summary": "Telegram-бот с приложением для продажи и доставки автомобилей: каталог, расчёт, заявки и работа менеджеров.", "shows": ["Telegram", "Каталог", "Заявки и аналитика"], "demo": "https://awgcars.ru/"},
+        "en": {"name": "AutoWorld Georgia", "industry": "Automotive", "status": "working-demo", "status_label": "COMMERCIAL CLIENT PROJECT", "summary": "Telegram bot and app for vehicle sales and imports: catalog, estimates, enquiries and team operations.", "shows": ["Telegram", "Catalog", "Enquiries and analytics"], "demo": "https://awgcars.ru/"},
+    },
     "max-tour": {
         "ru": {"name": "MAX TOUR", "industry": "Туризм", "status": "working-demo", "status_label": "ИНТЕРАКТИВНОЕ ДЕМО", "summary": "Клиентский путь, бронирование, роли, рабочая панель и аналитика для экскурсионного бизнеса.", "shows": ["Бронирование", "Операционный контур", "AI"], "demo": "https://max-tour.viiversion.com/"},
         "en": {"name": "MAX TOUR", "industry": "Tourism", "status": "working-demo", "status_label": "WORKING DEMO", "summary": "Customer flow, booking, roles, admin and owner analytics for a tour business.", "shows": ["Booking", "Operations", "AI"], "demo": "https://max-tour.viiversion.com/"},
