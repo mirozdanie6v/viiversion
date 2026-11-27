@@ -84,9 +84,11 @@ COPY = {
         "form_contact": "Как с вами связаться",
         "form_company": "Компания / сайт",
         "form_task": "Что хотите улучшить?",
-        "form_submit": "Продолжить отправку",
-        "form_note": "После нажатия мы зафиксируем источник и страницу обращения, скопируем текст заявки и откроем наш основной канал связи. Имя, контакт и текст заявки в аналитику не передаются.",
-        "form_done": "Заявка подготовлена и скопирована. Осталось отправить её в открывшемся канале связи.",
+        "form_submit": "Отправить заявку",
+        "form_note": "Имя, контакт и текст заявки не передаются в аналитику.",
+        "form_done": "Заявка принята.",
+        "form_pending": "Отправляем заявку…",
+        "form_error": "Не удалось подтвердить отправку. Попробуйте ещё раз.",
         "context": "Контекст",
         "lang_switch": "EN",
         "home": "Главная",
@@ -146,9 +148,11 @@ COPY = {
         "form_contact": "How should we contact you?",
         "form_company": "Company / website",
         "form_task": "What do you want to improve?",
-        "form_submit": "Continue to send",
-        "form_note": "We record the source page and campaign, copy the enquiry text and open our primary contact channel. Name, contact details and enquiry text are not sent to analytics.",
-        "form_done": "The enquiry is prepared and copied. Send it in the contact channel that just opened.",
+        "form_submit": "Send enquiry",
+        "form_note": "Name, contact details and enquiry text are not sent to analytics.",
+        "form_done": "Your enquiry was received.",
+        "form_pending": "Sending your enquiry…",
+        "form_error": "We could not confirm submission. Please try again.",
         "context": "Context",
         "lang_switch": "RU",
         "home": "Home",
@@ -341,25 +345,12 @@ document.addEventListener("DOMContentLoaded",()=>{
       const data=Object.fromEntries(new FormData(form).entries());
       let camp=campaign;
       try{camp=JSON.parse(sessionStorage.getItem("viiversion_campaign")||"{}")}catch(_){}
-      const lines=[
-        "VIIVERSION enquiry",
-        "",
-        "Name: "+(data.name||""),
-        "Contact: "+(data.contact||""),
-        "Company / URL: "+(data.company||""),
-        "Interest: "+(data.interest||""),
-        "Task: "+(data.task||""),
-        "",
-        "Page: "+location.href,
-        "Source: "+(camp.source||"direct"),
-        "Medium: "+(camp.medium||""),
-        "Campaign: "+(camp.campaign||""),
-        "Referrer: "+(camp.referrer||"")
-      ];
-      const message=lines.join("\n");
-
       const submitButton=form.querySelector('button[type="submit"]');
-      if(submitButton)submitButton.disabled=true;
+      const status=form.querySelector(".form-status");
+      if(submitButton.disabled)return;
+      submitButton.disabled=true;
+      status.textContent=status.dataset.pending;
+
       let stored=false, leadId="";
       try{
         const leadResponse=await fetch("/api/leads",{
@@ -382,10 +373,19 @@ document.addEventListener("DOMContentLoaded",()=>{
           })
         });
         const leadResult=await leadResponse.json().catch(()=>({}));
-        stored=leadResponse.ok&&leadResult.ok;
+        stored=leadResponse.status===201&&leadResult.ok===true&&Boolean(leadResult.id);
         leadId=leadResult.id||"";
       }catch(_){}
-      if(submitButton)submitButton.disabled=false;
+      status.textContent=stored?status.dataset.success:status.dataset.error;
+      if(stored){
+        form.reset();
+        if(interest)interest.value=data.interest||"";
+        if(context)context.value=JSON.stringify(campaign);
+      }
+      submitButton.disabled=false;
+
+      let cta="form";
+      try{cta=sessionStorage.getItem("viiversion_cta")||cta}catch(_){}
 
       analytics("lead_submit",{
         interest:String(data.interest||"").slice(0,160),
@@ -393,32 +393,11 @@ document.addEventListener("DOMContentLoaded",()=>{
         hasCompany:Boolean(data.company),
         taskLength:String(data.task||"").length,
         stored,
-        cta:(sessionStorage.getItem("viiversion_cta")||"form").slice(0,160)
+        cta:cta.slice(0,160)
       });
 
-      try{await navigator.clipboard.writeText(message)}catch(_){}
       try{localStorage.setItem("viiversion_last_enquiry",JSON.stringify({interest:data.interest||"",source:(camp.firstTouch&&camp.firstTouch.source)||camp.source||"",campaign:(camp.firstTouch&&camp.firstTouch.campaign)||camp.campaign||"",leadId,stored,createdAt:new Date().toISOString()}))}catch(_){}
 
-      const status=form.querySelector(".form-status");
-      if(status){
-        status.hidden=false;
-        if(!stored)status.textContent=document.documentElement.lang==="ru"
-          ?"Не удалось сохранить заявку автоматически. Текст скопирован — отправьте его в открывшемся канале связи."
-          :"Automatic saving failed. The message was copied — please send it in the contact channel that opened.";
-      }
-
-      const target=form.dataset.contact||"";
-      if(target.startsWith("mailto:")){
-        const subject=encodeURIComponent("VIIVERSION — "+(data.interest||"new enquiry"));
-        location.href=target+"?subject="+subject+"&body="+encodeURIComponent(message);
-      }else if(target.includes("wa.me/")||target.includes("whatsapp.com")){
-        const joiner=target.includes("?")?"&":"?";
-        window.open(target+joiner+"text="+encodeURIComponent(message),"_blank","noopener");
-      }else if(target.includes("t.me/")){
-        window.open(target,"_blank","noopener");
-      }else if(target){
-        window.open(target,"_blank","noopener");
-      }
     });
   }
 });
@@ -433,11 +412,6 @@ def loc(lang, path="/"):
 
 def alternate(lang, path="/"):
     return loc("en" if lang == "ru" else "ru", path)
-
-def contact_target():
-    if not CONTACTS:
-        return ""
-    return CONTACTS[0][0]
 
 def nav_path(lang, raw):
     if lang == "ru":
@@ -471,7 +445,6 @@ def footer(lang):
 def contact(lang, default_interest=""):
     c = COPY[lang]
     channels = "".join(f'<a class="btn btn-secondary" href="{escape(u)}" rel="noopener">{escape(n)}</a>' for u,n in CONTACTS)
-    target = escape(contact_target())
     return f'''<section class="contact-bar" id="contact"><div class="wrap contact-layout">
       <div>
         <div class="eyebrow">{c["contact"]}</div>
@@ -479,7 +452,7 @@ def contact(lang, default_interest=""):
         <p>{BRAND[lang]["final_lead"]}</p>
         <div class="contact-links">{channels}</div>
       </div>
-      <form class="lead-form" data-contact="{target}" data-default-interest="{escape(default_interest)}">
+      <form class="lead-form" data-default-interest="{escape(default_interest)}">
         <div class="form-grid">
           <div><label>{c["form_name"]}</label><input name="name" autocomplete="name"></div>
           <div><label>{c["form_contact"]}</label><input name="contact" required autocomplete="email"></div>
@@ -489,7 +462,7 @@ def contact(lang, default_interest=""):
         <input type="hidden" name="interest"><input type="hidden" name="page_context"><input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none;clip-path:inset(50%)">
         <div class="form-actions"><button class="btn btn-primary" type="submit">{c["form_submit"]} →</button></div>
         <div class="form-note">{c["form_note"]}</div>
-        <div class="form-status" hidden>{c["form_done"]}</div>
+        <div class="form-status" role="status" data-pending="{escape(c["form_pending"])}" data-success="{escape(c["form_done"])}" data-error="{escape(c["form_error"])}"></div>
       </form>
     </div></section>'''
 
