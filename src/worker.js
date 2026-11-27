@@ -59,8 +59,10 @@ export class LeadStore {
             "Получена: " + lead.createdAt,
           ].join("\n"),
         });
-        if (!result.delivered?.includes(job.to) && !result.queued?.includes(job.to)) {
-          throw new Error("Email service did not accept the recipient");
+        // Workers Email binding returns messageId, unlike the REST Email Sending API.
+        // A resolved send with a messageId means the provider accepted the message.
+        if (!(typeof result?.messageId === "string" && result.messageId.trim()) && !result?.delivered?.includes(job.to) && !result?.queued?.includes(job.to)) {
+          throw new Error("Email service did not acknowledge the message");
         }
         await storage.delete(key);
       } catch {
