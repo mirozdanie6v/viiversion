@@ -42,15 +42,16 @@ const url='https://uniq-smart-rent.mirozdanie6v.workers.dev/';
  await page.locator('.vehicle-card').first().click();await snap('client-detail','.detail');
  await page.locator('[data-book]').first().click();await snap('client-booking','#bookForm');await page.locator('.modal-x').first().click();
  await nav('requests');await snap('client-requests','.request-list');
+ const checkout=page.locator('[data-pay-request]').first();if(await checkout.count()){await checkout.click();await snap('client-payment','.payment-sheet');await page.locator('[data-finish-close]').first().click();}
  await nav('contacts');await snap('client-contacts','.contact-grid');
  await role('employee');await snap('employee-dashboard','.metrics');
  await nav('requests');await snap('employee-requests','.request-list');
- const pay=page.locator('[data-pay-request]').first();if(await pay.count()){await pay.click();await snap('employee-payment','.payment-sheet');await page.locator('[data-finish-close]').first().click();}
+ const paymentState=page.locator('.finish-payment-state').first();if(await paymentState.count())await snap('employee-payment','.finish-payment-state');
  await nav('fleet');await snap('employee-fleet','.fleet-table');
  await nav('handover');await snap('employee-handover','.request-list');
  await role('owner');await snap('owner-overview','.owner-metrics');
  await snap('owner-status','.status-bars');
- const profile=page.locator('[data-client-profile]').first();await profile.waitFor();await profile.click();await snap('owner-clients','.profile-sheet');await page.locator('[data-finish-close]').first().click();
+ const profile=page.locator('[data-client-profile]').first();if(await profile.count()){await profile.click();await snap('owner-clients','.profile-sheet');await page.locator('[data-finish-close]').first().click();}else{const clients=page.locator('main .section').filter({hasText:/Последние клиенты|Recent clients/}).first();if(await clients.count()){await clients.scrollIntoViewIfNeeded();await snap('owner-clients');}else{console.warn('Owner client profile not available in deployed build');}}
  await nav('requests');await snap('owner-requests','.request-list');
  await nav('fleet');await snap('owner-fleet','.metrics');
  } finally {await browser.close();}
