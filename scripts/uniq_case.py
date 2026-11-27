@@ -101,7 +101,7 @@ STYLE = """<style>
 .uniq-case .u-intro{padding:44px 0 64px;background:linear-gradient(140deg,#06111f,#102e52);color:white}
 .uniq-case .u-intro h1{font-size:clamp(36px,5.2vw,68px);line-height:1.06;max-width:890px;color:white;margin:16px 0 24px}
 .uniq-case .u-intro p{max-width:760px;color:#dce8fa;font-size:clamp(17px,2vw,22px);line-height:1.55}
-.uniq-case .u-intro .eyebrow{color:#b6d2ff}.uniq-case .u-hero-proof{margin:36px 0 0}
+.uniq-case .u-intro .eyebrow{color:#b6d2ff}.uniq-case .u-project{display:block;font-size:clamp(20px,2.4vw,30px);letter-spacing:.035em;color:#b6d2ff;margin-bottom:12px}.uniq-case .u-intro .btn-primary{background:#145dff;color:#fff;border-color:#145dff}.uniq-case .u-intro .btn-primary:hover{background:#124cce}.uniq-case .u-hero-proof{margin:36px 0 0}
 .uniq-case figure{margin:0;min-width:0}.uniq-case figure img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:contain;background:#e9eef5;border:1px solid var(--u-line);border-radius:12px}
 .uniq-case figcaption{font-size:14px;color:#5a6878;margin-top:10px;line-height:1.5}
 .uniq-case .u-intro figcaption{color:#dce8fa}
@@ -123,7 +123,7 @@ STYLE = """<style>
 .uniq-case .u-list article{padding:22px 0;border-top:1px solid var(--u-line)}.uniq-case .u-list h3{margin:0 0 8px;font-size:22px}.uniq-case .u-list p{line-height:1.6;margin:0}
 .uniq-case .u-soft{background:#f5f7fa}.uniq-case .u-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
 .uniq-case .u-section a:focus-visible,.uniq-case .u-nav a:focus-visible,.uniq-case .u-intro a:focus-visible{outline:3px solid #629eff;outline-offset:4px}
-@media(max-width:760px){.uniq-case .u-intro{padding:36px 0 48px}.uniq-case .u-section{padding:52px 0}.uniq-case .u-metrics{grid-template-columns:1fr 1fr;gap:20px 14px}.uniq-case .u-feature{grid-template-columns:1fr;gap:18px;padding:28px 0}.uniq-case .u-flow,.uniq-case .u-list{grid-template-columns:1fr}.uniq-case .u-actions a{width:100%;justify-content:center}.uniq-case .u-nav a{padding:8px 10px}}
+@media(max-width:760px){.uniq-case .u-intro{padding:32px 0 44px}.uniq-case .u-intro h1{font-size:clamp(30px,8vw,40px);margin:12px 0 18px}.uniq-case .u-intro p{font-size:17px}.uniq-case .u-hero-proof{margin-top:24px}.uniq-case .u-section{padding:52px 0}.uniq-case .u-metrics{grid-template-columns:1fr 1fr;gap:20px 14px}.uniq-case .u-feature{grid-template-columns:1fr;gap:18px;padding:28px 0}.uniq-case .u-flow,.uniq-case .u-list{grid-template-columns:1fr}.uniq-case .u-actions a{width:100%;justify-content:center}.uniq-case .u-nav a{padding:8px 10px}}
 </style>"""
 
 def screenshot(slug, caption, c, eager=False):
@@ -135,6 +135,8 @@ def screenshot(slug, caption, c, eager=False):
 
 def render_uniq_case(lang):
     c=COPY[lang]
+    project,headline=c['title'].split(' — ',1)
+    headline=headline[0].upper()+headline[1:]
     metrics="".join(f'<div class="u-metric"><b>{e(n)}</b><span>{e(label)}</span></div>' for n,label in c["metrics"])
     nav="".join(f'<a href="#{key}">{e(label)}</a>' for key,label in c["nav"])
     roles=[]
@@ -148,7 +150,7 @@ def render_uniq_case(lang):
         return "".join(f'<article><h3>{e(t)}</h3><p>{e(p)}</p></article>' for t,p in entries)
     flow="".join(f'<li>{i+1:02d} · {e(s)}</li>' for i,s in enumerate(c["flow"]))
     return STYLE+f'''<div class="uniq-case">
-<section class="u-intro"><div class="wrap"><div class="eyebrow">{e(c["status"])}</div><h1>{e(c["title"])}</h1><p>{e(c["lead"])}</p><div class="u-actions"><a class="btn btn-primary" href="{DEMO}" target="_blank" rel="noopener">{e(c["open"])} →</a></div><div class="u-hero-proof">{screenshot("hero","UNIQ SMART RENT",c,True)}</div></div></section>
+<section class="u-intro"><div class="wrap"><div class="eyebrow">{e(c["status"])}</div><h1><span class="u-project">{e(project)}</span>{e(headline)}</h1><p>{e(c["lead"])}</p><div class="u-actions"><a class="btn btn-primary" href="{DEMO}" target="_blank" rel="noopener">{e(c["open"])} →</a></div><div class="u-hero-proof">{screenshot("hero","UNIQ SMART RENT",c,True)}</div></div></section>
 <div class="wrap"><div class="u-metrics">{metrics}</div><nav class="u-nav" aria-label="UNIQ SMART RENT">{nav}</nav></div>
 <section class="u-section"><div class="wrap"><h2>{e(c["context"][0])}</h2><p class="u-lead">{e(c["context"][1])}</p></div></section>
 {"".join(roles)}
